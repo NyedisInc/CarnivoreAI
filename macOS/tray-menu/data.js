@@ -17,6 +17,10 @@ function createTrayData(deps) {
   let api = null;
   let trust = { trusted: null, reason: 'unknown', holder: null, holderText: null };
   let trustKey = null;
+  let verifiedPort = null;
+  let verifiedSmPid = null;
+  let verifiedBindHost = null;
+  let verifiedUptime = null;
   let sideState = side.emptySide();
   let sideTimer = null;
   let pushed = null;
@@ -95,15 +99,45 @@ function createTrayData(deps) {
 
   async function verifyPort(health) {
     const port = sm.getPort();
+    const smPid = sm.processPid || null;
+    const bindHost = typeof sm.getBindHost === 'function' ? sm.getBindHost() : null;
+    const uptime = health && typeof health.uptime === 'number' ? health.uptime : null;
+    const uptimeRegressed = uptime !== null && verifiedUptime !== null && uptime < verifiedUptime;
+    if (
+      trust.trusted === true
+      && port === verifiedPort
+      && smPid === verifiedSmPid
+      && bindHost === verifiedBindHost
+      && !uptimeRegressed
+      && portTrust.isCarnivoreHealth(health)
+    ) {
+      if (uptime !== null) verifiedUptime = uptime;
+      return;
+    }
     const pd = deps.portDeps();
     const holders = await portTrust.listeners(port, pd);
     if (holders === null && trust.trusted === true) return;
     const key = `${port}:${(holders || []).map((h) => h.pid).join(',')}`;
-    if (key === trustKey && trust.trusted === true) return;
+    if (key === trustKey && trust.trusted === true) {
+      verifiedPort = port;
+      verifiedSmPid = smPid;
+      verifiedBindHost = bindHost;
+      verifiedUptime = uptime;
+      return;
+    }
     const verdict = portTrust.judgePort({ holders, myUid: pd.myUid, health });
     trust = { ...verdict, holderText: verdict.holder ? portTrust.describeHolder(verdict.holder) : null };
     trustKey = key;
-    if (verdict.trusted !== true) {
+    if (verdict.trusted === true) {
+      verifiedPort = port;
+      verifiedSmPid = smPid;
+      verifiedBindHost = bindHost;
+      verifiedUptime = uptime;
+    } else {
+      verifiedPort = null;
+      verifiedSmPid = null;
+      verifiedBindHost = null;
+      verifiedUptime = null;
       if (verdict.trusted === false) console.warn('[tray-menu] refusing the server port:', verdict.reason, trust.holderText);
       disconnect();
     }
@@ -147,6 +181,10 @@ function createTrayData(deps) {
           disconnect();
           trust = { trusted: null, reason: 'unknown', holder: null, holderText: null };
           trustKey = null;
+          verifiedPort = null;
+          verifiedSmPid = null;
+          verifiedBindHost = null;
+          verifiedUptime = null;
           if (sm.getState() === 'stopped') await readOffline();
         }
       } finally {

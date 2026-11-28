@@ -11,14 +11,14 @@ PLANS = [
 
 SAMPLES: Dict[str, Dict[str, Any]] = {
     "yesno": {
-        "type": "session.question", "agent": "api-docs", "computer": "nostromo", "title": "api-docs asks",
-        "sub": "question on nostromo", "body": "merge exp/argent-widget-engine into master?", "cap": True,
+        "type": "session.question", "agent": "api-docs", "computer": "nostromo", "title": "api-docs has a question",
+        "sub": "", "body": "merge exp/argent-widget-engine into master?", "cap": True,
         "acts": [["yes", "yes"], ["no", "no"], ["reply", "type an answer"]],
         "card": {"ask": "merge exp/argent-widget-engine into master?"},
     },
     "choice": {
-        "type": "session.question", "agent": "billing-5", "computer": "nostromo", "title": "billing-5 asks",
-        "sub": "pick one on nostromo", "body": "which plan should I build: A, B or C?", "cap": True,
+        "type": "session.question", "agent": "billing-5", "computer": "nostromo", "title": "billing-5 has a question",
+        "sub": "", "body": "which plan should I build: A, B or C?", "cap": True,
         "acts": [["opt.1", "plan a"], ["opt.2", "plan b"], ["opt.3", "plan c"], ["reply", "type an answer"]],
         "card": {"ask": "which plan should I build: A, B or C?", "opts": PLANS, "multi": False, "qcount": 1},
     },

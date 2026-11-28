@@ -1,12 +1,14 @@
 
 from __future__ import annotations
 
+import time
 from typing import Any, Callable, Dict, Optional
 import sqlite3
 
 import structlog
 
-from src.core.federation import peer_hosts, peer_listing, shadow_rows
+from src.core.federation import peer_hosts, peer_listing, peer_listing_fast, peer_listing_feed, shadow_rows
+from src.core.pack.machines import capabilities
 from src.core.listing_push.diff import KeyedRows, apply_change
 
 logger = structlog.get_logger()
@@ -19,10 +21,12 @@ class _Held:
 
 
 _HELD: Dict[str, _Held] = {}
+_REIMPORT_AT: Dict[str, float] = {}
 
 
 def drop(peer_install_id: str) -> None:
     _HELD.pop(peer_install_id, None)
+    _REIMPORT_AT.pop(peer_install_id, None)
     peer_listing.PUSHED.discard(peer_install_id)
 
 
@@ -53,8 +57,18 @@ async def apply(frame: Dict[str, Any], peer: "peer_hosts.PeerRow", open_db: Call
     if held is None:
         logger.info("peer_listing_push_unusable", peer=peer.key)
         return False
+    if capabilities.mesh_on():
+        snap = peer_listing.pushed_rows(key)
+        due = time.monotonic() < _REIMPORT_AT.get(key, 0.0)
+        rows = peer_listing_fast.refresh_delta(frame, _HELD.get(key), held, peer, snap) if due and snap is not None and key in peer_listing.PUSHED else None
+        if rows is not None:
+            peer_listing.keep_pushed(key, rows)
+            _HELD[key] = held
+            return True
     if not await peer_listing.ingest(peer, open_db, [row for _, row in held.rows], [row for _, row in held.asleep]):
         return False
     _HELD[key] = held
     peer_listing.PUSHED.add(key)
+    if capabilities.mesh_on():
+        _REIMPORT_AT[key] = time.monotonic() + peer_listing_feed.jittered_resync()
     return True

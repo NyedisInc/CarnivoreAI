@@ -154,6 +154,8 @@ EXCLUDED_STORES: Tuple[ExcludedStore, ...] = (
                   "traced or written again; kept on disk untouched"),
     ExcludedStore("addons/state.json", K.GLOBAL, "which add-ons are on, with their grants and settings: install configuration"),
     ExcludedStore("cplugs/state.json", K.GLOBAL, "which plugins are on, with their grants and settings: install configuration"),
+    ExcludedStore("cplugs/renamed-carried.json", K.GLOBAL, "which renamed plugins' stored entries were carried to their new id (#3260): "
+                  "install configuration, ids only"),
     ExcludedStore("carnivore.online-backup.db", K.DERIVED, "an online copy of carnivore.db taken by the backup; the live rows are the claimed ones"),
     ExcludedStore("session-journal/pre-reboot-*.db", K.DERIVED, "copies of carnivore.db taken before a reboot; the live rows are the claimed ones"),
     ExcludedStore("automations-scheduler.jsonl", K.GLOBAL, "the automation scheduler's own log"),

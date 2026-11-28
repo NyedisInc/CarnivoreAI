@@ -16,7 +16,7 @@
   import { ageWords } from '../computers/computers-format';
   import { hosts, peers, nearby, discovered, refreshRoster, rosterActivity } from './roster-store.svelte';
   import { closePane, openAdd, openComputer, rosterUi, setSettings } from './roster-ui.svelte';
-  import { buildRoster, countsOf, freeCpu, inFilter, LOOK_FILTERS, matches, PACK_FILTERS, sortRoster, unlinkedNearby, type FilterKey } from './roster-model';
+  import { buildRoster, countsOf, meshOn, freeCpu, inFilter, LOOK_FILTERS, matches, PACK_FILTERS, sortRoster, unlinkedNearby, type FilterKey } from './roster-model';
   import { clock, startClock } from '../../opscenter/lib/frozen-clock.svelte';
   import RosterCard from './RosterCard.svelte';
   import ComputerPane from './ComputerPane.svelte';
@@ -62,6 +62,35 @@
 
   const freeRows = $derived<RankRow[]>(list.map((c) => ({ c, f: freeCpu(c) })).filter((x) => x.f !== null).sort((a, b) => (b.f ?? 0) - (a.f ?? 0)).slice(0, 5)
     .map((x) => ({ id: x.c.id, name: x.c.name, tags: x.c.kind === 'ssh-only' ? [t('roster.census.ssh_host')] : [], metric: { value: String(x.f), unit: t('roster.census.free_of', { cores: x.c.machine?.snapshot?.load?.cores ?? '' }) } })));
+  const fleetUtil = $derived.by(() => {
+    let cores = 0, busy = 0, ramTot = 0, ramUsed = 0, freeCores = 0, freeRam = 0;
+    for (const c of list) {
+      const snap = c.machine?.snapshot;
+      if (!snap?.load) continue;
+      const ld = snap.load;
+      const b = ld.busy_cores ?? ld.load_1;
+      if (ld.cores && b != null) {
+        const clamped = Math.min(ld.cores, Math.max(0, b));
+        cores += ld.cores;
+        busy += clamped;
+        const line = ld.cores * (1 - (snap.reserve?.cpu_pct ?? 0) / 100);
+        freeCores += Math.max(0, line - clamped);
+      }
+      if (ld.mem_total_gb && ld.mem_available_gb != null) {
+        ramTot += ld.mem_total_gb;
+        const used = Math.max(0, ld.mem_total_gb - ld.mem_available_gb);
+        ramUsed += used;
+        const line = ld.mem_total_gb * (1 - (snap.reserve?.mem_pct ?? 0) / 100);
+        freeRam += Math.max(0, line - used);
+      }
+    }
+    return {
+      cpuPct: cores > 0 ? Math.round((100 * busy) / cores) : null,
+      freeCores: Math.round(freeCores * 10) / 10,
+      ramPct: ramTot > 0 ? Math.round((100 * ramUsed) / ramTot) : null,
+      freeRam: Math.round(freeRam * 10) / 10,
+    };
+  });
 
   function onKeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement;
@@ -109,20 +138,24 @@
           <div class="wz-census m1-census" class:m1-census--two={true}>
             <section class="oc-rank m1-census__pack" data-panel="pack">
               <header class="oc-rank__head"><h3 class="oc-rank__label">{t('roster.census.pack')}</h3>
-                <Button variant="quiet" size="sm" onclick={() => setSettings(true)}>{t('roster.census.settings')}</Button></header>
+                <Button size="sm" onclick={() => setSettings(true)}>{t('roster.census.settings')}</Button></header>
               <dl class="pp-facts">
                 <dt class="m1-lead-k" role="img" aria-label={t('roster.census.leader')} title={t('roster.census.leader')}><Icon name="wolf" size={14} /></dt><dd>{alpha?.name ?? '-'}</dd>
                 <dt>{t('roster.census.linked')}</dt><dd>{others.length ? t('roster.census.linked_of', { linked, total: others.length }) : t('roster.census.none')}</dd>
                 <dt>{t('roster.census.name')}</dt><dd>{packName ?? t('roster.census.not_named')}</dd>
                 <dt>{t('roster.census.advertising')}</dt><dd>{advertising === null ? '-' : advertising ? t('roster.census.on') : t('roster.census.off')}</dd>
+                {#if fleetUtil.cpuPct !== null}<dt>{t('roster.census.fleet_cpu')}</dt><dd data-fleet="cpu">{t('roster.census.fleet_cpu_val', { pct: fleetUtil.cpuPct, free: fleetUtil.freeCores })}</dd>{/if}
+                {#if fleetUtil.ramPct !== null}<dt>{t('roster.census.fleet_ram')}</dt><dd data-fleet="ram">{t('roster.census.fleet_ram_val', { pct: fleetUtil.ramPct, free: fleetUtil.freeRam })}</dd>{/if}
               </dl>
+              {#if meshOn(packMachines.data) && packMachines.data?.roster_refusal}{@const full = packMachines.data.roster_refusal}
+                <p class="pp-warn" data-line="pack-full">{t(full.count - full.limit === 1 ? 'roster.full.over_one' : 'roster.full.over', { count: full.count, limit: full.limit, left: full.count - full.limit })}</p>{/if}
             </section>
             <RankPanel label={t('roster.census.headroom')} rows={freeRows} columns={{ name: t('roster.census.col_computer'), metric: t('roster.census.col_free') }} notMeasured={t('roster.census.no_load')} empty={t('roster.census.no_load')} onSelect={(id) => openComputer(id, 'overview')} />
           </div>
           {#if rosterUi.filter === 'all' && ghosts.length > 0}
             <section class="m1-near" data-panel="near" aria-label={t('roster.sec.near')}>
               <div class="cat-sec"><span class="cat-sec__label">{t('roster.sec.near')}</span>
-                <Button variant="quiet" size="sm" disabled={rosterActivity.busy !== null} onclick={() => void discovered.refresh(true)}>{t('hosts.fed.rescan')}</Button>
+                <Button size="sm" disabled={rosterActivity.busy !== null} onclick={() => void discovered.refresh(true)}>{t('hosts.fed.rescan')}</Button>
                 <span class="cat-sec__count">{t('roster.sec.near_count', { count: ghosts.length })}</span></div>
               <ul class="warez-grid m1-ghosts">
                 {#each ghosts as d (d.fid)}

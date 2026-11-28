@@ -197,7 +197,7 @@ def test_pairing_an_authenticator_again_clears_the_tombstone(tmp_path, monkeypat
         return None
 
     monkeypatch.setattr(auth_routes, "check_totp_code", accept)
-    monkeypatch.setattr(auth_routes, "create_access_token", lambda: ("a", 60))
+    monkeypatch.setattr(auth_routes, "create_access_token", lambda **_: ("a", 60))
     monkeypatch.setattr(auth_routes, "create_refresh_token", lambda: ("r", "jti", 0))
     request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace()))
     asyncio.run(auth_routes.redeem_totp_code(request, "123456"))

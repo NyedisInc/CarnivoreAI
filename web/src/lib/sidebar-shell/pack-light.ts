@@ -1,3 +1,4 @@
+/* cannot be read */
 import { isAgentKind } from '../drawer/bucketing';
 import type { PackMachine } from '../pack-machines/pack-machines-store.svelte';
 import type { SidebarRow } from './legacy';
@@ -9,6 +10,7 @@ interface LightGlobals {
     SessionStatusSummary?: { summaryHtml(rows: unknown[]): string };
 }
 
+/* cannot be read */
 export function agentsOf(m: Pick<KeyedMachine, 'is_self' | 'state' | 'host_key'>, rows: readonly SidebarRow[]): SidebarRow[] | null {
     const agents = rows.filter((r) => isAgentKind(r as never));
     if (m.is_self) return agents.filter((r) => !r.host_key || r.host_key === 'local');

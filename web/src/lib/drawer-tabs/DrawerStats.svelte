@@ -4,16 +4,16 @@
   import Icon from '../../opscenter/ui/Icon.svelte';
   import StatusLed from '../StatusLed.svelte';
   import { t } from '../i18n/index.svelte';
-  import { readChoice, writeChoice } from '../ui/prefs.svelte';
   import { floorFeedRows } from '../drawer/floor-feed.svelte';
   import { countAgents, type CountKind } from '../drawer/agent-counts';
   import { activeCountFilter, toggleCountFilter } from '../drawer/count-filter.svelte';
   import { packMachines } from '../pack-machines/pack-machines-store.svelte';
   import { acquireStatsFeed, statsFeed } from '../stats-feed/store.svelte';
   import { chartBars, compact, mergeBars, missingSpan, nextUnit, nextWindow, rateIn } from '../stats-feed/rate';
-  import { FEED_WINDOWS, RATE_UNITS, type FeedBody, type FeedWindow, type RateUnit } from '../stats-feed/types';
-  import { DRAWER_STATS_RATE_KEY, DRAWER_STATS_WINDOW_KEY } from './drawer-tabs';
+  import type { FeedBody, FeedWindow, RateUnit } from '../stats-feed/types';
+  import { followStatsPrefs, readStatsRate, readStatsWindow, writeStatsRate, writeStatsWindow } from './drawer-tabs';
   import { sectionShown, setSectionShown, sleepingSessions } from '../drawer/section-visibility.svelte';
+  import { setSleepingFolded, sleepingFolded, toggleSleepingFolded } from '../drawer/sleep-fold.svelte';
 
   const WORDS = ['unavailable', 'stats_off', 'plugin_off', 'needs_approval', 'paused'] as const;
   const COUNT_KINDS: readonly CountKind[] = ['active', 'working', 'unread'];
@@ -29,8 +29,8 @@
 
   let { feed = undefined }: { feed?: FeedBody } = $props();
 
-  let unit = $state<RateUnit>(readChoice(DRAWER_STATS_RATE_KEY, RATE_UNITS, 'min'));
-  let win = $state<FeedWindow>(readChoice(DRAWER_STATS_WINDOW_KEY, FEED_WINDOWS, '1h'));
+  let unit = $state<RateUnit>(readStatsRate());
+  let win = $state<FeedWindow>(readStatsWindow());
   let visible = $state(false);
   let root: HTMLElement | undefined = $state();
   let tokensEl: HTMLElement | undefined = $state();
@@ -39,7 +39,17 @@
 
   const counts = $derived(countAgents(floorFeedRows()));
   const sleepingShown = $derived(sectionShown('sleeping'));
+  const sleepingFold = $derived(sleepingFolded());
   const sleepingCount = $derived(sleepingSessions());
+
+  function onSleepingClick(): void {
+    if (!sleepingShown) {
+      setSectionShown('sleeping', true);
+      setSleepingFolded(false);
+      return;
+    }
+    toggleSleepingFolded();
+  }
   const filter = $derived(activeCountFilter());
   // there is nothing
   const packSize = $derived(packMachines.data?.machines.length ?? 0);
@@ -86,10 +96,14 @@
   $effect(() => (visible && !feed ? acquireStatsFeed(win) : undefined));
 
   onMount(() => {
+    const stopPrefs = followStatsPrefs({
+      onRate: (next) => { unit = next; },
+      onWindow: (next) => { win = next; },
+    });
     const Observer = visibilityObserver();
     if (!root || !Observer) {
       visible = true;
-      return;
+      return stopPrefs;
     }
     let timer: ReturnType<typeof setTimeout> | undefined;
     const io = new Observer((entries) => {
@@ -101,6 +115,7 @@
     });
     io.observe(root);
     return () => {
+      stopPrefs();
       io.disconnect();
       if (timer !== undefined) clearTimeout(timer);
     };
@@ -108,11 +123,11 @@
 
   function cycleRate(): void {
     unit = nextUnit(unit);
-    writeChoice(DRAWER_STATS_RATE_KEY, unit);
+    writeStatsRate(unit);
   }
   function cycleWindow(): void {
     win = nextWindow(win);
-    writeChoice(DRAWER_STATS_WINDOW_KEY, win);
+    writeStatsWindow(win);
   }
 </script>
 
@@ -131,9 +146,10 @@
           data-kind={kind}
           data-filter={kind !== 'sleeping' && filter === kind ? 'on' : undefined}
           data-hidden={kind === 'sleeping' && !sleepingShown ? 'true' : undefined}
-          aria-pressed={kind === 'sleeping' ? sleepingShown : filter === kind}
-          aria-label={kind === 'sleeping' ? t('drawer.stats.sleeping', { count: sleepingCount }) : t(`drawer.stats.${kind}`, { count: counts[kind] })}
-          onclick={() => (kind === 'sleeping' ? setSectionShown('sleeping', !sleepingShown) : toggleCountFilter(kind))}
+          data-expanded={kind === 'sleeping' && sleepingShown && !sleepingFold ? 'true' : undefined}
+          aria-pressed={kind === 'sleeping' ? (sleepingShown && !sleepingFold) : filter === kind}
+          aria-label={kind === 'sleeping' ? t('drawer.stats.sleeping_fold', { count: sleepingCount }) : t(`drawer.stats.${kind}`, { count: counts[kind] })}
+          onclick={() => (kind === 'sleeping' ? onSleepingClick() : toggleCountFilter(kind))}
         >
           {#if kind === 'sleeping'}<Icon name="moon" size={12} />{:else if kind === 'active'}<Icon name="bot" size={12} />{:else if kind === 'working'}<StatusLed status="working" size="10px" />{:else}<StatusLed status="idle" unread={true} size="10px" />{/if}<span class="dst-num">{kind === 'sleeping' ? sleepingCount : counts[kind]}</span>
         </button>
@@ -226,6 +242,11 @@
     }
     .dst-count[data-hidden='true'] {
       opacity: 0.5;
+    }
+    .dst-count[data-expanded='true'] {
+      border-color: var(--oc-line-frame);
+      background: var(--oc-ground-hover);
+      color: var(--oc-text-primary);
     }
     .dst-count[data-filter='on'] {
       border-color: var(--oc-yellow-bright);

@@ -18,6 +18,9 @@
   import { autoDelegateApi, type AutoDelegateApi, type AutoDelegateBody, type AutoDelegateView, type RecentJob } from './auto-delegate-api';
   import { hintFor, isOld, isTicked } from './delegate-rows';
   import { reasonFor } from './leftover-codes';
+  import { meshOn } from '../pack-roster/roster-model';
+
+  const MESH_REFUSALS: readonly string[] = ['not_linked', 'on_demand_only', 'older_app', 'no_status_card', 'member_list_unreadable', 'own_link_off', 'member_not_listed', 'member_not_mesh', 'member_link_off'];
 
   let { name, api = autoDelegateApi }: { name: string; api?: AutoDelegateApi } = $props();
 
@@ -37,6 +40,12 @@
   const copyOf = (m: PackMachine) => copies.find((c) => c.install_id === m.install_id);
   const leftovers = $derived(on ? [] : copies.filter((c) => c.auto));
   const running = $derived(view?.copy_run?.running === true);
+  const mesh = $derived(meshOn(packMachines.data));
+  const reason = (code: string): string => (mesh && MESH_REFUSALS.includes(code) ? t(`pack.autodelegate.refused.${code}`) : codedSentence({ code }, ''));
+  const memberRefused = $derived(mesh && view?.role === 'home'
+    ? Object.entries(view.copy_run?.refused ?? {}).filter(([id]) => !computers.some((m) => m.install_id === id || m.label === id))
+      .map(([id, code]): [string, string, string] => [packMachines.data?.machines.find((m) => m.install_id === id)?.label || id.slice(0, 8), reason(code), id])
+    : []);
   const targets = $derived(computers.filter((m) => m.state === 'connected' && !isOld(m) && takesWork(m) && isTicked(m, never) && !copyOf(m)));
   const jobsRunning = $derived(on && (view?.live_jobs ?? 0) > 0);
   const notRepo = $derived(view?.is_repo === false && !on);
@@ -48,7 +57,7 @@
     const run = view?.copy_run;
     const refused = run?.refused?.[m.install_id] ?? run?.refused?.[m.label] ?? null;
     return hintFor(m, { never: !isTicked(m, never) && !isOld(m), hasCopy: !!copyOf(m), takesWork: takesWork(m), refused, copying: on && running && !copyOf(m) }, t,
-      (code) => codedSentence({ code }, ''));
+      reason);
   }
 
   async function load(): Promise<void> {
@@ -142,11 +151,14 @@
         </List>
         {#if computers.length > 5}
           <div class="dk-more">
-            <Button variant="quiet" size="sm" data-ad="more" onclick={() => (more = !more)}>
+            <Button size="sm" data-ad="more" onclick={() => (more = !more)}>
               <Icon name={more ? 'chevron-up' : 'chevron-down'} size={12} />{more ? t('pack.deck.fewer') : t('pack.deck.more', { n: String(computers.length - 4) })}</Button>
           </div>
         {/if}
       {/if}
+      {#each memberRefused as [computer, words, rid] (rid)}
+        <State kind="warn" inline data-ad="member-refused" title={words ? t('pack.autodelegate.member_refused', { computer, reason: words }) : t('pack.autodelegate.member_refused_generic', { computer })} />
+      {/each}
       {#if on && computers.length && jobs.length}
         <h4 class="oc-sub">{t('pack.deck.recent')}</h4>
         <ul class="dk-jobs" data-ad="jobs">

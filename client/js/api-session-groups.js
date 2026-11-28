@@ -15,13 +15,20 @@ extendPrototype(API, {
     },
 
     /* list, so the */
-    async createSessionGroup(name) {
-        return await this.call('/session-groups', { method: 'POST', body: { name } });
+    async createSessionGroup(name, parentKey) {
+        const body = parentKey ? { name, parent_key: parentKey } : { name };
+        return await this.call('/session-groups', { method: 'POST', body });
     },
 
     async renameSessionGroup(groupUuid, name) {
         return await this.call(`/session-groups/${encodeURIComponent(groupUuid)}`, {
             method: 'PATCH', body: { name },
+        });
+    },
+
+    async setSessionGroupParent(groupUuid, parentKey) {
+        return await this.call(`/session-groups/${encodeURIComponent(groupUuid)}`, {
+            method: 'PATCH', body: { parent_key: parentKey || null },
         });
     },
 

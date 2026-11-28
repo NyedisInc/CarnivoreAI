@@ -9,13 +9,14 @@ from typing import Any, Dict, List, Optional, Tuple
 import structlog
 from fastapi import HTTPException, Request
 
-from src.api.catalog_views import find_item, latest_version
+from src.api.catalog_views import find_item, item_revocation_status, latest_version, revocation_lookup
 from src.core.catalog.publisher_rename import find_installed_item
 from src.core.catalog.archive_client import fetch_archive
 from src.core.catalog.fetch_stream import FetchRefusal
 from src.core.catalog.first_party import refuse_theme_code
 from src.core.catalog.index_cache import IndexSnapshot
-from src.core.catalog.verify_types import KEY_UNTRUSTED
+from src.core.catalog.revocation import VERSION_SUBJECT_SEPARATOR
+from src.core.catalog.verify_types import KEY_UNTRUSTED, VERSION_REVOKED
 from src.core.live_install_roots import HARNESS_CLAUDE, HARNESS_CODEX
 from src.core import resource_push
 from src.core.resource_push import topics as resource_topics
@@ -56,14 +57,37 @@ def refuse_409(code: str, detail: str, **extra: Any) -> HTTPException:
     return HTTPException(status_code=409, detail=body)
 
 
+def _raise_if_revoked_item(
+    snapshot: IndexSnapshot, item_id: str, cache: Any = None
+) -> None:
+    revoked_keys, revoked_versions, refused_items = revocation_lookup(snapshot, cache)
+    refused_code = refused_items.get(item_id)
+    if refused_code in (VERSION_REVOKED, KEY_UNTRUSTED):
+        raise refuse_409(
+            refused_code,
+            f"{item_id!r} was refused by the catalog ({refused_code})",
+        )
+    prefix = f"{item_id}{VERSION_SUBJECT_SEPARATOR}"
+    if any(subj.startswith(prefix) for subj in revoked_versions):
+        raise refuse_409(
+            VERSION_REVOKED,
+            f"{item_id!r} has been revoked by the publisher",
+        )
+
+
 def resolve_item(
-    snapshot: IndexSnapshot, item_id: str, installed_kind: Optional[str] = None
+    snapshot: IndexSnapshot,
+    item_id: str,
+    installed_kind: Optional[str] = None,
+    *,
+    cache: Any = None,
 ) -> Tuple[CatalogItem, ItemVersion]:
     if installed_kind is None:
         item, untrusted = find_item(snapshot, item_id)
     else:
         item, untrusted = find_installed_item(snapshot, item_id, installed_kind)
     if item is None:
+        _raise_if_revoked_item(snapshot, item_id, cache)
         raise HTTPException(status_code=404, detail=f"no catalog item {item_id!r}")
     if untrusted:
         raise refuse_409(
@@ -72,10 +96,21 @@ def resolve_item(
         )
     version = latest_version(item)
     if version is None:
+        _raise_if_revoked_item(snapshot, item.id, cache)
         raise HTTPException(
             status_code=404,
             detail=f"{item_id!r} carries no version named {item.latest!r}",
         )
+    revoked, reason, _since = item_revocation_status(
+        item_id=item.id,
+        version=version.v,
+        publisher_key_id=version.sig.key_id,
+        snapshot=snapshot,
+        cache=cache,
+    )
+    if revoked:
+        code = KEY_UNTRUSTED if reason == "key_revoked" else VERSION_REVOKED
+        raise refuse_409(code, f"{item.id!r} {version.v!r} was revoked ({code})")
     return item, version
 
 
@@ -137,11 +172,8 @@ def discovery_listing(roots: Any) -> Tuple[str, ...]:
 
 
 def refuse_cplug_scripts(item: CatalogItem, version: ItemVersion) -> None:
-    if item.kind == KIND_CPLUG and version.scripts > 0:
-        raise refuse_409(
-            SCRIPTS_NOT_SUPPORTED,
-            f"{item.id!r} is a plugin and declares executable content; a plugin installs without scripts",
-        )
+    _ = (item, version)
+    return None
 
 
 def _stage_now(
@@ -190,7 +222,7 @@ async def fetch_and_stage_with(
 ) -> Tuple[Path, Any]:
     refuse_cplug_scripts(item, version)
     if item.kind == KIND_CPLUG:
-        allow_scripts = False
+        allow_scripts = version.scripts > 0
     roots = services.install_roots
     try:
         staging = await asyncio.to_thread(staging_root_for, roots)

@@ -71,3 +71,31 @@ def test_new_session_uses_pane_client_env():
     src = Path(td.__file__).with_name("tmux_backend.py").read_text()
     assert "tmux_env = pane_client_env()" in src
     assert "tmux_env = os.environ.copy()" not in src
+
+
+def test_pane_client_env_drops_the_server_bind_host(monkeypatch):
+    monkeypatch.setenv("HOST", "0.0.0.0")
+    monkeypatch.setenv("KEEP_ME", "yes")
+    env = td.pane_client_env()
+    assert "HOST" not in env
+    assert env["KEEP_ME"] == "yes"
+    assert os.environ["HOST"] == "0.0.0.0", "the engine still binds per its own HOST"
+
+
+def test_scrub_server_only_globals_unsets_each_name_on_the_configured_socket():
+    import asyncio
+    from src.core.tmux_backend import TmuxBackend
+
+    calls = []
+
+    class _StubTransport:
+        async def run(self, socket_name, args, *, stdin_bytes=None, check=True):
+            calls.append((socket_name, tuple(args), check))
+            return 1, b"", b"unknown variable: HOST"
+
+    backend = TmuxBackend.__new__(TmuxBackend)
+    backend.socket_name = "throwaway-test-socket"
+    backend._transport = _StubTransport()
+    asyncio.run(backend.scrub_server_only_globals())
+    assert calls == [("throwaway-test-socket", ("set-environment", "-g", "-u", name), False) for name in td.SERVER_ONLY_ENV]
+    assert ("throwaway-test-socket", ("set-environment", "-g", "-u", "HOST"), False) in calls

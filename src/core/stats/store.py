@@ -23,10 +23,26 @@ class _ClosingConnection(sqlite3.Connection):
             self.close()
 
 
+def _tune_stats_conn(conn: sqlite3.Connection) -> None:
+    conn.execute("PRAGMA busy_timeout=5000")
+    conn.execute("PRAGMA cache_size=-32000")
+    conn.execute("PRAGMA temp_store=MEMORY")
+    conn.execute("PRAGMA mmap_size=134217728")
+
+
+_PERF_INDEXES = (
+    "CREATE INDEX IF NOT EXISTS usage_hour_src ON usage_hour(src, t, project)",
+    "CREATE INDEX IF NOT EXISTS counter_hour_src ON counter_hour(src, t, project)",
+    "CREATE INDEX IF NOT EXISTS usage_minute_src ON usage_minute(src)",
+    "CREATE INDEX IF NOT EXISTS counter_minute_src ON counter_minute(src)",
+    "CREATE INDEX IF NOT EXISTS quota_hour_acct_win ON quota_hour(account_id, window)",
+)
+
+
 def _open_read_only(path: Path) -> sqlite3.Connection:
     conn = connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA busy_timeout=5000")
+    _tune_stats_conn(conn)
     return conn
 
 
@@ -59,6 +75,8 @@ class StatsStore:
                 self._close_stale_backfills(conn)
                 with transaction(conn):
                     revision.ensure(conn)
+                    for ddl in _PERF_INDEXES:
+                        conn.execute(ddl)
             finally:
                 conn.close()
 
@@ -81,7 +99,7 @@ class StatsStore:
                 conn.execute("PRAGMA journal_mode=WAL")
                 conn.execute("PRAGMA synchronous=NORMAL")
             conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA busy_timeout=5000")
+            _tune_stats_conn(conn)
         except sqlite3.Error:
             conn.close()
             raise
@@ -94,5 +112,5 @@ class StatsStore:
         _READS.forget(self.db_path)
 
     def revision(self) -> int:
-        with self.connect(readonly=True) as conn:
+        with self.connect_read() as conn:
             return int(conn.execute("SELECT value FROM stats_meta WHERE key='revision'").fetchone()[0])

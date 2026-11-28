@@ -73,16 +73,16 @@ def test_features_reach_core_only_through_the_known_list():
 
 
 def test_the_section_checks_can_fail():
-    features = ["huddle", "save"]
-    assert platform_violations("from src.plugins.huddle import store\nimport src.plugins.save.engine\n", features) == [
-        "src.plugins.huddle", "src.plugins.save.engine"]
-    assert platform_violations("from src.plugins import huddle\n", features) == ["src.plugins.huddle"]
+    features = ["taskmanager", "save"]
+    assert platform_violations("from src.plugins.taskmanager import store\nimport src.plugins.save.engine\n", features) == [
+        "src.plugins.taskmanager", "src.plugins.save.engine"]
+    assert platform_violations("from src.plugins import taskmanager\n", features) == ["src.plugins.taskmanager"]
     assert platform_violations("from src.plugins.sdk import ToolSpec\nfrom src.core.mcp import tools\nfrom . import x\n", features) == []
     save_known = feature_core_known("save")
     assert core_imports("from src.core.deepsearch import fallback_hook\n", save_known) == ["src.core.deepsearch.fallback_hook"]
     assert core_imports("from src.core.deepsearch import index_scope\n", save_known) == ["src.core.deepsearch"]
-    assert core_imports("import src.api.auth\nfrom src.plugins.sdk import x\nimport json\n", feature_core_known("huddle")) == ["src.api.auth"]
-    assert feature_core_known("huddle") == frozenset()
+    assert core_imports("import src.api.auth\nfrom src.plugins.sdk import x\nimport json\n", feature_core_known("taskmanager")) == ["src.api.auth"]
+    assert feature_core_known("taskmanager") == frozenset()
 
 
 def test_the_section_map_doc_names_every_platform_package():

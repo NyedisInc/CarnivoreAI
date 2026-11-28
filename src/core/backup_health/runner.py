@@ -9,7 +9,7 @@ import structlog
 
 from src.core.backup_health import checks
 from src.core.backup_health import constants as K
-from src.core.backup_health import vault_check
+from src.core.backup_health import transcript_check, vault_check
 
 logger = structlog.get_logger()
 
@@ -21,10 +21,12 @@ def _apply(verdict: checks.Verdict, db_path: Path) -> str:
     if verdict.state == checks.FIRING:
         alerts.raise_alert(verdict.key, source=K.ALERT_SOURCE, severity=verdict.severity or AK.SEV_WARN,
                            title_key=verdict.title_key, detail_key=verdict.detail_key, params=verdict.params,
-                           sticky=verdict.sticky, db_path=db_path)
+                           sticky=verdict.sticky, actions=verdict.actions, db_path=db_path)
         return "raised"
     if verdict.state == checks.OK:
         alerts.resolve(verdict.key, db_path=db_path)
+        if verdict.drop_actions:
+            alerts.drop_actions(verdict.key, verdict.drop_actions, db_path=db_path)
         return "resolved"
     return "kept"
 
@@ -41,6 +43,7 @@ def run_checks(state_dir: Path, db_path: Path, *, now: Optional[float] = None,
 
         alerts.resolve(K.KEY_USB, db_path=db_path)
     verdicts.extend(vault_check.check_vault(state_dir, stamp))
+    verdicts.append(transcript_check.check_transcripts_unprotected(state_dir))
     outcome = {verdict.key: _apply(verdict, db_path) for verdict in verdicts}
     logger.info("backup_health_pass", checked=len(outcome), raised=sorted(k for k, v in outcome.items() if v == "raised"))
     return outcome

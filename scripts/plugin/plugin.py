@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The `plugin` command for plugin authors (plugin redesign Stage 1 step 10): new, check, pack, test, link.
+"""The `plugin` command for plugin authors: new, check, pack, test, link.
 
 Usage (from the repo root, with the app's venv)::
 
@@ -19,10 +19,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import shutil
-import subprocess
 import sys
-import tempfile
 import urllib.error
 from pathlib import Path
 from typing import List, Optional
@@ -31,16 +28,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from scripts.lib.testsrv_client import api  # noqa: E402
 from scripts.plugin import check, templates  # noqa: E402
-from src.core.catalog import plugin_pack  # noqa: E402
-from src.plugins.host import install_gates  # noqa: E402
-from src.plugins.runtime import sandbox  # noqa: E402
+from src.plugins.cli import install_publish, tester as v3_tester  # noqa: E402
+from src.plugins.cli.auth_discovery import CliHttpClient  # noqa: E402
+from src.plugins.host.sideload_copy import DEV_SKIP_DIRS, copy_tree  # noqa: E402
 
 PASS, FAIL, COULD_NOT = 0, 1, 2
 SIDELOAD_PATH = "/api/v1/cplug-owner/sideload"
 TOKEN_ENV = "CARNIVORE_API_TOKEN"
-PROBE = Path(__file__).with_name("probe.py")
-NOT_SHIPPED = frozenset({"tests"})
-TEST_TIMEOUT_S = 120
+NOT_SHIPPED = frozenset({"tests"}) | DEV_SKIP_DIRS
 
 
 def cmd_new(args: argparse.Namespace) -> int:
@@ -68,71 +63,30 @@ def cmd_pack(args: argparse.Namespace) -> int:
     source = Path(args.folder).resolve()
     out = Path(args.out).resolve()
     report = check.check_folder(source)
-    if not report.ok:
+    if not report.ok or report.manifest_v2 is None:
         print("\n".join(f"error: {e}" for e in report.errors), file=sys.stderr)
         return FAIL
     if out.exists():
         print(f"plugin pack: {out} already exists", file=sys.stderr)
         return COULD_NOT
-    packed = plugin_pack.pack_folder(source, out, args.publisher, NOT_SHIPPED)
-    for note in packed.notes:
-        print(f"note: {note}")
-    print(f"packed {packed.carnivore['id']} {packed.carnivore['version']} (min app {packed.carnivore['min_app_version']}) to {out}")
+    copy_tree(source, out, skip_dirs=NOT_SHIPPED)
+    m = report.manifest_v2
+    pkg_id = f"{args.publisher}/{m.id}" if args.publisher else f"local/{m.id}"
+    print(f"packed {pkg_id} {m.version} (min app {m.min_app_version or '1.16.0'}) to {out}")
     return PASS
-
-
-def _probe(runtime_dir: Path, code_dir: Path, entry: str) -> List[str]:
-    done = subprocess.run([sys.executable, "-I", "-B", str(PROBE), str(runtime_dir), str(code_dir), entry],
-                          capture_output=True, text=True, timeout=TEST_TIMEOUT_S, check=False, cwd=str(code_dir))
-    try:
-        return list(json.loads(done.stdout.strip().splitlines()[-1])["problems"])
-    except (IndexError, ValueError, KeyError) as exc:
-        raise RuntimeError(f"the entry could not be loaded: {done.stderr.strip()[-300:] or 'no output'}") from exc
-
-
-def _run_own_tests(source: Path, runtime_dir: Path, code_dir: Path) -> Optional[int]:
-    if not (source / "tests").is_dir():
-        return None
-    shutil.copytree(source / "tests", code_dir / "tests")
-    inherited = {k: v for k, v in os.environ.items() if not k.startswith(("PYTEST_", "COV_CORE_", "COVERAGE_"))}
-    env = {**inherited, "PYTHONPATH": os.pathsep.join([str(runtime_dir), str(code_dir)]), "PYTHONDONTWRITEBYTECODE": "1"}
-    done = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "tests"], cwd=str(code_dir), env=env,
-                          capture_output=True, text=True, timeout=TEST_TIMEOUT_S, check=False)
-    print(done.stdout.strip()[-1500:])
-    if done.returncode != 0 and done.stderr.strip():
-        print(done.stderr.strip()[-1500:])
-    return done.returncode
 
 
 def cmd_test(args: argparse.Namespace) -> int:
     source = Path(args.folder).resolve()
-    report = check.check_folder(source)
-    if not report.ok:
-        print("\n".join(f"error: {e}" for e in report.errors), file=sys.stderr)
-        return FAIL
-    with tempfile.TemporaryDirectory() as tmp:
-        support = Path(tmp) / "support"
-        code_dir = support / "plugins" / report.packed.cplug["id"]
-        plugin_pack.pack_folder(source, code_dir, "author", NOT_SHIPPED)
-        try:
-            install_gates.evaluate(f"author/{report.packed.cplug['id']}", code_dir)
-        except install_gates.CplugGateRefusal as exc:
-            print(f"install gate refused: {exc.code}: {exc.detail}", file=sys.stderr)
-            return FAIL
-        runtime_dir = Path(tmp) / "runtime"
-        shutil.copytree(sandbox.SDK_SOURCE, runtime_dir / sandbox.SDK_PACKAGE, ignore=shutil.ignore_patterns("__pycache__"))
-        try:
-            problems = _probe(runtime_dir, code_dir, Path(report.packed.cplug["entry"]).with_suffix("").as_posix().replace("/", "."))
-        except (RuntimeError, subprocess.TimeoutExpired) as exc:
-            print(f"plugin test: {exc}", file=sys.stderr)
-            return FAIL
-        for line in problems:
-            print(f"error: {line}")
-        tests = _run_own_tests(source, runtime_dir, code_dir)
-    if problems or tests not in (None, 0):
+    rep = v3_tester.test_folder(source)
+    if rep.unit_output:
+        print(rep.unit_output)
+    for line in rep.errors:
+        print(f"error: {line}")
+    if not rep.ok:
         print("plugin test: failed")
         return FAIL
-    print("plugin test: ok (install gates, entry matches manifest" + ("" if tests is None else ", own tests") + ")")
+    print("plugin test: ok")
     return PASS
 
 
@@ -156,6 +110,38 @@ def cmd_link(args: argparse.Namespace) -> int:
     return PASS
 
 
+def cmd_screenshot(args: argparse.Namespace) -> int:
+    from scripts.warez_gates import cplug_capture  # noqa: PLC0415
+
+    source = Path(args.folder).resolve()
+    out_dir = Path(args.out).resolve() if args.out else source / "screenshots"
+    entries = cplug_capture.capture_plugin_screenshots(source, out_dir, force=True)
+    if not entries:
+        print("plugin screenshot: no visual views/widgets captured (or Playwright Chromium unavailable)", file=sys.stderr)
+        return FAIL
+    for e in entries:
+        print(f"captured {out_dir / e['file']} ({e['w']}x{e['h']}, {e['bytes']} bytes, surface={e.get('surface')})")
+    return PASS
+
+
+def cmd_publish(args: argparse.Namespace) -> int:
+    client = CliHttpClient(base_url=args.base) if args.base else CliHttpClient()
+    target = args.target if args.target is not None else ("." if not args.github else "")
+    return install_publish.run_publish(
+        target,
+        version=args.version,
+        github=args.github,
+        tag=args.tag,
+        commit_sha=args.commit_sha,
+        subdir=args.subdir,
+        kind=args.kind,
+        name=args.name,
+        client=client,
+        assume_yes=args.yes,
+        as_json=args.json,
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(prog="plugin", description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -165,15 +151,15 @@ def build_parser() -> argparse.ArgumentParser:
     new.add_argument("--dir")
     new.add_argument("--author", default="me")
     new.set_defaults(fn=cmd_new)
-    chk = sub.add_parser("check", help="schema, id grammar, pack dry run, credential-looking names")
+    chk = sub.add_parser("check", help="schema, id grammar, manifest check, credential-looking names")
     chk.add_argument("folder")
     chk.set_defaults(fn=cmd_check)
-    pack = sub.add_parser("pack", help="write the exact package the app and the catalog read")
+    pack = sub.add_parser("pack", help="copy a validated v2 plugin folder for distribution")
     pack.add_argument("folder")
     pack.add_argument("--out", required=True)
     pack.add_argument("--publisher", help="catalog handle; without it the package is a local sideload")
     pack.set_defaults(fn=cmd_pack)
-    test = sub.add_parser("test", help="run the host's install gates and your tests on a temp copy")
+    test = sub.add_parser("test", help="run unit tests and sandbox smoke checks on a temp copy")
     test.add_argument("folder")
     test.set_defaults(fn=cmd_test)
     link = sub.add_parser("link", help="ask the running app to re-sync this folder")
@@ -181,6 +167,23 @@ def build_parser() -> argparse.ArgumentParser:
     link.add_argument("--base", default="http://127.0.0.1:8000")
     link.add_argument("--name")
     link.set_defaults(fn=cmd_link)
+    shot = sub.add_parser("screenshot", help="capture headless WebP screenshots of a plugin's views/widgets")
+    shot.add_argument("folder")
+    shot.add_argument("--out", help="output directory (default: <folder>/screenshots)")
+    shot.set_defaults(fn=cmd_screenshot)
+    pub = sub.add_parser("publish", help="publish a local plugin folder or GitHub owner/repo@tag to Warez")
+    pub.add_argument("target", nargs="?", default=None, help="local folder or GitHub owner/repo@tag")
+    pub.add_argument("--github", help="GitHub owner/repo[@tag] pointer")
+    pub.add_argument("--tag", help="explicit git tag")
+    pub.add_argument("--commit-sha", help="40-hex commit SHA to pin")
+    pub.add_argument("--subdir", help="relative subfolder inside the GitHub repo")
+    pub.add_argument("--kind", help="submission kind (default: cplug)")
+    pub.add_argument("--name", help="override submission item name")
+    pub.add_argument("--version")
+    pub.add_argument("-y", "--yes", action="store_true")
+    pub.add_argument("--base", help="override Carnivore server base URL")
+    pub.add_argument("--json", action="store_true")
+    pub.set_defaults(fn=cmd_publish)
     return ap
 
 

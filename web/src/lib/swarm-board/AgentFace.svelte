@@ -1,9 +1,9 @@
 
 <script lang="ts">
-  import { Character } from '../../plugins/huddle/swarm/characters';
-  import { activePack } from '../../plugins/huddle/swarm/swarm-settings.svelte';
-  import type { ColorBook } from '../../plugins/huddle/swarm/agent-colors.svelte';
-  import type { NodeLooks } from '../../plugins/huddle/swarm/node-look';
+  import { Character } from '../../plugins/taskmanager/swarm/characters';
+  import { activePack } from '../../plugins/taskmanager/swarm/swarm-settings.svelte';
+  import type { ColorBook } from '../../plugins/taskmanager/swarm/agent-colors.svelte';
+  import type { NodeLooks } from '../../plugins/taskmanager/swarm/node-look';
   import type { RosterAgent } from './board-data.svelte';
 
   interface Props {

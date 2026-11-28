@@ -1,9 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { init, use, type EChartsType } from 'echarts/core';
-  import { LineChart, BarChart } from 'echarts/charts';
-  import { GridComponent, LegendComponent, LegendScrollComponent, TooltipComponent, DataZoomComponent, MarkLineComponent, MarkAreaComponent } from 'echarts/components';
-  import { CanvasRenderer } from 'echarts/renderers';
+  import { loadECharts, type EChartsType } from '../../viz/echarts-loader';
   import type { Annotation, ChartConfig, ChartSeries, QueryResult } from './types';
   import { bucketMsOf, filledValue, observationOf, unobservedSpans, zeroFills } from './gap-fill';
   import { formatSi } from '../../viz/format';
@@ -13,8 +10,6 @@
   import type { LegendItem } from './legend-pages';
   import { analytics } from './state.svelte';
   import { SERIES_COUNT, assignSeriesLooks, mergeLegendSelection, toSrgb, type ColorContext } from './series-colors';
-
-  use([LineChart, BarChart, GridComponent, LegendComponent, LegendScrollComponent, TooltipComponent, DataZoomComponent, MarkLineComponent, MarkAreaComponent, CanvasRenderer]);
 
   let { config, results, seriesConfigs, annotations = [], thresholds = [], compact = false, onRangeChange, hiddenSeries = [], onHiddenChange, ownLegend = false, lookFor, wrapLegend = false }: { config: ChartConfig; results: QueryResult[]; seriesConfigs: ChartSeries[]; annotations?: Annotation[]; thresholds?: number[]; compact?: boolean; onRangeChange?: (range: { from: string; to: string } | null) => void; hiddenSeries?: string[]; onHiddenChange?: (hidden: string[]) => void; ownLegend?: boolean; lookFor?: (seriesKey: string) => { color: string; dashed?: boolean } | null; wrapLegend?: boolean } = $props();
   let node: HTMLDivElement;
@@ -245,20 +240,24 @@
   }
 
   onMount(() => {
+    let disposed = false;
     const observer = new ResizeObserver(() => { chart?.resize(); retickAfterResize(); });
     observer.observe(node);
     const theme = new MutationObserver(draw);
     theme.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
-    chart = init(node, undefined, { renderer: 'canvas' });
-    chart.on('legendselectchanged', (event: unknown) => {
-      legendSelected = { ...(event as { selected: Record<string, boolean> }).selected };
-      showSelection();
-      const absent = hiddenSeries.filter((name) => !(name in legendSelected));
-      onHiddenChange?.([...absent, ...Object.keys(legendSelected).filter((name) => legendSelected[name] === false)].slice(0, 32));
+    void loadECharts().then(({ init }) => {
+      if (disposed || !node) return;
+      chart = init(node, undefined, { renderer: 'canvas' });
+      chart.on('legendselectchanged', (event: unknown) => {
+        legendSelected = { ...(event as { selected: Record<string, boolean> }).selected };
+        showSelection();
+        const absent = hiddenSeries.filter((name) => !(name in legendSelected));
+        onHiddenChange?.([...absent, ...Object.keys(legendSelected).filter((name) => legendSelected[name] === false)].slice(0, 32));
+      });
+      chart.on('datazoom', (event: unknown) => onZoom(event as Parameters<typeof onZoom>[0]));
+      draw();
     });
-    chart.on('datazoom', (event: unknown) => onZoom(event as Parameters<typeof onZoom>[0]));
-    draw();
-    return () => { if (zoomTimer) clearTimeout(zoomTimer); observer.disconnect(); theme.disconnect(); chart?.dispose(); chart = null; };
+    return () => { disposed = true; if (zoomTimer) clearTimeout(zoomTimer); observer.disconnect(); theme.disconnect(); chart?.dispose(); chart = null; };
   });
 
   let shownHidden = '';

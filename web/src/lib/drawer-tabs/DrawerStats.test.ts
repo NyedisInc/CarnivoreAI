@@ -25,11 +25,19 @@ vi.mock('../../opscenter/api/auth.svelte', () => ({
 }));
 
 import DrawerStats from './DrawerStats.svelte';
-import { applyDrawerTab, DRAWER_STATS_ID, DRAWER_STATS_RATE_KEY, DRAWER_STATS_WINDOW_KEY } from './drawer-tabs';
+import {
+  applyDrawerTab,
+  DRAWER_STATS_ID,
+  DRAWER_STATS_RATE_KEY,
+  DRAWER_STATS_RATE_PREF_FIELD,
+  DRAWER_STATS_WINDOW_KEY,
+  DRAWER_STATS_WINDOW_PREF_FIELD,
+} from './drawer-tabs';
 import { BUILTIN_TABS } from '../dynamic-tabs/builtin';
 import { publishFloorRows } from '../drawer/floor-feed.svelte';
 import { activeCountFilter, setCountFilter } from '../drawer/count-filter.svelte';
 import { noteSleepingCount, sectionShown, setSectionShown } from '../drawer/section-visibility.svelte';
+import { setSleepingFolded, sleepingFolded } from '../drawer/sleep-fold.svelte';
 import { packMachines } from '../pack-machines/pack-machines-store.svelte';
 import { statsFeed } from '../stats-feed/store.svelte';
 import { setLocale } from '../i18n/index.svelte';
@@ -417,23 +425,82 @@ test('the stats bar shows no tooltip, leads with the wolf and has no automations
   for (const b of bar.querySelectorAll('.dst-count')) expect((b.getAttribute('aria-label') ?? '').length, 'count button names itself').toBeGreaterThan(0);
 });
 
-test('the moon shows the sleeping count like the other stats; a click hides them and the figure dims, a second click shows them', async () => {
+test('the moon defaults OFF (sleeping nested) and toggles ON to show all sleeping agents (#3391)', async () => {
   setSectionShown('sleeping', true);
+  setSleepingFolded(true);
   noteSleepingCount(4);
   const bar = await render();
   const moon = bar.querySelector<HTMLButtonElement>('.dst-count[data-kind="sleeping"]')!;
   expect(moon, 'the moon is drawn').not.toBeNull();
   expect(text(moon)).toBe('4');
-  expect(moon.getAttribute('aria-label')).toBe('sleeping agents: 4');
-  expect(moon.getAttribute('aria-pressed')).toBe('true');
-  expect(moon.dataset.hidden).toBeUndefined();
-  moon.click(); flushSync();
-  expect(sectionShown('sleeping')).toBe(false);
+  expect(moon.getAttribute('aria-label')).toBe('sleeping agents: 4 (click to show all sleeping agents)');
   expect(moon.getAttribute('aria-pressed')).toBe('false');
-  expect(moon.dataset.hidden).toBe('true');
-  expect(text(moon), 'a hidden set keeps its number').toBe('4');
+  expect(moon.dataset.expanded).toBeUndefined();
+  moon.click(); flushSync();
+  expect(sleepingFolded()).toBe(false);
+  expect(sectionShown('sleeping')).toBe(true);
+  expect(moon.getAttribute('aria-pressed')).toBe('true');
+  expect(moon.dataset.expanded).toBe('true');
+  expect(text(moon), 'an expanded set keeps its number').toBe('4');
   expect(moon.dataset.filter, 'never the yellow filter frame').toBeUndefined();
   moon.click(); flushSync();
-  expect(sectionShown('sleeping')).toBe(true);
-  expect(moon.dataset.hidden).toBeUndefined();
+  expect(sleepingFolded()).toBe(true);
+  expect(moon.dataset.expanded).toBeUndefined();
+  expect(moon.getAttribute('aria-pressed')).toBe('false');
+});
+
+test('statsRate and statsWindow mirror to ui_preferences and follow live preferences.changed updates (#3385)', async () => {
+  const listeners = new Map<string, (value: unknown) => void>();
+  const shared: Record<string, unknown> = {
+    [DRAWER_STATS_RATE_PREF_FIELD]: 'hour',
+    [DRAWER_STATS_WINDOW_PREF_FIELD]: '5h',
+  };
+  const writeSpy = vi.fn(async (field: string, value: string, local: () => void) => {
+    local();
+    shared[field] = value;
+    return { status: 'committed' };
+  });
+  (globalThis as Record<string, unknown>).PreferenceBridge = {
+    read: (field: string, fallback: () => unknown) => (shared[field] !== undefined ? shared[field] : fallback()),
+    write: writeSpy,
+    follow: (field: string, apply: (value: unknown) => void) => {
+      listeners.set(field, apply);
+      return () => { listeners.delete(field); };
+    },
+  };
+  try {
+    const bar = await render();
+    expect(rateText(bar)).toBe('7k / 36k /h');
+    expect(text(bar.querySelector('.dst-win'))).toBe('5h');
+    expect(calls).toEqual(['/stats/feed?window=5h']);
+
+    bar.querySelector<HTMLButtonElement>('.dst-rate')!.click();
+    flushSync();
+    expect(rateText(bar)).toBe('173k / 864k /d');
+    expect(localStorage.getItem(DRAWER_STATS_RATE_KEY)).toBe('day');
+    expect(writeSpy).toHaveBeenCalledWith(DRAWER_STATS_RATE_PREF_FIELD, 'day', expect.any(Function));
+
+    bar.querySelector<HTMLButtonElement>('.dst-chart')!.click();
+    await settle(() => calls.length > 1);
+    expect(text(bar.querySelector('.dst-win'))).toBe('1d');
+    expect(localStorage.getItem(DRAWER_STATS_WINDOW_KEY)).toBe('1d');
+    expect(writeSpy).toHaveBeenCalledWith(DRAWER_STATS_WINDOW_PREF_FIELD, '1d', expect.any(Function));
+
+    const writesBefore = writeSpy.mock.calls.length;
+    listeners.get(DRAWER_STATS_RATE_PREF_FIELD)!('sec');
+    listeners.get(DRAWER_STATS_WINDOW_PREF_FIELD)!('7d');
+    await settle(() => text(bar.querySelector('.dst-win')) === '7d');
+    expect(rateText(bar)).toBe('2 / 10 /s');
+    expect(localStorage.getItem(DRAWER_STATS_RATE_KEY)).toBe('sec');
+    expect(localStorage.getItem(DRAWER_STATS_WINDOW_KEY)).toBe('7d');
+    expect(writeSpy).toHaveBeenCalledTimes(writesBefore);
+
+    listeners.get(DRAWER_STATS_RATE_PREF_FIELD)!(null);
+    listeners.get(DRAWER_STATS_WINDOW_PREF_FIELD)!('bogus');
+    flushSync();
+    expect(rateText(bar)).toBe('2 / 10 /s');
+    expect(text(bar.querySelector('.dst-win'))).toBe('7d');
+  } finally {
+    delete (globalThis as Record<string, unknown>).PreferenceBridge;
+  }
 });

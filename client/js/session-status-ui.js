@@ -37,6 +37,10 @@ console.log('[SessionStatusUI Module] Loading...');
         codex_turn_failed: 'last turn failed',
     };
 
+    function backgroundLabel() {
+        return typeof globalThis.CloudeTr === 'function' ? globalThis.CloudeTr('session.status.background') : 'session.status.background';
+    }
+
     function questionLabel(status, activityHint) {
         if (normalizeStatus(status) !== 'question' || typeof activityHint !== 'string') return '';
         if (activityHint === 'question') return 'your turn - question waiting';
@@ -46,7 +50,9 @@ console.log('[SessionStatusUI Module] Loading...');
 
     function labelWithSource(status, statusSource, activityHint, parkedSummary) {
         const label = questionLabel(status, activityHint)
-            || STATUS_LABELS[normalizeStatus(status)];
+            || (normalizeStatus(status) === 'working_subagent' && activityHint === 'background'
+                ? backgroundLabel()
+                : STATUS_LABELS[normalizeStatus(status)]);
         const suffix = Object.prototype.hasOwnProperty.call(
             SOURCE_SUFFIX, statusSource,
         ) ? SOURCE_SUFFIX[statusSource] : '';
@@ -118,6 +124,7 @@ console.log('[SessionStatusUI Module] Loading...');
                 host_offline: s.host_offline,
                 usage_limit: s.usage_limit,
                 login_expired: s.login_expired,
+                activity_hint: s.activity_hint,
             });
             return globalThis.StatusLed.ledHtml({
                 inner: led.inner,

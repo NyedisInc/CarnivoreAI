@@ -31,7 +31,7 @@ def _log_read_failure(tmux_name: str, error_type: str) -> None:
     emit = logger.warning if first else logger.debug
     emit("model_facts_read_failed", tmux_name=tmux_name, error_type=error_type)
 
-_FAMILIES_WITH_READER = ("claude", "codex")
+_FAMILIES_WITH_READER = ("claude", "codex", "custom")
 
 
 @dataclass(frozen=True)

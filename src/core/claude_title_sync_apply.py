@@ -114,6 +114,37 @@ def _registry_evidence(
     return user_title, mark is not None and mark.agreed_title == recorded
 
 
+def _agy_evidence(
+    observed: Optional[str],
+    *,
+    uuid: str,
+    row_id: int,
+    current_title: Optional[str],
+    claude_title: Optional[str],
+    created_at: Any,
+) -> Tuple[Optional[str], bool]:
+    recorded = (claude_title or "").strip() or None
+    if not observed or observed == (current_title or "").strip():
+        return None, False
+    if recorded is not None and recorded != observed:
+        return None, False
+
+    from src.core.agy.title import user_rename_title
+
+    user_title = user_rename_title(
+        uuid, row_created_at=_parse_created_at(created_at)
+    )
+    if user_title is None or recorded is None:
+        return user_title, False
+
+    from src.core import claude_rename_retry_store as retry_store
+
+    mark = retry_store.mark_for(
+        retry_store.resolve_state_dir(), f"{uuid}:{row_id}"
+    )
+    return user_title, mark is not None and mark.agreed_title == recorded
+
+
 def sync_claude_title(session_manager: Any, session_id: str) -> TitleSyncResult:
     tmux_name = _tmux_name_for(session_manager, session_id)
     if not tmux_name:
@@ -146,7 +177,7 @@ def sync_claude_title(session_manager: Any, session_id: str) -> TitleSyncResult:
 
         row = conn.execute(
             "SELECT claude_session_uuid, title, claude_title, working_dir, "
-            "agent_family, created_at FROM sessions WHERE id = ?",
+            "agent_family, created_at, agent_type FROM sessions WHERE id = ?",
             (identity["id"],),
         ).fetchone()
         if row is None:
@@ -173,8 +204,11 @@ def sync_claude_title(session_manager: Any, session_id: str) -> TitleSyncResult:
                 ),
             )
 
-        path = _transcript_path_for(str(uuid), working_dir)
-        if not path:
+        from src.core.agy.identity import row_is_agy
+
+        is_agy = row_is_agy({"agent_family": agent_family, "agent_type": row[6]})
+        path = None if is_agy else _transcript_path_for(str(uuid), working_dir)
+        if not is_agy and not path:
             return TitleSyncResult(
                 SYNC_NO_TRANSCRIPT,
                 detail=(
@@ -183,16 +217,29 @@ def sync_claude_title(session_manager: Any, session_id: str) -> TitleSyncResult:
                 ),
             )
 
-        read = read_newest_custom_title(path)
-        user_title, ordered = _registry_evidence(
-            read.title if read.found else None,
-            tmux_name=tmux_name,
-            uuid=str(uuid),
-            row_id=row_id,
-            current_title=current_title,
-            claude_title=claude_title,
-            created_at=created_at,
-        )
+        if is_agy:
+            from src.core.agy.title import read_title
+
+            read = read_title(str(uuid))
+            user_title, ordered = _agy_evidence(
+                read.title if read.found else None,
+                uuid=str(uuid),
+                row_id=row_id,
+                current_title=current_title,
+                claude_title=claude_title,
+                created_at=created_at,
+            )
+        else:
+            read = read_newest_custom_title(path)
+            user_title, ordered = _registry_evidence(
+                read.title if read.found else None,
+                tmux_name=tmux_name,
+                uuid=str(uuid),
+                row_id=row_id,
+                current_title=current_title,
+                claude_title=claude_title,
+                created_at=created_at,
+            )
         verdict = decide_title_application(
             read,
             current_title=current_title,

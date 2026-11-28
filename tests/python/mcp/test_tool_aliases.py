@@ -10,9 +10,9 @@ from src.plugins.host import runtime
 from src.core.mcp import aliases, merged_tools, protocol, tools
 from src.core.mcp.caller import AgentCaller
 from src.plugins.host import mcp as cplug_mcp, runtime
-from src.plugins.huddle import CPLUG, mcp as task_manager_mcp
+from src.plugins.taskmanager import CPLUG, mcp as task_manager_mcp
 from src.plugins.sdk.manifest import ManifestError, parse_manifest
-from tests.python.cplugs.huddle.test_task_manager_mcp import call, manager  # noqa: F401
+from tests.python.cplugs.taskmanager.test_task_manager_mcp import call, manager  # noqa: F401
 
 REMOVED = {
     "huddle_guide": "task_manager_guide", "huddle_list": "task_manager_tasks_list", "huddle_changes": "task_manager_changes",
@@ -29,7 +29,7 @@ GONE = sorted([*REMOVED, "huddle_focus", "huddle_delete"])
 
 
 def test_the_alias_table_holds_only_the_merged_tools_now():
-    others = {old: new for d in runtime.definitions() if d.id != "huddle" for old, new in d.manifest.mcp_tool_aliases.items()}
+    others = {old: new for d in runtime.definitions() if d.id != CPLUG.manifest.id for old, new in d.manifest.mcp_tool_aliases.items()}
     assert aliases.table() == {**{old: m.into for old, m in merged_tools.MERGED.items()}, **others}
     assert dict(CPLUG.manifest.mcp_tool_aliases) == {}
     assert not any(name.startswith("huddle_") for name in aliases.table())
@@ -46,7 +46,7 @@ def test_an_old_name_is_not_registered_or_listed_and_its_new_name_is(old, new):
 
 def test_no_tool_named_huddle_is_registered_anywhere():
     assert [n for n in tools._TOOLS if n.startswith("huddle_")] == []
-    assert [n for n in runtime.find("huddle").tools if n.startswith("huddle_")] == []
+    assert [n for n in runtime.find("taskmanager").tools if n.startswith("huddle_")] == []
     assert [n for n in CPLUG.manifest.surfaces.mcp_tools if n.startswith("huddle_")] == []
     assert "huddle_focus" not in task_manager_mcp.TOOLS and not hasattr(task_manager_mcp, "huddle_focus")
 

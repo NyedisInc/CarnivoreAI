@@ -147,7 +147,7 @@
 .skp-eff { display: block; }
 @container skpane (max-width: 719px) {
   .skp-page { border: 0; background: transparent; overflow: visible; gap: calc(var(--oc-space-3) + var(--oc-space-0-5)); }
-  .skp-page .oc-titlebar, .skp-rmstrip { border: 1px solid var(--oc-line-panel); border-radius: var(--oc-radius); }
+  .skp-rmstrip { border: 1px solid var(--oc-line-panel); border-radius: var(--oc-radius); }
   .skp-col, .skp-grid { display: flex; flex-direction: column; gap: calc(var(--oc-space-3) + var(--oc-space-0-5)); }
   .skp-insp { display: contents; }
   .skp-insp__main, .skp-insp__quiet, .skp-stage { padding: 0; }

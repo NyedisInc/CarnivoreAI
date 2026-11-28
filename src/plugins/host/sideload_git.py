@@ -32,6 +32,9 @@ _SCP = re.compile(r"^(?:(?P<user>[A-Za-z0-9._~-]+)@)?(?P<host>[A-Za-z0-9][A-Za-z
 _REF = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9._/+-]{0,254}$")
 _HEX = re.compile(r"^[0-9a-fA-F]{7,64}$")
 _USERINFO = re.compile(r"(?<=://)[^/@\s]+@")
+_GH_OWNER = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$")
+_GH_REPO = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
+_GH_SHORTHAND = re.compile(r"^(?P<owner>[A-Za-z0-9][A-Za-z0-9-]{0,38})/(?P<repo>[A-Za-z0-9._-]{1,100})(?:@(?P<ref>.+))?$")
 
 _lock = threading.RLock()
 
@@ -65,6 +68,54 @@ def check_url(url: object) -> str:
     return url
 
 
+def parse_github_source(source: object, ref: Optional[str] = None) -> Tuple[str, str, str, Optional[str]]:
+    if not isinstance(source, str) or not source or len(source) > MAX_URL_CHARS:
+        raise SideloadRefused("git_url_refused", "source must be owner/repo or https://github.com/owner/repo", 422)
+    text = source.strip()
+    if text != source or text.startswith("-") or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in text) or "::" in text:
+        raise SideloadRefused("git_url_refused", "invalid characters in GitHub source", 422)
+    embedded_ref: Optional[str] = None
+    if "://" in text:
+        parts = urlsplit(text)
+        if parts.scheme.lower() != "https" or (parts.hostname or "").lower() != "github.com":
+            raise SideloadRefused("git_url_refused", "only https://github.com/owner/repo or owner/repo is allowed", 422)
+        if parts.username is not None or parts.password is not None or parts.port is not None or parts.query or parts.fragment:
+            raise SideloadRefused("git_url_refused", "GitHub URL must not carry credentials, ports, query, or fragments", 422)
+        segs = [s for s in parts.path.split("/") if s]
+        if len(segs) != 2:
+            raise SideloadRefused("git_url_refused", "GitHub URL path must be /owner/repo", 422)
+        owner, repo = segs
+    else:
+        matched = _GH_SHORTHAND.match(text)
+        if matched is None:
+            raise SideloadRefused("git_url_refused", "only owner/repo[@ref] or https://github.com/owner/repo is allowed", 422)
+        owner = matched.group("owner")
+        repo = matched.group("repo")
+        embedded_ref = matched.group("ref")
+    if repo.endswith(".git"):
+        repo = repo[:-4]
+    if not _GH_OWNER.match(owner) or not _GH_REPO.match(repo) or repo in (".", ".."):
+        raise SideloadRefused("git_url_refused", "invalid GitHub owner or repository name", 422)
+    checked_embedded = check_ref(embedded_ref) if embedded_ref is not None else None
+    checked_explicit = check_ref(ref)
+    if checked_embedded is not None and checked_explicit is not None and checked_embedded != checked_explicit:
+        raise SideloadRefused("ref_invalid", "embedded @ref and explicit ref must match", 422)
+    final_ref = checked_explicit if checked_explicit is not None else checked_embedded
+    canonical_url = f"https://github.com/{owner}/{repo}.git"
+    check_url(canonical_url)
+    return owner, repo, canonical_url, final_ref
+
+
+def github_owner_repo(url: object) -> Optional[Tuple[str, str]]:
+    if not isinstance(url, str) or not url:
+        return None
+    try:
+        owner, repo, _canon, _ref = parse_github_source(url)
+        return owner, repo
+    except SideloadRefused:
+        return None
+
+
 def redacted(url: str) -> str:
     if "://" in url:
         parts = urlsplit(url)
@@ -87,10 +138,16 @@ def check_ref(ref: object) -> Optional[str]:
 def check_subdir(subdir: object) -> Tuple[str, ...]:
     if subdir is None or subdir == "":
         return ()
-    if not isinstance(subdir, str) or len(subdir) > MAX_SUBDIR_CHARS or "\x00" in subdir or subdir.startswith("/") or "\\" in subdir:
+    if (
+        not isinstance(subdir, str)
+        or len(subdir) > MAX_SUBDIR_CHARS
+        or subdir.startswith(("/", "-"))
+        or "\\" in subdir
+        or any(ord(c) < 32 or ord(c) == 127 for c in subdir)
+    ):
         raise SideloadRefused("subdir_invalid", "the subfolder is a relative path inside the repository", 422)
     parts = tuple(p for p in PurePosixPath(subdir).parts if p != ".")
-    if any(p in ("..", ".git") for p in parts):
+    if any(p == ".." or p.lower() == ".git" for p in parts) or (parts and parts[0].startswith("-")):
         raise SideloadRefused("subdir_invalid", "the subfolder must stay inside the repository", 422)
     return parts
 
@@ -186,6 +243,15 @@ def _record_path(state_dir: Path) -> Path:
     return Path(state_dir) / "cplugs" / RECORD_FILE
 
 
+def _with_owner_repo(entry: Dict[str, Any]) -> Dict[str, Any]:
+    if "owner" in entry and "repo" in entry:
+        return entry
+    gh = github_owner_repo(entry.get("url"))
+    if gh is None:
+        return entry
+    return {**entry, "owner": gh[0], "repo": gh[1]}
+
+
 def records(state_dir: Path) -> Dict[str, Dict[str, Any]]:
     try:
         data = json.loads(_record_path(state_dir).read_text(encoding="utf-8"))
@@ -194,7 +260,7 @@ def records(state_dir: Path) -> Dict[str, Dict[str, Any]]:
     except (OSError, ValueError) as exc:
         logger.warning("cplug_sideload_git_record_unreadable", error_type=type(exc).__name__)
         return {}
-    return {k: v for k, v in data.items() if isinstance(v, dict)} if isinstance(data, dict) else {}
+    return {k: _with_owner_repo(v) for k, v in data.items() if isinstance(v, dict)} if isinstance(data, dict) else {}
 
 
 def _records_for_update(state_dir: Path) -> Dict[str, Dict[str, Any]]:
@@ -206,7 +272,10 @@ def _records_for_update(state_dir: Path) -> Dict[str, Dict[str, Any]]:
 
 
 def record(state_dir: Path, name: str, url: str, ref: Optional[str], subdir: Tuple[str, ...], commit: str) -> Dict[str, Any]:
-    entry = {"url": url, "ref": ref, "subdir": "/".join(subdir), "commit": commit, "synced_at": sideload.wall()}
+    entry: Dict[str, Any] = {"url": url, "ref": ref, "subdir": "/".join(subdir), "commit": commit, "synced_at": sideload.wall()}
+    gh = github_owner_repo(url)
+    if gh is not None:
+        entry["owner"], entry["repo"] = gh
     with _lock:
         data = _records_for_update(state_dir)
         data[name] = entry
@@ -233,3 +302,11 @@ def forget(state_dir: Path, name: str) -> None:
                                                                       log_event="cplug_sideload_git_record_write_failed"):
             raise SideloadRefused("sideload_not_saved", "the git sideload record could not be written", 500)
         shutil.rmtree(checkout_of(state_dir, name), ignore_errors=True)
+
+
+def restore_record(state_dir: Path, name: str, entry: Dict[str, Any]) -> None:
+    with _lock:
+        data = _records_for_update(state_dir)
+        data[name] = dict(entry)
+        if not atomic_write_json(_record_path(state_dir), data, log_event="cplug_sideload_git_record_write_failed"):
+            raise SideloadRefused("sideload_not_saved", "the git sideload record could not be written", 500)

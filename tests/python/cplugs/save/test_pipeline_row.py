@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from types import SimpleNamespace
 
 import pytest
 from fastapi import FastAPI
@@ -19,6 +20,8 @@ from tests.python.time_machine.helpers import make_corpus
 
 ROW_KEYS = {"plugin", "kind", "scope", "session_uuid", "session", "project_id", "project", "conversation_id", "family",
             "trigger", "finished_at", "duration_ms", "runs", "events", "outcome", "error", "seeded", "detail"}
+
+_CTX = SimpleNamespace(notify=lambda *_args: None)
 
 
 @pytest.fixture(autouse=True)
@@ -116,9 +119,9 @@ def test_the_follower_records_its_slice(clean):
 
 def test_the_plugin_start_offers_the_row_and_the_stop_withdraws_it(clean):
     async def cycle():
-        await save_plugin._start(None)
+        await save_plugin._start(_CTX)
         offered = "save" in pipeline_rows._providers
-        await save_plugin._stop(None)
+        await save_plugin._stop(_CTX)
         return offered, "save" in pipeline_rows._providers
 
     assert asyncio.run(cycle()) == (True, False)
@@ -180,9 +183,9 @@ def test_the_plugin_start_seeds_the_row_so_it_shows_at_once(tmp_path, clean):
     _tree(tmp_path)
 
     async def start():
-        await save_plugin._start(None)
+        await save_plugin._start(_CTX)
         rows = runtime.status()["recent"]
-        await save_plugin._stop(None)
+        await save_plugin._stop(_CTX)
         return rows
 
     [row] = asyncio.run(start())

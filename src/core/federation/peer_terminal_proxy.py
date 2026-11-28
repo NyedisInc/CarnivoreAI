@@ -15,7 +15,7 @@ from websockets.exceptions import ConnectionClosed, InvalidHandshake, WebSocketE
 
 from src.api import peer_auth
 from src.api.deps import SUBPROTOCOL_MARKER
-from src.core.federation import peer_hosts, peer_links, peer_listing
+from src.core.federation import mesh_peers, peer_hosts, peer_links, peer_listing
 from src.core.federation.peer_client import PeerClient, PeerRefused, PeerUnreachable
 from src.core.federation.peer_sockets import PEER_REVOKED_CODE, PEER_REVOKED_REASON
 from src.core.hosts.identity import parse_remote_session_id
@@ -40,6 +40,7 @@ DOWN_TYPES = frozenset({
     WSMessageType.SIZE_MASTER.value, WSMessageType.PONG.value, WSMessageType.ERROR.value})
 UP_TYPES: Dict[str, Tuple[str, ...]] = {
     WSMessageType.PTY_RESIZE.value: ("cols", "rows", "hidden"),
+    WSMessageType.VIEWER_FOCUS.value: ("focused",),
     WSMessageType.REPAINT.value: (),
     WSMessageType.PAUSE.value: (),
     WSMessageType.RESUME.value: (),
@@ -84,12 +85,12 @@ def close_for(code: Optional[int]) -> Tuple[int, str]:
 
 def _peer_client(host_key: str) -> Optional[PeerClient]:
     links = peer_links.LINKS
-    connected = links.connected_clients() if links is not None else []
+    connected = mesh_peers.session_clients(links)
     if not connected:
         return None
     with closing(peer_auth.open_db()) as conn:
         for install_id, client in connected:
-            row = peer_hosts.get(conn, install_id)
+            row = peer_hosts.get(conn, install_id, include_mesh=True)
             if row is not None and row.key == host_key:
                 return client
     return None
@@ -207,8 +208,27 @@ async def dispatch(websocket: WebSocket, registry: Any, requested_sid: Optional[
     return True
 
 
-async def relay(websocket: WebSocket, host_key: str, name: str, wire_id: str) -> None:
+def _mesh_iid(host_key: str) -> Optional[str]:
+    from src.core.federation import peer_forward
+
+    with closing(peer_auth.open_db()) as conn:
+        row = peer_forward._peer_by_key(conn, host_key)
+    return row.peer_install_id if row is not None and row.back_kind == peer_hosts.MESH_BACK_KIND else None
+
+
+async def _client_for(host_key: str) -> Tuple[Optional[PeerClient], Optional[str]]:
     client = _peer_client(host_key)
+    if mesh_peers.REGISTRY is None:
+        return client, None
+    iid = await asyncio.to_thread(_mesh_iid, host_key)
+    if client is not None or iid is None:
+        return client, iid
+    return await mesh_peers.connect(peer_links.LINKS, iid), iid
+
+
+async def relay(websocket: WebSocket, host_key: str, name: str, wire_id: str) -> None:
+    client, mesh_iid = await _client_for(host_key)
+    keep = mesh_peers.keep_alive(mesh_iid) if mesh_iid is not None and client is not None else None
     upstream = None
     measure: Optional[_Measure] = None
     try:
@@ -235,6 +255,8 @@ async def relay(websocket: WebSocket, host_key: str, name: str, wire_id: str) ->
     except (OSError, WebSocketException):
         await _close_browser(websocket, PEER_UNAVAILABLE_CODE, PEER_UNAVAILABLE_REASON)
     finally:
+        if keep is not None:
+            keep.cancel()
         if measure is not None:
             measure.cancel()
         if upstream is not None:
@@ -257,7 +279,7 @@ def _json_or_empty(response: Any) -> Any:
 
 async def forward_crown(host_key: str, name: str, method: str, wire_id: str,
                         body: Optional[dict] = None, client_id: Optional[str] = None) -> Any:
-    client = _peer_client(host_key)
+    client, _ = await _client_for(host_key)
     if client is None:
         raise PeerUnavailable()
     path = f"/sessions/{quote(name, safe='')}/size-master" + (f"?{urlencode({'client_id': client_id})}" if client_id else "")

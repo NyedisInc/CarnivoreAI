@@ -43,13 +43,14 @@ test('delegated work draws the wolf icon alone, the numbers in its hover', () =>
   const tag = foot('ses_1').querySelector('[data-foot-delegated]');
   expect(tag?.querySelector('svg')).not.toBeNull();
   expect(tag?.textContent?.trim()).toBe('');
-  expect(tag?.getAttribute('title')).toContain('+ 1 job: 299k tokens, $0.30');
+  expect(tag?.getAttribute('title')).toContain('total: 1 job, 299k tokens');
+  expect(tag?.getAttribute('title')).toContain('cost $0.30, 200k tokens in, 99k tokens out');
 });
 
 test('work running on another computer turns the icon green with no usage yet; finished work keeps the default', () => {
   const live = foot('ses_3').querySelector('[data-foot-delegated]');
   expect((live as HTMLElement).style.color).toBe('var(--oc-green)');
-  expect(live?.getAttribute('title')).toContain('running now on tower');
+  expect(live?.getAttribute('title')).toContain('active: 1 running on tower, tokens when done');
   expect((foot('ses_1').querySelector('[data-foot-delegated]') as HTMLElement).style.color).toBe('');
 });
 

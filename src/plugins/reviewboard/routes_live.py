@@ -6,7 +6,7 @@ from typing import Any, Dict
 from src.plugins.reviewboard import live, live_send, wire
 from src.plugins.reviewboard.errors import BoardError
 from src.plugins.reviewboard.live_requests import LiveBody, LiveCreateBody, LiveEndBody, LiveSendBody, MilestoneBody
-from src.plugins.reviewboard.routes import Ctx, router
+from src.plugins.reviewboard.routes_common import Ctx, router
 from src.plugins.sdk import CplugContext
 
 

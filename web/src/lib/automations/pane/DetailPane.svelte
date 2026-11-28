@@ -2,7 +2,6 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { t } from '../../i18n/index.svelte';
-  import Button from '../../base/Button.svelte';
   import Tabs, { panelAttrs, type TabDef } from '../../../opscenter/ui/Tabs.svelte';
   import { closePane, data } from '../page-store.svelte';
   import { claimEscape, escapeTaken } from '../logic/escape';
@@ -90,22 +89,18 @@
 <svelte:window onkeydowncapture={keys} />
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-<aside
+<div
   bind:this={paneEl}
+  role="group"
   class="ap-pn"
   tabindex="-1"
   aria-label={t('automations.page.pane.aria')}
   data-detail-pane
-  data-open={data.paneOpen ? '' : undefined}
+  data-open=""
   data-mode={isNew ? 'new' : undefined}
   ontouchstart={touchStart}
   ontouchend={touchEnd}
 >
-  <div class="pl-titlebar ap-pn-bar">
-    <Button size="sm" data-pane-back data-pane-close aria-label={t('automations.page.pane.back_aria')} onclick={closePane}>{t('automations.page.pane.back')}</Button>
-    <span class="pl-label ap-pn-bar-l">{t('automations.page.pane.title')}</span>
-    <Button size="sm" data-pane-close data-pane-x onclick={closePane}>{t('automations.page.pane.close')}</Button>
-  </div>
   <div class="ap-pn-scroll">
     {#if data.paneOpen || automation || isNew}
       <section class="ap-pn-sec ap-pn-headsec">
@@ -135,4 +130,4 @@
       {/if}
     {/if}
   </div>
-</aside>
+</div>

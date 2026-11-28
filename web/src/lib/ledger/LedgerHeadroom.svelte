@@ -43,7 +43,6 @@
                 sub={worst ? formatWindowLabel(worst.window, t) : ''}
             >
                 {#snippet icon()}
-                    {#if account.color}<span class="ledger-headroom__swatch" style:--mark={account.color}></span>{/if}
                     {@html providerMark(account.provider, 14).svg}
                 {/snippet}
                 {#snippet foot()}
@@ -79,15 +78,5 @@
 
     .ledger-headroom__item > :global(.oc-stat-tile) {
         flex: 1 1 auto;
-    }
-
-    .ledger-headroom__swatch {
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        margin-right: var(--oc-space-1);
-        border: var(--oc-border) solid var(--oc-line-rule);
-        border-radius: var(--oc-radius-control);
-        background: var(--mark);
     }
 </style>

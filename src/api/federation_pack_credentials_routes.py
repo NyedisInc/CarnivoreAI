@@ -16,7 +16,7 @@ from src.api.peer_auth import Principal, open_db, require_peer
 from src.config import settings
 from src.core import resource_push
 from src.core.pack.machines import capabilities, config_state, restrictions as restrictions_mod
-from src.core.pack.relay import adopt_active, codex_target, consent as consent_mod, ledger_sync_store, owner_side, target_side, targets
+from src.core.pack.relay import adopt_active, codex_target, consent as consent_mod, owner_side, retire, target_side, targets
 from src.core.provider_ledger import accounts_store
 from src.core.resource_push import topics as resource_topics
 from src.core.provider_ledger.credentials import claude_keychain_services
@@ -146,19 +146,23 @@ async def receive_credential(request: Request, principal: Principal = Depends(_r
 
 
 @router.delete("/credentials/{account_key}")
-async def revoke_credential(account_key: str, principal: Principal = Depends(_require_credentials)) -> JSONResponse:
-    """Delete the relay item this sender wrote for the account (only one carrying its relay marker). A tightening, so it
-    needs the scope but not the receive restriction."""
+async def revoke_credential(account_key: str, request: Request, principal: Principal = Depends(_require_credentials)) -> JSONResponse:
+    """Retire the relay copy this sender wrote for the account: the credential (only one carrying its relay marker), its profile folder and its
+    status, so the account leaves the providers list (#3108). A copy a live session here uses is kept and answered ``deferred``. A tightening,
+    so it needs the scope but not the receive restriction."""
+    return await _retire(request, principal, account_key, ("claude",))
+
+
+async def _retire(request: Request, principal: Principal, account_key: str, providers: Tuple[str, ...]) -> JSONResponse:
     if not principal.is_peer or principal.grant is None:
         raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer revokes a relay"})
     try:
-        removed = await asyncio.to_thread(target_side.revoke, principal.grant.peer_install_id, account_key)
+        outcome = await retire.retire(getattr(request.app.state, "session_manager", None), principal.grant.peer_install_id, account_key, providers)
     except target_side.RelayRefused as exc:
         raise HTTPException(exc.status, {"code": exc.code, "detail": "the credential was not removed"}) from None
-    await asyncio.to_thread(ledger_sync_store.forget, principal.grant.peer_install_id, "claude", account_key)
-    if removed:
+    if outcome == retire.REMOVED:
         _tell_ledger()
-    return JSONResponse({"ok": True, "removed": removed}, headers=_NO_STORE)
+    return JSONResponse({"ok": True, "removed": outcome == retire.REMOVED, "deferred": outcome == retire.DEFERRED}, headers=_NO_STORE)
 
 
 def _receive_codex(principal_id: str, body: CodexCredentialBody) -> int:
@@ -204,14 +208,6 @@ async def receive_codex_credential(request: Request, principal: Principal = Depe
 
 
 @router.delete("/credentials/codex/{account_key}")
-async def revoke_codex_credential(account_key: str, principal: Principal = Depends(_require_credentials)) -> JSONResponse:
-    """Delete the Codex relay auth.json this sender wrote (only one with its marker and an empty refresh token)."""
-    if not principal.is_peer or principal.grant is None:
-        raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer revokes a relay"})
-    try:
-        removed = await asyncio.to_thread(codex_target.revoke_codex, principal.grant.peer_install_id, account_key)
-    except target_side.RelayRefused as exc:
-        raise HTTPException(exc.status, {"code": exc.code, "detail": "the credential was not removed"}) from None
-    await asyncio.to_thread(ledger_sync_store.forget, principal.grant.peer_install_id, "codex", account_key)
-    _tell_ledger()
-    return JSONResponse({"ok": True, "removed": removed}, headers=_NO_STORE)
+async def revoke_codex_credential(account_key: str, request: Request, principal: Principal = Depends(_require_credentials)) -> JSONResponse:
+    """Retire the Codex relay copy this sender wrote (only one with its marker and an empty refresh token), folder and status included."""
+    return await _retire(request, principal, account_key, ("codex",))

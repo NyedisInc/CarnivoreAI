@@ -1,8 +1,6 @@
 
 <script lang="ts">
     import { failureReason } from '../errors/failure-reason';
-    import Button from '../base/Button.svelte';
-    import Sheet from '../sheet/Sheet.svelte';
     import { untrack } from 'svelte';
     import { subscribe } from '../../opscenter/api/events.svelte';
     import { BookmarkWidgetActions } from '../../opscenter/cells/bookmarks/widget-actions.svelte';
@@ -41,14 +39,13 @@
     const marksActions = new BookmarkWidgetActions();
     let resumeNotice = $state<{ text: string; error: boolean } | null>(null);
     let groupTick = $state(0);
-    let asideEl = $state<HTMLElement | null>(null);
 
     const uuid = $derived(row?.s.session_uuid ?? null);
     const live = $derived(row ? data.live(row.s) : undefined);
     const claude = $derived(row?.provider === 'claude');
     const running = $derived(row?.s.state === 'running');
     const remote = $derived(row ? row.computer !== null : false);
-    const gone = $derived(row ? row.s.has_transcript === false : false);
+    const gone = $derived(row ? row.s.has_transcript === false && !row.s.offloaded : false);
     const pinned = $derived.by(() => {
         void data.pinTick;
         return uuid !== null && pinnedUuidSet().has(uuid);
@@ -92,8 +89,7 @@
     async function resume(conversationId: string): Promise<void> {
         resumeNotice = null;
         try {
-            await panel.resume(conversationId);
-            resumeNotice = { text: t('sessions.page.panel.conv.resumed'), error: false };
+            if (await panel.resume(conversationId)) resumeNotice = { text: t('sessions.page.panel.conv.resumed'), error: false };
         } catch (error) {
             resumeNotice = { text: failureReason(error), error: true };
         }
@@ -105,20 +101,11 @@
         if (target && (/^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName) || target.isContentEditable)) return;
         onClose();
     }
-
-    $effect(() => {
-        if (uuid && asideEl && typeof matchMedia === 'function' && matchMedia('(max-width: 700px)').matches) asideEl.querySelector<HTMLElement>('[data-pn-back]')?.focus({ preventScroll: true });
-    });
 </script>
 
 <svelte:window onkeydown={onKey} />
 
-<Sheet place="page" class="sp-pn" width="var(--pn-w)" id="sp-pn" data-open aria-label={t('sessions.page.panel.label')} bind:el={asideEl}>
-    <div class="pl-titlebar sp-pn-bar">
-        <Button size="sm" data-pn-back onclick={onClose}>&lt; {t('sessions.page.panel.back')}</Button>
-        <span class="pl-label sp-pn-bar-l">{t('sessions.page.panel.title')}</span>
-        <Button size="sm" data-pn-close onclick={onClose}>{t('sessions.page.panel.close')}</Button>
-    </div>
+<div class="sp-pn" id="sp-pn" data-open role="group" aria-label={t('sessions.page.panel.label')}>
     <div class="sp-pn-scroll">
         {#if row}
             {#key row.s.session_uuid}
@@ -139,4 +126,4 @@
             <p class="sp-pn-note sp-pn-sec">{t('sessions.page.loading')}</p>
         {/if}
     </div>
-</Sheet>
+</div>

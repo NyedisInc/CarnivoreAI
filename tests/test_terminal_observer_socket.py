@@ -288,11 +288,32 @@ def test_an_observer_does_not_clear_the_unread_flag(observer_app):
 
     with _connect(client) as primary:
         _drive_handshake(primary, cols=PRIMARY_COLS, rows=PRIMARY_ROWS)
-    assert manager.viewed == [SESSION_ID], (
-        "THE CONTROL FAILED: a normal terminal socket no longer clears the "
-        "unread flag either, so the assertion above proves nothing about "
-        f"the observer. viewed={manager.viewed!r}"
+    assert manager.viewed == [], (
+        f"a primary bind cleared the unread flag. viewed={manager.viewed!r}"
     )
+
+
+def test_a_focus_report_marks_the_session_viewed_only_from_a_focused_primary(observer_app):
+    from fastapi.testclient import TestClient
+
+    client = TestClient(observer_app)
+    manager = observer_app.state.session_manager
+    focus = lambda on: json.dumps({"type": "viewer_focus", "focused": on})
+
+    with _connect(client) as primary:
+        _drive_handshake(primary, cols=PRIMARY_COLS, rows=PRIMARY_ROWS)
+        primary.send_text(focus(False))
+    assert manager.viewed == [], f"an unfocused report cleared unread. viewed={manager.viewed!r}"
+
+    with _connect(client, "1") as observer:
+        _read_until_paint(observer)
+        observer.send_text(focus(True))
+    assert manager.viewed == [], f"an observer's focus cleared unread. viewed={manager.viewed!r}"
+
+    with _connect(client) as primary:
+        _drive_handshake(primary, cols=PRIMARY_COLS, rows=PRIMARY_ROWS)
+        primary.send_text(focus(True))
+    assert len(manager.viewed) == 1, f"a focused primary did not mark viewed. viewed={manager.viewed!r}"
 
 
 
@@ -701,9 +722,8 @@ def test_an_interactive_viewer_does_not_clear_the_unread_flag(observer_app):
 
     with _connect(client) as primary:
         _drive_handshake(primary, cols=PRIMARY_COLS, rows=PRIMARY_ROWS)
-    assert manager.viewed == [SESSION_ID], (
-        "THE CONTROL FAILED: a normal terminal socket no longer clears the "
-        f"flag either. viewed={manager.viewed!r}"
+    assert manager.viewed == [], (
+        f"a primary bind cleared the unread flag. viewed={manager.viewed!r}"
     )
 
 

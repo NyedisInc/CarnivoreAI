@@ -118,6 +118,35 @@ def test_a_listener_that_raises_does_not_break_refresh() -> None:
     assert inbox.refresh() is True
 
 
+def test_folder_trust_suppressed_while_beast_handles_and_fires_if_still_open(captured) -> None:
+    state = {"open": True}
+    dlg = SimpleNamespace(kind=KIND_TRUST, question=REAL_TRUST.question, body="", rows=REAL_TRUST.rows, fingerprint="fp1234567890")
+    obs = SimpleNamespace(evidence=SimpleNamespace(dialog=dlg))
+    watcher = SimpleNamespace(observation_for=lambda s: obs if (s == "ses_1" and state["open"]) else None)
+
+    async def run_cleared() -> None:
+        src = ApprovalsSource(lambda: watcher, _manager, lambda: SimpleNamespace(list=lambda: []),
+                              hold_seconds=0.05, handles=lambda _sid, _obs: True)
+        src.on_gain([("dialog", "dlg:ses_1:fp1234567890")])
+        assert captured == []
+        state["open"] = False
+        await asyncio.sleep(0.08)
+        assert captured == []
+
+    asyncio.run(run_cleared())
+
+    async def run_still_open() -> None:
+        state["open"] = True
+        src = ApprovalsSource(lambda: watcher, _manager, lambda: SimpleNamespace(list=lambda: []),
+                              hold_seconds=0.02, handles=lambda _sid, _obs: True)
+        src.on_gain([("dialog", "dlg:ses_1:fp1234567890")])
+        assert captured == []
+        await asyncio.sleep(0.06)
+        assert [e.type_id for e in captured] == ["approval.folder_trust"]
+
+    asyncio.run(run_still_open())
+
+
 
 
 def _row(key: str = "pipeline.llm_all_down", severity: str = "error") -> Dict[str, Any]:

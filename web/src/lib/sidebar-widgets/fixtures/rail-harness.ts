@@ -92,6 +92,7 @@ export async function setupRail(viewClass: 'desktop' | 'mobile' = 'desktop'): Pr
   for (const def of [menuTab, agentsTab, questionsTab]) if (!tabRegistry.get(def.id)) registerTab(def);
   registerTestTabs();
   registerCoreSidebarWidgets();
+  // the Task Manager
   (globalThis as Record<string, unknown>).PreferenceBridge = {
     read: (field: string, fallback: () => unknown) => (field === 'widget_bars' ? { v: 1, rail: { mode: 'pinned' } } : fallback()),
     write: async (_field: string, _value: unknown, local: () => void) => { local(); return { status: 'committed' }; },

@@ -10,8 +10,9 @@ PRIVATE_REASON = "upstream on a private network"
 NOT_REGISTERED_REASON = "upstream not registered in argent"
 NOT_READY_REASON = "chaining not ready"
 ID_TAKEN_REASON = "session id taken in argent"
+SELF_REGISTRATION_OFF_REASON = "argent self-registration is off"
 DENIAL_REASONS = {"argent_upstream_not_registered": NOT_REGISTERED_REASON, "argent_upstream_private_network": PRIVATE_REASON,
-                 "agent_session.id_taken": ID_TAKEN_REASON}
+                 "agent_session.id_taken": ID_TAKEN_REASON, "self_registration_disabled": SELF_REGISTRATION_OFF_REASON}
 _PRIVATE_SUFFIXES = (".localhost", ".local", ".lan", ".home", ".internal", ".home.arpa")
 
 

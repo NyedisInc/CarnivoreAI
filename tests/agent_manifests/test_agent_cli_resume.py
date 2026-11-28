@@ -12,6 +12,7 @@ from src.config.launch_profiles import AgentDefinition, LaunchProfile
 from src.core.launch_profiles import agent_resume, bundle_guard, restart_seam
 from src.core.launch_profiles.store import LaunchProfileStore
 from src.core.session_output.escape_notices import NOTICES
+from src.core.shell_init import rc_prefixed
 from src.core.session_output.escape_scanner import EscapeScanner
 
 PROFILE = {"id": "oc", "harness": "custom", "label": "opencode", "custom_command": {"script": 'opencode "$@"'},
@@ -48,7 +49,8 @@ def test_resume_is_quoted_gated_flagged_and_swapped_in_on_restart(tmp_path):
         asyncio.run(restart_seam._with_agent_resume(settings, replayed, "carnivore_oc", "oc"))
     LaunchProfileStore(config).approve_resume_prefix("opencode")
     swapped = asyncio.run(restart_seam._with_agent_resume(settings, replayed, "carnivore_oc", "oc"))
-    assert swapped.command == "opencode --session sess-42"
+    assert swapped.command == rc_prefixed("opencode --session sess-42")
+    assert "source ~/.zshrc" in swapped.command and ".local/bin" in swapped.command
 
 
 def test_unapproved_prefix_raises_an_approvals_card_that_approves_it(tmp_path, monkeypatch):

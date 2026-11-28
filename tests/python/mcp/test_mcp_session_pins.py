@@ -36,7 +36,7 @@ class View:
         self._names = names
 
     async def list_infos(self):
-        return [SimpleNamespace(tmux_session=n, host_key="local", session=SimpleNamespace(id=f"ses_{n}"),
+        return [SimpleNamespace(label=None, claude_title=None, tmux_session=n, host_key="local", session=SimpleNamespace(id=f"ses_{n}"),
                                 session_row_id=i) for i, n in enumerate(self._names, 1)]
 
     async def list_peer_infos(self):

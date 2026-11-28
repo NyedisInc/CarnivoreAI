@@ -60,6 +60,9 @@ DDL: Tuple[str, ...] = (
     """CREATE TABLE IF NOT EXISTS command_runs (
         id INTEGER PRIMARY KEY AUTOINCREMENT, project_uid TEXT NOT NULL, shape TEXT NOT NULL, seconds REAL NOT NULL, at REAL NOT NULL)""",
     "CREATE INDEX IF NOT EXISTS command_runs_shape ON command_runs(project_uid, shape, id)",
+    """CREATE TABLE IF NOT EXISTS guard_giveways (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, at REAL NOT NULL, project_uid TEXT NOT NULL, shape TEXT NOT NULL)""",
+    "CREATE TABLE IF NOT EXISTS schema_marks (name TEXT PRIMARY KEY)",
 )
 
 ADDED_COLUMNS = {
@@ -73,6 +76,12 @@ ADDED_COLUMNS = {
         ("body", "TEXT DEFAULT 'command'"), ("task_head", "TEXT"), ("agent_type", "TEXT"), ("family", "TEXT"), ("permission_mode", "TEXT"),
         ("account_label", "TEXT"), ("account_how", "TEXT"), ("result_text", "TEXT"), ("question", "TEXT"), ("question_kind", "TEXT"),
         ("usage_json", "TEXT"), ("notified_state", "TEXT"), ("worker_session_uuid", "TEXT"),
+    ),
+    "command_runs": (
+        ("cpu_s", "REAL"), ("peak_ram_gb", "REAL"), ("source", "TEXT DEFAULT 'local'"),
+    ),
+    "project_policy": (
+        ("local_only_json", "TEXT"),
     ),
 }
 
@@ -88,6 +97,15 @@ def migrate(conn: sqlite3.Connection) -> None:
             except sqlite3.OperationalError as exc:
                 if "duplicate column" not in str(exc):
                     raise
+    if conn.execute("INSERT OR IGNORE INTO schema_marks (name) VALUES ('wipe_slow_command_runs_2026_11_20')").rowcount:
+        conn.execute("DELETE FROM command_runs WHERE seconds>=60")
+    if conn.execute("INSERT OR IGNORE INTO schema_marks (name) VALUES ('wipe_poisoned_shapes_2026_11_23')").rowcount:
+        conn.execute(
+            "DELETE FROM command_runs WHERE shape LIKE 'cut%' OR shape LIKE 'tr %' OR shape = 'tr' "
+            "OR shape LIKE 'seq %' OR shape LIKE 'export %' OR shape LIKE 'set %' OR shape = 'break' "
+            "OR shape LIKE 'timeout %' OR shape LIKE 'gtimeout %' OR shape LIKE 'shasum%' OR shape LIKE 'sysctl%' "
+            "OR shape = 'python3 -' OR shape LIKE 'gofmt %'"
+        )
 MADE_COPIES_DDL = """CREATE TABLE IF NOT EXISTS made_copies (
         root TEXT PRIMARY KEY, project_uid TEXT NOT NULL DEFAULT '', home_install_id TEXT NOT NULL DEFAULT '',
         auto INTEGER NOT NULL DEFAULT 0, folder_made INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT '')"""
@@ -120,3 +138,25 @@ SSH_DDL = (
         PRIMARY KEY (project_uid, host_key))""",
 )
 DDL = DDL + SSH_DDL
+
+LOAD_BALANCE_DDL = (
+    """CREATE TABLE IF NOT EXISTS peer_overhead (
+        project_uid TEXT NOT NULL, peer_install_id TEXT NOT NULL, ewma_s REAL NOT NULL, samples INTEGER NOT NULL DEFAULT 0,
+        last_mirror_s REAL NOT NULL DEFAULT 0, last_bundle_bytes INTEGER NOT NULL DEFAULT 0, updated_at REAL NOT NULL,
+        PRIMARY KEY (project_uid, peer_install_id))""",
+    """CREATE TABLE IF NOT EXISTS machine_load_hours (
+        install_id TEXT NOT NULL, hour INTEGER NOT NULL, label TEXT NOT NULL DEFAULT '', cores INTEGER, mem_total_gb REAL,
+        busy_cpu_sum REAL NOT NULL DEFAULT 0, busy_cpu_n INTEGER NOT NULL DEFAULT 0, busy_cpu_max REAL,
+        used_ram_sum REAL NOT NULL DEFAULT 0, used_ram_n INTEGER NOT NULL DEFAULT 0, used_ram_max REAL,
+        avail_ram_sum REAL NOT NULL DEFAULT 0, pegged_ticks INTEGER NOT NULL DEFAULT 0, mem_warn_ticks INTEGER NOT NULL DEFAULT 0,
+        idle_while_pegged_ticks INTEGER NOT NULL DEFAULT 0, jobs_hosted INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (install_id, hour))""",
+    "CREATE INDEX IF NOT EXISTS machine_load_hours_hour ON machine_load_hours(hour)",
+    """CREATE TABLE IF NOT EXISTS guard_events (
+        day TEXT NOT NULL, outcome TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0,
+        PRIMARY KEY (day, outcome))""",
+    """CREATE TABLE IF NOT EXISTS shape_overrides (
+        project_uid TEXT NOT NULL, shape TEXT NOT NULL, mode TEXT NOT NULL, updated_at REAL NOT NULL,
+        PRIMARY KEY (project_uid, shape))""",
+)
+DDL = DDL + LOAD_BALANCE_DDL

@@ -165,5 +165,8 @@ class SwarmCapability(Protocol):
     def register_card_port(self, port: Optional["CardPort"]) -> None:
         pass
 
+    def card_moved(self, card_id: int, before: str, after: str, reason: str = "") -> None:
+        pass
+
     def deal_requested(self, project_key: str) -> None:
         pass

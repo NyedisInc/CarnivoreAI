@@ -7,6 +7,7 @@
   import { onMount } from 'svelte';
   import VizSettings from './VizSettings.svelte';
   import { analytics } from '../cells/analytics/state.svelte';
+  import { selfHostInstallId } from '../cells/analytics/host-id.svelte';
   import type { ChartConfig } from '../cells/analytics/types';
   import { changeAnalyticsConfig, layoutEditor } from '../layout-editor/editor.svelte';
   import { t } from '../../lib/i18n/index.svelte';
@@ -29,7 +30,7 @@
   let visible = $state(false);
   const preset = $derived(config.range.preset ?? VIZ_SPECS.treemap.preset);
   const measure = $derived(config.options?.measure === 'cost' ? 'cost' : 'tokens');
-  const context = $derived({ now: analytics.tickAt, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions) });
+  const context = $derived({ now: analytics.tickAt, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions), selfInstallId: selfHostInstallId() });
 
   const models = planQuery(() => ({ on: config.enabled, items: treemapModelsPlan(config, context) }), () => visible);
   const rankings = $derived(TREEMAP_PROVIDERS.map((provider, at): { provider: string; rows: RankRow[]; unit: string } => {

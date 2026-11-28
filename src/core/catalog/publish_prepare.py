@@ -20,6 +20,8 @@ class Prepared:
     members: List[Tuple[str, bytes]] = field(default_factory=list)
     total_bytes: int = 0
     refusals: List[rules.Refusal] = field(default_factory=list)
+    script_files: List[str] = field(default_factory=list)
+    warnings: List[str] = field(default_factory=list)
     lint: Dict[str, Any] = field(default_factory=dict)
     compatibility: Optional[str] = None
     digest: str = ""
@@ -120,6 +122,11 @@ def prepare(folder_path: str, version: str) -> Prepared:
     if not over_cap:
         _read_members(folder, preview.files, prepared)
     prepared.members.sort()
+    prepared.script_files = rules.detect_script_files(
+        [p for p, _ in prepared.members], dict(prepared.members)
+    )
+    if prepared.script_files:
+        prepared.warnings.append("contains_scripts")
     if submission_preview._read_manifest(folder) is not None:
         manifest = grade_lint.read_manifest(folder)
         prepared.lint = grade_lint.grade_skill(folder, manifest).to_index()

@@ -32,6 +32,11 @@ REASON_PANES_DEAD: str = "retired_instance_panes_dead"
 REASON_NAME_PRESENT: str = "tmux_name_present_on_socket"
 
 REASON_UNMEASURED: str = "unmeasured"
+REASON_RETIRED_NO_PANE: str = "archived_row_without_tmux_instance"
+RETIRED_NO_PANE_SQL: str = (
+    "archived_at IS NOT NULL AND archived_at != '' AND TRIM(COALESCE(tmux_name, '')) = '' "
+    f"AND tmux_created_epoch IS NULL AND COALESCE(lifecycle, '') != '{SESSION_LIFECYCLE_RUNNING}'"
+)
 
 
 def _all_panes_dead(rows: Sequence[str], name: str, epoch: Optional[int]) -> Optional[bool]:
@@ -95,6 +100,8 @@ def decide_conversation_takeover(
     incumbent_panes_dead: Optional[bool] = None,
     namespace_prefix: str = "cloude_",
     live_instance_unrecorded: bool = False,
+    incumbent_archived_at: Optional[str] = None,
+    incumbent_tmux_epoch: Optional[int] = None,
 ) -> TakeoverDecision:
     live_unrecorded = live_instance_unrecorded and live_row_id is None
     if incumbent_row_id is None or (live_row_id is None and not live_unrecorded):
@@ -131,6 +138,13 @@ def decide_conversation_takeover(
 
     incumbent_name = (incumbent_tmux_name or "").strip()
     live_name = (live_tmux_name or "").strip()
+    if not incumbent_name and incumbent_archived_at and incumbent_tmux_epoch is None:
+        return TakeoverDecision(
+            may_take=True,
+            outcome=TMUX_GONE,
+            reason=REASON_RETIRED_NO_PANE,
+            detail="the row holding this conversation is archived and never had a tmux instance, so it has no pane",
+        )
     if not incumbent_name:
         return TakeoverDecision(
             may_take=False,

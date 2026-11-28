@@ -38,7 +38,7 @@ export { default as CascadeMenu } from '../../lib/drawer-tabs/CascadeMenu.svelte
 export { default as ApprovalHead } from '../../lib/approvals/ApprovalHead.svelte';
 export { default as TypedConfirm } from '../../lib/approvals/TypedConfirm.svelte';
 export { default as ApprovalCard } from '../../lib/approvals/ApprovalCard.svelte';
-export { default as TaskStatusList } from '../../opscenter/cells/task-list/StatusList.svelte';
+export { default as TaskStatusList } from '../../lib/task-status-list/StatusList.svelte';
 export { default as TaskRows } from '../../opscenter/cells/tasks/TaskRows.svelte';
 export { default as EditorControls } from '../../lib/editor-controls/EditorControls.svelte';
 export { saveLight, type SaveLight } from '../../opscenter/cells/notes/save-light';
@@ -58,3 +58,8 @@ export { rowHost } from '../../lib/sidebar-shell/row-host';
 export type { RowHost } from '../../lib/sidebar-shell/row-host';
 export type { SidebarRow } from '../../lib/sidebar-shell/legacy';
 export { areaMenuNodes } from '../../lib/widget-menu/bar-menu';
+/* the Task Manager */
+export { default as OptionList, type OptionItem } from '../../lib/base/OptionList.svelte';
+export { default as Tabs, panelAttrs, type TabDef } from '../../opscenter/ui/Tabs.svelte';
+export { titleWhenTruncated } from '../../lib/base/truncate';
+export { default as BudgetAskForm } from '../../lib/argent-cost/BudgetAskForm.svelte';

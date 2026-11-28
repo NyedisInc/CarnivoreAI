@@ -1,5 +1,6 @@
 
 import { resource, type Resource } from '../../opscenter/api/poll.svelte';
+import { setSelfHostInstallId } from '../../opscenter/cells/analytics/host-id.svelte';
 import { t } from '../i18n/index.svelte';
 import { apiErrorMessageOr } from '../errors/failure-reason';
 import * as api from './computers-api';
@@ -7,12 +8,24 @@ import * as api from './computers-api';
 export const COMPUTERS_POLL_MS = 15000;
 export const JOIN_POLL_MS = 1000;
 
-export const computers: Resource<api.ComputersView> = resource<api.ComputersView>(api.readComputers, {
-  intervalMs: COMPUTERS_POLL_MS,
-  name: 'computers',
-  topics: ['computers', 'pack_machines'],
-  body: { key: 'computers', read: (body) => (body as api.ComputersView | null) ?? null },
-});
+function recordSelf(view: api.ComputersView | null): api.ComputersView | null {
+  if (view?.self?.install_id) setSelfHostInstallId(view.self.install_id);
+  return view;
+}
+
+export const computers: Resource<api.ComputersView> = resource<api.ComputersView>(
+  async () => {
+    const view = await api.readComputers();
+    recordSelf(view);
+    return view;
+  },
+  {
+    intervalMs: COMPUTERS_POLL_MS,
+    name: 'computers',
+    topics: ['computers', 'pack_machines'],
+    body: { key: 'computers', read: (body) => recordSelf((body as api.ComputersView | null) ?? null) },
+  },
+);
 
 export const activity = $state<{
   busy: string | null;

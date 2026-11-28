@@ -7,11 +7,12 @@ import type { CplugRow } from '../plugins-page/cplugs-adapter';
 vi.mock('./api', () => ({
     fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/flowx/view/flow/t/index.html' })),
     callViewRoute: vi.fn(),
+    callViewTool: vi.fn(),
 }));
 
 import { activeFlyout, closeFlyout } from '../sidebar-widgets/flyout.svelte';
 import { flyout, press, rail, railOn, setupRail, settle, teardownRail } from '../sidebar-widgets/fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/taskmanager/swarm-flyout';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();

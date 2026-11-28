@@ -25,6 +25,11 @@ export function mirror(repo, tmp, mutate = () => {}, installed = {}) {
         fs.mkdirSync(dir, { recursive: true });
         fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name, version: installed[name] ?? String(specOf(pkg, name)).replace(/^[^0-9]*/, '') }));
     }
+    const eroot = path.join(mac, 'node_modules', 'electron');
+    fs.mkdirSync(path.join(eroot, 'dist'), { recursive: true });
+    fs.writeFileSync(path.join(eroot, 'path.txt'), 'Electron.app');
+    for (const f of ['Electron.app', 'LICENSE', 'LICENSES.chromium.html']) fs.writeFileSync(path.join(eroot, 'dist', f), 'x');
+    fs.mkdirSync(path.join(root, 'web', 'node_modules'), { recursive: true });
     return { root, mac, pkg, releaseSh: path.join(mac, 'scripts', 'release-build.sh') };
 }
 
@@ -44,7 +49,12 @@ export function registry(tmp, pin, pinAge = 20, extra = [], latest = undefined) 
 export const manifestBody = (...files) =>
     `version: 2.0.0-beta.1\nfiles:\n${files.map((z) => `  - url: ${z}\n    sha512: abc\n    size: 1\n`).join('')}path: ${files[0]}\nsha512: abc\nreleaseDate: '2026-10-23T00:00:00.000Z'\n`;
 
-export const GOOD_MANIFEST = manifestBody('Carnivore-2.0.0-beta.1-universal-mac.zip', 'Carnivore-2.0.0-beta.1-universal.dmg');
+export const GOOD_MANIFEST = manifestBody(
+    'Carnivore-2.0.0-beta.1-arm64-mac.zip',
+    'Carnivore-2.0.0-beta.1-mac.zip',
+    'Carnivore-2.0.0-beta.1-arm64.dmg',
+    'Carnivore-2.0.0-beta.1-x64.dmg',
+);
 
 
 export const FUSE_SENTINEL = 'dL7pKGdnNz796PbbjQWNKmHXBZaB9tsX';

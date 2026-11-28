@@ -1,0 +1,37 @@
+{
+  "carnivore-agy-launch-line": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "python3 -I ./carnivore_launch_line_hook.py",
+        "timeout": 5
+      }
+    ]
+  },
+  "carnivore-agy-delegate": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command|invoke_subagent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I ./carnivore_precheck_hook.py",
+            "timeout": 2
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I ./carnivore_precheck_hook.py",
+            "timeout": 2
+          }
+        ]
+      }
+    ]
+  }
+}

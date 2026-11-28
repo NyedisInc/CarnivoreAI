@@ -2,7 +2,7 @@ import { ApiError, authFetch, familyOf, resourcePush } from '../sdk';
 import { TASK_MANAGER_LIST_FAMILY, deltaTouchesIds, followTaskManagerDelta } from '../sdk/task-manager-delta';
 import { emptyFeed, feedItemIds, feedPath, mergeFeed, type FeedAnswer, type FeedItem, type FeedLane, type FlowSeed } from './flow-model';
 
-export const WATCHED = new Set(['cplug.flow.feed', 'crosstalk', 'cplug.huddle.cards', '$live']);
+export const WATCHED = new Set(['cplug.flow.feed', 'crosstalk', 'cplug.taskmanager.cards', '$live']);
 
 export class FlowFeed {
   seed = $state<FlowSeed | null>(null);

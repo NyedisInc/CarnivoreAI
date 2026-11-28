@@ -107,6 +107,8 @@ class FilePlanner:
                 self.walk.refused.add(conversation)
             return
         home, index, rel = placed
+        if home == P.HOME_STATE:
+            rel = cs.task_file_archive_rel(rel)
         copy = role in P.COPY_ROLES
         family = P.HOME_CODEX if home == P.HOME_CODEX else (P.HOME_CLAUDE if conversation else None)
         if role == P.R_CONFLICT:

@@ -5,7 +5,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parents[3]
 CATALOG = REPO / "client" / "js" / "i18n" / "catalog.en.js"
 SCAN_DIRS = ("web/src", "client", "src", "macOS", "tests", "scripts", "hosted")
-SCAN_SUFFIXES = {".ts", ".svelte", ".js", ".mjs", ".py", ".html", ".json"}
+SCAN_SUFFIXES = {".ts", ".svelte", ".js", ".mjs", ".py", ".html", ".json", ".toml"}
 THIS_FILE = Path(__file__).resolve()
 KEY_LINE = re.compile(r"^\s{4}'([a-zA-Z0-9_][\w.\-]*)'\s*:", re.M)
 VITE_OUT_DIR = re.compile(r"outDir\s*=\s*fileURLToPath\(\s*new URL\(\s*'([^']+)'", re.S)
@@ -18,6 +18,7 @@ BUILT_FAMILIES = (
     "notify.type.",
     "notify.copy.",
     "features.page.deps.kind.",
+    "features.page.",
     "keymap.action.",
     "keymap.category.",
     "keymap.item.",

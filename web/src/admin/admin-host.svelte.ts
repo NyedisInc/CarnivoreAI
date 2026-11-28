@@ -133,7 +133,7 @@ export interface AdminHost {
     cancelOverride(): void;
     confirmOverride(): Promise<void>;
     setRevokeReason(id: string, reason: string): void;
-    confirmRevoke(): Promise<void>;
+    confirmRevoke(): Promise<boolean>;
     regate(id: string): Promise<void>;
     setDisableReason(reason: string): void;
     cancelDisable(): void;
@@ -609,11 +609,11 @@ export function createHost(deps: {
             revokeReason = reason;
         },
 
-        async confirmRevoke(): Promise<void> {
+        async confirmRevoke(): Promise<boolean> {
             const local = reasonRefusal(revokeReason, 'revoke_needs_reason');
             if (local) {
                 refusal = local;
-                return;
+                return false;
             }
             const id = revoking;
             const reason = revokeReason;
@@ -625,6 +625,7 @@ export function createHost(deps: {
                 revokeReason = '';
                 await loadQueue(queueStatus);
             }
+            return ok;
         },
 
         async regate(id: string): Promise<void> {

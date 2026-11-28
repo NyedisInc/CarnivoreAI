@@ -24,6 +24,7 @@ function canonicalFolder(input, deps) {
     const real = io.realpathSync(path.resolve(expanded));
     return io.statSync(real).isDirectory() ? { ok: true, path: real, reason: null } : { ok: false, path: null, reason: 'not_folder' };
   } catch (error) {
+    // cannot be read
     return { ok: false, path: null, reason: 'not_folder' };
   }
 }

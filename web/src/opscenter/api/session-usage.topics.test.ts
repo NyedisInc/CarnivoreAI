@@ -89,4 +89,28 @@ describe('session usage', () => {
     expect(reads.length).toBeGreaterThan(before);
     mod.releaseSessionUsage(id);
   });
+
+  it('refreshes an agy (custom) local session immediately on session_usage:<id> push while keeping its 30s poll (#3364)', async () => {
+    listRow('ses_1', 'custom');
+    const { resourcePush } = await import('../../lib/resource-push/boot');
+    const store = resourcePush().store;
+    const mod = await import('./session-usage.svelte');
+    mod.sessionUsage('ses_1');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(count()).toBe(1);
+
+    store.hello({ resource_topics: ['session_usage', 'provider_ledger'] });
+    store.frame({ topics: ['session_usage:ses_2'] });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(count()).toBe(1);
+
+    store.frame({ topics: ['session_usage:ses_1'] });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(count()).toBe(2);
+
+    mod.releaseSessionUsage('ses_1');
+    store.frame({ topics: ['session_usage:ses_1'] });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(count()).toBe(2);
+  });
 });

@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 
 const read = (p: string): string => readFileSync(resolve(process.cwd(), p), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const BASE = read('src/lib/base/elements.css');
-const MK2 = read('src/opscenter/cells/task-manager-mk2/mk2-design.css');
+const MK2 = read('src/plugins/taskmanager/mk2/mk2-design.css');
 
 function block(css: string, open: number): [string, number] {
     let depth = 0;

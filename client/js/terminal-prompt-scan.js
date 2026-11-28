@@ -6,9 +6,16 @@
 
     var CODEX_CARET = '\u203a';
 
+    var AGY_CARET = '>';
+
+    function copilotHead(raw) {
+        return /^ \u276f[ \u00a0]+\S/.test(raw) ? raw.replace(/\s{2,}\d{1,2}:\d{2}$/, '') : '';
+    }
+
     var COMPOSER_TAIL_ROWS = 2;
 
     function caretFor(family) {
+        if (family === 'agy') return AGY_CARET;
         return family === 'codex' ? CODEX_CARET : CARET;
     }
 
@@ -140,6 +147,9 @@
         var isRule = typeof o.isRule === 'function' ? o.isRule : null;
         var caret = caretFor(o.family);
         var codex = caret === CODEX_CARET;
+        var agy = caret === AGY_CARET;
+        var copilot = o.family === 'copilot';
+        var own = agy || copilot;
 
         var length = typeof buf.length === 'number' ? buf.length : 0;
         if (length <= 0) return out;
@@ -155,9 +165,9 @@
         var lastAfter = -1;
         var i = 0;
         while (i < length) {
-            var cell = cellAt(buf, i, shared);
-            var head = isPromptCell(cell, caret) ? rowText(buf, i) : '';
-            if (!isPromptHead(head, caret)) {
+            var head = copilot ? copilotHead(rowText(buf, i))
+                : (isPromptCell(cellAt(buf, i, shared), caret) ? rowText(buf, i) : '');
+            if (!(copilot ? head !== '' : isPromptHead(head, caret))) {
                 i++;
                 continue;
             }
@@ -181,9 +191,9 @@
             if (text.charAt(0) === '!') continue;
             if (text === lastText) continue;
             if (isMenuOption(buf, start, head, caret)) continue;
-            if (isRuleRow(rowText(buf, start - 1), isRule)
-                || isRuleRow(rowText(buf, after), isRule)) continue;
-            if (inLiveBox(buf, start, baseY, rows, isRule)) continue;
+            if (isRuleRow(rowText(buf, after), isRule)) continue;
+            if (!own && isRuleRow(rowText(buf, start - 1), isRule)) continue;
+            if (!own && inLiveBox(buf, start, baseY, rows, isRule)) continue;
 
             lastText = text;
             if (codex) lastAfter = after;
@@ -228,6 +238,7 @@
         isPromptHead: isPromptHead,
         CARET: CARET,
         CODEX_CARET: CODEX_CARET,
+        AGY_CARET: AGY_CARET,
         PREVIEW_CHARS: PREVIEW_CHARS,
         MAX_TEXT: MAX_TEXT,
         layoutTicks: Ticks.layoutTicks,

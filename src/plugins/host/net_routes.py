@@ -34,7 +34,7 @@ def _error(status: int, code: str, detail: str) -> HTTPException:
 
 
 def _shipped(cplug_id: str) -> Any:
-    d = runtime.find(cplug_id)
+    d = runtime.find(runtime.canonical_id(cplug_id))
     if d is None:
         raise _error(404, "cplug_unknown", f"no plugin {cplug_id}")
     return d
@@ -45,6 +45,7 @@ async def put_secret(cplug_id: str, name: str, body: SecretBody, request: Reques
     """Store a secret value, bound to the hosts the manifest declares for it now. Output: its status (never the value)."""
     host = runtime.host_for(request.app)
     d = _shipped(cplug_id)
+    cplug_id = d.id
     store = SecretStore(host.state_dir)
     try:
         await run_in_threadpool(store.set, host.install_key(cplug_id), d.manifest, name, body.value)
@@ -58,6 +59,7 @@ async def get_secret(cplug_id: str, name: str, request: Request) -> Dict[str, bo
     """Whether a value is stored for the hosts the manifest declares now. Output: {secret_present, needs_reentry}."""
     host = runtime.host_for(request.app)
     d = _shipped(cplug_id)
+    cplug_id = d.id
     if name not in {s.name for s in d.manifest.network.secrets}:
         raise _error(404, "secret_unknown", f"{cplug_id} declares no secret {name}")
     try:
@@ -71,6 +73,7 @@ async def delete_secret(cplug_id: str, name: str, request: Request) -> Dict[str,
     """Remove a stored value and its binding. Output: {secret_present: false, needs_reentry: false}."""
     host = runtime.host_for(request.app)
     d = _shipped(cplug_id)
+    cplug_id = d.id
     if name not in {s.name for s in d.manifest.network.secrets}:
         raise _error(404, "secret_unknown", f"{cplug_id} declares no secret {name}")
     try:
@@ -84,7 +87,7 @@ async def delete_secret(cplug_id: str, name: str, request: Request) -> Dict[str,
 async def get_egress(cplug_id: str, request: Request, limit: int = Query(100, ge=1, le=500)) -> Dict[str, Any]:
     """The plugin's recent requests and refusals, newest first (the detail pane's egress list). Output: {rows}."""
     host = runtime.host_for(request.app)
-    _shipped(cplug_id)
+    cplug_id = _shipped(cplug_id).id
     try:
         rows = await run_in_threadpool(EgressLog(host.state_dir).recent, host.install_key(cplug_id), limit)
     except (sqlite3.Error, OSError) as exc:

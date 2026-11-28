@@ -84,6 +84,29 @@ def _answer(document: Dict[str, Any], surface: str, stale: Optional[str] = None)
     return JSONResponse(body, headers=_HEADERS)
 
 
+def _read_decl_doc(d: SidecarDefinition, decl: Any) -> Optional[Any]:
+    import json  # noqa: PLC0415
+
+    if not isinstance(decl, dict):
+        return None
+    if "document" in decl:
+        return decl["document"]
+    if isinstance(decl.get("ui_file"), str):
+        ui_path = d.code_root / decl["ui_file"]
+        if ui_path.is_file() and not ui_path.is_symlink():
+            return json.loads(ui_path.read_text(encoding="utf-8"))
+    return None
+
+
+def _tier0_static_document(d: SidecarDefinition, surface: str) -> Optional[Any]:
+    ui_meta = getattr(d.manifest, "ui_meta", None)
+    if not isinstance(ui_meta, dict) or surface not in ("widget", "tab", "screen"):
+        return None
+    if surface == "tab":
+        return _read_decl_doc(d, ui_meta.get("sidebar_tab")) or _read_decl_doc(d, ui_meta.get("widget"))
+    return _read_decl_doc(d, ui_meta.get("widget")) or (_read_decl_doc(d, ui_meta.get("sidebar_tab")) if surface == "screen" else None)
+
+
 @router.get("/cplugs/{cplug_id}/ui/{surface}")
 async def get_ui(cplug_id: str, surface: str, request: Request) -> JSONResponse:
     """Render one surface of an installed catalog cplug. Output: ``{surface, stale, document, reason?}``.
@@ -100,6 +123,30 @@ async def get_ui(cplug_id: str, surface: str, request: Request) -> JSONResponse:
             and not sidecar_routes.will_be_refused(request, cplug_id)):
         raise sidecar_routes._error(404, "unknown_surface", "no such surface")
     params = _params(request)
+    if isinstance(d0, SidecarDefinition) and not runtime.hidden(d0) and getattr(d0.manifest, "tier0", False):
+        host = runtime.host_for(request.app)
+        if not host.enabled(cplug_id):
+            raise sidecar_routes._error(409, "cplug_disabled", f"turn {cplug_id} on first")
+        live = host.sidecar_runtime()
+        if live is None:
+            raise sidecar_routes._error(503, "sidecar_runtime_unavailable", "the plugin runtime is not running")
+        if sidecar_routes.tier0_held_down(host, d0, live):
+            raise sidecar_routes.held_off(host, d0, live)
+        try:
+            key = host.install_key(cplug_id)
+        except identity.LedgerUnreadable as exc:
+            raise sidecar_routes._error(503, "install_ledger_unreadable", "the install ledger could not be read") from exc
+        if not _admit(key):
+            raise sidecar_routes._error(429, "rate_limited", "too many reads of this plugin's UI", **{"Retry-After": "5"})
+        raw_doc = _tier0_static_document(d0, surface)
+        if raw_doc is None:
+            raise sidecar_routes._error(404, "unknown_surface", "no such surface")
+        try:
+            fresh = ui_doc.validate(raw_doc, routes=d0.manifest.routes,
+                                    tools=[t.get("name") for t in d0.manifest.tools if isinstance(t, dict)])
+        except ui_doc.UiDocError as exc:
+            raise HTTPException(status_code=502, detail={"code": "invalid_ui_document", "detail": f"{d0.id} gave no usable {surface} document", "rule": exc.code, "path": exc.path}) from exc
+        return _answer(fresh, surface)
     try:
         _host, d, proc, key = await sidecar_routes._target(request, cplug_id, None)
     except HTTPException as exc:

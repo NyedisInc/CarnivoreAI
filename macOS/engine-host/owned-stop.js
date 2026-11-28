@@ -11,6 +11,7 @@ async function holdsEngine(manager) {
   if (manager.ownedProcess === true) return true;
   if (manager.getState() !== 'running' || !manager.adoptedVersion) return false;
   if (adoptionReplaced(manager, await manager.getHealth())) return false;
+  // cannot be read
   if (!manager.processPid || typeof manager.findPortHolderPid !== 'function') return true;
   const now = await manager.findPortHolderPid(manager.getPort());
   return !(Number.isInteger(now) && now !== manager.processPid);

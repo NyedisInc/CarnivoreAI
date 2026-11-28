@@ -1,10 +1,9 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import LogsScreen from './LogsScreen.svelte';
 
 export const LOGS_SCREEN_CONTAINER = 'logs-screen';
 export const LOGS_HASH = '#logs';
 
-const logsHost = createOverlayHost(LOGS_SCREEN_CONTAINER, LogsScreen, LOGS_HASH);
+const logsHost = createOverlayHost(LOGS_SCREEN_CONTAINER, { load: () => import('./LogsScreen.svelte') }, LOGS_HASH);
 
 export const openLogsScreen = (): boolean => logsHost.open();
 

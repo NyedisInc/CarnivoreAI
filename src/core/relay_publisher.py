@@ -498,7 +498,8 @@ async def _pump(
                     return
                 quiet_since = loop.time()
                 if frame.kind == viewer_fanout.FRAME_PTY:
-                    offer(await scrubber.scrub_off_loop(base64.b64decode(frame.payload)))
+                    raw = frame.payload if isinstance(frame.payload, bytes) else base64.b64decode(frame.payload)
+                    offer(await scrubber.scrub_off_loop(raw))
             elif (scrubber.pending
                   and loop.time() - quiet_since >= scrubber.idle_flush_seconds):
                 offer(await scrubber.flush_off_loop())

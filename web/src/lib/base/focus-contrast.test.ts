@@ -227,10 +227,10 @@ const EXEMPT: Record<string, string> = {
     'lib/markdown-editor/MarkdownEditor.svelte|var(--oc-control-line)': 'a token with no definition in tokens.css; finding for the editor\'s lane',
     'plugins/save/RestorePoints.svelte|color-mix(in srgb, var(--oc-cyan) 65%, transparent)': NO_BASE,
     'lib/swarm-board/SwarmBoard.svelte|transparent': NO_BASE,
-    'plugins/huddle/swarm/SwarmOrg.svelte|transparent': NO_BASE,
-    'plugins/huddle/HuddleViewSwitch.svelte|transparent': NO_BASE,
-    'plugins/huddle/chat/ChatAskForm.svelte|transparent': NO_BASE,
-    'plugins/huddle/TaskManagerMarkerFilter.svelte|transparent': NO_BASE,
+    'plugins/taskmanager/swarm/SwarmOrg.svelte|transparent': NO_BASE,
+    'plugins/taskmanager/HuddleViewSwitch.svelte|transparent': NO_BASE,
+    'plugins/taskmanager/chat/ChatAskForm.svelte|transparent': NO_BASE,
+    'plugins/taskmanager/TaskManagerMarkerFilter.svelte|transparent': NO_BASE,
 };
 
 const KNOWN_BELOW: Record<string, string> = {
@@ -239,7 +239,7 @@ const KNOWN_BELOW: Record<string, string> = {
     'lib/swarm-board/views/SwimlanesView.svelte|var(--oc-line-rule)': 'swarm board, the owner\'s lane: 1.90:1 on dracula',
     'lib/swarm-board/views/swimlanes/SwimLane.svelte|var(--oc-line-rule)': 'swarm board, the owner\'s lane: 1.90:1 on dracula',
     'lib/swarm-board/views/TimelineView.svelte|var(--oc-line-rule)': 'swarm board, the owner\'s lane: 1.90:1 on dracula',
-    'plugins/huddle/HuddleBody.svelte|var(--oc-line-rule)': 'task manager lead\'s lane: 1.90:1 on dracula',
+    'plugins/taskmanager/HuddleBody.svelte|var(--oc-line-rule)': 'task manager lead\'s lane: 1.90:1 on dracula',
 };
 
 function declaredBd(): Map<string, number> {
@@ -287,8 +287,8 @@ test('the declaration scan sees the sites the review named (it cannot pass by lo
     const keys = [...declaredBd().keys()];
     for (const needle of [
         'opscenter/cells/files/Cell.svelte|var(--oc-yellow)', 'opscenter/shell/PopoutBarActions.svelte|var(--oc-cyan)',
-        'plugins/devwidgetlab/lab-frame.css|var(--oc-orange)', 'plugins/huddle/HuddleReply.svelte|var(--oc-orange)',
-        'plugins/huddle/TaskManagerRowPosts.svelte|currentColor',
+        'plugins/devwidgetlab/lab-frame.css|var(--oc-orange)', 'plugins/taskmanager/HuddleReply.svelte|var(--oc-orange)',
+        'plugins/taskmanager/TaskManagerRowPosts.svelte|currentColor',
     ]) {
         expect(keys).toContain(needle);
     }

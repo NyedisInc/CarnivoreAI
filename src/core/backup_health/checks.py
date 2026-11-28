@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import structlog
 
@@ -26,6 +26,8 @@ class Verdict:
     detail_key: Optional[str] = None
     params: Dict[str, Any] = field(default_factory=dict)
     sticky: bool = False
+    actions: Tuple[Dict[str, Any], ...] = ()
+    drop_actions: Tuple[str, ...] = ()
 
 
 def _env_file_volume() -> Optional[str]:

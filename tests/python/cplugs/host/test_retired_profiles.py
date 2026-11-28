@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from src.core.plugin_health import sizes
-from src.plugins.host import registry_files, retired_profiles
+from src.plugins.host import registry_store, retired_profiles
 from src.plugins.runtime import sandbox
 
 MOVED_UUID = "a" * 32
@@ -36,7 +36,7 @@ def test_dead_profiles_are_the_ones_no_plugin_reads(state: Path) -> None:
 
 
 def test_moved_into_the_newest_backup_with_its_mtime_kept(state: Path) -> None:
-    older, newer = registry_files.backup_dir(state, 1), registry_files.backup_dir(state, 2)
+    older, newer = registry_store.backup_dir(state, 1), registry_store.backup_dir(state, 2)
     older.mkdir(parents=True)
     newer.mkdir()
     os.utime(older, ns=(1_000_000_000, 1_000_000_000))
@@ -46,7 +46,7 @@ def test_moved_into_the_newest_backup_with_its_mtime_kept(state: Path) -> None:
     assert sorted(moved) == sorted([target / f"{MOVED_UUID}.sb", target / f"{GONE_UUID}.sb"])
     assert (target / f"{MOVED_UUID}.sb").read_text() == f"(version 1) ; {MOVED_UUID}\n"
     assert newer.stat().st_mtime_ns == 2_000_000_000
-    assert registry_files.backups_newest_first(state)[0] == newer
+    assert registry_store.backups_newest_first(state)[0] == newer
     left = {p.name for p in retired_profiles.old_profiles_dir(state).iterdir()}
     assert left == {f"{UNMOVED_UUID}.sb", "huddle.sb"}
 

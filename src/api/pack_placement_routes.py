@@ -55,7 +55,11 @@ async def placement_explain(body: ExplainBody, request: Request) -> Dict[str, An
                                        record_it=False, remote=True)
     except explain.PlacementUnavailable:
         raise HTTPException(503, {"code": "pack_unavailable", "detail": "the Pack machine layer is not running"}) from None
-    return decision.as_dict()
+    answer = decision.as_dict()
+    note = explain.mesh_note()
+    if note is not None:
+        answer["note"] = note
+    return answer
 
 
 def _wired() -> runtime.Wiring:

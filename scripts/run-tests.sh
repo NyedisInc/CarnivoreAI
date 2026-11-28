@@ -62,14 +62,31 @@ if ! heavy_run_acquire "$REPO_ROOT"; then
     exit 90
 fi
 
+P1_ARGS=("${IGNORE_ARGS[@]}"); P2_ARGS=("${SERIAL_ONLY[@]}")
+if [ -n "${CLOUDE_TEST_SHARD:-}" ]; then
+    [ -n "${CLOUDE_TEST_JUNIT_DIR:-}" ] || { echo "run-tests.sh: CLOUDE_TEST_SHARD needs CLOUDE_TEST_JUNIT_DIR" >&2; exit 90; }
+    SERIAL_FLAGS=(); for f in "${SERIAL_ONLY[@]}"; do SERIAL_FLAGS+=(--serial "$f"); done
+    "$PYTHON" scripts/lib/suite_shard.py plan --shard "$CLOUDE_TEST_SHARD" --out "$CLOUDE_TEST_JUNIT_DIR" \
+        --durations "${CLOUDE_SHARD_DURATIONS:-}" "${SERIAL_FLAGS[@]}" || exit 90
+    P1_ARGS=(); P2_ARGS=()
+    while IFS= read -r f; do [ -n "$f" ] && P1_ARGS+=("$f"); done < "$CLOUDE_TEST_JUNIT_DIR/pass1-files.txt"
+    while IFS= read -r f; do [ -n "$f" ] && P2_ARGS+=("$f"); done < "$CLOUDE_TEST_JUNIT_DIR/pass2-files.txt"
+fi
+
 echo "== pass 1 of 2: everything but the serial files, at $WORKERS workers"
-"$PYTHON" -m pytest -q -n "$WORKERS" "${IGNORE_ARGS[@]}" ${J1[@]+"${J1[@]}"}
-RC_PARALLEL=$?
+RC_PARALLEL=0
+if [ "${#P1_ARGS[@]}" -gt 0 ]; then
+    "$PYTHON" -m pytest -q -n "$WORKERS" "${P1_ARGS[@]}" ${J1[@]+"${J1[@]}"}
+    RC_PARALLEL=$?
+fi
 
 echo
 echo "== pass 2 of 2: ${SERIAL_ONLY[*]}, serially, on a quiet machine"
-"$PYTHON" -m pytest -q ${J2[@]+"${J2[@]}"} "${SERIAL_ONLY[@]}"
-RC_SERIAL=$?
+RC_SERIAL=0
+if [ "${#P2_ARGS[@]}" -gt 0 ]; then
+    "$PYTHON" -m pytest -q ${J2[@]+"${J2[@]}"} "${P2_ARGS[@]}"
+    RC_SERIAL=$?
+fi
 
 echo
 if [ "$RC_PARALLEL" -eq 0 ] && [ "$RC_SERIAL" -eq 0 ]; then

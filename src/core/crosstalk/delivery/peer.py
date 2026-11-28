@@ -6,7 +6,7 @@ from contextlib import closing
 from typing import Any
 
 from src.api import peer_auth
-from src.core.federation import peer_hosts, peer_links
+from src.core.federation import mesh_peers, peer_hosts, peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.hosts.identity import parse_remote_session_id
 
@@ -18,7 +18,7 @@ async def propagate_owner_window(app: Any, card: dict, updates: list[tuple[str, 
     view = BatchView(app.state.session_manager, app)
     infos = await view.list_peer_infos()
     with closing(peer_auth.open_db()) as conn:
-        peers = {p.key: p for p in peer_hosts.list_peers(conn)}
+        peers = {p.key: p for p in peer_hosts.list_peers(conn, include_mesh=True)}
     links = peer_links.LINKS
     if links is None:
         return
@@ -29,7 +29,7 @@ async def propagate_owner_window(app: Any, card: dict, updates: list[tuple[str, 
         parsed = parse_remote_session_id(info.session.id) if info is not None else None
         if parsed is None or parsed[0] not in peers:
             continue
-        client = links.client(peers[parsed[0]].peer_install_id)
+        client = mesh_peers.session_client(links, peers[parsed[0]].peer_install_id)
         if client is None:
             continue
         body = {'sender_uuid': card['session_uuid'], 'sender_epoch': sender_epoch,
@@ -45,14 +45,20 @@ async def deliver(app: Any, info: Any, message: dict) -> tuple[str, str | None]:
     if parsed is None or not parsed[0].startswith('peer-'):
         return 'failed', 'target is not a paired-computer session'
     host_key, receiver_tmux = parsed
-    if info.host_state != 'up':
+    if info.host_state != 'up' and mesh_peers.REGISTRY is None:
         return 'held', 'paired computer is disconnected'
     with closing(peer_auth.open_db()) as conn:
-        peer = next((p for p in peer_hosts.list_peers(conn) if p.key == host_key), None)
+        peer = next((p for p in peer_hosts.list_peers(conn, include_mesh=True) if p.key == host_key), None)
     if peer is None:
         return 'failed', 'paired computer is no longer paired'
     links = peer_links.LINKS
-    client = links.client(peer.peer_install_id) if links is not None else None
+    client = mesh_peers.session_client(links, peer.peer_install_id)
+    if client is None and peer.back_kind == peer_hosts.MESH_BACK_KIND:
+        client = await mesh_peers.connect(links, peer.peer_install_id)
+        if client is None:
+            return 'held', 'paired computer cannot be reached from this computer right now'
+    if info.host_state != 'up' and peer.back_kind != peer_hosts.MESH_BACK_KIND:
+        return 'held', 'paired computer is disconnected'
     if client is None:
         return 'held', 'paired computer is disconnected'
     sender_info = await app.state.session_manager.get_session_info(session_id=message['sender_id'])

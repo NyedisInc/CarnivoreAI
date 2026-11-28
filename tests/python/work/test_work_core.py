@@ -79,7 +79,7 @@ def test_list_helpers() -> None:
 
 
 def test_the_plugin_rules_ask_core() -> None:
-    from src.plugins.huddle import rules
+    from src.plugins.taskmanager import rules
 
     assert rules.ALL_LIST == lists.ALL_LIST and rules.check_list_key("agent:3") == "agent:3" and rules.agent_id_of("agent:3") == 3
     with pytest.raises(rules.TaskManagerInvalid):
@@ -93,7 +93,7 @@ def test_the_sdk_door_is_cores_one_copy() -> None:
 def test_ctx_work_is_on_the_task_manager_context_and_writes_no_audit_row(tmp_path: Path) -> None:
     host = runtime.Host(tmp_path, FastAPI(), publish=lambda topic: None)
     turn_on(host)
-    ctx = host.context("huddle")
+    ctx = host.context("taskmanager")
     assert ctx.has("work") and type(ctx.work) is WorkCapability
     with closing(ctx.work.storage.connect(True)) as conn, conn:
         assert ctx.work.next_seq(conn) == ctx.work.cursor(conn)
@@ -101,11 +101,11 @@ def test_ctx_work_is_on_the_task_manager_context_and_writes_no_audit_row(tmp_pat
 
 def test_a_stored_state_without_the_work_grant_still_holds_it(tmp_path: Path) -> None:
     host = runtime.Host(tmp_path, FastAPI(), publish=lambda topic: None)
-    d = runtime.find("huddle")
+    d = runtime.find("taskmanager")
     owner_state.update(tmp_path, d.manifest, None,
                        lambda st: replace(st, enabled=True, grants=tuple(p for p in d.manifest.permissions if p != "work")))
     assert "work" in owner_state.get(tmp_path, d.manifest).grants
-    assert host.context("huddle").has("work")
+    assert host.context("taskmanager").has("work")
 
 
 def test_a_context_without_the_grant_has_no_work_and_the_error_names_it() -> None:

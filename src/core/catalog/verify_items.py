@@ -92,7 +92,13 @@ def latest_version(item: CatalogItem) -> Optional[ItemVersion]:
     return None
 
 
-def _refuse_item(item_id: str, code: str, detail: str) -> ItemVerdict:
+def _refuse_item(
+    item_id: str,
+    code: str,
+    detail: str,
+    *,
+    provenance_repos: Tuple[str, ...] = (),
+) -> ItemVerdict:
     logger.warning(
         "catalog_item_refused",
         item_id=log_value(item_id),
@@ -102,7 +108,12 @@ def _refuse_item(item_id: str, code: str, detail: str) -> ItemVerdict:
     return ItemVerdict(
         item=None,
         trusted=False,
-        refusal=ItemRefusal(item_id=item_id, code=code, detail=detail),
+        refusal=ItemRefusal(
+            item_id=item_id,
+            code=code,
+            detail=detail,
+            provenance_repos=provenance_repos,
+        ),
     )
 
 
@@ -187,12 +198,21 @@ def verify_item(
             f"{ITEM_SCHEMA_DETAIL_PREFIX} {errors_summary(exc)}",
         )
 
+    prov_repos = tuple(
+        dict.fromkeys(
+            v.provenance.repo.strip().lower()
+            for v in item.versions
+            if getattr(v, "provenance", None) is not None and getattr(v.provenance, "repo", "")
+        )
+    )
+
     identity = f"{item.publisher}/{item.name}"
     if item.id != identity:
         return _refuse_item(
             item.id,
             SIGNATURE_INVALID,
             f"{ITEM_SCHEMA_DETAIL_PREFIX} id is not the signed {identity!r}",
+            provenance_repos=prov_repos,
         )
 
     if len({version.v for version in item.versions}) != len(item.versions):
@@ -200,6 +220,7 @@ def verify_item(
             item.id,
             SIGNATURE_INVALID,
             f"{ITEM_SCHEMA_DETAIL_PREFIX} two versions share one version string",
+            provenance_repos=prov_repos,
         )
 
     if is_reserved_name(item.name, item.kind, item.publisher):
@@ -207,19 +228,33 @@ def verify_item(
             item.id,
             NAME_RESERVED,
             f"name {item.name!r} is reserved by a harness",
+            provenance_repos=prov_repos,
         )
 
     version = latest_version(item)
     if version is None:
         return _refuse_item(
-            item.id, SIGNATURE_INVALID, "latest version missing"
+            item.id,
+            SIGNATURE_INVALID,
+            "latest version missing",
+            provenance_repos=prov_repos,
         )
 
     signing_key_id = version.sig.key_id.strip().upper()
     if signing_key_id in revoked_key_ids:
-        return _refuse_item(item.id, KEY_UNTRUSTED, "key revoked")
+        return _refuse_item(
+            item.id,
+            KEY_UNTRUSTED,
+            "key revoked",
+            provenance_repos=prov_repos,
+        )
     if version_subject(identity, version.v) in revoked_versions:
-        return _refuse_item(item.id, VERSION_REVOKED, "version revoked")
+        return _refuse_item(
+            item.id,
+            VERSION_REVOKED,
+            "version revoked",
+            provenance_repos=prov_repos,
+        )
 
     if publisher_key is not None and signing_key_id == publisher_key.key_id:
         signing_key: Optional[PublicKey] = publisher_key

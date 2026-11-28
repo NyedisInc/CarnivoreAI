@@ -13,7 +13,7 @@ from src.core.trail_entry import utc_now
 
 SCOPE_SESSIONS = "sessions"
 SCOPE_SETTINGS = "settings"
-PACK_SCOPES = ("machine", "swarm-proxy", "replica", "migrate", "credentials", "refresh", "skills", "global-setup")
+PACK_SCOPES = ("machine", "swarm-proxy", "replica", "migrate", "credentials", "refresh", "skills", "global-setup", "pack-ui")
 KNOWN_SCOPES = frozenset({SCOPE_SESSIONS, "archive", "ledger", SCOPE_SETTINGS, *PACK_SCOPES})
 SCOPE_REPLICA = "replica"
 

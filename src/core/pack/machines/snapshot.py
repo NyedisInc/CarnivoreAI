@@ -143,6 +143,7 @@ class SnapshotCollector:
         memory, disk, load = host_metrics.collect_memory(), host_metrics.collect_disk(self._state_dir()), host_metrics.collect_load()
         total = memory.get("total_bytes") if memory["available"] else None
         avail = memory.get("available_bytes") if memory["available"] else None
+        compressed = memory.get("compressed_bytes") if memory["available"] else None
         snap = {
             "v": SNAPSHOT_VERSION, "install_id": install_id, "label": label, "app_version": app_version,
             "taken_at": time.time() if now is None else now, "specs": specs,
@@ -150,6 +151,7 @@ class SnapshotCollector:
                 "cores": load.get("cpu_count") if load["available"] else specs["cores"],
                 "load_1": load.get("load_1") if load["available"] else None,
                 "load_5": load.get("load_5") if load["available"] else None,
+                "busy_cores_15s": load.get("busy_cores_15s") if load["available"] else None,
                 "busy_cores": load.get("busy_cores_1") if load["available"] else None,
                 "busy_cores_5": load.get("busy_cores_5") if load["available"] else None,
                 "cpu_source": load.get("cpu_source") if load["available"] else None,
@@ -157,6 +159,8 @@ class SnapshotCollector:
                 "memory_percent": memory.get("used_percent") if memory["available"] else None,
                 "mem_total_gb": round(total / _GB, 1) if total else None,
                 "mem_available_gb": round(avail / _GB, 1) if avail is not None else None,
+                "mem_compressed_gb": round(compressed / _GB, 1) if compressed is not None else None,
+                "pageouts_per_s": memory.get("pageouts_per_s") if memory["available"] else None,
                 "disk_percent": disk.get("used_percent") if disk["available"] else None,
                 "disk_free_gb": round(disk["free_bytes"] / _GB, 1) if disk["available"] else None,
                 "uptime_seconds": host_metrics.collect_host()["uptime_seconds"],

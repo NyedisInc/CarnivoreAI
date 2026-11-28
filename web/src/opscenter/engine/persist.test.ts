@@ -228,7 +228,7 @@ describe('validate: numbers repair', () => {
     (blob['hidden'] as string[]).push(removed!['id'] as string);
     const checked = validate(blob, META);
     expect(checked.refusal).toBeNull();
-    expect(checked.layout?.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects', 'themes']);
+    expect(checked.layout?.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects', 'themes']);
   });
 
   it('reads heroCollapsed as a strict boolean', () => {
@@ -596,7 +596,7 @@ describe('validate: the row shape is consulted per page', () => {
   it('does not require the home panels on the terminal page', () => {
     const checked = validate(goodTerminal(), META, 'terminal');
     expect(checked.refusal).toBeNull();
-    expect(checked.layout?.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects']);
+    expect(checked.layout?.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects']);
   });
 
   it('still refuses a HOME blob whose rows claim the terminal kind', () => {

@@ -36,6 +36,7 @@ vitest web/src/lib/sidebar-shell/band-conformance.test.ts
 vitest web/src/lib/drawer-tabs/drawer-strips.test.ts
 pytest tests/python/design_system/test_frame_regions_owned.py
 pytest tests/python/design_system/test_frame_header_controls.py
+pytest tests/python/design_system/test_frame_geometry.py
 vitest web/src/lib/menu-page/menu-frames.test.ts
 # The server keymap snapshot (src/core/keymap/registry.json) must match client/js/keymap/: any client/ commit runs this, so it cannot go stale (#2786).
 pytest tests/python/keymap/test_clash_mirror.py

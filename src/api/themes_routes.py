@@ -111,9 +111,50 @@ def _load_manifest(theme_dir: Path, source: str) -> Optional[ThemeManifest]:
     return manifest
 
 
+_ROOT_SCAN_LOCK = __import__("threading").Lock()
+_ROOT_SCAN_CACHE: dict[tuple[str, str], tuple[tuple, list[ThemeManifest]]] = {}
+
+
+def _root_fingerprint(root: Path) -> Optional[tuple]:
+    try:
+        root_st = root.stat()
+    except OSError:
+        return None
+    items: list[tuple] = []
+    try:
+        children = sorted(root.iterdir(), key=lambda p: p.name.lower())
+    except OSError:
+        return None
+    for child in children:
+        if child.name.startswith(".") or not child.is_dir():
+            continue
+        try:
+            cst = child.stat()
+            tj = child / "theme.json"
+            tjst = tj.stat() if tj.is_file() else None
+            ej = child / "effects.js"
+            ejst = ej.stat() if ej.is_file() else None
+            items.append((
+                child.name,
+                cst.st_mtime_ns,
+                (tjst.st_mtime_ns, tjst.st_size) if tjst else None,
+                (ejst.st_mtime_ns, ejst.st_size) if ejst else None,
+            ))
+        except OSError:
+            items.append((child.name, -1, None, None))
+    return (root_st.st_ino, root_st.st_mtime_ns, tuple(items))
+
+
 def _scan_themes_root(root: Optional[Path], source: str) -> List[ThemeManifest]:
     if root is None or not root.is_dir():
         return []
+    key = (str(root), source)
+    fp = _root_fingerprint(root)
+    if fp is not None:
+        with _ROOT_SCAN_LOCK:
+            cached = _ROOT_SCAN_CACHE.get(key)
+            if cached is not None and cached[0] == fp:
+                return list(cached[1])
     out: List[ThemeManifest] = []
     seen_ids = set()
     try:
@@ -138,7 +179,18 @@ def _scan_themes_root(root: Optional[Path], source: str) -> List[ThemeManifest]:
             continue
         seen_ids.add(m.id)
         out.append(m)
+    if fp is not None:
+        with _ROOT_SCAN_LOCK:
+            if len(_ROOT_SCAN_CACHE) > 32:
+                _ROOT_SCAN_CACHE.clear()
+            _ROOT_SCAN_CACHE[key] = (fp, list(out))
     return out
+
+
+def warm_themes_cache() -> int:
+    bundled = _scan_themes_root(_bundled_themes_root(), "builtin")
+    user = _scan_themes_root(_user_themes_root(), "user")
+    return len(bundled) + len(user)
 
 
 def _theme_installs_reader(request: Request) -> Callable[[], Tuple[InstalledItem, ...]]:
@@ -217,13 +269,14 @@ async def list_themes(request: Request) -> List[ThemeManifest]:
     bundled_root = _bundled_themes_root()
     user_root = _user_themes_root()
     read_installs = _theme_installs_reader(request)
-    bundled, user, installs = await asyncio.to_thread(
-        _scan_both_roots, bundled_root, user_root, read_installs
-    )
-    first_party = await asyncio.to_thread(
-        first_party_listing.trusted_ids, user_root, user, installs,
-        first_party_listing.pinned_key_id(),
-    )
+    pinned_key = first_party_listing.pinned_key_id()
+
+    def _gather_themes():
+        b, u, inst = _scan_both_roots(bundled_root, user_root, read_installs)
+        fp = first_party_listing.trusted_ids(user_root, u, inst, pinned_key)
+        return b, u, inst, fp
+
+    bundled, user, installs, first_party = await asyncio.to_thread(_gather_themes)
     bundled.sort(key=lambda m: m.name.lower())
     user.sort(key=lambda m: m.id.lower())
 

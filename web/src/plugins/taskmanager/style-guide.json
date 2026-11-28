@@ -1,0 +1,12 @@
+{
+  "files": {
+    "web/src/plugins/taskmanager/HuddleSwarmSettings.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/plugins/taskmanager/swarm/SwarmMemberFace.svelte": {
+      "section": "status-led",
+      "classes": []
+    }
+  }
+}

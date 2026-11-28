@@ -4,7 +4,7 @@ export type PlacementOptionValue = boolean | number | string;
 
 export type PlacementOptions = Readonly<Record<string, PlacementOptionValue>>;
 
-export const PLACEMENT_OPTION_WIDGETS: ReadonlySet<string> = new Set(['core.questions', 'core.task-list', 'core.session-contents']);
+export const PLACEMENT_OPTION_WIDGETS: ReadonlySet<string> = new Set(['core.questions', 'core.session-contents']);
 
 export const SINGLE_COPY_OPTION_WIDGETS: ReadonlySet<string> = new Set(['core.running-sessions']);
 

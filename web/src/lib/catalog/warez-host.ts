@@ -1,7 +1,6 @@
 /* the warez menu */
 import { inNativeShell } from '../native-shell/shell';
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import WarezScreen from './WarezScreen.svelte';
 import type { MenuNode } from './menu/route';
 import { openEliteScreen } from '../elite/elite-host';
 import { firstVisit, markEliteSeen, settleFirstVisit } from '../elite/first-visit';
@@ -17,7 +16,7 @@ export interface WarezOpenOptions {
     home?: boolean;
 }
 
-const host = createOverlayHost(WAREZ_SCREEN_CONTAINER, WarezScreen, WAREZ_HASH, { aliases: ['#catalog'] });
+const host = createOverlayHost(WAREZ_SCREEN_CONTAINER, { load: () => import('./WarezScreen.svelte') }, WAREZ_HASH, { aliases: ['#catalog'] });
 
 export const openWarezScreen = (options: WarezOpenOptions = {}): boolean => {
     if (inNativeShell()) return false;

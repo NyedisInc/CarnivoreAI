@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import hashlib
 import json
 import os
@@ -477,7 +476,7 @@ async def test_a_hung_relay_never_costs_the_owner_a_byte():
             chunk = CHUNK + str(i).encode()
             registry.publish(SESSION_ID, chunk)
             frame = await owner.get()
-            received.append(base64.b64decode(frame.payload))
+            received.append(frame.payload)
             await asyncio.sleep(0)
         dropped = await _until(lambda: any(
             e.get("event") == "relay_publish_disconnected" for e in captured))

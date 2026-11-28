@@ -238,7 +238,33 @@ export async function createProjectFlow(
             host.terminalDims(),
             hostChoice.key,
         );
-        const session = await host.createSession(payload);
+        let session: CreatedSession;
+        try {
+            session = await host.createSession(payload);
+        } catch (createErr) {
+            // the project folder
+            // the project row
+            const errObj = createErr as { status?: number; body?: { code?: unknown } } | null;
+            const code = typeof errObj?.body?.code === 'string' ? errObj.body.code : '';
+            const isLaunchCrash =
+                errObj?.status === 502 ||
+                code === 'agent_exited' ||
+                code === 'agent_not_installed' ||
+                code === 'agent_not_installed_claude' ||
+                code === 'agent_not_installed_codex' ||
+                code === 'tmux_missing' ||
+                code === 'session_launch_failed';
+            if (isLocal && parent && isLaunchCrash) {
+                await persistProjectRow(host, {
+                    name: details.name,
+                    path: parent,
+                    description: details.description || null,
+                    ...(companyId !== null ? { company_id: companyId } : {}),
+                }, t);
+                await refreshProjects(host);
+            }
+            throw createErr;
+        }
 
         if (isLocal) {
             await persistProjectRow(host, {

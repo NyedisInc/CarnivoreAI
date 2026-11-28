@@ -1,6 +1,6 @@
 {
   "name": "cloude-code-menubar",
-  "version": "1.16.9",
+  "version": "1.16.10",
   "description": "macOS menu bar app for Carnivore remote control",
   "main": "main.js",
   "scripts": {
@@ -18,12 +18,11 @@
   "author": "Carnivore",
   "license": "MIT",
   "devDependencies": {
-    "electron": "45.3.0",
+    "electron": "45.4.1",
     "electron-builder": "26.15.3",
     "playwright-core": "1.64.0"
   },
   "dependencies": {
-    "axios": "^1.20.0",
     "electron-updater": "6.8.9",
     "qrcode": "^1.5.4",
     "semver": "~7.7.3"
@@ -31,6 +30,10 @@
   "build": {
     "appId": "ai.carnivore.menubar",
     "productName": "Carnivore",
+    "compression": "maximum",
+    "electronLanguages": [
+      "en"
+    ],
     "afterPack": "scripts/after-pack.js",
     "afterAllArtifactBuild": "scripts/notarize-dmg.js",
     "electronFuses": {
@@ -49,7 +52,19 @@
     "files": [
       "**/*",
       "!scripts/**",
-      "!.*{,/**/*}"
+      "!.*{,/**/*}",
+      "!assets/dmg/**",
+      "!assets/icon.icns",
+      "!assets/AppIcon-1024.png",
+      "!assets/generate-*",
+      "!assets/README.md",
+      "!payload/**",
+      "!sounds/**",
+      "!README.md",
+      "!package-lock.json",
+      "!**/__pycache__/**",
+      "!node_modules/**/*.map",
+      "!node_modules/pngjs/browser.js"
     ],
     "extraResources": [
       {
@@ -69,7 +84,13 @@
           "**/*",
           "!**/__pycache__/**",
           "!**/*.pyc",
-          "!**/.DS_Store"
+          "!**/.DS_Store",
+          "!widget-harness-build/**",
+          "!dist/style-guide.js",
+          "!dist/style-guide-chunk-*.js",
+          "!style-guide/**",
+          "!style-guide.html",
+          "!dist/widget-lab/**"
         ]
       },
       {
@@ -85,7 +106,9 @@
         "filter": [
           "**/*",
           "!**/.DS_Store",
-          "!capture/**"
+          "!capture/**",
+          "!changes/**",
+          "!catalog/**"
         ]
       },
       {
@@ -176,13 +199,15 @@
         {
           "target": "dmg",
           "arch": [
-            "universal"
+            "arm64",
+            "x64"
           ]
         },
         {
           "target": "zip",
           "arch": [
-            "universal"
+            "arm64",
+            "x64"
           ]
         }
       ]
@@ -192,6 +217,7 @@
       "url": "https://github.com/NyedisInc/CarnivoreAI/releases/latest/download"
     },
     "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "title": "Carnivore ${version}",
       "background": "assets/dmg/background.tiff",
       "icon": "assets/icon.icns",
@@ -214,11 +240,11 @@
       ],
       "iconSize": 128,
       "iconTextSize": 14,
-      "format": "UDZO",
+      "format": "ULFO",
       "sign": true
     }
   },
   "allowScripts": {
-    "electron@45.3.0": true
+    "electron@45.4.1": true
   }
 }

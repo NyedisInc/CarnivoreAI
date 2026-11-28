@@ -37,7 +37,7 @@ it('matches a name, a project, a folder and an asleep row, best match first', ()
     assert.deepEqual(searchHitRows(rows as never, 'carn').map((r) => r.name), ['cloude_carn_docs', 'cloude_zed', 'cloude_billing', 'cloude_other']);
 });
 
-it('a pinned hit is listed ONCE, draws no pin (no tag, no pin toggle), keeps its menu key, and the sections give way to AGENTS', () => {
+it('a pinned hit is listed ONCE, wears its pressed pin (no tag), keeps its menu key, and the sections give way to AGENTS', () => {
     Search.setQuery('carn');
     const rows = [row('cloude_carn_a', { is_pinned: true }), row('cloude_carn_b')];
     Store.save(['cloude_carn_a'], rows.map((r) => r.name as string), []);
@@ -46,7 +46,8 @@ it('a pinned hit is listed ONCE, draws no pin (no tag, no pin toggle), keeps its
     assert.ok(html.includes('data-group="search:agents"'));
     assert.ok(!html.includes('data-group="pinned"') && !html.includes('data-group="p:10"'));
     assert.equal((html.match(/oc-tag/g) || []).length, 0, 'a search result wears no pinned tag');
-    assert.ok(!html.includes('session-sidebar-row-pin') && !html.includes('data-pin-session'), 'a search result draws no pin toggle');
+    assert.match(html, /data-pin-session="cloude_carn_a" aria-pressed="true"/, 'a pinned hit shows as pinned');
+    assert.match(html, /data-pin-session="cloude_carn_b" aria-pressed="false"/, 'an unpinned hit offers the pin');
     assert.ok(html.includes('session-row-menu-trigger'), 'the kebab stays');
 });
 
@@ -124,38 +125,19 @@ it('matches a tmux handle without its owned product prefix: "carn" and "clou" li
     assert.equal(Search.matchesRow(hockey, q('fantasy_hockey')), true, 'the rest of the handle still matches');
 });
 
-it('an agent row in a search is the quiet D row: no box chrome, provider mark, status-icon cluster, closed chip or pin, but the kebab, the age and the model line', () => {
+it('a session hit is the drawer\'s own session row: the status-icon cluster, the provider mark, the kebab and the pin, marked as a search hit', () => {
     Search.setQuery('carn');
-    const stamp = new Date(Date.now() - 3 * 3600 * 1000).toISOString();
-    const html = drawList([row('cloude_carn_a', { running_model: 'claude-opus-4-6', running_model_effort: 'high', last_work_at: stamp, agent_family: 'claude' })]);
-    assert.ok(html.includes('class="session-sidebar-row ssr-row sd-r"'), 'the quiet row, still a session row for the band gestures');
-    for (const chrome of ['session-sidebar-row-main', 'session-sidebar-row-provider', 'session-sidebar-row-controls-cluster', 'session-sidebar-row-closed', 'session-sidebar-row-pin']) {
-        assert.ok(!html.includes(chrome), `no ${chrome} on a search agent row`);
-    }
-    assert.ok(html.includes('session-row-menu-trigger'), 'the kebab stays at the end of line one');
-    assert.match(html, /<span class="sd-r__meta">3h<\/span>/);
-    assert.match(html, /class="sd-r__sub"><span class="session-sidebar-row-model/);
-    assert.match(html, /<span>opus-4-6<\/span><span class="sd-dim">high<\/span>/);
+    const html = drawList([row('cloude_carn_a', { agent_family: 'claude' })]);
+    assert.ok(html.includes('session-sidebar-row-main') && html.includes('session-sidebar-row-controls-cluster'));
+    assert.ok(html.includes('data-search-hit="1"') && html.includes('session-row-menu-trigger') && html.includes('session-sidebar-row-pin'));
+    assert.ok(!html.includes('sd-r__body'), 'the quiet D row is gone');
 });
 
-it('a closed agent row still draws a light slot (the quiet ring), so its name starts in the same column as every other row (Joe, 2026-10-22)', () => {
+it('a closed hit wears the closed chip and no status light, like a closed row outside the search', () => {
     Search.setQuery('carn');
-    const html = drawList([row('cloude_carn_a'), row('cloude_carn_b', { closed: true })]);
-    const closed = html.slice(html.indexOf('data-name="cloude_carn_b"'));
-    const top = closed.slice(0, closed.indexOf('</div>'));
-    assert.match(top, /class="dps__led dps__led--ring"/, 'the closed row wears a hollow ring in the light slot');
-    assert.ok(top.indexOf('dps__led') < top.indexOf('session-sidebar-row-name'), 'the slot comes before the name');
-});
-
-it('an asleep agent says "asleep, worked ..." and a closed one "closed" on the muted second line, in place of the model, with no chip', () => {
-    Search.setQuery('carn');
-    const stamp = new Date(Date.now() - 2 * 86400 * 1000).toISOString();
-    const asleep = drawList([row('cloude_carn_a', { asleep: true, running_model: 'claude-opus-4-6', last_work_at: stamp })]);
-    assert.match(asleep, /<span class="sd-dim">asleep, worked 2d ago<\/span>/);
-    assert.ok(!asleep.includes('opus-4-6'), 'the note stands in for the model line');
-    const closed = drawList([row('cloude_carn_b', { closed: true })]);
-    assert.match(closed, /<span class="sd-dim">closed<\/span>/);
-    assert.ok(!closed.includes('session-sidebar-row-closed') && !closed.includes('session-sidebar-row-badge'), 'no closed chip box');
+    const html = drawList([row('cloude_carn_b', { closed: true })]);
+    assert.ok(html.includes('session-sidebar-row-closed'), 'the closed chip');
+    assert.ok(!html.includes('dps__led'), 'a closed row has no light');
 });
 
 it('the section head is a fold chevron, the name and the muted count, as variant D draws it', () => {

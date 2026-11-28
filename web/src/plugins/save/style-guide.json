@@ -8,6 +8,10 @@
       "section": "settings",
       "classes": []
     },
+    "web/src/plugins/save/OffloadedList.svelte": {
+      "section": "settings",
+      "classes": []
+    },
     "web/src/plugins/save/RestorePoints.svelte": {
       "section": "ledger-catalog",
       "classes": [
@@ -33,16 +37,6 @@
     "web/src/plugins/save/ScopePanel.svelte": {
       "section": "settings",
       "classes": []
-    },
-    "web/src/plugins/save/SessionTab.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "rpt-hintline",
-        "rpt-stack",
-        "rpt-ways",
-        "rpt-ways__ok",
-        "rpt-ways__rp"
-      ]
     },
     "web/src/plugins/save/StoragePanel.svelte": {
       "section": "settings",

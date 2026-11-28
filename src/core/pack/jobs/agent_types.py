@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler
 from src.models.model_ids import is_valid_model_id
 
 CAP_AGENT = "pack.jobs.agent"
+CAP_AGENT_AGY = "pack.jobs.agent.agy"
 CAP_REPLY_DIGEST = "pack.jobs.reply_digest"
 CAP_ACCOUNT_IDENTITY = "pack.jobs.account_identity"
 DIGEST_PATTERN = r"^[0-9a-f]{8}$"
@@ -32,9 +33,10 @@ TASK_MAX = 19000
 USAGE_MAX = 10**12
 DEFINITION_MAX = 8 * 1024
 DEFINITION_QUOTED_MAX = 10000
-FAMILIES = ("claude", "codex")
+FAMILIES = ("claude", "codex", "agy")
 CLAUDE_MODES = ("default", "acceptEdits", "auto", "dontAsk", "bypassPermissions", "plan", "manual")
 CODEX_MODES = ("ask", "skip_all")
+AGY_MODES = ("default", "accept-edits", "auto", "skip_all")
 DEFINITION_KEYS = frozenset({"description", "prompt", "tools", "disallowedTools", "model", "effort"})
 
 
@@ -76,7 +78,7 @@ class AgentSpec(_Wire):
     omit_when_none: ClassVar[Tuple[str, ...]] = ("account_identity",)
 
     task: str = Field(min_length=1, max_length=TASK_MAX)
-    family: Literal["claude", "codex"]
+    family: Literal["claude", "codex", "agy"]
     permission_mode: str = Field(min_length=1, max_length=32)
     agent_type: Optional[str] = Field(default=None, pattern=AGENT_NAME_PATTERN)
     definition_json: Optional[str] = Field(default=None, max_length=DEFINITION_MAX)
@@ -118,7 +120,7 @@ class AgentSpec(_Wire):
 
     @model_validator(mode="after")
     def _facts(self) -> "AgentSpec":
-        allowed = CLAUDE_MODES if self.family == "claude" else CODEX_MODES
+        allowed = CLAUDE_MODES if self.family == "claude" else CODEX_MODES if self.family == "codex" else AGY_MODES
         if self.permission_mode not in allowed:
             raise ValueError(f"permission_mode for {self.family} must be one of {', '.join(allowed)}")
         if self.definition_json is not None and (self.agent_type is None or self.family != "claude"):

@@ -25,6 +25,7 @@ BLOCK_UNIDENTIFIED: str = "unidentified_claude_here"
 BLOCK_WRITERS_UNMEASURED: str = "writers_unmeasured"
 BLOCK_NO_CONVERSATION: str = "no_conversation"
 BLOCK_TRANSCRIPT_MISSING: str = "transcript_missing"
+BLOCK_OFFLOADED: str = "offloaded"
 BLOCK_NAME_IN_USE: str = "name_in_use"
 BLOCK_NO_WRAPPER: str = "no_wrapper"
 BLOCK_PRESENCE_UNMEASURED: str = "presence_unmeasured"
@@ -159,7 +160,7 @@ def evaluate_candidate(
     if block is None and kind == KIND_GONE and not shell:
         directory = resume_directory(folder, conversation, family=row.get("agent_family"))
         if directory.refuses:
-            block, where = BLOCK_TRANSCRIPT_MISSING, directory.detail or "the conversation file is missing"
+            block, where = (BLOCK_OFFLOADED if directory.offloaded else BLOCK_TRANSCRIPT_MISSING), directory.detail or "the conversation file is missing"
         elif directory.working_dir:
             out["folder"] = folder = directory.working_dir
     if block is None and not shell and not m.writers_ok:

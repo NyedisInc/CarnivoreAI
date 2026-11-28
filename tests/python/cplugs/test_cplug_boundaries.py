@@ -26,7 +26,7 @@ def violations(source: str, cplug_id: str) -> List[str]:
 
 
 def test_every_cplug_imports_only_the_sdk_and_itself():
-    shipped = ["argent", "crate", "devwidgetlab", "flow", "huddle", "reviewboard", "save", "sessionchat", "share", "timemachine", "tmdevtools", "unread"]
+    shipped = ["argent", "crate", "devwidgetlab", "flow", "reviewboard", "save", "sessionchat", "share", "taskmanager", "timemachine", "tmdevtools", "unread"]
     assert feature_ids() == [i for i in shipped if (ROOT / "src" / "plugins" / i).is_dir()]
     found = {}
     for cplug_id in feature_ids():
@@ -61,4 +61,4 @@ def test_core_never_imports_an_cplug_except_the_ship_list():
         if core_importers(path.read_text(), ids):
             offenders.append(str(rel))
     assert offenders == []
-    assert core_importers("from src.plugins.huddle import store\n", ["huddle"])
+    assert core_importers("from src.plugins.taskmanager import store\n", ["taskmanager"])

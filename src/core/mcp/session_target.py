@@ -5,7 +5,7 @@ import asyncio
 from dataclasses import dataclass, field
 from typing import Any, Optional
 
-from src.core.mcp import common
+from src.core.mcp import common, reply_sentence
 from src.core.mcp.common import ToolError
 from src.core.session_identity import APP_SESSION_ID_PREFIX
 
@@ -50,6 +50,10 @@ def _row_has_id(row: dict, target: str) -> bool:
     if str(row["session_uuid"]) == target:
         return True
     return target.startswith(APP_ID_PREFIX) and row.get("legacy_session_id") == target
+
+
+def _note_row(target: str, row: dict) -> None:
+    reply_sentence.note_name(target, (row.get("title") or "").strip() or (row.get("claude_title") or "").strip() or row.get("tmux_name"))
 
 
 def _target_text(args: Any) -> str:
@@ -138,6 +142,7 @@ class TargetResolver:
                 if reach == LIVE:
                     raise ToolError(f"{target!r} is asleep (session_uuid {row['session_uuid']}): "
                                     f"{tool or 'this tool'} needs a live session; wake it with session_wake first") from None
+                _note_row(target, row)
                 return SessionTarget(kind=KIND_ASLEEP, row=row, session_uuid=str(row["session_uuid"]),
                                      tmux_name=row.get("tmux_name"))
             if reach == RECORD:
@@ -148,8 +153,16 @@ class TargetResolver:
             if reach == CLOSED:
                 closed = await self.closed_row(target)
                 if closed is not None:
+                    _note_row(target, closed)
                     return SessionTarget(kind=KIND_CLOSED, row=closed, session_uuid=str(closed["session_uuid"]),
                                          tmux_name=closed.get("tmux_name"))
+            if reach == CLOSED:
+                stopped = await self.stopped_row(target)
+                if stopped is not None:
+                    raise ToolError(
+                        f"{target!r} is a stopped session ({stopped.get('lifecycle_source') or 'no recorded cause'}) with no "
+                        "conversation id recorded, so there is nothing to resume: a claude or codex session reopens only on a "
+                        "recorded conversation") from None
             if reach == PINNED:
                 orphan = await self._orphan_pin(target)
                 if orphan is not None:

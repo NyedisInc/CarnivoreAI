@@ -29,7 +29,7 @@ DEFAULT_RULES: Dict[str, Any] = {
 }
 
 _TOP_KEYS = set(DEFAULT_RULES) | {"families"}
-_FAMILIES = ("claude", "codex")
+_FAMILIES = ("claude", "codex", "agy")
 
 
 class RulesError(ValueError):

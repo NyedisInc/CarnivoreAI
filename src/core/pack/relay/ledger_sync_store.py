@@ -108,13 +108,15 @@ def statuses_by_profile() -> Dict[str, StoredStatus]:
     return out
 
 
-def sessions_reports(provider: str, account_key: str) -> List[StoredSessions]:
-    out: List[StoredSessions] = []
+def all_sessions_reports() -> Dict[Tuple[str, str], List[StoredSessions]]:
+    out: Dict[Tuple[str, str], List[StoredSessions]] = {}
     for sender, prov, key, body, at in _rows("sessions"):
-        if prov != provider or key != account_key:
-            continue
         try:
-            out.append(StoredSessions(sender, LedgerSessionsBody.model_validate_json(body), at))
+            out.setdefault((prov, key), []).append(StoredSessions(sender, LedgerSessionsBody.model_validate_json(body), at))
         except ValidationError:
             logger.warning("pack_ledger_sync_bad_stored_sessions", account=key)
     return out
+
+
+def sessions_reports(provider: str, account_key: str) -> List[StoredSessions]:
+    return all_sessions_reports().get((provider, account_key), [])

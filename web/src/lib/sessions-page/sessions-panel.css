@@ -1,42 +1,10 @@
 @layer components {
-    .sp-page > * {
-        --pn-w: var(--oc-sheet-w);
-    }
-
-    @container sp-page (min-width: 1700px) {
-        .sp-page > * {
-            --pn-w: var(--oc-sheet-w-wide);
-        }
-    }
-
-    .sp-page[data-session] > .oc-titlebar {
-        margin-right: var(--pn-w);
-    }
-
-    .sp-hosts[data-panel] {
-        padding-right: var(--pn-w);
-    }
-
-
-    .sp-pn-bar {
-        flex: none;
-        justify-content: space-between;
-    }
-
-    .sp-pn-bar-l {
-        margin-right: auto;
-    }
-
-    .sp-page .sp-pn-bar [data-pn-back] {
-        display: none;
+    .sp-pn {
+        min-width: 0;
     }
 
     .sp-pn-scroll {
-        flex: 1 1 0;
-        min-height: 0;
         padding-bottom: var(--oc-space-5);
-        overflow-y: auto;
-        overscroll-behavior: contain;
     }
 
     .sp-pn-body {
@@ -298,17 +266,6 @@
         padding: var(--oc-space-3) 0 var(--oc-space-1);
     }
 
-    .sp-pn-conv > header {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: var(--oc-space-1) var(--oc-space-3);
-    }
-
-    .sp-pn-cdate {
-        color: var(--oc-text-bright);
-    }
-
     .sp-pn-began {
         margin: var(--oc-space-1) 0 var(--oc-space-2);
         color: var(--oc-text-secondary);
@@ -390,29 +347,6 @@
     }
 
     @media (max-width: 700px) {
-        .sp-hosts[data-panel] {
-            padding-right: 0;
-        }
-
-        .sp-page[data-session] > .oc-titlebar {
-            margin-right: 0;
-        }
-
-        .sp-page .sp-pn-bar [data-pn-back] {
-            display: inline-flex;
-            min-width: 44px;
-            min-height: 44px;
-        }
-
-        .sp-page .sp-pn-bar [data-pn-close],
-        .sp-pn-bar-l {
-            display: none;
-        }
-
-        .sp-pn-bar {
-            justify-content: flex-start;
-        }
-
         .sp-pn-actions [data-go],
         .sp-pn-list [data-btn],
         .sp-pn-link {

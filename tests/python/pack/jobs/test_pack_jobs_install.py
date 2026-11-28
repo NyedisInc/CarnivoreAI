@@ -273,11 +273,17 @@ class FakeTarget:
                 "tail": "Error: no bottle" if state == "failed" else ""}
 
 
+def _memory_db() -> sqlite3.Connection:
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE projects (uid TEXT, air_gap INTEGER)")
+    return conn
+
+
 def make_engine(tmp_path: Path, the_view: PlaceView, monkeypatch: pytest.MonkeyPatch, target: FakeTarget) -> Engine:
     state, jobs = tmp_path / "state", tmp_path / "jobs"
     state.mkdir()
     jobs.mkdir()
-    eng = Engine(state_dir=state, jobs_root=jobs, install_id=A, target_for=lambda _i: target, open_db=lambda: sqlite3.connect(":memory:"),
+    eng = Engine(state_dir=state, jobs_root=jobs, install_id=A, target_for=lambda _i: target, open_db=_memory_db,
                  view_for=lambda _r, _u: the_view)
     monkeypatch.setattr(eng, "_resolve_project", lambda folder: ({"uid": UID, "name": "app", "root": folder}, ""))
 

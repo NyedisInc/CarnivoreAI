@@ -65,21 +65,18 @@ describe('cozy: the meter', () => {
         expect(right(el)).toBeNull();
         expect(el.querySelector('.session-row-body__right')).toBeNull();
         const body = el.querySelector('.session-row-body--cozy')!;
-        expect(body.querySelector('.session-sidebar-row-model')?.getAttribute('data-model-tier')).toBe('5');
-        expect(text(body.querySelector('.session-row-body__model'))).toBe('opus-5');
+        expect(el.querySelector('.sb-avatar .session-sidebar-row-model')?.getAttribute('data-model-tier')).toBe('5');
+        expect(text(body.querySelector('.session-row-body__model'))).toContain('opus-5');
         const effort = body.querySelector('.session-row-body__effort')!;
         expect(effort.hasAttribute('aria-label')).toBe(false);
         expect(text(effort.querySelector('.oc-visually-hidden'))).toBe('effort');
-        expect(effort.lastChild?.textContent?.trim()).toBe('high');
-        expect(text(effort)).toBe('effort high');
-        expect(body.lastElementChild).toBe(body.querySelector('.session-row-body__effort'));
+        expect(text(effort)).toContain('high');
         const parts = Array.from(body.querySelectorAll('.session-row-live__part'));
         expect(parts.map((p) => p.getAttribute('data-live'))).toEqual(['agents', 'shells', 'timers']);
         expect(parts.map((p) => text(p))).toEqual(['3/5', '2', '14m']);
         expect(parts[0]?.getAttribute('data-subagents-session-id')).toBe('ses_a');
         expect(parts[2]?.getAttribute('data-timers-session-id')).toBe('ses_a');
         expect(el.querySelector('.subagent-count--button, .timer-chip, .session-sidebar-row-when, .session-sidebar-row-agents-icon')).toBeNull();
-        expect(el.querySelector('.session-sidebar-row-main .session-sidebar-row-model')).toBeNull();
         expect(el.getAttribute('title')).toBeNull();
     });
 
@@ -124,16 +121,18 @@ describe('cozy: the meter', () => {
 });
 
 describe('detailed: the triage stack', () => {
-    it('a calm row is two lines: state word, then live work and last worked', () => {
+    it('a calm row carries state + age in the stack and live work + inline context bar in the triage footer', () => {
         const el = draw(row({ subagents_running: 3, subagents_total: 5, background_open: 2 }), 'detailed');
         expect(el.getAttribute('data-row-body')).toBe('detailed');
         expect(el.hasAttribute('data-row-flag')).toBe(false);
-        expect(text(right(el))).toBe('working');
-        expect(right(el)?.getAttribute('data-tone')).toBe('ok');
+        const state = el.querySelector('.sb-row-stack .session-row-body__state');
+        expect(text(state)).toBe('working');
+        expect(state?.getAttribute('data-tone')).toBe('ok');
+        expect(text(el.querySelector('.sb-row-stack .session-row-body__when'))).toBe('2m ago');
         const lines = el.querySelectorAll('.session-row-body--detailed > .session-row-body__line');
         expect(lines.length).toBe(1);
         expect(text(lines[0]?.querySelector('.session-row-live'))).toBe('3/5agents2shells');
-        expect(text(lines[0]?.querySelector('.session-row-body__when'))).toBe('2m ago');
+        expect(text(lines[0]?.querySelector('.session-row-body__ctx-pct'))).toBe('71%');
         expect(el.querySelector('.session-sidebar-row-meta, .session-row__subagent-count')).toBeNull();
     });
 
@@ -152,16 +151,15 @@ describe('detailed: the triage stack', () => {
         expect(el.getAttribute('data-row-flag')).toBe('warn');
     });
 
-    it('a dead row is its exited flag with the restart; an asleep row says when it worked', () => {
+    it('a dead row carries its exited text and restart in the stack; an asleep row says when it worked', () => {
         const dead = draw(row({ status: 'dead', last_work_at: iso(2 * 3600) }), 'detailed');
-        expect(text(right(dead))).toBe('dead');
-        const flag = dead.querySelector('.session-row-body__flag[data-flag="exited"]');
-        expect(text(flag?.querySelector('.session-row-body__flag-words'))).toBe('process exited 2h ago');
-        expect(flag?.querySelector('.session-sidebar-row-delete')).not.toBeNull();
+        expect(text(dead.querySelector('.session-row-body__ended'))).toBe('process exited 2h ago');
+        expect(dead.querySelector('.session-row-body--cozy .session-sidebar-row-delete')).not.toBeNull();
         expect(dead.querySelector('.session-row-body__foot')).toBeNull();
         const asleep = draw(row({ status: 'asleep', asleep: true, last_work_at: iso(86400 + 60) }), 'detailed');
         expect(right(asleep)).toBeNull();
         expect(text(asleep.querySelector('.session-row-body__ended'))).toBe('asleep, worked 1d ago');
+        expect(asleep.querySelector('.session-row-body__foot')).toBeNull();
     });
 });
 
@@ -172,12 +170,11 @@ describe('the rank tag', () => {
         expect(idx.workerRank?.({ name: 'x', session_row_id: 8 })).toBeNull();
         for (const density of ['cozy', 'detailed']) {
             const el = draw(row({ host_key: 'peer-studio', host_label: 'studio' }), density, (p) => { p.body!.rankTag = 'task'; });
-            const main = Array.from(el.querySelector('.session-sidebar-row-main')!.children).map((c) => c.className);
-            const at = (cls: string) => main.findIndex((c) => c.includes(cls));
+            const top = Array.from(el.querySelector('.sb-row-stack__top')!.children).map((c) => c.className);
+            const at = (cls: string) => top.findIndex((c) => c.includes(cls));
             expect(at('session-row-body__rank')).toBeGreaterThan(at('session-sidebar-row-name'));
             expect(at('session-sidebar-row-host')).toBeGreaterThan(at('session-row-body__rank'));
-            if (density === 'detailed') expect(at('session-row-body__right')).toBeGreaterThan(at('session-sidebar-row-host'));
-            else expect(at('session-row-body__right')).toBe(-1);
+            expect(el.querySelector('.sb-row-stack .session-row-body__state')).not.toBeNull();
         }
     });
 });

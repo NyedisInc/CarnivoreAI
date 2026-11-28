@@ -11,12 +11,14 @@
     transport?: string | null;
     usageLimit?: string | null;
     loginExpired?: string | null;
+    activityHint?: string | null;
     note: string;
   }
 
   const cases: LedCase[] = [
     { status: 'working', note: 'green, breathing ring' },
     { status: 'working_subagent', note: 'green, sub agents running' },
+    { status: 'working_subagent', activityHint: 'background', note: 'background' },
     { status: 'question', note: 'yellow, blocked on you' },
     { status: 'notice', note: 'light blue, wants attention' },
     { status: 'finished_unread', note: 'crisp still ring, unread turn' },
@@ -45,12 +47,13 @@
         transport={c.transport ?? null}
         usageLimit={c.usageLimit ?? null}
         loginExpired={c.loginExpired ?? null}
+        activityHint={c.activityHint ?? null}
         showLabel={true}
       />
       <code class="sg-led-props"
         >{c.status ?? 'null'}{c.unread ? ' unread' : ''}{c.startupGate ? ' startupGate' : ''}{c.transport
           ? ' transport=' + c.transport
-          : ''}{c.usageLimit ? ' usageLimit' : ''}{c.loginExpired ? ' loginExpired' : ''}</code
+          : ''}{c.usageLimit ? ' usageLimit' : ''}{c.loginExpired ? ' loginExpired' : ''}{c.activityHint ? ' hint=' + c.activityHint : ''}</code
       >
       <span class="sg-led-note">{c.note}</span>
     </li>

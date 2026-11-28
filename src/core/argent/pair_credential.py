@@ -115,12 +115,16 @@ class CredentialSender:
 
     def __init__(self, *, store: ArgentStore, tokens: TokenStore, peer: PeerFn, candidates: Callable[[], List[str]],
                  allows: Callable[[str], Optional[bool]], read_settings: Callable[[], Any], approved: Optional[Callable[[str], bool]] = None,
-                 clock: Callable[[], float] = time.time, delegates: Optional[Delegates] = None, label: Callable[[str], str] = lambda iid: iid) -> None:
+                 clock: Callable[[], float] = time.time, delegates: Optional[Delegates] = None, label: Callable[[str], str] = lambda iid: iid, max_life: Optional[int] = None,
+                 frozen: Callable[[], bool] = lambda: False, denied: Callable[[str], bool] = lambda _iid: False) -> None:
         self._store, self._tokens, self._peer, self._candidates = store, tokens, peer, candidates
         self._allows, self._read_settings, self._clock = allows, read_settings, clock
         self._approved = approved or (lambda _iid: False)
         self._delegates = delegates or Delegates(store, tokens, read_settings=read_settings, clock=clock)
         self._label = label
+        self._max_life = max_life
+        self._frozen = frozen
+        self._denied = denied
         self.sent: Dict[str, Dict[str, Any]] = {}
         self._retry_at: Dict[str, float] = {}
         self._fails: Dict[str, int] = {}
@@ -145,12 +149,16 @@ class CredentialSender:
         if login is None or source != "own" or float(login["expires_at"]) <= now + MIN_REMAINING_SECONDS:
             return []
         pushed: List[str] = []
-        listed = [only] if only else self._candidates()
+        frozen = await asyncio.to_thread(self._frozen)
+        listed = [only] if only else await asyncio.to_thread(self._candidates)
         if not only:
             for iid in await asyncio.to_thread(self._store.delegate_installs):
-                if iid not in listed:
-                    async with self._lock(iid):
-                        await self._delegates.revoke(iid)
+                if iid in listed:
+                    continue
+                if frozen and not await asyncio.to_thread(self._denied, iid):
+                    continue
+                async with self._lock(iid):
+                    await self._delegates.revoke(iid)
         for iid in listed:
             lock = self._lock(iid)
             if force and (lock.locked() or now - self._forced_at.get(iid, -1e9) < FORCE_MIN_SECONDS):
@@ -158,20 +166,37 @@ class CredentialSender:
             async with lock:
                 if force:
                     self._forced_at[iid] = now
-                if await self._push_one(iid, login, now, force):
+                if await self._push_one(iid, login, now, force, frozen):
                     pushed.append(iid)
         return pushed
+
+    def delegate_copies(self, iid: str, since_ms: int) -> List[Dict[str, Any]]:
+        return self._delegates.copies_of(iid, since_ms)
+
+    async def revoke_removed(self, iid: str) -> str:
+        async with self._lock(iid):
+            killed: List[str] = []
+            pending = await self._delegates.revoke(iid, killed)
+            if pending is None:
+                return "none"
+            state = "pending" if pending else ("dead" if killed else "expired")
+            self.sent[iid] = {"state": state, "expires_at": max((int(e["expires_at"]) for e in pending), default=None)}
+        logger.info("argent_delegate_removed", target=iid, state=state, killed=len(killed), pending=len(pending))
+        return state
 
     def _lock(self, install_id: str) -> asyncio.Lock:
         return self._locks.setdefault(install_id, asyncio.Lock())
 
-    async def _push_one(self, iid: str, login: Dict[str, object], now: float, force: bool) -> bool:
-        if self._allows(iid) is False or not self._approved(iid):
+    async def _push_one(self, iid: str, login: Dict[str, object], now: float, force: bool, frozen: bool = False) -> bool:
+        if self._allows(iid) is False:
+            await self._delegates.revoke(iid)
+        pre, approved = await asyncio.to_thread(lambda: (self._frozen(), self._approved(iid)))
+        if not approved and (not (frozen or pre or await asyncio.to_thread(self._frozen)) or await asyncio.to_thread(self._denied, iid)):
             await self._delegates.revoke(iid)
         link = self._peer(iid)
         if link is None or CAP_CREDENTIAL not in link[1]:
             return False
-        if self._allows(iid) is not True or not self._approved(iid):
+        if self._allows(iid) is not True or not approved:
             self.sent[iid] = {"state": "not_accepting", "expires_at": None}
             return False
         rec = await asyncio.to_thread(self._store.delegate_get, iid)
@@ -180,7 +205,7 @@ class CredentialSender:
         if not force and self._retry_at.get(iid, 0.0) > now:
             return False
         try:
-            minted = await self._delegates.mint(self._label(iid))
+            minted = await self._delegates.mint(await asyncio.to_thread(self._label, iid))
         except DelegateUnavailable as exc:
             self.sent[iid] = {"state": "no_delegate" if exc.code == "route_missing" else "failed", "expires_at": None}
             self._back_off(iid, 600.0 if exc.code == "route_missing" else None)
@@ -191,7 +216,7 @@ class CredentialSender:
         await asyncio.to_thread(self._store.delegate_put, iid, {**base, "stale": [*base.get("stale", []), fresh]})
         body = {"tenant_id": login["tenant_id"], "identity_id": login["identity_id"], "display_name": login["display_name"],
                 "access_token": minted.token, "expires_at": expiry_ms, "ca_pem": self._ca_text()}
-        outcome = await self._post(link[0], iid, body)
+        outcome = "too_long" if self._max_life is not None and minted.expires_in > self._max_life else await self._post(link[0], iid, body)
         self.sent[iid] = {"state": outcome, "expires_at": expiry_ms if outcome == "pushed" else None}
         if outcome != "pushed":
             self._back_off(iid, None)

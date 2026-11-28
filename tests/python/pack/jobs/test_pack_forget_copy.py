@@ -456,6 +456,9 @@ class _Links:
     def capabilities(self, install_id: str) -> List[str]:
         return self._caps
 
+    def client(self, install_id: str) -> None:
+        return None
+
 
 def test_the_body_sent_to_a_computer_without_the_capability_is_todays_body(world, monkeypatch) -> None:
     from src.core.federation import peer_links
@@ -466,13 +469,13 @@ def test_the_body_sent_to_a_computer_without_the_capability_is_todays_body(world
         conn.commit()
     sent: List[Dict[str, Any]] = []
 
-    async def fake_call(peer, method, path, body=None):
+    async def fake_call(peer, method, path, body=None, **_k):
         sent.append(body)
         return {"root": body["root"]}
 
     peer = type("Peer", (), {"peer_install_id": "iid-b", "label": "b", "key": "b"})()
     monkeypatch.setattr(project_replica_routes, "call_peer", fake_call)
-    monkeypatch.setattr(project_replica_routes, "find_peer", lambda machine: peer)
+    monkeypatch.setattr(project_replica_routes, "find_peer", lambda machine, **_k: peer)
     monkeypatch.setattr(project_replica_routes.direction, "contained", lambda iid: False)
     monkeypatch.setattr(project_replica_routes, "_sync_proxy_scope", lambda iid: None)
     monkeypatch.setattr(project_replica_routes.bundles, "is_repo", lambda root: False)

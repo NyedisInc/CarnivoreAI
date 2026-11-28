@@ -10,10 +10,12 @@
     interface Props {
         plugin: Pick<CplugItem, 'cplugId' | 'name' | 'unverified' | 'installKey' | 'declared'>;
         surface: Surface;
+        bar?: boolean;
+        fill?: boolean;
         t: Translate;
     }
 
-    const { plugin, surface, t }: Props = $props();
+    const { plugin, surface, bar = true, fill = false, t }: Props = $props();
     const declared = $derived(plugin.declared ?? { routes: [], tools: [] });
     let state = $state<SurfaceState>({ kind: 'loading' });
 
@@ -29,7 +31,7 @@
 </script>
 
 {#if state.kind === 'ready'}
-    <Renderer cplugId={plugin.cplugId} name={plugin.name} unverified={plugin.unverified} document={state.document} {declared} stale={state.stale} {t} />
+    <Renderer cplugId={plugin.cplugId} name={plugin.name} unverified={plugin.unverified} document={state.document} {declared} stale={state.stale} {bar} {fill} {t} />
 {:else}
-    <HostFrame name={plugin.name} unverified={plugin.unverified} note={line ? t(line) : null} {t} />
+    <HostFrame name={plugin.name} unverified={plugin.unverified} {bar} {fill} note={line ? t(line) : null} {t} />
 {/if}

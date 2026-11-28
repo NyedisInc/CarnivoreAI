@@ -289,7 +289,7 @@ def test_confirmation_names_the_artifact_and_the_target_release(tmp_path):
     trail = write_trail(tmp_path, CANONICAL_LINES)
     _, plan = run_cli(trail, "0.8.1")
     text = plan["confirmation"]
-    assert "cloude.db" in text
+    assert "carnivore.db" in text
     assert "0.8.1" in text
     assert "schema v2" in text
     assert plan["target_code_started_at"] in text

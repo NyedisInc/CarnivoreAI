@@ -30,6 +30,12 @@ def _run_one_time_migrations(ctx: "BootContext", state_dir: Path) -> None:
 
     config_path = Path(settings.auth_config_file).expanduser()
     fresh_install = ctx.datastore_state.fresh_install
+    from src.plugins.host.renamed_entry import migrate as migrate_renamed_entries
+
+    migrate_renamed_entries(state_dir)
+    from src.plugins.host.renamed_files import migrate as migrate_renamed_files
+
+    migrate_renamed_files(state_dir)
     try:
         migrate_split_plugins(state_dir, config_path, fresh_install)
     except (OSError, ValueError) as exc:
@@ -88,6 +94,11 @@ def _host_steps() -> list[BootStep]:
         from src.plugins.host import retired_profiles
 
         retired_profiles.retire_old_profiles(state_dir)
+        from src.core.app_alerts import service as alert_service
+        from src.plugins.host import renamed
+
+        renamed.alert_shadowed_installs(state_dir, cplugs_host.definitions(), alert_service.raise_alert)
+        renamed.alert_stuck_carries(state_dir, cplugs_host.definitions(), alert_service.raise_alert)
         await held.host.start()
 
     async def stop(ctx: "BootContext") -> None:
@@ -114,9 +125,13 @@ async def _start_sidecar(ctx: "BootContext", host: object) -> None:
     refresher = app.state.catalog_index_refresher
     refresher.after_pass = app.state.sidecar_runtime.index.sync
     refresher.hourly_while = app.state.sidecar_runtime.index.third_party_enabled
+    ctx.services.catalog.index_cache.after_index_sync = refresher.notify_after_pass
 
 
 async def _stop_sidecar(ctx: "BootContext") -> None:
+    studio_mgr = getattr(ctx.app.state, "plugin_studio_dev", None)
+    if studio_mgr is not None and hasattr(studio_mgr, "shutdown"):
+        await studio_mgr.shutdown()
     await ctx.app.state.sidecar_runtime.stop()
 
 
@@ -136,8 +151,17 @@ def _stop_card_push(_ctx: "BootContext") -> None:
 
 def _tune_gc(_ctx: "BootContext") -> None:
     from src.core.perf_hooks import gc_tuning
+    from src.core.product_identity import test_mode_enabled
 
-    gc_tuning.tune_after_startup()
+    if test_mode_enabled():
+        gc_tuning.tune_after_startup()
+        return
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        gc_tuning.tune_after_startup()
+        return
+    loop.call_later(8.0, gc_tuning.tune_after_startup)
 
 
 def _flush_request_log(_ctx: "BootContext") -> None:

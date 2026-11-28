@@ -1,4 +1,9 @@
-import { REVIEW_BLOCKING_KINDS, REVIEW_INSTRUCTIONS_WRITE_KIND, REVIEW_KINDS } from '../../../../client/js/labels/skill.js';
+import {
+    REVIEW_BLOCKING_KINDS,
+    REVIEW_INSTRUCTIONS_WRITE_KIND,
+    REVIEW_KINDS,
+    REVIEW_LEGACY_BLOCKING_KINDS,
+} from '../../../../client/js/labels/skill.js';
 import type { CatalogReview, CatalogReviewWarning } from './types';
 
 export const MAX_WARNINGS = 50;
@@ -51,12 +56,13 @@ function permittedVerdicts(found: FindingSummary, malformed: boolean): Set<strin
     if (malformed) return new Set();
     if (!found.count) return new Set(['clean']);
     if (found.blocking) return new Set(['blocked']);
-    return found.unknown ? new Set(['flagged', 'blocked']) : new Set(['flagged']);
+    return found.unknown || found.legacyBlocking ? new Set(['flagged', 'blocked']) : new Set(['flagged']);
 }
 
 interface FindingSummary {
     count: number;
     blocking: boolean;
+    legacyBlocking: boolean;
     unknown: boolean;
     instructionsWrite: boolean;
 }
@@ -108,7 +114,7 @@ export function reviewView(review: CatalogReview | null | undefined): ReviewView
     const stated = raw !== undefined && raw !== null;
     const malformed = stated && !Array.isArray(raw);
     const warnings: WarningView[] = [];
-    const found: FindingSummary = { count: 0, blocking: false, unknown: false, instructionsWrite: false };
+    const found: FindingSummary = { count: 0, blocking: false, legacyBlocking: false, unknown: false, instructionsWrite: false };
     const instructionsDetails: string[] = [];
     let instructionsFindings = 0;
     if (Array.isArray(raw)) {
@@ -117,6 +123,7 @@ export function reviewView(review: CatalogReview | null | undefined): ReviewView
             const kind = shown(warning.kind, MAX_KIND_CHARS);
             found.count += 1;
             if (REVIEW_BLOCKING_KINDS.has(kind ?? '')) found.blocking = true;
+            else if (REVIEW_LEGACY_BLOCKING_KINDS.has(kind ?? '')) found.legacyBlocking = true;
             else if (!REVIEW_KINDS.has(kind ?? '')) found.unknown = true;
             if (kind === REVIEW_INSTRUCTIONS_WRITE_KIND) {
                 found.instructionsWrite = true;

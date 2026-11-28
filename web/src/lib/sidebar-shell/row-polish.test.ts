@@ -58,7 +58,7 @@ describe('sidebar row polish', () => {
     });
 
     it('a row lights up and shows the pointer on hover, with no shift', () => {
-        expect(css).toMatch(/\.session-sidebar-row\[role="option"\]:not\(\[aria-selected="true"\]\):hover \{[^}]*background: color-mix/);
+        expect(css).toMatch(/\.session-sidebar-row\[role="option"\]:not\(\[aria-selected="true"\]\):hover \{[^}]*background: var\(--oc-ground-hover\)/);
         expect(css).not.toMatch(/translate|margin-left|padding-left/);
     });
 });

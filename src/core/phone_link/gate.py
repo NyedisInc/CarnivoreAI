@@ -20,6 +20,7 @@ DENIED_PREFIXES = (
     "/api/v1/auth/qr", "/api/v1/auth/enrollment", "/api/v1/setup", "/setup",
     "/api/v1/auth/join", "/api/v1/computers/add", "/api/v1/computers/peers", "/api/v1/computers/join",
     "/api/v1/computers/leave",
+    "/api/v1/catalog/computer-account", "/api/v1/catalog/account/sessions/revoke-others", "/api/v1/catalog/account/delete",
 )
 
 STRIPPED_HEADERS = (b"x-forwarded-for", b"forwarded", b"x-real-ip", b"x-forwarded-host",

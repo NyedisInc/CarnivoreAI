@@ -257,6 +257,11 @@ class AutomationStore(ClaimMixin):
         with closing(self._read()) as conn:
             return [run_row(r) for r in conn.execute(sql + " ORDER BY seq DESC LIMIT ?", (*args, max(1, min(limit, m.RUNS_KEPT))))]
 
+    def latest_runs(self) -> Dict[str, Dict[str, Any]]:
+        sql = "SELECT r.* FROM runs r WHERE r.seq = (SELECT MAX(seq) FROM runs WHERE automation_id = r.automation_id)"
+        with closing(self._read()) as conn:
+            return {r["automation_id"]: run_row(r) for r in conn.execute(sql)}
+
     def latest_stopped_runs(self) -> Dict[str, Dict[str, Any]]:
         busy = (m.CLAIMED, m.RUNNING)
         marks = ",".join("?" * len(busy))

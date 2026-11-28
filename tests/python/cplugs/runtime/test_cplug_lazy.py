@@ -5,7 +5,7 @@ import asyncio
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, List
 
 import pytest
 
@@ -254,18 +254,31 @@ def test_a_burst_of_calls_samples_at_most_once_per_busy_interval(monkeypatch, tm
 
 
 def test_the_manifest_declares_subscriptions_and_the_spec_carries_them():
-    from src.plugins.host import sidecar_manifest as man
+    from src.plugins.host.plugin_manifest import from_manifest_v2
     from src.plugins.host.sidecar_spec import build_spec
+    from src.plugins.sdk.manifest_v2 import ManifestV2Error, parse_manifest_v2
 
-    base = {"schema": 1, "id": "clock", "name": "Clock", "description": "d", "version": "1.0.0", "entry": "main.py", "tools": []}
-    assert man.parse_sidecar_manifest(base, "clock", "dg").subscriptions == ()
-    m = man.parse_sidecar_manifest({**base, "subscriptions": ["feed.meta"]}, "clock", "dg")
+    base = {
+        "schema": 2,
+        "id": "clock",
+        "name": "Clock",
+        "description": "d",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "author": "me",
+        "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    }
+    assert from_manifest_v2(parse_manifest_v2(base), "dg").subscriptions == ()
+    m = from_manifest_v2(
+        parse_manifest_v2({**base, "events": {"on": ["feed.meta"]}, "permissions": {"read": ["feed.meta"]}}),
+        "dg",
+    )
     assert m.subscriptions == ("feed.meta",)
     d = SimpleNamespace(id="clock", install_key="k", folder=Path("/x"), code_root=Path("/x"), item_id="clock", manifest=m)
     assert build_spec(d, frozenset(), {}).subscriptions == frozenset({"feed.meta"})
-    for bad in (["nope"], "feed.meta", ["feed.meta", "feed.meta"]):
-        with pytest.raises(man.SidecarManifestError):
-            man.parse_sidecar_manifest({**base, "subscriptions": bad}, "clock", "dg")
+    for bad in ("feed.meta", ["feed.meta", "feed.meta"], ["BAD!"]):
+        with pytest.raises(ManifestV2Error):
+            parse_manifest_v2({**base, "events": {"on": bad}})
 
 
 def test_a_subscriber_is_never_idle_evicted_and_an_event_ensures_the_process(world):

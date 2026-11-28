@@ -9,7 +9,7 @@ from .conftest import LEAK, assert_fixed
 
 
 def test_mcp_usage_unreadable_answers_a_code_not_the_exception_type(driver, monkeypatch):
-    def broken(_days):
+    def broken(_days, _scope="pack"):
         raise sqlite3.OperationalError(f"disk I/O error {LEAK}")
 
     monkeypatch.setattr(mcp_usage_routes, "_answer", broken)

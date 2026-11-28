@@ -116,7 +116,18 @@ def test_a_fork_row_stays_on_its_anchors_host(conn):
 
 
 HOST_FIELDS = ("host_key", "host_label", "host_state")
-FEDERATION_FIELDS = ("session_uuid", "origin_install_id", "project_uid", "company_uid")
+FEDERATION_FIELDS = (
+    "session_uuid",
+    "origin_install_id",
+    "project_uid",
+    "company_uid",
+    "parent_project_uid",
+    "last_work_at",
+    "is_swarm",
+    "swarm_role",
+    "hop",
+    "origin_label",
+)
 
 
 def test_the_listing_wrapper_is_unchanged_but_for_its_trailing_host_and_federation_fields():
@@ -132,5 +143,8 @@ def test_the_listing_wrapper_is_unchanged_but_for_its_trailing_host_and_federati
     new_json = SessionInfo(**data).model_dump_json()
     assert new_json == (old_json[:-1]
                         + ',"host_key":"local","host_label":"this machine","host_state":"up"'
-                        + ',"session_uuid":null,"origin_install_id":null,"project_uid":null,"company_uid":null}')
-    assert list(json.loads(new_json))[-7:] == [*HOST_FIELDS, *FEDERATION_FIELDS]
+                        + ',"session_uuid":null,"origin_install_id":null,"project_uid":null,"company_uid":null'
+                        + ',"parent_project_uid":null,"last_work_at":null'
+                        + ',"is_swarm":false,"swarm_role":null,"hop":0,"origin_label":null}')
+    tail = [*HOST_FIELDS, *FEDERATION_FIELDS]
+    assert list(json.loads(new_json))[-len(tail):] == tail

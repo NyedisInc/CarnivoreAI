@@ -47,7 +47,8 @@ WALK = """([effort, wrap]) => {
   const a = spark.getBoundingClientRect(), m = mark.getBoundingClientRect();
   return {
     roots, markIsRoot: makesEffect(mark), markContainsSpark: mark.contains(spark),
-    animations: document.getAnimations().filter((x) => x.effect.target && spark.contains(x.effect.target)).length,
+    join: getComputedStyle(spark).animationName,
+    motes: ['::before', '::after'].filter((q) => getComputedStyle(spark, q).content !== 'none').length,
     inset: [m.left - a.left, m.top - a.top, a.right - m.right, a.bottom - m.bottom].map((v) => Math.round(v * 10) / 10),
   };
 }"""
@@ -94,7 +95,8 @@ def test_spark_is_a_sibling_of_the_backdrop_root_mark(page, effort):
     assert not r["markIsRoot"], "the mark is a backdrop root again (the max rainbow is an opacity cross-fade, issue #1821)"
     assert not r["markContainsSpark"], "the spark is inside the mark again (2.5 to 8 times the GPU inside a backdrop root, issue #1821)"
     assert r["roots"] == [], f"an ancestor of the spark creates an effect node: {r['roots']}"
-    assert r["animations"] == 2, "the spark must still run its two motes"
+    assert r["join"] == "amb-join-sparks-steam", "the spark must join the shared ambient clock (issue #3265)"
+    assert r["motes"] == 2, "the spark must still carry its two motes"
     assert r["inset"] == [3, 3, 3, 3], f"the spark must sit 3px around the 16px mark, got {r['inset']}"
 
 

@@ -15,7 +15,7 @@ from src.api.catalog_hosted_routes import (
     _safe_item_id,
     _state_dir,
 )
-from src.core.catalog import catalog_auth, hosted_api
+from src.core.catalog import catalog_auth, client_sessions, hosted_api
 from src.models.catalog_ratings import ItemRatingWriteResponse, RatingWriteRequest
 
 logger = structlog.get_logger()
@@ -35,8 +35,9 @@ def _unauthorized() -> HTTPException:
 
 async def _bearer(request: Request, allow_guest: bool = False) -> str:
     try:
-        return await catalog_auth.bearer(
-            _state_dir(request), _catalog(request).api_base_url(), allow_guest=allow_guest
+        return await catalog_auth.bearer_for(
+            _state_dir(request), _catalog(request).api_base_url(), client_sessions.client_ref(request).key,
+            allow_guest=allow_guest,
         )
     except catalog_auth.SignedOut:
         raise _unauthorized() from None

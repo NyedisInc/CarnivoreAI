@@ -47,7 +47,7 @@ def build_main(state_dir: Path) -> Path:
         conn.commit()
     store = SpectatorLinksStore(str(path))
     asyncio.run(store.init())
-    ready.ensure(path, work_storage.folder(state_dir), state_dir)
+    ready.ensure(path, work_storage.legacy_folder(state_dir), state_dir)
     ready.forget(path)
     return path
 

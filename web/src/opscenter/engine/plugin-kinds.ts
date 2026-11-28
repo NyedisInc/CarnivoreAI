@@ -7,6 +7,10 @@ export function registerPluginKind(kind: PluginKind, meta: CellMeta): void {
   KINDS.set(kind, meta);
 }
 
+export function unregisterPluginKind(kind: string): boolean {
+  return KINDS.delete(kind as PluginKind);
+}
+
 export function pluginKinds(): PluginKind[] {
   return [...KINDS.keys()];
 }
@@ -22,6 +26,7 @@ export function isPluginSlot(kindOrSlot: string): boolean {
 export interface PanelProvider {
   manifests(): Readonly<Record<string, WidgetManifest>>;
   isPanel(kind: string): boolean;
+  canPopOut?(kind: string): boolean;
   tail(kind: string): string | undefined;
   fit(kind: string): { w: number; h: number };
   info(kind: string): { about: string; data: string } | undefined;
@@ -29,7 +34,7 @@ export interface PanelProvider {
   loaded(): boolean;
 }
 
-let panelProvider: PanelProvider = { manifests: () => ({}), isPanel: () => false, tail: () => undefined, info: () => undefined, fit: () => ({ w: 6, h: 5 }), revision: () => 0, loaded: () => true };
+let panelProvider: PanelProvider = { manifests: () => ({}), isPanel: () => false, canPopOut: () => false, tail: () => undefined, info: () => undefined, fit: () => ({ w: 6, h: 5 }), revision: () => 0, loaded: () => true };
 
 export function setPanelProvider(provider: PanelProvider): void {
   panelProvider = provider;

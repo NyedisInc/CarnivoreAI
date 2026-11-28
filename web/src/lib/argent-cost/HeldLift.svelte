@@ -1,6 +1,10 @@
 
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import Button from '../base/Button.svelte';
+  import BudgetAskForm from './BudgetAskForm.svelte';
+  import { loadBudgetRequests, type BudgetRequestRow } from './budget-ask';
+  import { resourcePush } from '../resource-push/boot';
   import { t } from '../i18n/index.svelte';
   import { authFetch } from '../../opscenter/api/auth.svelte';
   import type { LiftView } from './cost-view';
@@ -11,18 +15,16 @@
   let busy = $state(false);
   let said = $state('');
 
-  async function ask(): Promise<void> {
-    busy = true;
-    said = '';
+  let requests = $state<BudgetRequestRow[]>([]);
+
+  async function loadRequests(): Promise<void> {
     try {
-      await fetcher<unknown>('/argent/budget/requests', { method: 'POST', body: JSON.stringify({ item_id: itemId }) });
-      said = t('argent.card.lift_sent');
+      requests = await loadBudgetRequests(fetcher as (path: string) => Promise<unknown>);
     } catch {
-      said = t('argent.card.lift_failed');
-    } finally {
-      busy = false;
     }
   }
+  void loadRequests();
+  onDestroy(resourcePush().pushOrPoll(() => void loadRequests(), 60_000, ['argent_budget_requests']));
 
   async function liftInArgent(): Promise<void> {
     busy = true;
@@ -43,7 +45,7 @@
   {#if lift.isOwner}
     <Button size="sm" disabled={busy} data-argent-lift-open onclick={() => void liftInArgent()}>{t('argent.card.lift_in_argent')}</Button>
   {:else}
-    <Button size="sm" disabled={busy} data-argent-lift-ask onclick={() => void ask()}>{lift.owner ? t('argent.card.lift_ask', { owner: lift.owner }) : t('argent.cost.ask')}</Button>
+    <BudgetAskForm {itemId} capMicros={lift.capMicros ?? null} spentMicros={lift.spentMicros ?? null} held owner={lift.owner} {requests} {fetcher} onsent={() => void loadRequests()} />
     {#if !lift.owner}<span class="hl-said" data-argent-lift-governing>{lift.governingTitle ? t('argent.cost.governed_by', { title: lift.governingTitle }) : t('argent.cost.governed_above')}</span>{/if}
   {/if}
   {#if said}<span class="hl-said" role="status" data-argent-lift-said>{said}</span>{/if}

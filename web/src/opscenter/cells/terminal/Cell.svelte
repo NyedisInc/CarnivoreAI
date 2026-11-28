@@ -61,7 +61,7 @@
   const boundRow = $derived(rowFor(sessions.data, shownSession));
   const boundHue = $derived<StatusHue>(
     boundRow
-      ? statusHue(boundRow.activity_status, boundRow.startup_gate, boundRow.unread, hostOffline(boundRow), usageLimitLabel(boundRow))
+      ? statusHue(boundRow.activity_status, boundRow.startup_gate, boundRow.unread, hostOffline(boundRow), usageLimitLabel(boundRow), boundRow.activity_hint)
       : 'grey',
   );
   const boundWord = $derived(

@@ -38,7 +38,11 @@ export CARNIVORE_JOB_ID={job_id} CARNIVORE_JOB_DIR={cwd}
 {push_block}
 CAP={cap}
 set -m
-"${{SHELL:-/bin/bash}}" -l "$D/command.sh" >> "$D/output.log" 2>&1 < /dev/null &
+RUN_SHELL="${{SHELL:-/bin/bash}}"
+case "$(basename "$RUN_SHELL")" in
+  zsh) "$RUN_SHELL" -l -o no_nomatch "$D/command.sh" >> "$D/output.log" 2>&1 < /dev/null & ;;
+  *)   "$RUN_SHELL" -l "$D/command.sh" >> "$D/output.log" 2>&1 < /dev/null & ;;
+esac
 PID=$!
 ( sleep "$CAP"; : > "$D/capped"; kill -TERM -"$PID" 2>/dev/null; sleep 10; kill -KILL -"$PID" 2>/dev/null ) &
 WATCH=$!
@@ -125,7 +129,6 @@ def _tail(log_path: Path, tail_bytes: int) -> "tuple[str, int]":
 
 def status(job_id: str, *, meta_dir: Path, socket: str = paths.JOBS_TMUX_SOCKET, tail_bytes: int = 16384) -> RunStatus:
     meta = Path(meta_dir)
-    text, size = _tail(meta / "output.log", tail_bytes)
 
     def exit_code() -> Optional[int]:
         try:
@@ -134,22 +137,28 @@ def status(job_id: str, *, meta_dir: Path, socket: str = paths.JOBS_TMUX_SOCKET,
             return None
 
     code = exit_code()
+    text, size = _tail(meta / "output.log", tail_bytes)
     if code is None and alive(job_id, socket=socket):
         return RunStatus(HostState.RUNNING, None, None, text, size)
     if code is None:
         code = exit_code()
+        text, size = _tail(meta / "output.log", tail_bytes)
     if code is not None:
         return RunStatus(HostState.EXITED, code, "time cap" if code == 124 else None, text, size)
     return RunStatus(HostState.FAILED, None, "the job's session ended without an exit code", text, size)
 
 
 def pane_pids(*, socket: str = paths.JOBS_TMUX_SOCKET) -> List[int]:
+    return list(pane_pids_by_job(socket=socket).values())
+
+
+def pane_pids_by_job(*, socket: str = paths.JOBS_TMUX_SOCKET) -> dict:
     done = _tmux(socket, "list-panes", "-a", "-F", "#{session_name} #{session_attached} #{pane_pid}")
-    out: List[int] = []
+    out: dict = {}
     for line in done.stdout.splitlines() if done.returncode == 0 else []:
         parts = line.split()
         if len(parts) == 3 and parts[0].startswith("cvjob_") and parts[1] == "0" and parts[2].isdigit():
-            out.append(int(parts[2]))
+            out["job_" + parts[0][len("cvjob_"):]] = int(parts[2])
     return out
 
 

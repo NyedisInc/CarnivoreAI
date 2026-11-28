@@ -6,6 +6,7 @@ import collections
 import json
 import re
 import secrets
+import sqlite3
 import time
 from contextlib import closing
 from dataclasses import asdict, dataclass
@@ -14,7 +15,7 @@ from typing import Any, Deque, Dict, List, Optional, Set
 
 import structlog
 
-from src.core.computers import add_preview, store
+from src.core.computers import add_preview, commit, store
 from src.core.computers.add_preview import HostKeyJail
 from src.core.computers.invites import MemberRefused, TooManyInvites
 from src.core.computers.join_link import build_link
@@ -43,7 +44,7 @@ KNOWN_ERRORS = frozenset({
     "no_console_login", "server_timeout", "setup_timeout", "too_many_attempts", "unsupported_system", "usage", "verify_failed",
     "bad_code", "code_used_up", "code_expired", "no_pack_found", "bad_totp", "already_joined",
     "wrong_code", "expired", "no_invite", "busy", "rate_limited", "refused", "main_mismatch", "join_has_peers", "no_pack", "unreachable",
-    "join_failed", "bad_request", "undetermined", "unavailable", "no_relay", "incompatible",
+    "join_failed", "bad_request", "undetermined", "unavailable", "no_relay", "incompatible", "pack_full",
 })
 _STEPS = ("download", "install", "launch", "wait_server", "join_ready", "join", "connect")
 
@@ -173,9 +174,21 @@ def _members(rt: Any) -> Dict[str, bool]:
         return {r.peer_install_id: r.first_link_at is not None for r in store.members_tls(conn)}
 
 
+def _check_room(rt: Any) -> None:
+    with closing(rt.open_db()) as conn:
+        commit.check_room(conn, "")
+
+
 async def _send_link(rt: Any, job: AddJob, proc: asyncio.subprocess.Process) -> None:
     if rt.invites is None or rt.join_server is None or rt.identity is None:
         raise _Fail("computers_unavailable")
+    try:
+        await asyncio.to_thread(_check_room, rt)
+    except commit.JoinRefused:
+        raise _Fail("pack_full") from None
+    except sqlite3.Error as exc:
+        log.warning("computers_room_unreadable", error_type=type(exc).__name__)
+        raise _Fail("computers_unavailable") from None
     try:
         inv = rt.invites.mint("ssh_add", job_id=job.id)
     except MemberRefused:

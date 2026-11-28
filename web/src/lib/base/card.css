@@ -1,4 +1,4 @@
-/* a wrapping row */
+/* a wrapping row the Task Manager */
 @layer patterns {
   .oc-card {
     --_on: var(--oc-surface-raised);

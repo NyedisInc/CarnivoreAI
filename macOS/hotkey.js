@@ -31,6 +31,7 @@ async function readPreference(api) {
   return acceleratorOf(result && result.reachable && result.data ? result.data.values : null);
 }
 
+/* cannot be read */
 function createHotkey({ globalShortcut, readAccelerator, onFire, report, store = null }) {
   let current = null;
   let held = false;

@@ -148,15 +148,16 @@ export function primaryAction(session: HistorySession): Primary {
         default:
             break;
     }
-    if (session.has_transcript) return { id: 'resume' };
+    if (session.has_transcript || session.offloaded) return { id: 'resume' };
     if (!session.claude_session_uuid) return { id: 'restart' };
     return { id: 'none', disabledReasonKey: 'projects.page.primary.gone_reason' };
 }
 
-export function diskTag(session: HistorySession): 'on-disk' | 'gone' | null {
+export function diskTag(session: HistorySession): 'on-disk' | 'offloaded' | 'gone' | null {
     if (session.state === 'running' || session.state === 'asleep') return null;
     if (!session.claude_session_uuid) return null;
-    return session.has_transcript ? 'on-disk' : 'gone';
+    if (session.has_transcript) return 'on-disk';
+    return session.offloaded ? 'offloaded' : 'gone';
 }
 
 export function findSession(

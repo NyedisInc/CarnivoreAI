@@ -31,6 +31,8 @@ LINK_TUNNEL_POP_AUDIENCE = b"relay.carnivore.ai/link-tunnel"
 ACME_TXT_PREFIX = b"carnivore-relay-acme-txt-v1\x00"
 CUSTOM_DOMAIN_PREFIX = b"carnivore-relay-custom-domain-v1\x00"
 APNS_PREFIX = b"carnivore-relay-apns-v1\x00"
+LINK_STATUS_PREFIX = b"carnivore relay v2 link-status\x00"
+STATUS_KEY_PREFIX = b"carnivore relay v2 status-key\x00"
 ACME_ACTIONS = ("set", "clear", "status")
 
 _B64URL_RE = re.compile(r"\A[A-Za-z0-9_-]*\Z")
@@ -103,6 +105,15 @@ def apns_message(device_id: str, ts: int, nonce: bytes, environment: str, token:
     return (APNS_PREFIX + device_id.encode("ascii") + b"\x00" + _be8(ts) + nonce
             + environment.encode("ascii") + b"\x00" + token.encode("ascii") + b"\x00"
             + collapse_id.encode("ascii") + b"\x00" + hashlib.sha256(ciphertext).digest() + AUDIENCE)
+
+
+def link_status_message(device_id: str, ts: int, seq: int, status: str) -> bytes:
+    return (LINK_STATUS_PREFIX + device_id.encode("ascii") + b"\x00" + _be8(ts) + _be8(seq)
+            + status.encode("ascii") + b"\x00" + AUDIENCE)
+
+
+def status_key_message(device_id: str, ts: int, nonce: bytes, key_hash: bytes) -> bytes:
+    return STATUS_KEY_PREFIX + device_id.encode("ascii") + b"\x00" + _be8(ts) + nonce + key_hash + AUDIENCE
 
 
 def link_id_for(device_id: str, nonce: bytes) -> str:

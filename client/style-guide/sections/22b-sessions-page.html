@@ -36,14 +36,12 @@ Alex (example-owner), 2026-10-14.</p>
 <h3 class="sg-h3" id="sessions-page-list">list view</h3>
 <dl class="sg-facts">
     <dt>shape</dt>
-    <dd><code>ListView.svelte</code> (<code>.sp-ix</code>): the lens rail on the left, one scroller (<code>.sp-list</code>, the base <code>List</code> at the roomy density, role listbox) on the
-        right holding the sticky column header and the ruled groups. The active lens is remembered per device.</dd>
+    <dd><code>ListView.svelte</code> (<code>.sp-ix</code>): one scroller (<code>.sp-list</code>, the base <code>List</code> at the roomy density, role listbox) holding the sticky column header and the ruled groups. The active lens is remembered per device.</dd>
     <dt>lens rail</dt>
-    <dd><code>LensRail.svelte</code> (<code>.sp-rail</code>): nine lenses (project, recents, most used, dormant, pinned, provider,
+    <dd><code>LensRail.svelte</code> (<code>.sp-rail</code>), drawn in the nav frame's fixed 208px side region (#2775, Joe (ccsliinc) 2026-11-20; the list view publishes its state): nine lenses (project, recents, most used, dormant, pinned, provider,
         computer, needs you, long runners), each a base row <code>Button</code> (<code>[data-lens]</code>) with its own icon and a live count
         (<code>.sp-n</code>). The active lens lists its groups as row <code>Button</code> sub-items (<code>[data-sec]</code>); the one scrolled to wears
-        <code>aria-current</code>. A lens the data cannot answer is disabled and says why (<code>.sp-why</code>). On a phone the
-        rail is rows of 44px chips and the keys hint (<code>.sp-keys</code>) is dropped.</dd>
+        <code>aria-current</code>. A lens the data cannot answer is disabled and says why (<code>.sp-why</code>). Below 720px of the page the frame's picker opens it as a sheet and the keys hint (<code>.sp-keys</code>) is dropped.</dd>
     <dt>column header</dt>
     <dd><code>ListHead.svelte</code> (<code>.sp-lhead</code>): sticky, small tracked uppercase headings (quiet small base <code>Button</code>s, <code>[data-sort]</code>) in the
         rows' own cell classes (<code>.sp-c-name</code> and friends) so each sits over its column. A click sorts the sessions inside
@@ -95,11 +93,9 @@ Alex (example-owner), 2026-10-14.</p>
 <h3 class="sg-h3" id="sessions-page-panel">slide-out panel</h3>
 <dl class="sg-facts">
     <dt>panel</dt>
-    <dd><code>SessionPanel.svelte</code> (<code>.sp-pn</code>): the detail of one session docked at the right of the page body
-        (480px, 560 from 1700px; the list makes room, <code>.sp-hosts[data-panel]</code>), non-modal. Selecting another row swaps the
-        content with an opacity crossfade (<code>.sp-pn-body</code>); the list keeps the keyboard. Escape, the close button or a
-        second press on the row closes it. At 700px or less it is a full sheet and <code>[data-pn-back]</code> ("&lt; sessions") returns to
-        the list. The title bar is the ledger chrome (<code>.pl-titlebar</code>, <code>.pl-label</code>); sections are
+    <dd><code>SessionPanel.svelte</code> (<code>.sp-pn</code>): the detail of one session in the frame's DETAIL region (360 to 560px of the page, under the one header, #2775), non-modal. Selecting another row swaps the
+        content with an opacity crossfade (<code>.sp-pn-body</code>); the list keeps the keyboard. Escape, the frame head's close key or a
+        second press on the row closes it. Below 900px of the page it replaces the list. The head is the frame's; sections are
         <code>.sp-pn-sec</code> with a hairline under each and definition lists <code>.sp-pn-dl</code>.</dd>
     <dt>head</dt>
     <dd><code>PanelHead.svelte</code>: the status light with its word and "via tier" (<code>.sp-pn-status</code>, <code>.sp-pn-src</code>), the

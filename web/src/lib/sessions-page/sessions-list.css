@@ -2,17 +2,10 @@
     .sp-ix {
         --go-w: 88px;
         --hd-h: 30px;
-        display: grid;
+        display: flex;
         flex: 1 1 0;
-        grid-template-columns: 208px minmax(0, 1fr);
         min-width: 0;
         min-height: 0;
-    }
-
-    @container sp-page (min-width: 1700px) {
-        .sp-ix {
-            grid-template-columns: 240px minmax(0, 1fr);
-        }
     }
 
     .sp-host[data-host='list'] {
@@ -26,11 +19,7 @@
         flex-direction: column;
         gap: var(--oc-space-0-5);
         min-width: 0;
-        min-height: 0;
         padding: var(--oc-space-3) var(--oc-space-2) var(--oc-space-4) var(--oc-space-3);
-        box-shadow: inset -1px 0 0 0 var(--oc-line-rule);
-        overflow-y: auto;
-        overscroll-behavior: contain;
     }
 
     .sp-label {
@@ -162,6 +151,11 @@
         min-width: 0;
     }
 
+    .sp-tail [data-go] {
+        flex: none;
+        white-space: nowrap;
+    }
+
     .sp-rail :is([data-sec], [data-inactive-toggle])[data-zero] {
         color: var(--oc-text-dim);
     }
@@ -181,6 +175,7 @@
 
     .sp-listcol {
         display: flex;
+        flex: 1 1 0;
         flex-direction: column;
         min-width: 0;
         min-height: 0;
@@ -577,8 +572,9 @@
         align-items: center;
         justify-content: center;
         gap: var(--oc-space-1-5);
-        width: var(--go-w);
-        min-width: 0;
+        width: auto;
+        min-width: var(--go-w);
+        max-width: none;
         justify-self: end;
         font-family: var(--font-mono);
     }
@@ -670,76 +666,6 @@
     }
 
     @media (max-width: 700px) {
-        .sp-ix {
-            grid-template-columns: minmax(0, 1fr);
-            grid-template-rows: auto minmax(0, 1fr);
-        }
-
-        .sp-rail {
-            flex-direction: row;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: 0;
-            padding: 0;
-            box-shadow: inset 0 -1px 0 0 var(--oc-line-rule);
-            overflow: visible;
-        }
-
-        .sp-rail > .sp-label,
-        .sp-keys {
-            display: none;
-        }
-
-        .sp-rail-chips,
-        .sp-subs {
-            display: flex;
-            flex-direction: row;
-            gap: var(--oc-space-1);
-            width: 100%;
-            min-width: 0;
-            margin: 0;
-            padding: var(--oc-space-1) var(--oc-space-3);
-            overflow-x: auto;
-            box-shadow: none;
-        }
-
-        .sp-subs {
-            padding-top: 0;
-        }
-
-        .sp-subs:empty {
-            display: none;
-        }
-
-        .sp-rail [data-lens],
-        .sp-rail :is([data-sec], [data-inactive-toggle]) {
-            flex: none;
-            align-items: center;
-            width: auto;
-            min-height: 44px;
-            padding: var(--oc-space-1) var(--oc-space-3);
-            border-color: var(--oc-line-panel);
-            font-size: var(--oc-fs-body);
-            order: 0 !important;
-        }
-
-        .sp-rail [data-lens][aria-pressed='true'],
-        .sp-rail :is([data-sec], [data-inactive-toggle])[aria-current='true'] {
-            border-color: var(--oc-text-muted);
-        }
-
-        .sp-rail [data-lens] .sp-why {
-            display: none;
-        }
-
-        .sp-rail [data-lens][disabled] {
-            flex-wrap: nowrap;
-        }
-
-        .sp-rail :is([data-sec], [data-inactive-toggle]) {
-            color: var(--oc-text-secondary);
-        }
-
         .sp-list {
             --ind: 16px;
             scroll-padding-top: 100px;
@@ -751,7 +677,7 @@
 
         .sp-row {
             --go-w: 64px;
-            grid-template-columns: var(--oc-space-4) minmax(0, 1fr) calc(var(--go-w) + var(--oc-space-5));
+            grid-template-columns: var(--oc-space-4) minmax(0, 1fr) minmax(calc(var(--go-w) + var(--oc-space-5)), max-content);
             padding-block: var(--oc-space-2);
         }
 

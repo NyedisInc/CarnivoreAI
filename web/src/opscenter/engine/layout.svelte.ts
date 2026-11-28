@@ -150,7 +150,7 @@ export function createLayoutStore(page: LayoutPage): LayoutStore {
     page === 'terminal'
       ? { layout: resetLayout(META, 'terminal'), notice: '', stored: false }
       : load(META, page, primarySessionId());
-  if (page === 'home' && opened.migrated) save(opened.layout, page);
+  if ((page === 'home' || page === 'warroom') && opened.migrated) save(opened.layout, page);
 
   const state: LayoutState = $state({
     layout: opened.layout,

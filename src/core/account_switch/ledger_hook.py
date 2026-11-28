@@ -6,7 +6,7 @@ from typing import Any, Set
 
 import structlog
 
-from src.core.account_switch import auto_restart, auto_switch, profile_setup
+from src.core.account_switch import agy_rotate, auto_restart, auto_switch, profile_setup
 from src.models.provider_ledger import LedgerSnapshot
 
 logger = structlog.get_logger()
@@ -27,3 +27,6 @@ async def after_ledger_pass(snapshot: LedgerSnapshot, app_state: Any = None) -> 
     task = asyncio.create_task(auto_restart.after_pass(snapshot, app_state))
     _TASKS.add(task)
     task.add_done_callback(_done)
+    agy_task = asyncio.create_task(agy_rotate.after_pass(snapshot, app_state))
+    _TASKS.add(agy_task)
+    agy_task.add_done_callback(_done)

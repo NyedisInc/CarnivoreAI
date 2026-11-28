@@ -60,6 +60,8 @@
     height: 100%;
     overflow: hidden;
     border-radius: inherit;
+    contain: strict;
+    isolation: isolate;
 }
 
 .spiral-mask > svg {
@@ -67,18 +69,20 @@
     height: 100%;
 }
 
-@keyframes avatar-spiral-turn {
-    to { transform: rotate(-360deg); }
-}
-
 .session-sidebar-bar__avatar .spiral-turn {
     overflow: visible;
     transform-origin: 50% 50%;
-    animation: avatar-spiral-turn 2s linear infinite;
+    will-change: transform;
+    animation: amb-join-avatar-spiral 1ms;
+    transform: rotate(var(--amb-spiral-deg, 0deg));
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .session-sidebar-bar__avatar .spiral-turn { animation: none; }
+    .session-sidebar-bar__avatar .spiral-turn {
+        animation: none;
+        transform: none;
+        will-change: auto;
+    }
 }
 
 .session-sidebar-bar__account:hover .session-sidebar-bar__avatar {

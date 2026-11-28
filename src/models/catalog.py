@@ -4,12 +4,12 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic import ValidationError
 
 from .catalog_doc import _Doc
 from .catalog_grade import GradeBlock, GradeRule  # noqa: F401
-from .catalog_media import CardMedia  # noqa: F401
+from .catalog_media import CardMedia, CardScreenshot  # noqa: F401
 from .catalog_names import (  # noqa: F401
     RESERVED_NAMES_FOR,
     RESERVED_SKILL_NAMES,
@@ -114,6 +114,24 @@ class SignatureBlock(_Doc):
     gsig: str = Field(..., min_length=1)
 
 
+class UpstreamProvenance(_Doc):
+
+    source_type: str = "github"
+    repo: str = ""
+    tag: str = ""
+    commit_sha: str = ""
+    subdir: str = ""
+    signature_verified: bool = False
+    key_id: str = ""
+
+    @field_validator("commit_sha")
+    @classmethod
+    def _commit_sha_shape(cls, value: str) -> str:
+        if value:
+            return _match_or_raise(value, COMMIT_RE, "provenance.commit_sha")
+        return value
+
+
 class ItemVersion(_Doc):
 
     v: str = Field(..., min_length=1)
@@ -128,6 +146,10 @@ class ItemVersion(_Doc):
     sig: SignatureBlock
     review: Optional[ReviewBlock] = None
     grade: Optional[GradeBlock] = None
+    manifest_schema: Optional[int] = None
+    provenance: Optional[UpstreamProvenance] = None
+    requires_warning_ack: bool = False
+    warning_reasons: Optional[List[str]] = None
 
     @field_validator("digest")
     @classmethod
@@ -147,6 +169,7 @@ class ItemCard(_Doc):
     icon: Optional[str] = None
     tags: Optional[List[str]] = None
     media: Optional[CardMedia] = None
+    screenshots: Optional[List[CardScreenshot]] = None
 
     @field_validator("media", mode="before")
     @classmethod
@@ -157,6 +180,24 @@ class ItemCard(_Doc):
             return CardMedia.model_validate(value)
         except ValidationError:
             return None
+
+    @field_validator("screenshots", mode="before")
+    @classmethod
+    def _screenshots_or_nothing(cls, value: object) -> object:
+        if value is None:
+            return None
+        if not isinstance(value, list):
+            return None
+        kept: List[CardScreenshot] = []
+        for entry in value[:4]:
+            if isinstance(entry, CardScreenshot):
+                kept.append(entry)
+                continue
+            try:
+                kept.append(CardScreenshot.model_validate(entry))
+            except ValidationError:
+                continue
+        return kept or None
 
 
 class ItemFrontMatter(_Doc):

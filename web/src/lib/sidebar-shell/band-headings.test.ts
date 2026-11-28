@@ -64,16 +64,26 @@ describe('agents tab grouping headings', () => {
         expect(folded.querySelector('.session-sidebar-company')).toBeNull();
     });
 
-    it('paints a band heading muted grey with a right-hand hairline, and steps every body in by the one tree step', () => {
+    it('paints sticky uppercase muted band headings, section-only carets, single guide lines, and no project sub-lines', () => {
         const band = css('session-sidebar-band-structure.css');
+        const groups = css('session-sidebar-groups.css');
+        const layouts = css('session-sidebar-layouts.css');
         const colour = ruleBody(band, BAND + ':not(:hover, :focus-visible)');
         expect(colour).toMatch(/color:\s*var\(--oc-text-muted\)/);
         expect(colour).not.toMatch(/--oc-orange|--band-hue/);
-        const rule = ruleBody(band, BAND + '::after');
-        expect(rule).toMatch(/flex:\s*1 1 auto/);
-        expect(rule).toMatch(/border-top:\s*1px solid var\(--sidebar-divider\)/);
+        expect(band).toMatch(/position:\s*sticky/);
+        expect(band).toMatch(/border-inline-start:\s*var\(--oc-border\) solid color-mix\(in oklab, var\(--sb-tint, var\(--oc-text-muted\)\) 50%, transparent\)/);
         expect(band).toMatch(/--sidebar-tree-step:\s*var\(--oc-space-2\);/);
         expect(ruleBody(band, '.session-sidebar-group > .session-sidebar-group__body,\n.session-sidebar-layout__members')).toMatch(/padding-inline-start:\s*var\(--sidebar-tree-step\)/);
-        expect(css('session-sidebar-colours.css')).not.toMatch(/\[data-group="pinned"\][^{]*>\s*\.session-sidebar-group__headerrow > \.session-sidebar-group__header/);
+        expect(ruleBody(groups, '.session-sidebar-group__headerrow .session-sidebar-group__gutter')).toMatch(/display:\s*none/);
+        expect(ruleBody(groups, '.session-sidebar-group[data-section] > .session-sidebar-group__headerrow[data-band-kind="reserved"] .session-sidebar-group__gutter')).toMatch(/display:\s*flex/);
+        expect(ruleBody(layouts, '.session-sidebar-layout__toggle')).toMatch(/display:\s*none/);
+        const colours = css('session-sidebar-colours.css');
+        expect(colours).not.toMatch(/\[data-group="pinned"\][^{]*>\s*\.session-sidebar-group__headerrow > \.session-sidebar-group__header/);
+        expect(colours).not.toMatch(/\[data-group\^="p:"\][^{]*>\s*\.session-sidebar-group__body:has\(> \*\)/);
+        expect(ruleBody(colours, '.session-sidebar-layout__members')).toMatch(/border-inline-start:\s*var\(--oc-border\) solid color-mix\(in oklab, var\(--row-hue\) 50%, transparent\)/);
+        expect(colours).toContain('.session-sidebar-row[data-layout-colour="coral"] + .session-sidebar-layout__members');
+        expect(colours).toContain('.session-sidebar-row[data-kind="layout"][data-layout-colour] .session-sidebar-row-provider');
+        expect(ruleBody(colours, ':is(.session-sidebar-group[data-section="groups"], .session-sidebar-group[data-group="pinned"]) > .session-sidebar-group__body > .session-sidebar-group[data-group^="g:"] > .session-sidebar-group__body:has(> *)')).toMatch(/border-inline-start:\s*var\(--oc-border\) solid color-mix\(in oklab, var\(--band-hue\) 50%, transparent\)/);
     });
 });

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from src.core.automations import command_allowlist
 from src.core.automations import models as m
 from src.core.automations import targets
 from src.core.automations.report_empty import report_is_empty
@@ -44,6 +45,7 @@ async def _runner(ctx, automation, run):
 def _runners(monkeypatch):
     for kind in m.TARGET_KINDS:
         monkeypatch.setitem(targets.RUNNERS, kind, _runner)
+    monkeypatch.setattr(command_allowlist, "allows", lambda text, path=None: True)
 
 
 def _store(tmp_path):

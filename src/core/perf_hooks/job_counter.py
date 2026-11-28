@@ -98,8 +98,10 @@ def attach(loop: asyncio.AbstractEventLoop) -> bool:
     if id(loop) in _saved_factories:
         return False
     if id(loop) not in _installed_loops:
+        from src.core.perf_hooks.executors import interactive_max_workers  # noqa: PLC0415
+
         old = getattr(loop, "_default_executor", None)
-        loop.set_default_executor(_CountingExecutor(thread_name_prefix="counted"))
+        loop.set_default_executor(_CountingExecutor(max_workers=interactive_max_workers(), thread_name_prefix="counted"))
         if isinstance(old, ThreadPoolExecutor):
             old.shutdown(wait=False)
         _installed_loops.add(id(loop))

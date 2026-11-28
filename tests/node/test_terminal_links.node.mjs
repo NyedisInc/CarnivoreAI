@@ -115,6 +115,82 @@ await test('a URL stops at a box-drawing border', async () => {
     assert.equal(links[0].text, 'https://example.com/a');
 });
 
+await test('a hard-wrapped multi-line agy S3 presigned URL stitches completely from any row', async () => {
+    const { ctx } = makeContext();
+    const { term, provider } = linkedTerminal(ctx);
+    term.resize(90, 24);
+    const lines = [
+        '  Gallery Link (7-day presigned S3 URL)',
+        '  https://mockup-galleries-demo.s3.amazonaws.com/mockups/carnivore/new-agent-',
+        '  workflow/r1/index.html?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-',
+        '  Credential=TESTCRED000000000000%2F20261125%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-',
+        '  Date=20261125T183057Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-',
+        '  Signature=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+        '',
+        '  The 5 Blind Directions',
+    ];
+    await write(term, lines.join('\r\n') + '\r\n');
+    const expected = 'https://mockup-galleries-demo.s3.amazonaws.com/mockups/carnivore/new-agent-workflow/r1/index.html?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=TESTCRED000000000000%2F20261125%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20261125T183057Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef';
+    for (const row of [2, 4, 6]) {
+        const links = await linksAt(provider(), row);
+        assert.equal(links.length, 1, `row ${row} should yield 1 stitched link`);
+        assert.equal(links[0].text, expected);
+        assert.equal(links[0].range.start.y, 2);
+        assert.equal(links[0].range.end.y, 6);
+        assert.equal(links[0].range.start.x, 3);
+    }
+    assert.deepEqual(await linksAt(provider(), 7), []);
+    assert.deepEqual(await linksAt(provider(), 8), []);
+});
+
+await test('a soft-wrapped URL without newlines stitches across xterm isWrapped rows', async () => {
+    const { ctx } = makeContext();
+    const { term, provider } = linkedTerminal(ctx);
+    const longUrl = 'https://example.com/' + 'segment/'.repeat(18) + 'end?ok=1';
+    await write(term, longUrl + '\r\n');
+    const links1 = await linksAt(provider(), 1);
+    const links2 = await linksAt(provider(), 2);
+    assert.equal(links1.length, 1);
+    assert.equal(links1[0].text, longUrl);
+    assert.equal(links2.length, 1);
+    assert.equal(links2[0].text, longUrl);
+});
+
+await test('a URL followed by normal prose on the next line is NOT merged with the prose', async () => {
+    const { ctx } = makeContext();
+    const { term, provider } = linkedTerminal(ctx);
+    await write(term, '  Visit https://example.com/docs\r\n  Then click the button to continue.\r\n');
+    const links1 = await linksAt(provider(), 1);
+    assert.equal(links1.length, 1);
+    assert.equal(links1[0].text, 'https://example.com/docs');
+    assert.equal(links1[0].range.start.y, 1);
+    assert.equal(links1[0].range.end.y, 1);
+    assert.deepEqual(await linksAt(provider(), 2), []);
+});
+
+await test('two separate URLs on consecutive lines remain two distinct links', async () => {
+    const { ctx } = makeContext();
+    const { term, provider } = linkedTerminal(ctx);
+    await write(term, '  https://first.example/one-\r\n  https://second.example/two\r\n');
+    const l1 = await linksAt(provider(), 1);
+    const l2 = await linksAt(provider(), 2);
+    assert.equal(l1.length, 1);
+    assert.equal(l1[0].text, 'https://first.example/one-');
+    assert.equal(l2.length, 1);
+    assert.equal(l2[0].text, 'https://second.example/two');
+});
+
+await test('a hard-wrapped URL inside a bordered box strips box borders and trailing prose', async () => {
+    const { ctx } = makeContext();
+    const { term, provider } = linkedTerminal(ctx);
+    await write(term, '│ https://example.com/very/long-\r\n│ path/final?x=1 and more words │\r\n');
+    const links = await linksAt(provider(), 1);
+    assert.equal(links.length, 1);
+    assert.equal(links[0].text, 'https://example.com/very/long-path/final?x=1');
+    assert.equal(links[0].range.start.y, 1);
+    assert.equal(links[0].range.end.y, 2);
+});
+
 await test('a plain click opens http(s); a right or middle click does not', () => {
     const { ctx, clicked } = makeContext({ platform: 'MacIntel' });
     ctx.TerminalLinks.activate({ button: 2 }, 'https://a.example/');

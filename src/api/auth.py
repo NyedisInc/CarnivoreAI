@@ -93,7 +93,7 @@ def _get_ttls() -> tuple[int, int, int]:
     return access_ttl, refresh_ttl, grace
 
 
-def create_access_token(user: str = "claudetunnel_user") -> tuple[str, int]:
+def create_access_token(user: str = "claudetunnel_user", family: Optional[str] = None) -> tuple[str, int]:
     auth_config = settings.load_auth_config()
     access_ttl, _, _ = _get_ttls()
     now = datetime.utcnow()
@@ -103,6 +103,8 @@ def create_access_token(user: str = "claudetunnel_user") -> tuple[str, int]:
         "sub": user,
         "typ": "access",
     }
+    if family:
+        payload["fam"] = family
     token = jwt.encode(payload, auth_config.jwt_secret, algorithm="HS256")
     return token, access_ttl
 

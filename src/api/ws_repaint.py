@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 from typing import Any, Optional
 
 import structlog
@@ -38,8 +37,7 @@ async def repaint(websocket: Any, session_id: Optional[str], stream: Any) -> str
     screen, why = await capture_screen(websocket, session_id)
     if screen is None:
         return why
-    outcome = viewer_fanout.offer_paint(
-        stream, base64.b64encode(_CLEAR_AND_HOME + screen).decode("ascii"))
+    outcome = viewer_fanout.offer_paint(stream, _CLEAR_AND_HOME + screen)
     logger.debug("ws_repaint", session_id=session_id, size=len(screen), outcome=outcome)
     return "queued" if outcome == OFFER_ACCEPTED else outcome
 
@@ -58,8 +56,7 @@ async def resume(websocket: Any, session_id: Optional[str], stream: Any) -> str:
             if why == "no_backend":
                 break
             if screen is not None and getattr(stream, "held_chunks", 0) == held:
-                outcome = viewer_fanout.offer_paint(
-                    stream, base64.b64encode(_CLEAR_AND_HOME + screen).decode("ascii"))
+                outcome = viewer_fanout.offer_paint(stream, _CLEAR_AND_HOME + screen)
                 return "queued" if outcome == OFFER_ACCEPTED else outcome
     finally:
         stream.paused = False

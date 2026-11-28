@@ -105,9 +105,17 @@ def _names(rank: str, job: str, name: str, specialty: str) -> Tuple[str, str]:
 
 def _check_profile(name: str) -> None:
     try:
-        profiles.require_known(name)
+        known = profiles.require_known(name)
     except profiles.ProfileRefused as exc:
         raise SpawnRefused(str(exc)) from exc
+    from pathlib import Path
+
+    from src.config import settings as app_settings
+    from src.core.agy.identity import is_agy_agent_type
+    from src.core.launch_profiles.store import LaunchProfileStore
+
+    if is_agy_agent_type(known, LaunchProfileStore(Path(app_settings.auth_config_file).expanduser()).list()):
+        raise SpawnRefused("an Antigravity (agy) launch profile cannot be a Swarm agent yet")
 
 
 async def _check_card(parent: Dict[str, Any], card_id: Any) -> None:

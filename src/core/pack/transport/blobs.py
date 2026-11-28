@@ -62,9 +62,16 @@ class Inbox:
         self.directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         os.chmod(self.directory, 0o700)
 
-    def status(self, blob_id: str) -> Dict[str, Any]:
+    def _foreign(self, blob_id: str, peer: str) -> bool:
+        if not (self._part(blob_id).is_file() or self._sealed(blob_id).is_file()):
+            return False
+        return not peer or self.owner(blob_id) != peer
+
+    def status(self, blob_id: str, *, peer: str = "", strict_owner: bool = False) -> Dict[str, Any]:
         if not valid_id(blob_id):
             raise BlobError("bad_blob_id", 400)
+        if strict_owner and self._foreign(blob_id, peer):
+            raise BlobError("unknown_blob", 404)
         if self._sealed(blob_id).is_file():
             return {"received": self._sealed(blob_id).stat().st_size, "sealed": True}
         part = self._part(blob_id)
@@ -82,9 +89,11 @@ class Inbox:
             total += f.stat().st_size
         return total
 
-    def put(self, blob_id: str, offset: int, data: bytes, chunk_sha256: str, peer: str = "") -> int:
+    def put(self, blob_id: str, offset: int, data: bytes, chunk_sha256: str, peer: str = "", *, strict_owner: bool = False) -> int:
         if not valid_id(blob_id):
             raise BlobError("bad_blob_id", 400)
+        if strict_owner and self._foreign(blob_id, peer):
+            raise BlobError("blob_not_yours", 403)
         if len(data) > CHUNK_BYTES:
             raise BlobError("chunk_too_large", 413)
         if not _SHA_RE.match(chunk_sha256 or "") or hashlib.sha256(data).hexdigest() != chunk_sha256:
@@ -113,9 +122,11 @@ class Inbox:
             os.close(fd)
         return have + len(data)
 
-    def seal(self, blob_id: str, size: int, sha256: str, kind: str) -> Path:
+    def seal(self, blob_id: str, size: int, sha256: str, kind: str, *, peer: str = "", strict_owner: bool = False) -> Path:
         if not valid_id(blob_id):
             raise BlobError("bad_blob_id", 400)
+        if strict_owner and self._foreign(blob_id, peer):
+            raise BlobError("blob_not_yours", 403)
         if kind not in KINDS or not _SHA_RE.match(sha256 or ""):
             raise BlobError("bad_kind", 422)
         sealed, part = self._sealed(blob_id), self._part(blob_id)

@@ -9,7 +9,6 @@
     import type { Translate } from '../sessions/types';
     import type { LedgerHost } from './ledger-host';
     import { LEDGER_KEYS } from './ledger-model';
-    import ColorSwatches from './ColorSwatches.svelte';
     import AccountPathFold from './AccountPathFold.svelte';
     import {
         accountBody,
@@ -52,21 +51,34 @@
     let provider = $state<ProviderKind>('claude');
     let path = $state(pathDefaultFor('claude'));
     let advanced = $state(false);
-    let color = $state<string | null>(null);
     let busy = $state(false);
     let refusal = $state<string | null>(null);
 
     const id = $derived(slugFromName(name));
 
     function chooseProvider(value: string): void {
-        provider = value === 'codex' ? 'codex' : 'claude';
+        provider = value === 'codex' ? 'codex' : value === 'antigravity' && host.captureAgyLogin ? 'antigravity' : 'claude';
         path = pathDefaultFor(provider);
         refusal = null;
     }
 
+    async function capture(): Promise<void> {
+        if (busy || !host.captureAgyLogin) return;
+        busy = true;
+        refusal = null;
+        try {
+            await host.captureAgyLogin();
+            await onChanged();
+        } catch (error) {
+            refusal = t(LEDGER_KEYS.editorFailed, { reason: refusalText(error, t) });
+        } finally {
+            busy = false;
+        }
+    }
+
     async function submit(): Promise<void> {
         if (busy) return;
-        const draft = { name, provider, path, managed: !advanced, color };
+        const draft = { name, provider, path, managed: !advanced, color: null };
         const refused = draftRefusal(draft, taken, t);
         if (refused) {
             refusal = refused;
@@ -78,7 +90,6 @@
             await host.saveAccount(slugFromName(name), accountBody(draft));
             name = '';
             path = pathDefaultFor(provider);
-            color = null;
             await onChanged();
         } catch (error) {
             refusal = t(LEDGER_KEYS.editorFailed, { reason: refusalText(error, t) });
@@ -92,6 +103,7 @@
 <Card id="ledger-add-panel" data-ledger="editor" hidden={!open} foldable bind:open title={t(LEDGER_KEYS.editorSummary)} headingLevel={2}>
     {#snippet children()}
         <div class="ledger-editor__form">
+            {#if provider !== 'antigravity'}
             <Field
                 id="ledger-account-name"
                 label={t(LEDGER_KEYS.editorNameLabel)}
@@ -104,6 +116,7 @@
                     refusal = null;
                 }}
             />
+            {/if}
 
             <Select
                 id="ledger-account-provider"
@@ -113,26 +126,14 @@
                 options={[
                     { value: 'claude', label: t(LEDGER_KEYS.editorProviderClaude) },
                     { value: 'codex', label: t(LEDGER_KEYS.editorProviderCodex) },
+                    ...(host.captureAgyLogin
+                        ? [{ value: 'antigravity', label: t(LEDGER_KEYS.editorProviderAntigravity) }]
+                        : []),
                 ]}
                 onchange={(event) => chooseProvider((event.currentTarget as HTMLSelectElement).value)}
             />
 
-            
-            <div class="ledger-editor__colors">
-                <span class="oc-label" id="ledger-account-color-label">
-                    {t(LEDGER_KEYS.colorLabel)}
-                </span>
-                <ColorSwatches
-                    value={color}
-                    disabled={busy}
-                    {t}
-                    onPick={(hex) => {
-                        color = hex;
-                        refusal = null;
-                    }}
-                />
-            </div>
-
+            {#if provider !== 'antigravity'}
             
             <Field
                 id="ledger-account-id"
@@ -141,22 +142,34 @@
                 tabindex={-1}
                 value={id}
             />
+            {/if}
         </div>
 
+        {#if provider === 'antigravity'}
+            
+            <p class="ledger-editor__help" data-ledger="agy-capture-help">{t(LEDGER_KEYS.agyCaptureHelp)}</p>
+        {:else}
         <p class="ledger-editor__help">{t(LEDGER_KEYS.editorManagedHelp)}</p>
         <p class="ledger-editor__help">{t(LEDGER_KEYS.editorIdHelp)}</p>
 
         
         <AccountPathFold bind:open={advanced} bind:path {provider} {busy} {t} />
+        {/if}
 
         {#if refusal}
             <State kind="error" inline role="status" data-ledger="editor-refusal" title={refusal} />
         {/if}
     {/snippet}
     {#snippet foot()}
-        <Button variant="confirm" data-ledger="editor-submit" disabled={busy} onclick={() => void submit()}>
-            {busy ? t(LEDGER_KEYS.editorSubmitting) : t(LEDGER_KEYS.editorSubmit)}
-        </Button>
+        {#if provider === 'antigravity'}
+            <Button variant="confirm" data-ledger="agy-capture" disabled={busy} onclick={() => void capture()}>
+                {busy ? t(LEDGER_KEYS.agyCapturing) : t(LEDGER_KEYS.agyCaptureSubmit)}
+            </Button>
+        {:else}
+            <Button variant="confirm" data-ledger="editor-submit" disabled={busy} onclick={() => void submit()}>
+                {busy ? t(LEDGER_KEYS.editorSubmitting) : t(LEDGER_KEYS.editorSubmit)}
+            </Button>
+        {/if}
     {/snippet}
 </Card>
 
@@ -172,14 +185,6 @@
         min-width: 0;
     }
 
-    .ledger-editor__colors {
-        display: flex;
-        flex: 2 1 240px;
-        flex-direction: column;
-        gap: var(--oc-space-1);
-        min-width: 0;
-    }
-
     .ledger-editor__help {
         margin: 0;
         color: var(--oc-text-secondary);
@@ -189,8 +194,7 @@
     }
 
     @media (max-width: 1023px) {
-        .ledger-editor__form > :global(.oc-form-field),
-        .ledger-editor__colors {
+        .ledger-editor__form > :global(.oc-form-field) {
             flex: 1 1 100%;
         }
     }

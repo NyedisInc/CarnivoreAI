@@ -46,7 +46,7 @@
           {#each view.logged_in as login (login)}<option value={login}>{login}</option>{/each}
         </Select>
         {#if view.source === 'project'}
-          <Button variant="quiet" size="sm" disabled={busy} data-pt="account-clear" onclick={() => onAccount(null)}>{t('pack.transport.account_clear')}</Button>
+          <Button size="sm" disabled={busy} data-pt="account-clear" onclick={() => onAccount(null)}>{t('pack.transport.account_clear')}</Button>
         {/if}
       </div>
     {/if}

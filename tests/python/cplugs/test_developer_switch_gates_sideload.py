@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-from src.plugins.host import developer_mode, sideload
+from src.plugins.host import developer_mode, registry_store, sideload
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.cplugs.test_cplug_sideload import URL, world  # noqa: F401
 
@@ -47,7 +47,7 @@ def test_on_reaches_the_consent_path_then_expiry_refuses(world, dev):
     dev["on"] = True
     r = put(w, enabled=True, hours=1)
     assert r.status_code == 200 and r.json()["developer_mode"] is True
-    stored = json.loads(sideload.switch_path(w.state).read_text())
+    stored = json.loads(registry_store.registry_path(w.state).read_text())["switches"]["sideload"]
     assert stored["expires_at"] == stored["enabled_at"] + HOUR
     assert post(w).status_code == 200
     w.clock.t += HOUR

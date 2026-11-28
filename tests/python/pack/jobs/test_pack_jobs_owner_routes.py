@@ -27,7 +27,7 @@ PROJECT = {"uid": UID, "display_name": "trader", "root": "/p/trader"}
 class FakeEngine:
 
     def __init__(self, store: JobStore) -> None:
-        self.store, self.calls = store, []
+        self.store, self.calls, self.install_id = store, [], "iid-me"
 
     async def submit(self, req: Any) -> JobRecord:
         self.calls.append(("submit", req))
@@ -137,7 +137,7 @@ async def test_put_on_starts_ensure_all(eng, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_put_refusals(eng, monkeypatch):
-    def no_peer(machine: str):
+    def no_peer(machine: str, **_k):
         raise HTTPException(404, {"code": "unknown_machine", "detail": machine})
 
     monkeypatch.setattr(project_replica_routes, "find_peer", no_peer)

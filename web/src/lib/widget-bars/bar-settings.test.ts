@@ -164,29 +164,30 @@ describe('rail defaults', () => {
   });
 });
 
-describe('the sidebar rail leaf (issue #1790)', () => {
-  test('absent reads as auto-hide and writes nothing; the bars view is unchanged by it', () => {
-    expect(widgetBars.rail.mode).toBe('autohide');
+describe('the sidebar rail leaf (issue #1790, #3388)', () => {
+  test('absent reads as pinned and writes nothing; the bars view is unchanged by it', () => {
+    expect(widgetBars.rail.mode).toBe('pinned');
     expect(widgetBars.view).toEqual(BAR_DEFAULTS);
     expect(writes).toEqual([]);
   });
 
   test('setRail writes only the rail leaf, beside the bars\' leaves, and null removes it again', async () => {
     await widgetBars.set('side', { size: 'compact' });
-    expect(await widgetBars.setRail('pinned')).toBe('committed');
-    expect(writes.at(-1)).toEqual({ field: 'widget_bars', value: { v: 1, side: { size: 'compact' }, rail: { mode: 'pinned' } } });
-    expect(widgetBars.rail.mode).toBe('pinned');
+    expect(await widgetBars.setRail('autohide')).toBe('committed');
+    expect(writes.at(-1)).toEqual({ field: 'widget_bars', value: { v: 1, side: { size: 'compact' }, rail: { mode: 'autohide' } } });
+    expect(widgetBars.rail.mode).toBe('autohide');
     expect(await widgetBars.setRail(null)).toBe('committed');
     expect(writes.at(-1)).toEqual({ field: 'widget_bars', value: { v: 1, side: { size: 'compact' } } });
+    expect(widgetBars.rail.mode).toBe('pinned');
     expect(await widgetBars.setRail(null), 'nothing to remove').toBe('unchanged');
   });
 
   test('a rail leaf alone is a whole value, and a malformed one is dropped, never guessed', async () => {
-    await widgetBars.setRail('pinned');
-    expect(widgetBars.stored).toEqual({ v: 1, rail: { mode: 'pinned' } });
+    await widgetBars.setRail('autohide');
+    expect(widgetBars.stored).toEqual({ v: 1, rail: { mode: 'autohide' } });
     shared['widget_bars'] = { v: 1, rail: { mode: 'float' } };
     widgetBars.reload();
     expect(widgetBars.stored).toEqual({ v: 1 });
-    expect(widgetBars.rail.mode).toBe('autohide');
+    expect(widgetBars.rail.mode).toBe('pinned');
   });
 });

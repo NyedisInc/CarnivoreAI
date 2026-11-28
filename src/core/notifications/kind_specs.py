@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import secrets
+import threading
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
 
@@ -68,6 +69,8 @@ class KindSpec:
     sms_like: bool = False
     details_allowed: bool = True
     virtual: bool = False
+    label: Optional[str] = None
+    plugin_id: Optional[str] = None
 
 
 MAX_EMAIL_RECIPIENTS = 10
@@ -133,14 +136,42 @@ KINDS: Tuple[KindSpec, ...] = (
 )
 
 _BY_ID: Dict[str, KindSpec] = {k.id: k for k in KINDS}
+_LOCK = threading.RLock()
+_DYNAMIC: Dict[str, KindSpec] = {}
 
 
 def get_kind(kind_id: str) -> Optional[KindSpec]:
-    return _BY_ID.get(kind_id)
+    found = _BY_ID.get(kind_id)
+    if found is not None:
+        return found
+    with _LOCK:
+        return _DYNAMIC.get(kind_id)
 
 
 def ordered_kinds() -> List[KindSpec]:
-    return list(KINDS)
+    with _LOCK:
+        return list(KINDS) + sorted(_DYNAMIC.values(), key=lambda k: k.id)
+
+
+def register_kind(spec: KindSpec) -> bool:
+    if spec.id in _BY_ID:
+        return False
+    with _LOCK:
+        _DYNAMIC[spec.id] = spec
+    return True
+
+
+def unregister_kind(kind_id: str) -> bool:
+    with _LOCK:
+        return _DYNAMIC.pop(kind_id, None) is not None
+
+
+def unregister_plugin_kinds(plugin_id: str) -> int:
+    with _LOCK:
+        victims = [kid for kid, spec in _DYNAMIC.items() if spec.plugin_id == plugin_id]
+        for kid in victims:
+            _DYNAMIC.pop(kid, None)
+        return len(victims)
 
 
 def is_destination_id(value: object) -> bool:

@@ -162,6 +162,7 @@ BUNDLED_TMUX_ENV = "CARNIVORE_BUNDLED_TMUX"
 STAGE_DIR_ENV = "CARNIVORE_TMUX_STAGE_DIR"
 PAYLOAD_ONLY_ENV = ("PYTHONNOUSERSITE", "PYTHONPYCACHEPREFIX", "PYTHONDONTWRITEBYTECODE", "CARNIVORE_PAYLOAD_PYTHON",
                     BUNDLED_TMUX_ENV, STAGE_DIR_ENV)
+SERVER_ONLY_ENV = ("HOST",)
 
 SELECTION_TTL_SECONDS = 5.0
 
@@ -236,7 +237,7 @@ def _staged_tmux_paths() -> List[str]:
 
 
 def pane_client_env() -> Dict[str, str]:
-    return {k: v for k, v in os.environ.items() if k not in PAYLOAD_ONLY_ENV}
+    return {k: v for k, v in os.environ.items() if k not in PAYLOAD_ONLY_ENV and k not in SERVER_ONLY_ENV}
 
 
 def candidate_tmux_paths() -> List[str]:

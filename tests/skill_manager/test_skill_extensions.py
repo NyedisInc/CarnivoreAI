@@ -8,8 +8,8 @@ import pytest
 from src.core.skill_manager import skill_extensions as he
 from src.core.skill_manager.inventory import build_inventory
 from src.core.skill_manager.roots import known_profiles
-from src.plugins.huddle import mcp as _task_manager_mcp  # noqa: F401
-from src.plugins.huddle.public import TASK_MANAGER_GUIDE_REV
+from src.plugins.taskmanager import mcp as _task_manager_mcp  # noqa: F401
+from src.plugins.taskmanager.public import TASK_MANAGER_GUIDE_REV
 
 
 def _skill(root: Path, folder: str, extra: str) -> None:

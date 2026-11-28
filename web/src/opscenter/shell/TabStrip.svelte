@@ -29,7 +29,7 @@ export const LONG_PRESS_MS = 500;
   import Icon from '../ui/Icon.svelte';
   import AgentTabMarks from '../../lib/sidebar-shell/AgentTabMarks.svelte';
   import SessionFace from '../../lib/sessions/SessionFace.svelte';
-  import { NOT_MEASURED } from '../../lib/sessions/agent-marks';
+  import { NOT_MEASURED, sessionMark } from '../../lib/sessions/agent-marks';
   import { INNER_LABELS } from '../../lib/led';
   import { t } from '../../lib/i18n/index.svelte';
   import { confirmOk, onMiddleClick, suppressMiddleAutoscroll } from '../../lib/confirm-ok/confirm-ok';
@@ -40,6 +40,8 @@ export const LONG_PRESS_MS = 500;
   import { nextKey } from '../../lib/zone-shell/key-nav';
   import TabKey, { keyFace } from '../../lib/zone-shell/TabKey.svelte';
   import { tick } from 'svelte';
+  import { applyComet, cometKind } from '../../lib/comet/comet';
+  import { comet, startComet } from '../../lib/comet/comet-pref.svelte';
   import { mountStrip, stripOf } from '../engine/tabs-motion/strip-motion';
 
   let {
@@ -107,6 +109,7 @@ export const LONG_PRESS_MS = 500;
     return () => strip.destroy();
   }
 
+  startComet();
   let buttons = $state<Record<string, HTMLElement | null>>({});
 
   $effect(() => watchShift());
@@ -193,7 +196,8 @@ export const LONG_PRESS_MS = 500;
     return tint && /^#[0-9a-f]{3,8}$/i.test(tint) ? tint : null;
   }
 
-  function markFor(family: string | null): string | null {
+  function markFor(family: string | null, wrapperIcon: string | null = null): string | null {
+    if (family === 'custom' && wrapperIcon) return sessionMark(family, wrapperIcon, 14).svg || null;
     const icon = (globalThis as {
       AgentFamilyIcon?: { svg(f: string | null, size: number): string; normalize(f: string | null): string };
     }).AgentFamilyIcon;
@@ -255,7 +259,7 @@ export const LONG_PRESS_MS = 500;
 <div class="oc-tabs-track" data-tab-track={group ? '' : undefined} {@attach trackMotion}>
   {#each items as item, index (item.id)}
     {@const selected = item.id === active}
-    {@const mark = item.glyph ? null : markFor(item.family)}
+    {@const mark = item.glyph ? null : markFor(item.family, item.face?.icon ?? null)}
     {@const cellIcon = item.glyph ?? iconFor(item.family)}
     {@const tint = safeTint(item.tint)}
     {@const skull = onKill !== undefined && (shiftKey.held || armed === item.id)}
@@ -274,6 +278,7 @@ export const LONG_PRESS_MS = 500;
       style:--oc-tab-bar={selected && holdsInput ? safeBar(item.bar) : null}
       class:oc-tabwrap-idle={selected && !holdsInput}
       role="presentation"
+      {@attach (el) => applyComet(el, !selected && comet.on ? cometKind(item.face) : null, comet.lap)}
       onmousedown={onClose ? suppressMiddleAutoscroll : undefined}
       onauxclick={onClose ? (event) => onMiddleClick(event, () => void confirmClose(item.id, item.name)) : undefined}
       oncontextmenu={(event) => onTabContextMenu(event, item.id)}
@@ -498,16 +503,12 @@ export const LONG_PRESS_MS = 500;
     .oc-tab-workflow {
       color: var(--oc-cyan);
       line-height: 0;
-      animation: oc-tab-workflow-pulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes oc-tab-workflow-pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
+      animation: amb-join-busy-pulses 1ms;
+      opacity: var(--amb-pulse-op);
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .oc-tab-workflow { animation: none; }
+      .oc-tab-workflow { animation: none; opacity: 1; }
     }
   }
 </style>

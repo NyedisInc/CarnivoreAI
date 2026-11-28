@@ -49,6 +49,7 @@ export interface SessionListItem {
     timers_live?: number | null;
     timers_next_fire_at?: string | null;
     background_open?: number | null;
+    stalled_agents?: number | null;
     automations_state?: string | null;
     automations_total?: number | null;
     automations_enabled?: number | null;

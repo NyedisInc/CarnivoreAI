@@ -1,6 +1,7 @@
 import { t } from '../../i18n/index.svelte';
 import { companyById, setCompanyColor } from '../../companies';
 import { deleteCompanyConfirm, renameCompanyPrompt } from '../../sidebar-shell/company-actions';
+import { createGroupThenAssign } from '../../sidebar-shell/group-assign';
 import { announceFailure, reasonOf } from '../../sidebar-shell/interaction-globals';
 import { entryNodes, spaced } from '../entries';
 import { defineItemMenu } from '../registry';
@@ -21,6 +22,7 @@ defineItemMenu('company', {
                 }] : []),
             ],
             [foldInsideEntry(key)],
+            [{ label: t('sidebar.group.menu.new'), icon: 'add', id: 'group', onPick: () => { void createGroupThenAssign(null, undefined, key); } }],
             [{ label: t('sidebar.company.menu.delete'), icon: 'close', id: 'delete-company', danger: true, onPick: () => { void deleteCompanyConfirm(company); } }],
         ]);
         return { nodes: entryNodes(entries, env.glyph, env.close), ariaLabel: t('sidebar.company.menu.title', { name: company.name }) };

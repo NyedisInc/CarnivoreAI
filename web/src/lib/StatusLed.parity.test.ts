@@ -33,7 +33,7 @@ describe('byte-identical to the legacy renderer', () => {
     ];
     const GATES = [undefined, 'ready', 'awaiting_startup_prompt', 'unknown'];
     const TRANSPORTS = [undefined, 'connected', 'disconnected', 'reconnecting'];
-    const HINTS = [undefined, null, 'shell', 'not-a-hint'];
+    const HINTS = [undefined, null, 'shell', 'background', 'not-a-hint'];
 
     test('the legacy files load in a bare sandbox', () => {
         const api = legacy();

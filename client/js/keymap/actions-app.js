@@ -28,7 +28,7 @@ const APP = [
     }),
     def('file.save', 'app', 'list:files', { mac: ['cmd+s'], other: ['ctrl+s'] }, { owner: 'web/src/lib/open-files/FileScreen.svelte' }),
     def('form.submit', 'app', 'field', { mac: ['cmd+enter'], other: ['ctrl+enter'] }, {
-        owner: 'web/src/plugins/huddle/HuddleBody.svelte',
+        owner: 'web/src/plugins/taskmanager/HuddleBody.svelte',
     }),
     def('search.focus', 'app', 'list:pages', ['/'], { owner: 'web/src/lib/drawer-tabs/DrawerSearch.svelte' }),
 ];

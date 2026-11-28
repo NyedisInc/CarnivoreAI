@@ -9,6 +9,7 @@ import structlog
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 
 from src.api import peer_ws_auth, ws_dead_token
+from src.core.catalog import client_sessions
 from src.api.deps import SUBPROTOCOL_MARKER, verify_jwt_from_subprotocol
 from src.core.bounded_stream import BoundedStream
 from src.core.event_hub import (
@@ -16,7 +17,7 @@ from src.core.event_hub import (
     EventClient,
     EventHub,
 )
-from src.core.federation import peer_sockets
+from src.core.federation import peer_listing_feed, peer_sockets
 from src.core.perf_hooks.monitor import PERF, frame_topic
 from src.core.resource_push.topics import all_topics
 from src.core.version import resolve_version
@@ -168,20 +169,38 @@ async def websocket_events(websocket: WebSocket) -> None:
     if not peer:
         await websocket.accept(subprotocol=SUBPROTOCOL_MARKER)
 
-    client: EventClient = hub.register(reduced=peer or bool(websocket.scope.get("via_link") or websocket.scope.get("via_peer_link")))
-    hello = json.dumps({"type": WSMessageType.EVENTS_HELLO,
-                        "client_id": client.client_id,
-                        "server_version": resolve_version(),
-                        "client_build": client_build_key(),
-                        "resource_topics": list(all_topics())})
-    client.stream.offer(hello, len(hello))
+    family = None if peer else client_sessions.token_claim(detail or "", "fam")
     feed = (getattr(websocket.app.state, "peer_listing_feed", None)
             if peer and websocket.query_params.get(PEER_LISTING_QUERY[0]) == PEER_LISTING_QUERY[1] else None)
+    grant = websocket.scope.get("peer_grant")
+    caps = peer_listing_feed.member_caps(peer, grant) if feed is not None else None
+    owner = None
+    if caps and not grant.peer_install_id:
+        caps = feed = None
+    if caps:
+        if feed.claim(grant.peer_install_id):
+            owner = grant.peer_install_id
+        else:
+            logger.info("peer_listing_feed_member_refused", reason="one_listing_socket_per_member")
+            caps = feed = None
+    try:
+        client: EventClient = hub.register(reduced=peer or bool(websocket.scope.get("via_link") or websocket.scope.get("via_peer_link")), family=family,
+                                           **({"max_bytes": caps[0]} if caps else {}))
+        hello = json.dumps({"type": WSMessageType.EVENTS_HELLO,
+                            "client_id": client.client_id,
+                            "server_version": resolve_version(),
+                            "client_build": client_build_key(),
+                            "resource_topics": list(all_topics())})
+        client.stream.offer(hello, len(hello))
+    except BaseException:
+        if owner is not None:
+            feed.release(owner)
+        raise
     verdict = "done"
     try:
         if feed is not None:
             try:
-                await feed.attach(client.stream)
+                await feed.attach(client.stream, **({"cap": caps[1]} if caps else {}))
             except Exception:  # noqa: BLE001
                 logger.exception("peer_listing_feed_attach_failed")
         writer = asyncio.create_task(_drain_to_socket(websocket, client.stream, peer))
@@ -198,8 +217,9 @@ async def websocket_events(websocket: WebSocket) -> None:
     finally:
         if feed is not None:
             feed.detach(client.stream)
+        if owner is not None:
+            feed.release(owner)
         hub.unregister(client)
-        grant = websocket.scope.get("peer_grant")
         if grant is not None:
             peer_sockets.unregister(grant.grant_id, websocket)
 

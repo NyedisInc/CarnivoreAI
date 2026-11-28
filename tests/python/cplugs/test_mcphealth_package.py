@@ -5,7 +5,6 @@ import asyncio
 import json
 import os
 import shutil
-import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -21,7 +20,7 @@ from src.core.mcp_health.monitor import Measure, Target
 from src.core.mcp_health.servers import ServerSpec
 from src.plugins.host import install_gates, ui_doc
 from src.plugins.host.mcp_health_port import health_from_document
-from src.plugins.host.sidecar_manifest import load_sidecar_manifest
+from src.plugins.host.plugin_manifest import load_sidecar_manifest
 from src.plugins.runtime import sandbox
 from src.plugins.runtime.dispatch import HostDispatcher, HostServices, PluginContext
 from src.plugins.runtime.owner_tokens import OwnerTokens
@@ -115,9 +114,11 @@ def staged(tmp_path, drop_permission=None):
     dest = tmp_path / "code" / "mcphealth"
     shutil.copytree(PACKAGE, dest, ignore=shutil.ignore_patterns("__pycache__"))
     if drop_permission:
-        doc = json.loads((dest / "cplug.json").read_text())
-        doc["permissions"]["app"].remove(drop_permission)
-        (dest / "cplug.json").write_text(json.dumps(doc))
+        text = (dest / "carnivore.toml").read_text()
+        short = drop_permission.removesuffix(".read")
+        text = text.replace(f'read = ["{short}"]', "read = []").replace(f'read = ["{drop_permission}"]', "read = []")
+        lines = [line for line in text.splitlines() if not line.startswith(f'"{drop_permission}" = ')]
+        (dest / "carnivore.toml").write_text("\n".join(lines) + "\n")
     return dest
 
 
@@ -130,7 +131,7 @@ def test_the_folder_passes_the_install_gates_and_the_sidecar_parser(tmp_path):
     assert manifest.entry == "mcphealth_main.py" and manifest.subscriptions == ("mcp.health",) and manifest.default_enabled is False
     request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(services=SimpleNamespace(settings_reader=SimpleNamespace(state_dir=lambda: tmp_path)))))
     via_route_gate = asyncio.run(catalog_cplug_gates.gate_staged_cplug(request, SimpleNamespace(id=ITEM), copy))
-    assert via_route_gate.facts["version"] == "1.0.1"
+    assert via_route_gate.facts["version"] == "1.0.2"
     assert not any(p.stat().st_mode & 0o111 for p in PACKAGE.rglob("*") if p.is_file()) and not (PACKAGE / "scripts").exists()
 
 

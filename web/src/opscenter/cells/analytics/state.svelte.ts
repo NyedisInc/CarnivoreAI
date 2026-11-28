@@ -6,10 +6,223 @@ import type { ChartConfig, DimensionItem, MetricCatalogEntry, StatsFilters } fro
 import { ApiError, authFetch } from '../../api/auth.svelte';
 import { t } from '../../../lib/i18n/index.svelte';
 import { flushSave } from '../../engine/persist';
-import { homeReferencedAnalytics, homeSeedLevel, setHomeSeedLevel, whenHomeSyncReady } from '../../engine/home-seed';
+import { homeHasSyncedBoards, homeReferencedAnalytics, homeSeedLevel, setHomeSeedLevel, whenHomeSyncReady } from '../../engine/home-seed';
 import { markPruneDone, pruneAlreadyDone, staleChartIds } from './prune';
 import type { LayoutStore } from '../../engine/layout.svelte';
 import type { SlotId } from '../../engine/types';
+import { drawerEnv } from '../../../lib/drawer/env';
+import { whenLegacyBootComplete } from '../../../lib/legacy-boot';
+import { explicitHostId, normalizeHostFiltersForSave } from '../../viz/plan';
+import { selfHostInstallId } from './host-id.svelte';
+
+export const ANALYTICS_FILTERS_PREF_FIELD = 'analytics_filters';
+export const ANALYTICS_TIMEZONE_PREF_FIELD = 'analytics_timezone';
+export const ANALYTICS_PREF_WRITE_DELAY_MS = 400;
+
+export const GLOBAL_FILTER_KEYS = ['provider', 'host', 'project', 'model', 'agent_kind', 'account_id', 'window'] as const;
+export type GlobalFilterKey = (typeof GLOBAL_FILTER_KEYS)[number];
+
+interface AnalyticsPrefsApi {
+  HYDRATED?: unknown;
+  status?(): unknown;
+  get?(field: string, fallback?: unknown): unknown;
+  committedValue?(field: string): unknown;
+  set?(field: string, value: unknown): Promise<unknown>;
+  subscribe?(fn: (name: string, value: unknown) => void): () => void;
+}
+
+interface AnalyticsBridgeApi {
+  read?(field: string, fallback: () => unknown): unknown;
+  write?(field: string, value: unknown, local: () => void): Promise<unknown>;
+  follow?(field: string, apply: (value: unknown) => void): () => void;
+}
+
+interface AnalyticsPrefGlobals {
+  PreferenceBridge?: AnalyticsBridgeApi;
+  Preferences?: AnalyticsPrefsApi;
+}
+
+function prefGlobals(): AnalyticsPrefGlobals {
+  return drawerEnv() as AnalyticsPrefGlobals;
+}
+
+export function parseAnalyticsFilters(raw: unknown): StatsFilters | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const obj = raw as Record<string, unknown>;
+  const out: StatsFilters = {};
+  for (const key of GLOBAL_FILTER_KEYS) {
+    const val = obj[key];
+    if (typeof val === 'string') {
+      const trimmed = val.trim();
+      if (trimmed && trimmed.length <= 256) out[key] = trimmed;
+    }
+  }
+  return out;
+}
+
+export function parseAnalyticsTimezone(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const tz = raw.trim();
+  if (!tz || tz.length > 64) return null;
+  if (tz === 'UTC') return tz;
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: tz });
+    return tz;
+  } catch {
+    return null;
+  }
+}
+
+function cleanFilters(filters: StatsFilters): StatsFilters {
+  const out: StatsFilters = {};
+  for (const key of GLOBAL_FILTER_KEYS) {
+    const val = filters[key];
+    if (typeof val === 'string' && val.trim()) out[key] = val.trim();
+  }
+  return out;
+}
+
+function readSharedPref(field: string): unknown {
+  const g = prefGlobals();
+  const bridge = g.PreferenceBridge;
+  if (bridge && typeof bridge.read === 'function') return bridge.read(field, () => undefined);
+  const prefs = g.Preferences;
+  if (!prefs) return undefined;
+  if (typeof prefs.status === 'function' && prefs.status() !== (prefs.HYDRATED ?? 'hydrated')) return undefined;
+  if (typeof prefs.get === 'function') return prefs.get(field, undefined);
+  if (typeof prefs.committedValue === 'function') return prefs.committedValue(field);
+  return undefined;
+}
+
+function writeSharedPref(field: string, value: unknown): void {
+  const g = prefGlobals();
+  const bridge = g.PreferenceBridge;
+  if (bridge && typeof bridge.write === 'function') {
+    bridge.write(field, value, () => {}).catch((err: unknown) => {
+      console.warn(`Analytics: could not share ${field}:`, err);
+    });
+    return;
+  }
+  const prefs = g.Preferences;
+  if (prefs && typeof prefs.set === 'function'
+      && (typeof prefs.status !== 'function' || prefs.status() === (prefs.HYDRATED ?? 'hydrated'))) {
+    prefs.set(field, value).catch((err: unknown) => {
+      console.warn(`Analytics: could not share ${field}:`, err);
+    });
+  }
+}
+
+let applyingRemotePrefs = false;
+let filtersWriteTimer: ReturnType<typeof setTimeout> | null = null;
+let timezoneWriteTimer: ReturnType<typeof setTimeout> | null = null;
+
+function applyRemoteFilters(raw: unknown): boolean {
+  const parsed = parseAnalyticsFilters(raw);
+  if (parsed === null) return false;
+  if (JSON.stringify(cleanFilters(analytics.filters)) === JSON.stringify(parsed)) return false;
+  applyingRemotePrefs = true;
+  try {
+    if (filtersWriteTimer !== null) {
+      clearTimeout(filtersWriteTimer);
+      filtersWriteTimer = null;
+    }
+    analytics.filters = parsed;
+    analytics.revision++;
+  } finally {
+    applyingRemotePrefs = false;
+  }
+  return true;
+}
+
+function applyRemoteTimezone(raw: unknown): boolean {
+  const parsed = parseAnalyticsTimezone(raw);
+  if (parsed === null || analytics.timezone === parsed) return false;
+  applyingRemotePrefs = true;
+  try {
+    if (timezoneWriteTimer !== null) {
+      clearTimeout(timezoneWriteTimer);
+      timezoneWriteTimer = null;
+    }
+    analytics.timezone = parsed;
+    analytics.revision++;
+  } finally {
+    applyingRemotePrefs = false;
+  }
+  return true;
+}
+
+export function setAnalyticsFilter(key: GlobalFilterKey, value: string): void {
+  const resolved = key === 'host'
+    ? explicitHostId(value.trim() || undefined, selfHostInstallId())
+    : (value.trim() || undefined);
+  const next = cleanFilters(analytics.filters);
+  if (resolved) next[key] = resolved;
+  else delete next[key];
+  analytics.filters = next;
+  analytics.revision++;
+  if (applyingRemotePrefs) return;
+  if (filtersWriteTimer !== null) clearTimeout(filtersWriteTimer);
+  filtersWriteTimer = setTimeout(() => {
+    filtersWriteTimer = null;
+    writeSharedPref(ANALYTICS_FILTERS_PREF_FIELD, cleanFilters(analytics.filters));
+  }, ANALYTICS_PREF_WRITE_DELAY_MS);
+}
+
+export function setAnalyticsTimezone(timezone: string): void {
+  const parsed = parseAnalyticsTimezone(timezone);
+  if (!parsed) return;
+  analytics.timezone = parsed;
+  analytics.revision++;
+  if (applyingRemotePrefs) return;
+  if (timezoneWriteTimer !== null) clearTimeout(timezoneWriteTimer);
+  timezoneWriteTimer = setTimeout(() => {
+    timezoneWriteTimer = null;
+    writeSharedPref(ANALYTICS_TIMEZONE_PREF_FIELD, analytics.timezone);
+  }, ANALYTICS_PREF_WRITE_DELAY_MS);
+}
+
+export function syncAnalyticsPrefsFromPreferences(): void {
+  applyRemoteFilters(readSharedPref(ANALYTICS_FILTERS_PREF_FIELD));
+  applyRemoteTimezone(readSharedPref(ANALYTICS_TIMEZONE_PREF_FIELD));
+}
+
+export function startAnalyticsPrefsSync(
+  target: Window | null = typeof window !== 'undefined' ? window : null,
+): () => void {
+  syncAnalyticsPrefsFromPreferences();
+  const g = prefGlobals();
+  const unsubs: Array<() => void> = [];
+  const bridge = g.PreferenceBridge;
+  if (bridge && typeof bridge.follow === 'function') {
+    unsubs.push(bridge.follow(ANALYTICS_FILTERS_PREF_FIELD, (value) => { applyRemoteFilters(value); }));
+    unsubs.push(bridge.follow(ANALYTICS_TIMEZONE_PREF_FIELD, (value) => { applyRemoteTimezone(value); }));
+  } else if (g.Preferences && typeof g.Preferences.subscribe === 'function') {
+    unsubs.push(g.Preferences.subscribe((name, value) => {
+      if (name === ANALYTICS_FILTERS_PREF_FIELD) applyRemoteFilters(value);
+      else if (name === ANALYTICS_TIMEZONE_PREF_FIELD) applyRemoteTimezone(value);
+    }));
+  }
+  let stopped = false;
+  whenLegacyBootComplete(target, () => {
+    if (!stopped) syncAnalyticsPrefsFromPreferences();
+  });
+  return () => {
+    stopped = true;
+    for (const stop of unsubs) stop();
+  };
+}
+
+export function resetAnalyticsPrefsSync(): void {
+  if (filtersWriteTimer !== null) {
+    clearTimeout(filtersWriteTimer);
+    filtersWriteTimer = null;
+  }
+  if (timezoneWriteTimer !== null) {
+    clearTimeout(timezoneWriteTimer);
+    timezoneWriteTimer = null;
+  }
+  applyingRemotePrefs = false;
+}
 
 export const analytics = $state<{
   charts: Record<string, ChartConfig>;
@@ -54,9 +267,13 @@ export function seedHomeAnalytics(store: LayoutStore): Promise<void> {
     await pruneStaleCharts();
     await upgradeAgentCharts();
     if (homeSeedLevel() >= 2 || analytics.error) return;
+    if (Object.keys(analytics.charts).length > 0 || homeHasSyncedBoards()) return;
     const added: SlotId[] = [];
     const firstUpgradeDone = homeSeedLevel() >= 1;
     const firstSeed = homeSeedLevel() === 0;
+    const storeHasAnalytics = store.state.layout.rows.some((row) => row.slots.some((slot) => slot.id.startsWith('analytics:')))
+      || store.state.layout.hidden.some((id) => id.startsWith('analytics:'));
+    if (firstSeed && storeHasAnalytics) return;
     for (const preset of DEFAULT_CHARTS) {
       if (firstUpgradeDone && (preset.metric === 'total_tokens' || preset.metric === 'estimated_cost_nano_usd') && preset.operation === 'timeline' && !('group_by' in preset)) continue;
       const ids = new Set(store.state.layout.rows.flatMap((row) => row.slots.map((slot) => slot.id)).concat(store.state.layout.hidden));
@@ -254,10 +471,20 @@ export function changeChart(chart: ChartConfig): void {
 const VIEW_SAVE_DELAY_MS = 600;
 const viewTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+function normalizeChartHostFilters(chart: ChartConfig): ChartConfig {
+  const selfId = selfHostInstallId();
+  if (!selfId) return chart;
+  return {
+    ...chart,
+    filters: normalizeHostFiltersForSave(chart.filters, selfId),
+    series: chart.series.map((series) => (series.filters ? { ...series, filters: normalizeHostFiltersForSave(series.filters, selfId) } : series)),
+  };
+}
+
 export function saveChartView(id: string, mutate: (chart: ChartConfig) => ChartConfig): void {
   const current = analytics.charts[id];
   if (!current) return;
-  changeChart(mutate(structuredClone($state.snapshot(current))));
+  changeChart(normalizeChartHostFilters(mutate(structuredClone($state.snapshot(current)))));
   const pending = viewTimers.get(id);
   if (pending) clearTimeout(pending);
   viewTimers.set(id, setTimeout(() => { viewTimers.delete(id); void writeChartView(id); }, VIEW_SAVE_DELAY_MS));
@@ -311,7 +538,8 @@ const unsaved = new Set<string>();
 const creating = new Map<string, Promise<void>>();
 
 export function addChart(copy?: ChartConfig): ChartConfig {
-  const chart = newChart(copy);
+  const chart = normalizeChartHostFilters(newChart(copy));
+  changeChart(chart);
   const done = createChart($state.snapshot(chart) as ChartConfig).then((saved) => {
     const local = analytics.charts[chart.id];
     if (local) analytics.charts[chart.id] = { ...local, revision: saved.revision };

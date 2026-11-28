@@ -18,6 +18,7 @@ class Policy:
     carry: List[str] = field(default_factory=list)
     bring_back: List[str] = field(default_factory=list)
     setup: Optional[List[str]] = None
+    local_only: List[str] = field(default_factory=list)
 
 
 def _list(raw: Optional[str]) -> List[str]:
@@ -30,7 +31,8 @@ def get(store: JobStore, uid: str) -> Policy:
         return Policy(project_uid=uid)
     return Policy(project_uid=uid, auto_delegate=bool(row["auto_delegate"]), never_use=_list(row["never_use_json"]),
                   carry=_list(row["carry_json"]), bring_back=_list(row["bring_back_json"]),
-                  setup=_list(row["setup_json"]) if row["setup_json"] else None)
+                  setup=_list(row["setup_json"]) if row["setup_json"] else None,
+                  local_only=_list(row.get("local_only_json")))
 
 
 def set_auto(store: JobStore, uid: str, on: bool) -> None:
@@ -56,10 +58,14 @@ def _check_wire(never_use: Optional[List[str]], carry: Optional[List[str]], brin
 
 
 def set_lists(store: JobStore, uid: str, *, never_use: Optional[List[str]] = None, carry: Optional[List[str]] = None,
-              bring_back: Optional[List[str]] = None, setup: Optional[List[str]] = None) -> None:
+              bring_back: Optional[List[str]] = None, setup: Optional[List[str]] = None,
+              local_only: Optional[List[str]] = None) -> None:
     _check_wire(never_use, carry, bring_back, setup)
+    if local_only is not None and (len(local_only) > 50 or any(len(s) > 200 or "\0" in s for s in local_only)):
+        raise PackInputError("at most 50 local_only patterns of at most 200 characters")
     cols = {}
-    for name, value in (("never_use_json", never_use), ("carry_json", carry), ("bring_back_json", bring_back)):
+    for name, value in (("never_use_json", never_use), ("carry_json", carry), ("bring_back_json", bring_back),
+                        ("local_only_json", local_only)):
         if value is not None:
             cols[name] = json.dumps(_check(value))
     if setup is not None:

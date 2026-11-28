@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[3]
 DEFINITIONS = {d.id: d for d in runtime.definitions()}
 SHARED_FAMILIES = frozenset({"oc", "pl", "modal", "tw"})
 MAX_FOREIGN_SHARE = 0.1
-PREFIX_MISMATCH_OK = {"huddle": "css_prefix is hdr but the classes are hd and hb; the Task Manager split owner decides (#1711)"}
+PREFIX_MISMATCH_OK = {"taskmanager": "css_prefix is hdr but the classes are hd and hb; the Task Manager split owner decides (#1711)"}
 
 _COMMENT, _URL, _SELECTOR, _CLASS = re.compile(r"/\*.*?\*/", re.S), re.compile(r"url\([^)]*\)"), re.compile(r"([^{}]+)\{"), re.compile(r"\.([a-zA-Z_][\w-]*)")
 

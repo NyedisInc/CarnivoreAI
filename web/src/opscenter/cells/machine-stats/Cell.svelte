@@ -24,8 +24,16 @@
   const tall = $derived(widget.heightState === 'all');
 
   const resourceNow = $derived(machineStats.current);
-  const list = $derived(resourceNow?.status === 'ok' && resourceNow.data ? readings(resourceNow.data) : null);
+  const rawData = $derived(resourceNow?.status === 'ok' && resourceNow.data ? resourceNow.data : null);
+  const packMachines = $derived(rawData && Array.isArray(rawData.machines) && rawData.machines.length > 1 ? rawData.machines : []);
+  const packMode = $derived(packMachines.length > 1);
+  const primaryStats = $derived(rawData ? (packMode && rawData.pack_aggregate ? rawData.pack_aggregate : rawData) : null);
+  const list = $derived(primaryStats ? readings(primaryStats) : null);
   const shown = $derived(list ? (wide || tall ? list : list.slice(0, 3)) : []);
+
+  function pctLabel(value: number | null): string {
+    return value === null ? '—' : `${Math.round(value)}%`;
+  }
 
   const notice = $derived.by((): string => {
     if (list) return '';
@@ -39,25 +47,85 @@
 {#if notice}
   <State inline kind={stateKindOf(resourceNow?.status)} title={notice} />
 {:else}
-  <div class="oc-ms" class:oc-ms--wide={wide} class:oc-ms--tall={tall && !wide} data-machine-stats>
-    {#each shown as r (r.key)}
-      <div class="oc-ms-meter" data-meter={r.key}>
-        <span class="oc-ms-label">{r.label}</span>
-        <span class="oc-ms-figure" class:oc-ms-figure--none={!r.measured}>{r.figure}</span>
-        {#if r.percent !== null}
-          <span class="oc-ms-bar" role="presentation"><span class="oc-ms-fill oc-ms-fill--{toneOf(r.percent)}" style={`width: ${Math.min(100, Math.max(0, r.percent))}%`}></span></span>
-        {/if}
-        {#if r.sub && (wide || tall || r.percent === null)}
-          <span class="oc-ms-sub" class:oc-ms-sub--below={tall && !wide && r.percent !== null}>{r.sub}</span>
-        {/if}
+  <div class="oc-ms-wrap" class:oc-ms-wrap--pack={packMode} data-pack-mode={packMode ? 'true' : undefined}>
+    <div class="oc-ms" class:oc-ms--wide={wide} class:oc-ms--tall={tall && !wide} data-machine-stats>
+      {#each shown as r (r.key)}
+        <div class="oc-ms-meter" data-meter={r.key}>
+          <span class="oc-ms-label">{r.label}</span>
+          <span class="oc-ms-figure" class:oc-ms-figure--none={!r.measured}>{r.figure}</span>
+          {#if r.percent !== null}
+            <span class="oc-ms-bar" role="presentation"><span class="oc-ms-fill oc-ms-fill--{toneOf(r.percent)}" style={`width: ${Math.min(100, Math.max(0, r.percent))}%`}></span></span>
+          {/if}
+          {#if r.sub && (wide || tall || r.percent === null)}
+            <span class="oc-ms-sub" class:oc-ms-sub--below={tall && !wide && r.percent !== null}>{r.sub}</span>
+          {/if}
+        </div>
+      {/each}
+    </div>
+    {#if packMode}
+      <div class="oc-ms-pack" data-pack-machines>
+        {#each packMachines as m (m.install_id)}
+          <div class="oc-ms-pack-row" data-pack-machine={m.install_id}>
+            <span class="oc-ms-pack-label">{m.label}</span>
+            <span class="oc-ms-pack-stat" data-pack-cpu>{t('opscenter.machine_stats.cpu')} {pctLabel(m.cpu_percent)}</span>
+            <span class="oc-ms-pack-stat" data-pack-mem>{t('opscenter.machine_stats.memory')} {pctLabel(m.memory_percent)}</span>
+            <span class="oc-ms-pack-stat" data-pack-disk>{t('opscenter.machine_stats.disk')} {pctLabel(m.disk_percent)}</span>
+          </div>
+        {/each}
       </div>
-    {/each}
+    {/if}
   </div>
 {/if}
 </WidgetShell>
 
 <style>
   @layer components {
+
+    .oc-ms-wrap {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      min-width: 0;
+    }
+
+    .oc-ms-wrap--pack .oc-ms {
+      flex: 1 1 auto;
+      height: auto;
+    }
+
+    .oc-ms-pack {
+      display: flex;
+      flex-direction: column;
+      gap: var(--oc-space-0-5);
+      padding: var(--oc-space-1) calc(var(--oc-space-2) + var(--oc-space-0-5));
+      border-top: var(--oc-border) solid var(--oc-line-frame);
+      font-family: var(--font-mono);
+      overflow-y: auto;
+    }
+
+    .oc-ms-pack-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto auto;
+      align-items: center;
+      gap: var(--oc-space-2);
+      min-width: 0;
+    }
+
+    .oc-ms-pack-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: var(--oc-fs-micro);
+      letter-spacing: var(--oc-tracking-label);
+      color: var(--oc-text-bright);
+    }
+
+    .oc-ms-pack-stat {
+      white-space: nowrap;
+      font-size: var(--oc-fs-micro);
+      color: var(--oc-text-secondary);
+    }
 
     .oc-ms {
       display: flex;

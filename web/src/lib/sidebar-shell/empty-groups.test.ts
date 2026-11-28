@@ -42,22 +42,22 @@ function draw(rows: Record<string, unknown>[], query = '', dragging = false): st
 
 const has = (html: string, key: string): boolean => html.includes(`data-group="${key}"`);
 
-it('a group with no member row on the list draws no heading and no line', () => {
+it('a hand-made group with no member row stays drawn even when hide empty sections is on (#3373)', () => {
     const html = draw([row('cloude_a'), row('cloude_c')]);
     assert.ok(has(html, 'g:g1'), 'the group with a member draws');
-    assert.ok(!has(html, 'g:g2'), 'the group with none is skipped');
-    assert.ok(!html.includes('beta crew'), 'its name is nowhere in the list');
+    assert.ok(has(html, 'g:g2'), 'the empty hand-made group stays visible');
+    assert.ok(html.includes('beta crew'), 'its heading is reachable to set rules or file rows');
 });
 
-it('it comes back the moment a member row appears, and the stored group never changed', () => {
+it('the stored group stays intact as members come and go', () => {
     const before = JSON.stringify(GroupStore.current());
-    assert.ok(!has(draw([row('cloude_a')]), 'g:g2'));
+    assert.ok(has(draw([row('cloude_a')]), 'g:g2'));
     assert.ok(has(draw([row('cloude_a'), row('cloude_b')]), 'g:g2'));
     assert.equal(JSON.stringify(GroupStore.current()), before, 'drawing never edits the group store');
 });
 
-it('a group whose only members the view filtered out is hidden too', () => {
-    assert.ok(!has(draw([row('cloude_a')]), 'g:g2'));
+it('a group whose members were filtered out by view filters still stays drawn outside search (#3373)', () => {
+    assert.ok(has(draw([row('cloude_a')]), 'g:g2'));
 });
 
 it('a typed search draws no group at all: the matching agent is listed flat, and a drag keeps the group it matches', () => {
@@ -100,11 +100,11 @@ describe('the hide empty sections setting', () => {
         assert.ok(!has(withShell, 'browsers'));
     });
 
-    it('off draws a hand-made group with no member row, on hides it', () => {
+    it('both off and on keep a hand-made group with no member row visible (#3373)', () => {
         EmptySections.setEmptySectionsHidden(false);
         assert.ok(has(draw([row('cloude_a')]), 'g:g2'), 'off: the empty group draws');
         EmptySections.setEmptySectionsHidden(true);
-        assert.ok(!has(draw([row('cloude_a')]), 'g:g2'), 'on: the empty group is skipped');
+        assert.ok(has(draw([row('cloude_a')]), 'g:g2'), 'on: the empty group stays visible');
         assert.ok(has(draw([row('cloude_a')]), 'g:g1'), 'a group with a member always draws');
     });
 

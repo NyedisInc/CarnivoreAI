@@ -11,14 +11,15 @@ from typing import Any, Awaitable, Callable, Optional
 import structlog
 
 from src.core import session_notes_store
+from src.core.auto_sleep.sleeper import is_sleepable_agent
 from src.core.cross_session_search import strip_ansi
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.plugins.host import mcp as cplug_mcp
 from src.core.mcp import (session_target, companion_shell_tools, dashboard_tools, description_tools, project_color_tools, color_tools, layout_tools, dialog_tools, notification_tools, preference_tools,
                           project_lifecycle_tools, project_replica_tools, session_control_tools, automation_tools, beast_mode, bookmark_tools, lineage_tools, timeline_tools, board_tools, byoai_tools, crosstalk_tools, federated, launch_profile_tools, notify_tools,
-                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_memory_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools, deepsearch_tools, wait_tools, pack_jobs_tools, pack_jobs_reply_tools, pack_jobs_metrics_tools, ssh_targets_tools, codex_helpers_tools, session_events_tools)
+                          messaging_tools, card_capacity_tools, card_tools, card_validate_tools, company_tools, group_tools, swarm_memory_tools, swarm_tools, pin_tools, pipeline_tools, session_delete_tools, session_folder_move_tools, session_purge_tools, project_tools, project_pack_tools, catalog_tools, mod_tools, skill_tools, read_tools, swarm_order_tools, write_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_leftovers_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, stats_tools, project_library_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools, deepsearch_tools, wait_tools, pack_jobs_tools, pack_jobs_reply_tools, pack_jobs_metrics_tools, ssh_targets_tools, codex_helpers_tools, retention_tools, session_events_tools)
 from src.core.mcp import agent_tool_switches, aliases, merged_tools, pane_only, read_only_hint, tool_switches
-from src.core.mcp import lean_answers
+from src.core.mcp import lean_answers, reply_sentence
 from src.core.mcp.approvals import call_context
 from src.core.mcp.caller import AgentCaller
 from src.plugins.sdk import old_names
@@ -78,6 +79,14 @@ async def sessions_list(manager: Any, caller: AgentCaller, args: dict) -> dict:
     return _ok(answer)
 
 
+def _sleep_verdict(manager: Any, info: Any) -> Optional[dict]:
+    sleeper = getattr(getattr(getattr(manager, "app", None), "state", None), "auto_sleeper", None)
+    if sleeper is None or not is_sleepable_agent(info):
+        return None
+    verdict = sleeper.verdict_for(info.session.id)
+    return verdict.model_dump(mode="json") if verdict is not None else None
+
+
 async def session_status(manager: Any, caller: AgentCaller, args: dict) -> dict:
     target = await session_target.resolve_target(manager, args, reach=session_target.STORED, tool="session_status")
     if not target.live:
@@ -95,6 +104,7 @@ async def session_status(manager: Any, caller: AgentCaller, args: dict) -> dict:
         ),
         "pty_pid": info.session.pty_pid,
         "last_activity": info.session.last_activity,
+        "sleep_verdict": _sleep_verdict(manager, info),
     })
 
 
@@ -200,7 +210,7 @@ _TOOLS: dict[str, tuple[str, dict, list, Handler]] = {
                        "limit": {"type": "integer", "minimum": 1, "maximum": MAX_LIST_ROWS},
                        "detail": {"type": "boolean", "description": "200 rows instead of the lean 50"}},
                       [], sessions_list),
-    "session_status": ("Status detail for one session, live or asleep (an asleep one answers asleep: true).",
+    "session_status": ("Status detail for one session, live or asleep (an asleep one answers asleep: true); a live agent carries sleep_verdict, why auto sleep has not slept it.",
                        {"target": _TARGET_SCHEMA}, ["target"], session_status),
     "session_read_output": (
         "Tail of a session's terminal output (max 500 lines, ANSI stripped, secrets redacted).",
@@ -258,7 +268,7 @@ _TOOLS.update(card_tools.TOOLS)
 _TOOLS.update(card_validate_tools.TOOLS)
 _TOOLS.update(card_capacity_tools.TOOLS)
 _ROUTE_MODULES = (swarm_memory_tools, session_control_tools, companion_shell_tools, dialog_tools, dashboard_tools, preference_tools, notification_tools,
-                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, layout_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools, pack_jobs_tools, pack_jobs_reply_tools, pack_jobs_metrics_tools, ssh_targets_tools, codex_helpers_tools, session_events_tools)
+                  project_lifecycle_tools, project_replica_tools, messaging_tools, description_tools, project_color_tools, color_tools, layout_tools, computers_tools, pack_machines_tools, app_update_tools, plugin_sideload_tools, plugin_admin_tools, pack_relay_tools, api_key_tools, pack_skills_tools, pack_global_sync_tools, pack_leftovers_tools, pack_placement_tools, pack_transport_tools, pack_span_tools, pack_migrate_tools, pack_move_tools, browser_open_tools, files_open_tools, ui_show_tools, row_look_tools, pack_send_tools, usage_tools, session_usage_tools, session_inspect_tools, session_recovery_tools, session_background_tools, stats_tools, project_library_tools, swarm_switch_tools, argent_tools, swarm_member_tools, beast_tools, autonomy_tools, pack_jobs_tools, pack_jobs_reply_tools, pack_jobs_metrics_tools, ssh_targets_tools, codex_helpers_tools, retention_tools, session_events_tools)
 for _module in _ROUTE_MODULES:
     _TOOLS.update(_module.READ_TOOLS)
     _TOOLS.update(_module.WRITE_TOOLS)
@@ -348,6 +358,7 @@ async def call_tool(manager: Any, caller: AgentCaller, name: str, args: Any) -> 
     called, name = name, aliases.canonical(name)
     args = merged_tools.with_preset(called, args) if called in merged_tools.MERGED else args
     mcp_events.take_gate_denied()
+    reply_sentence.begin_call()
     if (why := tool_switches.hidden_reason(caller, name, called_as=called) or agent_tool_switches.hidden_reason(caller, called)):
         mcp_events.mark_gate_denied()
         result = _fail(why)
@@ -356,6 +367,7 @@ async def call_tool(manager: Any, caller: AgentCaller, name: str, args: Any) -> 
     if result is None:
         result = await _run_tool(manager, caller, name, args)
     mcp_events.finish(event, result, denied_by_gate=mcp_events.take_gate_denied())
+    reply_sentence.attach(name, args, result)
     logger.info("mcp.tool_result", tool=called, chars=result_chars(result), is_error=bool(isinstance(result, dict) and result.get("isError")))
     return result
 

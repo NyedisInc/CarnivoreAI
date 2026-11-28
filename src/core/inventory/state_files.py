@@ -13,12 +13,14 @@ from src.core.inventory.claims import ClaimBook
 from src.core.inventory.entry_claims import RENAME_STORE
 from src.core.inventory.locations import PINNED_THEMES_FILE, UNREAD_STATE_FILE, Locations
 from src.core.inventory.side_trace import JOURNAL
+from src.core.work import folders as work_folders
 
 DATA_SUFFIXES: Tuple[str, ...] = (".db", ".json", ".jsonl")
 MAIN_DB_FILE = "carnivore.db"
 CLAIMED_STATE_FILES: Tuple[str, ...] = (UNREAD_STATE_FILE, PINNED_THEMES_FILE, f"{JOURNAL}/journal.json", RENAME_STORE,
                                         "swarm/settings/*.json", vault_record.HEALTH_FILE)
-CLAIMED_STATE_DIRS: Tuple[str, ...] = ("time-machine", vault_record.DEFAULT_DIR_NAME, "deepsearch-backup-copies", "cplugs/huddle/files", "swarm/desk", "swarm/hooks")
+CLAIMED_STATE_DIRS: Tuple[str, ...] = ("time-machine", vault_record.DEFAULT_DIR_NAME, "deepsearch-backup-copies", *work_folders.FILES_RELS,
+                                       "swarm/desk", "swarm/hooks")
 
 
 def core_patterns(book: ClaimBook) -> List[str]:

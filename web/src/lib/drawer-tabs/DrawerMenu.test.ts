@@ -11,7 +11,7 @@ import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 // Task Manager is on by default for a clean install since 2026-10-05 (docs/cplugs.md section 9 question 1, superseded);
 // these tests pin its enablement explicitly instead of leaning on the default.
-cplugEnablement.enabled = { huddle: true };
+cplugEnablement.enabled = { taskmanager: true };
 
 setLocale('en');
 
@@ -42,9 +42,9 @@ const FORMER_RAIL: Array<[string, string]> = [
   ['dashboards', 'dashboard'],
   ['warroom', 'war room'],
   ['sessions', 'projects'],
+  ['widgets', 'widgets'],
   ['automations', 'automations'],
   ['warez', 'warez'],
-  ['widgets', 'widgets'],
   ['blueprints', 'blueprints'],
   ['providers', 'providers'],
   ['hosts', 'pack'],

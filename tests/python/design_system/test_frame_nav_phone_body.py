@@ -102,6 +102,7 @@ def test_a_scroll_frame_nav_page_still_grows_with_its_content_on_a_phone(browser
 
 SELF_SCROLLING_NAV_PAGES = {
     "web/src/lib/catalog/CatalogScreen.svelte",
+    "web/src/lib/plugin-studio/StudioScreen.svelte",
     "web/src/lib/settings-page/SettingsScreen.svelte",
     "web/src/lib/sessions-page/SessionsPage.svelte",
     "web/src/lib/widgets-page/WidgetsScreen.svelte",

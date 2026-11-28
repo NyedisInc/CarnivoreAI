@@ -586,7 +586,7 @@ describe('the docked conversations drawer', () => {
     });
 });
 
-describe('adding an account asks for a name, a type and a colour', () => {
+describe('adding an account asks for a name and a type (no color swatches, #3365)', () => {
     test('THERE IS NO DIRECTORY FIELD ON SCREEN, because the app makes one', async () => {
         const spy = recorder();
         await paint(spy.host);
@@ -601,48 +601,10 @@ describe('adding an account asks for a name, a type and a colour', () => {
         );
     });
 
-    test('the sorted terminal colours open from one chip and none is chosen to begin with', async () => {
+    test('no provider colour picker is shown in the add form (#3365)', async () => {
         const spy = recorder();
         await paint(spy.host);
-        expect(document.querySelectorAll('[data-ledger="editor"] .ledger-tcell')).toHaveLength(0);
-        await openPicker('[data-ledger="editor"]');
-        const swatches = document.querySelectorAll('[data-ledger="editor"] .ledger-tcell');
-        expect(swatches).toHaveLength(249);
-        expect(
-            [...swatches].filter((node) => node.getAttribute('aria-pressed') === 'true'),
-        ).toHaveLength(0);
-    });
-
-    test('A HEX FIELD REACHES ANY COLOUR, with no library and no native input', async () => {
-        const spy = recorder();
-        await paint(spy.host);
-        await openPicker('[data-ledger="editor"]');
-        const hex = one<HTMLInputElement>('[data-ledger="editor"] [data-ledger="color-hex"]');
-        expect(hex.getAttribute('type')).toBe('text');
-        expect(hex.getAttribute('aria-label')).toBe(t('ledger.color.hex_label'));
-    });
-
-    test('A COLOUR THE PALETTE NEVER OFFERED RIDES ON THE WIRE, lowercased', async () => {
-        const spy = recorder();
-        await paint(spy.host);
-        type('#ledger-account-name', 'claude one');
-        await openPicker('[data-ledger="editor"]');
-        const custom = one<HTMLInputElement>('[data-ledger="editor"] [data-ledger="color-hex"]');
-        custom.value = '#123456';
-        custom.dispatchEvent(new Event('input', { bubbles: true }));
-        await settle();
-        await press('[data-ledger="editor-submit"]');
-        expect(spy.saved[0]?.body.color).toBe('#123456');
-    });
-
-    test('every swatch is a real button, so the keyboard reaches it', async () => {
-        const spy = recorder();
-        await paint(spy.host);
-        await openPicker('[data-ledger="editor"]');
-        for (const node of document.querySelectorAll('[data-ledger="editor"] .ledger-tcell')) {
-            expect(node.tagName).toBe('BUTTON');
-            expect(node.getAttribute('aria-label')).toBeTruthy();
-        }
+        expect(document.querySelector('[data-ledger="editor"] [data-ledger="color-chip"]')).toBeNull();
     });
 
     test('A MANAGED WRITE STATES NO POINTER AT ALL', async () => {
@@ -666,39 +628,12 @@ describe('adding an account asks for a name, a type and a colour', () => {
         expect(document.querySelector('[data-ledger="editor-refusal"]')).toBeNull();
     });
 
-    test('the chosen swatch rides on the wire and shows as chosen first', async () => {
-        const spy = recorder();
-        await paint(spy.host);
-        type('#ledger-account-name', 'claude one');
-        await openPicker('[data-ledger="editor"]');
-        one<HTMLButtonElement>('[data-ledger="editor"] .ledger-tcell').click();
-        await settle();
-        await openPicker('[data-ledger="editor"]');
-        expect(one<HTMLButtonElement>('[data-ledger="editor"] .ledger-tcell[aria-pressed="true"]')).toBeTruthy();
-        await press('[data-ledger="editor-submit"]');
-        expect(spy.saved[0]?.body.color).toBe('#ffffff');
-    });
-
     test('OPENING THE ADVANCED FOLD IS WHAT MAKES A ROW UNMANAGED', async () => {
         const spy = recorder();
         await paint(spy.host);
         await fillAdvancedClaude('work', '~/.claude-work');
         await press('[data-ledger="editor-submit"]');
         expect(spy.saved[0]?.body.managed).toBe(false);
-    });
-
-    test('a written account leaves no colour selected for the next one', async () => {
-        const spy = recorder();
-        await paint(spy.host);
-        type('#ledger-account-name', 'claude one');
-        await openPicker('[data-ledger="editor"]');
-        one<HTMLButtonElement>('[data-ledger="editor"] .ledger-tcell').click();
-        await settle();
-        await press('[data-ledger="editor-submit"]');
-        await openPicker('[data-ledger="editor"]');
-        expect(
-            one<HTMLButtonElement>('[data-ledger="editor"] .ledger-tcell').getAttribute('aria-pressed'),
-        ).toBe('false');
     });
 
     test('a refused managed write says so under the form, not as a toast', async () => {
@@ -715,40 +650,18 @@ describe('adding an account asks for a name, a type and a colour', () => {
     });
 });
 
-describe('the mark in front of a row', () => {
+describe('provider cards carry no color swatch boxes (#3365)', () => {
     const COLOURED = ledgerWith({ color: '#a3e635', managed: true });
 
-    test('a row with a colour paints it', async () => {
+    test('no colour swatch renders on provider cards or headroom tiles even if stored color is set', async () => {
         const spy = recorder({
             ledger: COLOURED,
             accounts: [{ id: 'main', name: 'main', provider: 'claude', color: '#a3e635' }],
         });
         await paint(spy.host);
-        expect(one('[data-ledger="row"] .ledger-mark').getAttribute('style')).toContain('#a3e635');
-    });
-
-    test('A ROW WITH NO COLOUR PAINTS AN EMPTY OUTLINE, never a default hue', async () => {
-        const spy = recorder({ ledger: ONE, accounts: [{ id: 'main', name: 'main' }] });
-        await paint(spy.host);
-        const mark = one('[data-ledger="row"] .ledger-mark');
-        expect(mark.classList.contains('ledger-mark--none')).toBe(true);
-        expect(mark.getAttribute('style')).toContain('transparent');
-    });
-
-    test('PRESSING THE MARK OPENS THE EDITOR, which is the one place a colour is set', async () => {
-        const spy = recorder({ ledger: ONE, accounts: [{ id: 'main', name: 'main' }] });
-        await paint(spy.host);
-        expect(document.querySelector('[data-ledger="edit"]')).toBeNull();
-        await press('[data-ledger="row"] .ledger-mark');
-        expect(document.querySelector('[data-ledger="edit"]')).not.toBeNull();
-    });
-
-    test('there is no picker that writes a colour on its own any more', async () => {
-        const spy = recorder({ ledger: ONE, accounts: [{ id: 'main', name: 'main' }] });
-        await paint(spy.host);
-        await press('[data-ledger="row"] .ledger-mark');
-        expect(document.querySelector('.ledger-mark__picker')).toBeNull();
-        expect(spy.saved).toEqual([]);
+        expect(document.querySelector('[data-ledger="row"] .ledger-mark')).toBeNull();
+        expect(document.querySelector('.ledger-headroom__swatch')).toBeNull();
+        expect(document.querySelector('[data-ledger="row"] [data-ledger="provider-mark"]')).not.toBeNull();
     });
 });
 
@@ -799,11 +712,10 @@ describe('editing an account that already exists', () => {
         expect(card?.parentElement?.classList.contains('ledger-cell--wide')).toBe(true);
     });
 
-    test('IT OPENS PRE-FILLED WITH THE NAME AND THE COLOUR THE ROW ALREADY HAS', async () => {
+    test('IT OPENS PRE-FILLED WITH THE NAME AND NO COLOUR PICKER (#3365)', async () => {
         await openEditor([STORED_NAMED]);
         expect(one<HTMLInputElement>('#ledger-edit-name').value).toBe('main');
-        await openPicker('[data-ledger="edit"]');
-        expect(one<HTMLInputElement>('[data-ledger="edit"] [data-ledger="color-hex"]').value).toBe('a3e635');
+        expect(document.querySelector('[data-ledger="edit"] [data-ledger="color-chip"]')).toBeNull();
     });
 
     const editorValues = (): (string | undefined)[] =>
@@ -833,12 +745,9 @@ describe('editing an account that already exists', () => {
         expect(one('[data-ledger="edit"]').textContent ?? '').toContain(t('ledger.edit.immutable_help'));
     });
 
-    test('SAVING SENDS THE STORED ROW BACK WHOLE, with only the name and colour changed', async () => {
+    test('SAVING SENDS THE STORED ROW BACK WHOLE, with only the name changed and color cleared', async () => {
         const spy = await openEditor([STORED_NAMED]);
         type('#ledger-edit-name', 'day job');
-        await openPicker('[data-ledger="edit"]');
-        one<HTMLButtonElement>('[data-ledger="edit"] .ledger-tcell[data-idx="200"]').click();
-        await settle();
         await press('[data-ledger="edit-save"]');
         expect(spy.saved).toEqual([
             {
@@ -847,7 +756,7 @@ describe('editing an account that already exists', () => {
                     name: 'day job',
                     provider: 'claude',
                     managed: false,
-                    color: '#ff00d7',
+                    color: null,
                     short_name: '',
                     claude_config_dir: '~/.claude-main',
                     codex_home: '~/.codex',
@@ -884,25 +793,6 @@ describe('editing an account that already exists', () => {
         expect(spy.saved[0]?.body.short_name).toBe('m2');
     });
 
-    test('a colour can be taken back off through the editor', async () => {
-        const spy = await openEditor([STORED_NAMED]);
-        await openPicker('[data-ledger="edit"]');
-        await press('[data-ledger="edit"] [data-ledger="color-none"]');
-        await press('[data-ledger="edit-save"]');
-        expect(spy.saved[0]?.body.color).toBeNull();
-    });
-
-    test('a freely picked colour reaches the wire lowercased', async () => {
-        const spy = await openEditor([STORED_NAMED]);
-        await openPicker('[data-ledger="edit"]');
-        const custom = one<HTMLInputElement>('[data-ledger="edit"] [data-ledger="color-hex"]');
-        custom.value = '#ABCDEF';
-        custom.dispatchEvent(new Event('input', { bubbles: true }));
-        await settle();
-        await press('[data-ledger="edit-save"]');
-        expect(spy.saved[0]?.body.color).toBe('#abcdef');
-    });
-
     test('BOTH LISTS ARE RE-READ ONCE THE WRITE LANDS', async () => {
         const spy = await openEditor([STORED_NAMED]);
         type('#ledger-edit-name', 'day job');
@@ -923,15 +813,11 @@ describe('editing an account that already exists', () => {
     test('CANCEL WRITES NOTHING AND THROWS THE TYPING AWAY', async () => {
         const spy = await openEditor([STORED_NAMED]);
         type('#ledger-edit-name', 'day job');
-        await openPicker('[data-ledger="edit"]');
-        await press('[data-ledger="edit"] [data-ledger="color-none"]');
         await press('[data-ledger="edit-cancel"]');
         expect(spy.saved).toEqual([]);
         expect(document.querySelector('[data-ledger="edit"]')).toBeNull();
         await press('[data-ledger="row"] [data-ledger="edit-start"]');
         expect(one<HTMLInputElement>('#ledger-edit-name').value).toBe('main');
-        await openPicker('[data-ledger="edit"]');
-        expect(one<HTMLInputElement>('[data-ledger="edit"] [data-ledger="color-hex"]').value).toBe('a3e635');
     });
 
     test('A BLANK NAME IS REFUSED INLINE AND THE FORM STAYS OPEN', async () => {
@@ -976,7 +862,7 @@ describe('editing an account that already exists', () => {
         expect(one<HTMLButtonElement>('[data-ledger="edit-save"]').disabled).toBe(true);
         expect(one<HTMLButtonElement>('[data-ledger="edit-cancel"]').disabled).toBe(true);
         expect(one<HTMLInputElement>('#ledger-edit-name').disabled).toBe(true);
-        expect(one<HTMLButtonElement>('[data-ledger="edit"] [data-ledger="color-chip"]').disabled).toBe(true);
+        expect(one<HTMLInputElement>('#ledger-edit-short-name').disabled).toBe(true);
         expect(one('[data-ledger="edit-save"]').textContent ?? '').toContain(t('ledger.edit.saving'));
     });
 

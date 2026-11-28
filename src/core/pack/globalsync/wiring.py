@@ -20,7 +20,7 @@ from src.core.federation.peer_links import CONNECTED
 from src.core.pack.globalsync import collect, panel_merge, rules
 from src.core.pack.globalsync.sender import (NOT_APPROVED, OFFLINE, RECEIVER_OFF, GlobalSync, PeerView)
 from src.core.pack.globalsync.store import Status, clean_settings
-from src.core.pack.machines import runtime as machines_runtime
+from src.core.pack.machines import capabilities, runtime as machines_runtime
 from src.core.pack.relay import approval
 from src.core.pack.transport import blobs
 from src.core.provider_ledger import accounts_store
@@ -107,7 +107,7 @@ class PanelKick:
         self._handle = self._loop.call_later(PANEL_QUIET_SECONDS, lambda: spawn(self._run()))
 
 
-def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_links.PeerLinks]]) -> GlobalSync:
+def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_links.PeerLinks]], app_state: Any = None) -> GlobalSync:
     global SYNC, WATCH
     wired = machines_runtime.wiring()
     if wired is None:
@@ -139,12 +139,42 @@ def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_l
             return panel_merge.doc_for_send(conn, read_arrangement, runtime.install_id, stamps_path,
                                             member=runtime.settings().master_install_id != runtime.install_id)
 
+    if capabilities.mesh_on() and app_state is not None:
+        from src.core.pack.globalsync import mesh_panel, mesh_telemetry, mesh_workspace
+        from src.core.pack.meshdata import gossip
+
+        def _sync_settings() -> dict:
+            return clean_settings(wired.state.global_sync())
+
+        gossip.add_step(mesh_panel.attach(app_state, open_db, _sync_settings, stamps_path))
+        gossip.add_step(mesh_workspace.attach(app_state, open_db, _sync_settings, state_dir))
+        gossip.add_step(
+            mesh_telemetry.attach(
+                app_state,
+                open_db,
+                label=lambda: runtime.label,
+                app_version=runtime.app_version,
+                state_dir=str(app_settings.get_state_dir()),
+            )
+        )
+
+        async def _telemetry_beat() -> None:
+            while True:
+                await asyncio.sleep(mesh_telemetry.REFRESH_SECONDS)
+                links_now = links_getter()
+                has_peer = links_now is not None and bool(links_now.connected_clients())
+                if has_peer and wired.state.restrictions().may_receive_pack_ui:
+                    gossip.wake()
+
+        spawn(_telemetry_beat())
+
     sync = GlobalSync(
         settings=lambda: clean_settings(wired.state.global_sync()), is_main=lambda: runtime.content_alpha() == runtime.install_id,
         peers=peers, approved=approval.reader(open_db), allows=lambda iid: machines_runtime.peer_restriction(iid, "may_receive_global_setup"),
         contained=direction.contained, accounts=accounts, request_for=request_for, status=Status(state_dir / "global-sync-status.json"),
         outbox=state_dir / "global-outbox", home=Path.home(), notify=lambda: resource_push.notify(topics.PACK_GLOBAL_SYNC), installs=Status(state_dir / "global-install-status.json"),
         panel_doc=panel_doc, panel_status=Status(state_dir / "global-panel-status.json"),
+        panel_allows=lambda iid: machines_runtime.peer_restriction(iid, "may_receive_pack_ui", default=True),
         main_id=runtime.content_alpha, one_way_toward=direction.is_one_way_toward,
         panel_pending=lambda: panel_merge.pending(stamps_path), panel_sent=lambda: panel_merge.clear_pending(stamps_path))
     SYNC = sync
@@ -181,6 +211,10 @@ def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_l
             await sync.sync(ready)
 
     async def panel_pass() -> None:
+        if capabilities.mesh_on():
+            from src.core.pack.meshdata import gossip
+
+            gossip.wake()
         if not sync.settings().get("panel"):
             return
         if sync.is_main():
@@ -188,11 +222,34 @@ def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_l
         else:
             await sync.send_changes()
 
+    def _wake_mesh_workspace() -> None:
+        if capabilities.mesh_on():
+            from src.core.pack.meshdata import gossip
+
+            gossip.wake()
+
+    def _workspace_pref_fp(data: Any) -> str:
+        values = read_block(data).get("values", {}) if isinstance(data, dict) else {}
+        if not isinstance(values, dict):
+            return ""
+        from src.core.pack.globalsync import mesh_workspace
+
+        return json.dumps(mesh_workspace.synced_pref_snapshot(values), sort_keys=True, separators=(",", ":"))
+
+    def _read_workspace_pref_fp() -> str:
+        try:
+            config = json.loads(Path(app_settings.auth_config_file).expanduser().read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return ""
+        return _workspace_pref_fp(config)
+
     global KICK
     kick_panel = KICK = PanelKick(loop, panel_pass)
     resource_push.add_topic_listener(topics.PROJECTS, kick_panel.poke)
     resource_push.add_topic_listener(topics.COMPANIES, kick_panel.poke)
-    seen = {"arrangement": json.dumps(read_arrangement(), sort_keys=True)}
+    resource_push.add_topic_listener(topics.ROW_LOOKS, _wake_mesh_workspace)
+    resource_push.add_topic_listener(topics.ITEM_SETTINGS, _wake_mesh_workspace)
+    seen = {"arrangement": json.dumps(read_arrangement(), sort_keys=True), "workspace_prefs": _read_workspace_pref_fp()}
 
     def on_config_commit(_path: Path, data: Any) -> None:
         value = read_block(data).get("values", {}).get("drawer_arrangement") if isinstance(data, dict) else None
@@ -200,6 +257,10 @@ def start(open_db: Callable[[], Any], links_getter: Callable[[], Optional[peer_l
         if now != seen["arrangement"]:
             seen["arrangement"] = now
             kick_panel.poke()
+        ws_now = _workspace_pref_fp(data)
+        if ws_now != seen["workspace_prefs"]:
+            seen["workspace_prefs"] = ws_now
+            _wake_mesh_workspace()
 
     config_writer.on_commit(on_config_commit)
     links = links_getter()

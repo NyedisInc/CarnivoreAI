@@ -20,7 +20,7 @@ const ROWS: CplugRow[] = [
         permissions: { app: ['sessions.read', 'notify'] }, grants: { app: [] }, risks: { 'sessions.read': 'low', notify: 'low' },
         settings_schema: { version: 1, fields: { notify: { kind: 'boolean', labelKey: 'cplug.mcphealth.settings.notify', default: false } } },
     },
-    { id: 'huddle', name_key: 'cplug.huddle.name', description_key: 'cplug.huddle.description', version: '1.0.0', tier: 'builtin', icon: 'list', author: 'Joe (ccsliinc)', surfaces: { tabs: ['huddle'], mcp_tools: ['huddle_list'] }, enabled: true, state: 'needs_approval', permissions: { app: ['sessions.message'] }, grants: { app: [] }, risks: { 'sessions.message': 'high' } },
+    { id: 'taskmanager', name_key: 'cplug.huddle.name', description_key: 'cplug.huddle.description', version: '1.0.0', tier: 'builtin', icon: 'list', author: 'Joe (ccsliinc)', surfaces: { tabs: ['huddle'], mcp_tools: ['huddle_list'] }, enabled: true, state: 'needs_approval', permissions: { app: ['sessions.message'] }, grants: { app: [] }, risks: { 'sessions.message': 'high' }, settings_schema: { version: 1, fields: { showTab: { kind: 'boolean', labelKey: 'cplug.huddle.settings.show_tab', default: true } } } },
     { id: 'flow', name_key: 'cplug.flow.name', description_key: 'cplug.flow.description', version: '1.0.0', tier: 'builtin', icon: 'plug', author: 'Joe (ccsliinc)', enabled: true, state: 'unavailable', permissions: { app: [] } },
     { id: 'share', name_key: 'cplug.share.name', description_key: 'cplug.share.description', version: '1.0.0', tier: 'core', icon: 'search', enabled: true, state: 'active', permissions: { app: [] } },
     { id: 'gone', enabled: false, state: 'removed' },

@@ -1,3 +1,4 @@
+/* the Task Manager */
 
 export const CACHE_VERSION = 1;
 

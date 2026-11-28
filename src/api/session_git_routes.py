@@ -29,13 +29,26 @@ def watch_for(app_state: Any) -> GitStatusWatch:
     return watch
 
 
+async def _resolve_git_ref(manager: Any, session_id: str) -> Optional[dict]:
+    fast = getattr(manager, "resolve_session_ref", None)
+    if callable(fast):
+        return await fast(session_id)
+    info = await manager.get_session_info(session_id)
+    if info is None:
+        return None
+    return {
+        "tmux_session": getattr(info, "tmux_session", None),
+        "working_dir": getattr(getattr(info, "session", None), "working_dir", None),
+    }
+
+
 async def _session_directory(manager: Any, info: Any) -> Optional[Path]:
-    tmux_name = getattr(info, "tmux_session", None)
+    tmux_name = info.get("tmux_session") if isinstance(info, dict) else getattr(info, "tmux_session", None)
     if tmux_name:
         facts = await read_pane_facts(manager.tmux_socket_name(), tmux_name)
         if facts.cwd:
             return Path(facts.cwd)
-    stored = getattr(getattr(info, "session", None), "working_dir", None)
+    stored = info.get("working_dir") if isinstance(info, dict) else getattr(getattr(info, "session", None), "working_dir", None)
     return Path(stored) if stored else None
 
 
@@ -52,14 +65,14 @@ async def get_session_git_status(request: Request, session_id: str) -> SessionGi
     manager = request.app.state.session_manager
     if remote_target(manager, session_id) is not None:
         return SessionGitStatus(state="remote")
-    info = await manager.get_session_info(session_id)
-    if info is None:
+    ref = await _resolve_git_ref(manager, session_id)
+    if ref is None:
         raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
-    directory = await _session_directory(manager, info)
+    directory = await _session_directory(manager, ref)
     if directory is None:
         return SessionGitStatus(state="unknown")
     status = await watch_for(request.app.state).read(session_id, directory)
-    stored = getattr(getattr(info, "session", None), "working_dir", None)
+    stored = ref.get("working_dir")
     if status.state != "ok" or not stored:
         return status
     real = await asyncio.to_thread(os.path.realpath, stored)
@@ -93,10 +106,10 @@ async def get_session_git_diff(
     manager = request.app.state.session_manager
     if remote_target(manager, session_id) is not None:
         return SessionGitDiff(state="remote")
-    info = await manager.get_session_info(session_id)
-    if info is None:
+    ref = await _resolve_git_ref(manager, session_id)
+    if ref is None:
         raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
-    directory = await _session_directory(manager, info)
+    directory = await _session_directory(manager, ref)
     if directory is None:
         return SessionGitDiff(state="unknown", path=path)
     watch = watch_for(request.app.state)

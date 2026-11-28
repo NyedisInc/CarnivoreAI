@@ -45,6 +45,7 @@ class Collection:
     name: str
     build: Callable[[Dict[str, Any]], Awaitable[CollectionResult]]
     key_of: Callable[[Dict[str, Any]], Optional[str]]
+    tier: Optional[int] = None
 
 
 class ListingPublisher:
@@ -60,6 +61,7 @@ class ListingPublisher:
         stale_seconds: float = DEFAULT_STALE_SECONDS,
         after_pass: Optional[Callable[[], None]] = None,
         feed: Optional[Callable[[], Awaitable[bool]]] = None,
+        on_change: Optional[Callable[[Dict[str, Any]], None]] = None,
     ) -> None:
         self._collections = list(collections)
         self._publish = publish
@@ -69,6 +71,7 @@ class ListingPublisher:
         self.stale_seconds = stale_seconds
         self._after_pass = after_pass
         self._feed = feed
+        self._on_change = on_change
         self.stream = secrets.token_hex(6)
         self.seq = 0
         self._rows: Dict[str, KeyedRows] = {}
@@ -100,22 +103,45 @@ class ListingPublisher:
         changes: Dict[str, Any] = {}
         new_rows: Dict[str, KeyedRows] = {}
         new_status: Dict[str, Dict[str, Any]] = {}
-        for collection in self._collections:
+
+        async def _build_and_diff(collection: Collection) -> Optional[tuple]:
             try:
                 result = await collection.build(context)
             except (OSError, RuntimeError, ValueError, TypeError, KeyError, AttributeError) as exc:
                 logger.warning("listing_push_build_failed", collection=collection.name,
                                error=str(exc), error_type=type(exc).__name__)
-                continue
+                return None
             rows, change = await asyncio.to_thread(self._keyed_diff, collection, result.rows)
             status = result.status_dict()
             if status != self._status.get(collection.name):
                 change = dict(change or {})
                 change["status"] = status
-            if change:
-                changes[collection.name] = change
-            new_rows[collection.name] = rows
-            new_status[collection.name] = status
+            return collection.name, rows, status, change
+
+        waves: List[List[Collection]] = []
+        for collection in self._collections:
+            if (
+                collection.tier is not None
+                and waves
+                and waves[-1][0].tier == collection.tier
+            ):
+                waves[-1].append(collection)
+            else:
+                waves.append([collection])
+
+        for wave in waves:
+            if len(wave) == 1:
+                outcomes = [await _build_and_diff(wave[0])]
+            else:
+                outcomes = list(await asyncio.gather(*(_build_and_diff(c) for c in wave)))
+            for outcome in outcomes:
+                if outcome is None:
+                    continue
+                name, rows, status, change = outcome
+                if change:
+                    changes[name] = change
+                new_rows[name] = rows
+                new_status[name] = status
         self._rows.update(new_rows)
         self._status.update(new_status)
         self._computed_at = time.monotonic()
@@ -125,6 +151,8 @@ class ListingPublisher:
         self.seq += 1
         frame = {"type": FRAME_TYPE, "stream": self.stream, "seq": self.seq, "changes": changes}
         self._publish(frame)
+        if self._on_change is not None:
+            self._on_change(changes)
         return frame
 
     def _keyed_diff(self, collection: Collection, result_rows: List[Dict[str, Any]]):

@@ -52,7 +52,7 @@ def world(tmp_path, monkeypatch):
 
 
 def _call(args):
-    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), tmux_session="cloude_life", session_row_id=7, host_key="local")
+    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), label=None, claude_title=None, tmux_session="cloude_life", session_row_id=7, host_key="local")
 
     class View:
         app = None

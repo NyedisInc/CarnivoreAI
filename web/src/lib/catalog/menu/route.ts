@@ -1,5 +1,5 @@
 
-export const MENU_KINDS = ['skill', 'theme', 'mod', 'plugin'] as const;
+export const MENU_KINDS = ['skill', 'theme', 'mod', 'plugin', 'widget', 'loadout'] as const;
 export type MenuKind = (typeof MENU_KINDS)[number];
 
 export const SKILLS_TABS = ['stats', 'pack'] as const;
@@ -26,7 +26,7 @@ export const RESERVED_SEGMENTS: readonly string[] = ['store', 'installed', 'look
 
 export const HOME_NODE: MenuNode = { scope: 'store', page: 'everything' };
 
-const PLURAL: Record<MenuKind, string> = { skill: 'skills', theme: 'themes', mod: 'mods', plugin: 'plugins' };
+const PLURAL: Record<MenuKind, string> = { skill: 'skills', theme: 'themes', mod: 'mods', plugin: 'plugins', widget: 'widgets', loadout: 'loadouts' };
 
 function kindOfSegment(segment: string | undefined): MenuKind | null {
     return MENU_KINDS.find((kind) => kind === segment || PLURAL[kind] === segment) ?? null;

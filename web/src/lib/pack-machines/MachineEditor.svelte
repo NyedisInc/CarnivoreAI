@@ -5,7 +5,8 @@
   import NumberField from '../base/NumberField.svelte';
   import ReserveForm from './ReserveForm.svelte';
   import MachineAllowLists from './MachineAllowLists.svelte';
-  import { saveRestrictions, type PackMachine, type Restrictions } from './pack-machines-store.svelte';
+  import { orderEditable, meshOn } from '../pack-roster/roster-model';
+  import { packMachines, saveRestrictions, type PackMachine, type Restrictions } from './pack-machines-store.svelte';
 
   interface Props {
     machine: PackMachine;
@@ -14,6 +15,7 @@
 
   const RULES: readonly (keyof Restrictions)[] = ['may_host_agents', 'may_receive_projects', 'may_install_tools', 'may_receive_credentials', 'may_receive_global_setup', 'may_update_carnivore'];
   const snap = $derived(machine.snapshot);
+  const reserveEditable = $derived(machine.is_self || !meshOn(packMachines.data) || orderEditable(packMachines.data));
   const rules = $derived(RULES.filter((rule) => !(machine.is_self && (rule === 'may_receive_credentials' || rule === 'may_receive_global_setup'))));
 
   function setCap(value: number | null): void {
@@ -29,10 +31,12 @@
 {#if snap}
   {@const cfg = snap.reserve.config}
   <div class="pm-edit" data-pm="editor">
-    {#if cfg}
+    {#if cfg && reserveEditable}
       {#key JSON.stringify(cfg)}
         <ReserveForm {machine} reserve={{ ...snap.reserve, config: cfg }} />
       {/key}
+    {:else if cfg}
+      <p class="pm-note" data-pm="reserve-alpha-only">{t('pack.machines.reserve_alpha_only', { name: machine.label })}</p>
     {/if}
     <h3 class="pl-label">{t('pack.machines.restrictions_title')}</h3>
     <p class="pm-note">{machine.is_self ? t('pack.machines.restrictions_own') : t('pack.machines.restrictions_peer')}</p>

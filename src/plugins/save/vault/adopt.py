@@ -1,33 +1,64 @@
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import io
+import os
+import re
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 import structlog
 
 from src.plugins.save.engine import layout
+from src.plugins.save.offload import ledger as offload_ledger
 from src.plugins.save.vault import constants as K
 from src.plugins.save.vault import digest as digest_mod
 from src.plugins.save.vault import retention
-from src.plugins.save.vault.manifest import HOME_CLAUDE, HOME_CODEX, HOME_FOLDER, FileEntry, Manifest, ManifestError, check_rel, check_unit
+from src.plugins.save.vault.manifest import (HOME_CLAUDE, HOME_CODEX, HOME_FOLDER, FileEntry, Manifest, ManifestError, check_rel, check_unit,
+                                             HOME_CODEX_ACCOUNT_PREFIX, is_codex_account_home)
 from src.plugins.save.vault.store import Vault, signature, unit_lock
+from src.plugins.sdk import transcript_files as tf, vault_sources
 from src.plugins.sdk.blob_codec import ChunkReader, ChunkRef, IterStream, chain_sha
 from src.core.deepsearch.fallback_hook import AdoptedPoint, FallbackPoint
 
 logger = structlog.get_logger()
 
 ADOPTED, PRESENT, REFUSED = "adopted", "present", "refused"
+REASON_LEDGER_UNREADABLE: str = "the offload ledger cannot be read"
 _FAMILIES = ("claude", "codex")
 _ROLES = (K.ROLE_TRANSCRIPT, K.ROLE_SUBAGENT, K.ROLE_TOOL_RESULT, K.ROLE_CONVERSATION_OTHER, K.ROLE_FILE_HISTORY, K.ROLE_CODEX_ROLLOUT)
 _HOMES = (HOME_CLAUDE, HOME_CODEX)
+_CODEX_TOP = ("sessions", "archived_sessions")
 _FOLDER_FAMILY, _FOLDER_ROLE, _FOLDER_HOMES = K.FAMILY_PLUGIN, K.ROLE_FOLDER_FILE, (HOME_FOLDER,)
 
 
 class AdoptRefused(ValueError):
     pass
+
+
+_IMPORT_KEY = re.compile(r"codex@[A-Za-z0-9_-]+")
+
+
+def localize(point: FallbackPoint, default_home: Path) -> FallbackPoint:
+    if point.kind != K.KIND_CONVERSATION:
+        return point
+    out = []
+    base = os.path.normpath(default_home)
+    for f in point.files:
+        if f.home.startswith(HOME_CODEX_ACCOUNT_PREFIX) and not _IMPORT_KEY.fullmatch(f.home):
+            raise AdoptRefused(f"{f.rel}: {f.home!r} is not a Codex home key")
+        if f.home != HOME_CODEX and not f.home.startswith(HOME_CODEX_ACCOUNT_PREFIX):
+            out.append(f)
+            continue
+        top = f.rel.split("/", 1)[0]
+        target = os.path.normpath(os.path.join(base, f.rel))
+        if top not in _CODEX_TOP or not target.startswith(os.path.join(base, top) + os.sep):
+            raise AdoptRefused(f"{f.rel}: a Codex file may only sit under sessions/ or archived_sessions/ of a Codex home")
+        out.append(dataclasses.replace(f, home=HOME_CODEX, source_path=target))
+    return dataclasses.replace(point, files=tuple(out))
 
 
 def _check(point: FallbackPoint) -> None:
@@ -52,7 +83,7 @@ def _check(point: FallbackPoint) -> None:
             check_rel(f.rel)
         except ManifestError as exc:
             raise AdoptRefused(str(exc)) from exc
-        if f.home not in homes or f.role not in roles or getattr(f, "read", None) is None:
+        if (f.home not in homes and not (not folder and is_codex_account_home(f.home))) or f.role not in roles or getattr(f, "read", None) is None:
             raise AdoptRefused(f"{f.rel}: not a file a point can hold (home {f.home!r}, role {f.role!r})")
         if (f.home, f.rel) in seen:
             raise AdoptRefused(f"{f.rel}: listed twice")
@@ -92,7 +123,7 @@ def _stamp(point: FallbackPoint) -> datetime:
 
 def _manifest_of(point: FallbackPoint, point_id: str, entries: List[FileEntry]) -> Manifest:
     return Manifest(
-        unit=point.conversation_id, point_id=point_id, reason=point.reason, created_epoch=point.created_epoch,
+        unit=point.conversation_id, point_id=point_id, reason=K.REASON_ADOPT, created_epoch=point.created_epoch,
         created_at=point.created_at, kind=point.kind, family=point.family,
         conversation_id=point.conversation_id if point.kind == K.KIND_CONVERSATION else None,
         session_uuid=point.session_uuid, project_uid=point.project_uid, project_name=point.project_name,
@@ -100,9 +131,14 @@ def _manifest_of(point: FallbackPoint, point_id: str, entries: List[FileEntry]) 
         files=sorted(entries, key=lambda e: (e.home, e.rel)))
 
 
-def adopt_point(vault: Vault, point: FallbackPoint, log: Callable[[Dict[str, Any]], None]) -> AdoptedPoint:
+def adopt_point(vault: Vault, point: FallbackPoint, log: Callable[[Dict[str, Any]], None],
+                offloaded: Optional[offload_ledger.OffloadedUnits] = None, default_codex_home: Optional[Path] = None) -> AdoptedPoint:
+    point = localize(point, default_codex_home if default_codex_home is not None else Path(vault_sources.codex_home()))
     _check(point)
     unit = point.conversation_id
+    offloaded = offloaded if offloaded is not None else offload_ledger.offloaded_units(vault.root, state_dir=Path(tf.state_dir()))
+    if offloaded.holds(unit):
+        raise AdoptRefused(REASON_LEDGER_UNREADABLE if offloaded.unreadable else "this conversation is offloaded; restore it before importing another copy")
     fresh: Set[str] = set()
     with vault.guard.capturing():
         entries = [_entry_of(vault, f, fresh) for f in point.files]
@@ -122,8 +158,9 @@ def adopt_point(vault: Vault, point: FallbackPoint, log: Callable[[Dict[str, Any
             vault.manifests.unit_dir(unit).mkdir(parents=True, exist_ok=True)
             vault.manifests.set_kept(unit, point_id)
             try:
-                if point.tags:
-                    vault.manifests.write_tags(unit, point_id, dict(point.tags))
+                tags = {**dict(point.tags or {}), **({"sender_reason": point.reason} if point.reason != K.REASON_IMPORT else {})}
+                if tags:
+                    vault.manifests.write_tags(unit, point_id, tags)
                 vault.blobs.sync_dirs()
                 vault.manifests.write(manifest)
             except OSError:
@@ -137,9 +174,11 @@ def adopt_point(vault: Vault, point: FallbackPoint, log: Callable[[Dict[str, Any
 
 def adopt_points(vault: Vault, points: Sequence[FallbackPoint], log: Callable[[Dict[str, Any]], None]) -> List[AdoptedPoint]:
     out: List[AdoptedPoint] = []
+    offloaded = offload_ledger.offloaded_units(vault.root, state_dir=Path(tf.state_dir()))
+    here = Path(vault_sources.codex_home())
     for point in sorted(points, key=lambda p: (p.conversation_id, p.created_epoch)):
         try:
-            out.append(adopt_point(vault, point, log))
+            out.append(adopt_point(vault, point, log, offloaded, here))
         except (AdoptRefused, ManifestError) as exc:
             logger.warning("vault_adopt_refused", unit=point.conversation_id, point=point.point_id, error=str(exc)[:200])
             out.append(AdoptedPoint(point.conversation_id, point.point_id, REFUSED, reason=str(exc)[:300]))
@@ -152,8 +191,11 @@ def remove_adopted(vault: Vault, entries: Sequence[Dict[str, Any]]) -> Dict[str,
     for entry in entries:
         name = f"{entry.get('unit')}/{entry.get('point_id')}"
         try:
+            if offload_ledger.protects(vault.root, str(entry.get("unit")), str(entry.get("point_id"))):
+                report["kept"].append(name)
+                continue
             verdict = vault.manifests.remove_adopted(str(entry["unit"]), str(entry["point_id"]), str(entry["manifest_sha256"]))
-        except (OSError, ManifestError, KeyError, layout.InvalidIdError) as exc:
+        except (OSError, ManifestError, KeyError, layout.InvalidIdError, offload_ledger.LedgerUnreadable) as exc:
             report["errors"].append(f"{name}: {type(exc).__name__}")
             continue
         report["removed" if verdict in ("removed", "absent") else "kept"].append(name)

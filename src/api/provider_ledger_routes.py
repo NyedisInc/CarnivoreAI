@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import uuid
 from dataclasses import asdict
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -22,7 +22,8 @@ from src.core.provider_ledger.total import compute_total
 from src.api.enrollment_gate import is_local_request
 from src.core.provider_ledger.login_command import login_env_for, login_profile_dir
 from src.core.provider_ledger.login_guard import live_login_session
-from src.core.account_switch import auto_switch, ledger_hook, pane_account, profile_setup, shared_links, store
+from src.core.agy import accounts as agy_accounts
+from src.core.account_switch import agy_rotate, auto_switch, ledger_hook, pane_account, profile_setup, shared_links, store
 from src.config.provider_account_switch import MIN_THRESHOLD_PERCENT
 from src.core.account_switch.active import PROVIDERS, effective_active, find_account, pointer_for
 from src.core.account_switch.decide import rank_candidates
@@ -92,6 +93,28 @@ async def _stored_account(account_id: str) -> Optional[ProviderAccount]:
     return next((a for a in accounts if a.id == account_id), None)
 
 
+def _assemble_ledger_snapshot(
+    snap: LedgerSnapshot,
+    *,
+    peer_telemetry: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> LedgerSnapshot:
+    from src.core.pack.globalsync import mesh_telemetry
+    from src.core.pack.relay import ledger_sync_store
+
+    stored = ledger_sync_store.statuses_by_profile()
+    relayed = relay_accounts.all_relay_rows(stored=stored)
+    local = ledger_sync_view.decorate_local(snap.accounts)
+    peers = mesh_telemetry.active_peers() if peer_telemetry is None else peer_telemetry
+    base_rows = [*local, *relayed]
+    keys = ledger_sync_view.identity_keys(base_rows, pushed=stored)
+    mesh_rows, mesh_keys = mesh_telemetry.ledger_rows_from_telemetry(peers, keys, base_rows) if peers else ([], {})
+    if not relayed and not mesh_rows:
+        return snap.model_copy(update={"accounts": local})
+    rows = [*base_rows, *mesh_rows]
+    all_keys = {**keys, **mesh_keys}
+    return snap.model_copy(update={"accounts": rows, "total": compute_total(rows, all_keys)})
+
+
 @router.get(
     "/provider-ledger",
     response_model=LedgerSnapshot,
@@ -107,13 +130,7 @@ async def get_provider_ledger() -> LedgerSnapshot:
     need different actions from the person looking at them.
     """
     snap = poller.snapshot()
-    relayed = await asyncio.to_thread(relay_accounts.all_relay_rows)
-    local = await asyncio.to_thread(ledger_sync_view.decorate_local, snap.accounts)
-    if not relayed:
-        return snap.model_copy(update={"accounts": local})
-    rows = [*local, *relayed]
-    keys = await asyncio.to_thread(ledger_sync_view.identity_keys, rows)
-    return snap.model_copy(update={"accounts": rows, "total": compute_total(rows, keys)})
+    return await asyncio.to_thread(_assemble_ledger_snapshot, snap)
 
 
 @router.get(
@@ -186,6 +203,11 @@ async def put_provider_account(
         for key, value in body.model_dump(exclude={"id"}).items()
         if value is not None
     }
+    if stated.get("provider") == "antigravity" and stated.get("managed"):
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "invalid_account", "detail": "an antigravity account has no profile directory to manage"},
+        )
     stored = await _stored_account(account_id)
     if (
         "short_name" not in body.model_fields_set
@@ -301,6 +323,14 @@ async def start_provider_account_login(
             JSON.
     """
     account = _account_or_404(await _stored_accounts(), account_id)
+    if account.provider == "antigravity":
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "login_inside_agy",
+                "detail": "an antigravity login is made inside agy; sign in there, then capture the login",
+            },
+        )
 
     manager = request.app.state.session_manager
     existing = live_login_session(manager, account_id)
@@ -419,6 +449,21 @@ async def finish_provider_account_setup(account_id: str) -> ProviderSetupResult:
 
 
 
+def _antigravity_active(accounts: List[ProviderAccount], switch, rows, now: datetime) -> ActiveAccountState:
+    pointer = switch.active_antigravity
+    current = find_account(accounts, pointer, "antigravity")
+    order = rank_candidates(
+        rows, provider="antigravity", active_account_id=pointer, threshold_percent=switch.threshold_percent, now=now
+    )
+    return ActiveAccountState(
+        provider="antigravity",
+        account_id=current.id if current is not None else None,
+        source="pointer" if current is not None else "none",
+        pointer=pointer,
+        next_order=[r.id for r in order],
+    )
+
+
 def _switch_state_now(path: Path) -> AccountSwitchState:
     switch = store.read_switch(path)
     accounts = poller_scan.with_auto_default(accounts_store.list_accounts(path))
@@ -439,6 +484,7 @@ def _switch_state_now(path: Path) -> AccountSwitchState:
             if auto_switch._linkable(find_account(accounts, r.id, provider))
         ]
         active.append(ActiveAccountState(**asdict(current), next_order=[r.id for r in order]))
+    active.append(_antigravity_active(accounts, switch, rows, now))
     return AccountSwitchState(
         auto_switch=switch.auto_switch,
         threshold_percent=switch.threshold_percent,
@@ -585,6 +631,17 @@ async def activate_provider_account(account_id: str, request: Request) -> Accoun
             status_code=404,
             detail={"code": "unknown_account", "detail": "no account holds this id"},
         )
+    if account.provider == "antigravity":
+        try:
+            await asyncio.to_thread(agy_rotate.activate_account, path, account.id)
+        except agy_accounts.AgyAccountError as exc:
+            raise HTTPException(
+                status_code=409,
+                detail={"code": "agy_" + exc.code, "detail": "the stored login for this account could not be swapped into agy"},
+            ) from exc
+        except (FileNotFoundError, ValueError) as exc:
+            raise _unreadable(exc) from exc
+        return AccountActivated(state=await _switch_state(), running_elsewhere=[])
     if account.provider not in PROVIDERS:
         raise HTTPException(
             status_code=409,

@@ -14,12 +14,13 @@ const CHANNELS = Object.freeze({
 });
 
 const ROW_ID = /^\d{1,15}$/;
-const WIDGET_ID = /^(?:core\.[a-z0-9][a-z0-9-]*|[a-z][a-z0-9]{1,23}\.[a-z][a-z0-9-]{0,31}:[a-z0-9][a-z0-9:_-]{0,63})$/;
+const WIDGET_ID = /^(?:core\.[a-z0-9][a-z0-9-]*|(?!core\.)[a-z][a-z0-9-]{1,23}\.[a-z][a-z0-9-]{0,31}:[a-z0-9][a-z0-9:_-]{0,63})$/;
+const TAB_ID = /^[a-z][a-z0-9-]{0,95}$/;
 const MAX_COORD = 20000;
 
 function validTearOff(kind, id, screenX, screenY) {
   if (typeof id !== 'string') return false;
-  if (!((kind === 'terminal' && ROW_ID.test(id)) || (kind === 'widget' && WIDGET_ID.test(id)))) return false;
+  if (!((kind === 'terminal' && ROW_ID.test(id)) || (kind === 'widget' && WIDGET_ID.test(id)) || (kind === 'tab' && TAB_ID.test(id)))) return false;
   return [screenX, screenY].every((n) => Number.isInteger(n) && Math.abs(n) <= MAX_COORD);
 }
 

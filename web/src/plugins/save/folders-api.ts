@@ -1,7 +1,7 @@
-import { ApiError, authFetch } from '../sdk';
+import { authFetch } from '../sdk';
+import { savePluginSettings } from './plugin-settings-api';
 
 const ROUTE = '/cplugs/save/folders';
-const PLUGIN_ROUTE = '/cplugs/save';
 export const FOLDER_OPT_OUT_SETTING = 'vaultFolderOptOut';
 
 export type Fetcher = typeof authFetch;
@@ -53,21 +53,12 @@ export function optOutUnits(text: unknown): string[] {
 }
 
 export async function saveFolderSwitch(unit: string, on: boolean, fetcher: Fetcher = authFetch): Promise<void> {
-    for (let attempt = 0; ; attempt += 1) {
-        const current = await fetcher<{ revision?: number; settings?: Record<string, unknown> }>(PLUGIN_ROUTE);
-        const off = new Set(optOutUnits(current.settings?.[FOLDER_OPT_OUT_SETTING]));
+    await savePluginSettings((stored) => {
+        const off = new Set(optOutUnits(stored[FOLDER_OPT_OUT_SETTING]));
         if (on) off.delete(unit);
         else off.add(unit);
-        try {
-            await fetcher(PLUGIN_ROUTE, {
-                method: 'PUT',
-                body: JSON.stringify({ revision: current.revision ?? 0, settings: { [FOLDER_OPT_OUT_SETTING]: [...off].sort().join(',') } }),
-            });
-            return;
-        } catch (error) {
-            if (attempt >= 1 || !(error instanceof ApiError) || error.status !== 409) throw error;
-        }
-    }
+        return { [FOLDER_OPT_OUT_SETTING]: [...off].sort().join(',') };
+    }, fetcher);
 }
 
 const AGO_UNITS: readonly (readonly [seconds: number, key: string])[] = [

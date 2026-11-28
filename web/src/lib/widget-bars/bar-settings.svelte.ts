@@ -35,7 +35,7 @@ const RESET_ROUTE = '/preferences/widget-bars/reset';
 
 const SIZES: readonly BarSize[] = ['compact', 'cozy', 'detailed'];
 const MODES: readonly BarMode[] = ['autohide', 'pinned'];
-export const RAIL_DEFAULTS: Readonly<RailSettings> = Object.freeze({ mode: 'autohide' });
+export const RAIL_DEFAULTS: Readonly<RailSettings> = Object.freeze({ mode: 'pinned' });
 
 const EDGES: readonly RailEdge[] = ['side', 'bottom'];
 

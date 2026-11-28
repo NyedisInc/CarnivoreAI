@@ -1,8 +1,8 @@
 
 <script lang="ts">
     import { onDestroy } from 'svelte';
-    import { t as reactiveT, authFetch, resourcePush, failureReason, formatMicros, type Translate } from '../sdk';
-    import { Button, State } from '../sdk/ui';
+    import { t as reactiveT, authFetch, resourcePush, failureReason, formatMicros, loadBudgetRequests, type BudgetRequestRow, type Translate } from '../sdk';
+    import { BudgetAskForm, Button, State } from '../sdk/ui';
 
     interface Budget { state: string; spent_micros: number | null; cap_micros: number | null; owner_name: string; effective_spent_micros: number | null; governing_item_id?: string; governing_item_title?: string }
     interface Item { name: string; held: boolean; budget: Budget | null }
@@ -10,6 +10,9 @@
     const { t = reactiveT, fetcher = authFetch, pollMs = 30000, open = (url) => void window.open(url, '_blank', 'noopener,noreferrer') }: Props = $props();
 
     let items = $state<Record<string, Item>>({});
+    let requests = $state<BudgetRequestRow[]>([]);
+    const askFor = /\?ask=([^&#]+)$/.exec(typeof window === 'undefined' ? '' : window.location.hash)?.[1];
+    const askItem = askFor ? decodeURIComponent(askFor) : '';
     let busy = $state(false);
     let problem = $state('');
     let said = $state('');
@@ -24,21 +27,15 @@
             problem = failureReason(error);
         }
     }
-    void load();
-    onDestroy(resourcePush().pushOrPoll(() => void load(), pollMs, ['argent_cost']));
-
-    async function ask(id: string): Promise<void> {
-        busy = true;
-        problem = said = '';
+    async function loadRequests(): Promise<void> {
         try {
-            await fetcher<unknown>('/argent/budget/requests', { method: 'POST', body: JSON.stringify({ item_id: id }) });
-            said = t('argent.cost.sent');
-        } catch (error) {
-            problem = failureReason(error);
-        } finally {
-            busy = false;
+            requests = await loadBudgetRequests(fetcher as (path: string) => Promise<unknown>);
+        } catch {
         }
     }
+    void load();
+    void loadRequests();
+    onDestroy(resourcePush().pushOrPoll(() => { void load(); void loadRequests(); }, pollMs, ['argent_cost', 'argent_budget_requests']));
 
     async function liftInArgent(id: string, item: Item): Promise<void> {
         busy = true;
@@ -71,7 +68,7 @@
                 {/if}
             </p>
             <div class="tm__actions">
-                <Button size="sm" disabled={busy} data-argent="ask" onclick={() => void ask(id)}>{t('argent.cost.ask')}</Button>
+                <BudgetAskForm itemId={id} capMicros={item.budget?.cap_micros ?? null} spentMicros={item.budget?.effective_spent_micros ?? item.budget?.spent_micros ?? null} held owner={item.budget?.owner_name ?? ''} {requests} {fetcher} startOpen={askItem === id} onsent={() => void loadRequests()} />
                 <Button size="sm" variant="confirm" disabled={busy} data-argent="lift" onclick={() => void liftInArgent(id, item)}>{t('argent.cost.lift_in_argent')}</Button>
             </div>
         {/each}

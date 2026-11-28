@@ -3,7 +3,7 @@
   import { t } from '../i18n/index.svelte';
   import { autoSleepActivity, isKeptAwake, setKeepAwake } from './auto-sleep-store.svelte';
   import { sessions } from '../../opscenter/api';
-  import { sleepHoldParts } from './sleep-hold';
+  import { sleepHoldParts, sleepVerdictLine } from './sleep-hold';
 
   let { sessionName }: { sessionName: string | null } = $props();
 
@@ -15,10 +15,17 @@
       ? null
       : sleepHoldParts((sessions.data ?? []).find((row) => row.tmux_session === sessionName), Date.now()),
   );
+  const verdict = $derived(
+    on || !sessionName
+      ? null
+      : sleepVerdictLine((sessions.data ?? []).find((row) => row.tmux_session === sessionName), Date.now()),
+  );
   const label = $derived(
     !known
       ? t('auto_sleep.keep_awake.unknown')
-      : held
+      : verdict
+        ? t('auto_sleep.keep_awake.off_verdict', { line: verdict })
+        : held
         ? t('auto_sleep.keep_awake.off_held', { reason: held })
         : t(on ? 'auto_sleep.keep_awake.on' : 'auto_sleep.keep_awake.off', { name: sessionName ?? '' }),
   );
@@ -60,6 +67,7 @@
   .kaw-icon[data-keep-awake='1'] {
     color: var(--oc-violet);
     opacity: 1;
+    animation: amb-join-sparks-steam 1ms;
   }
 
   .kaw-icon:hover:not(:disabled),
@@ -82,31 +90,34 @@
   }
 
   .kaw-icon[data-keep-awake='1'] :global(.kaw-steam) {
-    animation: kaw-steam 2.4s ease-out infinite;
+    opacity: var(--amb-steam-op-1, 0);
+    transform: translateY(calc(var(--amb-steam-y-1) * 1px * var(--kaw-u)));
   }
 
   .kaw-icon[data-keep-awake='1'] :global(.kaw-steam-2) {
-    animation-delay: 0.8s;
+    opacity: var(--amb-steam-op-2, 0);
+    transform: translateY(calc(var(--amb-steam-y-2) * 1px * var(--kaw-u)));
   }
 
   .kaw-icon[data-keep-awake='1'] :global(.kaw-steam-3) {
-    animation-delay: 1.6s;
-  }
-
-  @keyframes kaw-steam {
-    0% { opacity: 0; transform: translateY(calc(1.5px * var(--kaw-u, 1))); }
-    30% { opacity: 0.85; }
-    100% { opacity: 0; transform: translateY(calc(-2.5px * var(--kaw-u, 1))); }
+    opacity: var(--amb-steam-op-3, 0);
+    transform: translateY(calc(var(--amb-steam-y-3) * 1px * var(--kaw-u)));
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .kaw-icon[data-keep-awake='1'] {
+      animation: none;
+    }
+
     .kaw-icon[data-keep-awake='1'] :global(.kaw-steam) {
       animation: none;
       opacity: 0.6;
+      transform: none;
     }
   }
 
 :global(:root[data-motion="off"]) .kaw-icon[data-keep-awake='1'] :global(.kaw-steam) {
   opacity: 0.6;
+  transform: none;
 }
 </style>

@@ -17,7 +17,7 @@ import structlog
 
 from src.tui import api_client as api_mod
 from src.tui.api_client import ApiClient, AuthRequired, LoginError
-from src.tui.token_store import TokenPair, TokenStore
+from src.core.cli_command.token_store import TokenPair, TokenStore
 
 REPO = Path(__file__).resolve().parents[2]
 BASE = "http://127.0.0.1:8000"

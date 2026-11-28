@@ -75,12 +75,14 @@ def _check_field(key: str, field: Any) -> None:
     kind = field.get("kind")
     if kind not in FIELD_KINDS:
         raise SettingsSchemaError(f"{where}.kind is not boolean, number, enum or string")
-    allowed = {"kind", "labelKey", "default", "hintKey", "keywordsKey"} | {
+    allowed = {"kind", "labelKey", "default", "hintKey", "keywordsKey", "hidden"} | {
         "boolean": set(), "number": {"min", "max"}, "enum": {"options", "control"}, "string": {"maxLength"},
     }[kind]
     extra = set(field) - allowed
     if extra:
         raise SettingsSchemaError(f"{where} carries an unknown field: {sorted(extra)[0]}")
+    if "hidden" in field and not isinstance(field["hidden"], bool):
+        raise SettingsSchemaError(f"{where}.hidden must be true or false")
     hint = field.get("hintKey")
     if "hintKey" in field and (not isinstance(hint, str) or not LABEL_KEY_RE.match(hint)):
         raise SettingsSchemaError(f"{where}.hintKey must be a catalog key")

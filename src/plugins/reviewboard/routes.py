@@ -4,7 +4,7 @@ from __future__ import annotations
 import asyncio
 from typing import Any, Dict, Optional
 
-from fastapi import Depends, HTTPException, Query
+from fastapi import HTTPException, Query
 from fastapi.responses import Response
 
 from src.plugins.reviewboard import drafts, opener, payload_draft, publish, relink, root, rounds, saves, service, ticket, viewer, wire
@@ -12,11 +12,10 @@ from src.plugins.reviewboard import state as board_states
 from src.plugins.reviewboard.topics import TOPIC
 from src.plugins.reviewboard.errors import BoardError
 from src.plugins.reviewboard.requests import CreateBody, DraftBody, OpenBody, PayloadDraftBody, RelinkBody, ResendBody, ReviseBody, RoundBody, SaveBody, TicketBody
-from src.plugins.sdk import OWN_POLICY_HEADER, CplugContext, add_public_get, cplug_context, cplug_router
+from src.plugins.reviewboard.routes_common import Ctx, router
+from src.plugins.sdk import OWN_POLICY_HEADER, CplugContext, add_public_get
 from src.plugins.sdk.sandboxed_html import view_headers
 
-router = cplug_router("reviewboard")
-Ctx = Depends(cplug_context("reviewboard"))
 VIEW_PATH = f"/api/v1{router.prefix}/view"
 
 

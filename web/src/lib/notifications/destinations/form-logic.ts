@@ -17,15 +17,51 @@ export const kindOf = (kinds: readonly Kind[], id: string): Kind | undefined => 
 
 export const addableKinds = (kinds: readonly Kind[]): Kind[] => kinds.filter((k) => !k.virtual);
 
+export function isPluginKind(kind: Pick<Kind, 'id' | 'plugin_id'>): boolean {
+    return Boolean(kind.plugin_id) || kind.id.startsWith('plugin:');
+}
+
+export function kindLabel(kind: Kind, t: Translate): string {
+    const translated = t(kind.label_key);
+    if (translated !== kind.label_key) return translated;
+    return kind.label?.trim() || kind.id;
+}
+
+export function fieldLabel(field: KindField, t: Translate): string {
+    const key = `settings.notify.field.${field.name}`;
+    const translated = t(key);
+    if (translated !== key) return translated;
+    return field.label?.trim() || field.name.replace(/_/g, ' ');
+}
+
 const KIND_GROUPS: ReadonlyArray<readonly [string, readonly string[]]> = [
     ['chat', ['slack', 'discord', 'teams', 'telegram']], ['push', ['ntfy', 'pushover']], ['incident', ['pagerduty']],
-    ['sms', ['sns', 'twilio']], ['other', ['email', 'webhook']],
+    ['sms', ['sns', 'twilio']], ['other', ['email', 'webhook']], ['plugins', []],
 ];
 
 export function kindItems(kinds: readonly Kind[], t: Translate): PickItem[] {
-    const group = (id: string): number => { const at = KIND_GROUPS.findIndex(([, ids]) => ids.includes(id)); return at < 0 ? KIND_GROUPS.length - 1 : at; };
-    return kinds.map((k) => ({ id: k.id, text: t(k.label_key), name: '', vendor: t(`settings.notify.kind.group.${KIND_GROUPS[group(k.id)]![0]}`), detail: '', flags: [], preset: k.id }))
-        .sort((a, b) => group(a.id) - group(b.id));
+    const pluginsIdx = KIND_GROUPS.findIndex(([name]) => name === 'plugins');
+    const otherIdx = KIND_GROUPS.findIndex(([name]) => name === 'other');
+    const group = (k: Kind): number => {
+        if (isPluginKind(k)) return pluginsIdx;
+        const at = KIND_GROUPS.findIndex(([, ids]) => ids.includes(k.id));
+        return at < 0 ? otherIdx : at;
+    };
+    return kinds
+        .map((k) => ({
+            id: k.id,
+            text: kindLabel(k, t),
+            name: isPluginKind(k) ? (k.plugin_id ?? '') : '',
+            vendor: t(`settings.notify.kind.group.${KIND_GROUPS[group(k)]![0]}`),
+            detail: '',
+            flags: [],
+            preset: k.id,
+        }))
+        .sort((a, b) => {
+            const ka = kinds.find((x) => x.id === a.id)!;
+            const kb = kinds.find((x) => x.id === b.id)!;
+            return group(ka) - group(kb);
+        });
 }
 
 export function initialDraft(kind: Kind, saved: Destination | null): Draft {

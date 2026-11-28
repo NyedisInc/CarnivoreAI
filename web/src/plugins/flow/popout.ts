@@ -1,4 +1,4 @@
-import manifest from '../../../../src/plugins/flow/cplug.json';
+import manifest from '../../../../src/plugins/flow/carnivore.toml';
 import type { CplugManifest, CplugPopout } from '../sdk';
 import { flowTab } from './flow-tab';
 

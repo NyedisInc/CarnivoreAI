@@ -8,7 +8,7 @@ from src.core.mcp_health.fold import McpHealth
 from src.plugins.sdk import ports
 from src.plugins.sdk.mcp_health import PORT_NAME
 from src.models import CarnivoreLinkInfo, McpDropInfo, McpHealthInfo, SessionInfo
-from src.models.sessions import McpServerHealthInfo
+from src.models.mcp_health import McpServerHealthInfo
 
 
 def mcp_health_info(health: Optional[McpHealth]) -> Optional[McpHealthInfo]:

@@ -1,4 +1,6 @@
 
+import { createKeepAwake, pageHidden } from './wake-lock';
+
 export interface EngineEvents {
     text(all: string): void;
     ready(): void;
@@ -22,9 +24,17 @@ export interface MicDeps {
     transcribeReady(): Promise<boolean>;
 }
 
+export function glueText(a: string, b: string): string {
+    if (!a) return b;
+    if (!b) return a;
+    return /\s$/.test(a) || /^\s/.test(b) ? a + b : `${a} ${b}`;
+}
+
 export type MicPhase = 'idle' | 'listening' | 'working' | 'message';
 
 const STOP_GRACE_MS = 1200;
+const MAX_QUIET_RESTARTS = 5;
+const QUIET_WINDOW_MS = 5000;
 const READY_MS = 3000;
 
 export function createMic(deps: MicDeps) {
@@ -36,6 +46,12 @@ export function createMic(deps: MicDeps) {
     let run = 0;
     let grace: ReturnType<typeof setTimeout> | null = null;
     let watchdog: ReturnType<typeof setTimeout> | null = null;
+    let stopping = false;
+    let prefix = '';
+    let quiet = 0;
+    let quietSince = 0;
+    let lastStarter: EngineStarter | null = null;
+    const awake = createKeepAwake();
 
     function release(): void {
         if (grace) { clearTimeout(grace); grace = null; }
@@ -43,12 +59,16 @@ export function createMic(deps: MicDeps) {
         const e = engine;
         engine = null;
         e?.abort();
+        awake.drop();
     }
 
     function reset(): void {
         run += 1;
         release();
         ticket = null;
+        stopping = false;
+        prefix = '';
+        quiet = 0;
         state.phase = 'idle';
         state.transcript = '';
         state.reason = '';
@@ -71,12 +91,14 @@ export function createMic(deps: MicDeps) {
         deps.deliver(words, t);
     }
 
-    function launch(queue: EngineStarter[], mine: number): void {
+    function launch(queue: EngineStarter[], mine: number, resumed = false): void {
         const [starter, ...rest] = queue;
         if (!starter) return;
         const live = starter === deps.speech;
-        let up = !live;
+        let up = !live || resumed;
+        lastStarter = starter;
         const next = (why: 'blocked' | 'unavailable' | 'failed' | 'no_response') => {
+            if (up && live && why === 'failed' && state.transcript && !stopping) { restart(mine); return; }
             if (up || rest.length === 0) { fail(why); return; }
             const e = engine;
             engine = null;
@@ -87,17 +109,58 @@ export function createMic(deps: MicDeps) {
         state.live = live;
         engine = starter({
             ready: () => { if (mine === run) { up = true; if (watchdog) { clearTimeout(watchdog); watchdog = null; } } },
-            text: (all) => { if (mine === run) state.transcript = all; },
-            end: (all) => { if (mine === run) finish(all); },
+            text: (all) => {
+                if (mine !== run) return;
+                if (all) quiet = 0;
+                state.transcript = glueText(prefix, all);
+            },
+            end: (all) => {
+                if (mine !== run) return;
+                if (live && state.phase === 'listening' && !stopping) { restart(mine, all); return; }
+                finish(all === null ? null : glueText(prefix, all));
+            },
             error: (why) => { if (mine === run) next(why); },
         });
-        if (live) watchdog = setTimeout(() => { if (mine === run && !up) next('no_response'); }, READY_MS);
-        else {
+        awake.hold();
+        if (live && !up) watchdog = setTimeout(() => { if (mine === run && !up) next('no_response'); }, READY_MS);
+        else if (!live) {
             void deps.transcribeReady().then((ok) => { if (mine === run && !ok) fail('no_transcribe'); }, () => {});
         }
     }
 
+    function restart(mine: number, final?: string | null): void {
+        const heard = glueText(prefix, final ?? '');
+        if (heard.length > state.transcript.length) state.transcript = heard;
+        prefix = state.transcript;
+        const e = engine;
+        engine = null;
+        if (watchdog) { clearTimeout(watchdog); watchdog = null; }
+        e?.abort();
+        if (pageHidden()) { awake.drop(); state.reason = 'paused'; return; }
+        const now = Date.now();
+        if (quiet === 0 || now - quietSince > QUIET_WINDOW_MS) { quiet = 0; quietSince = now; }
+        quiet += 1;
+        if (quiet >= MAX_QUIET_RESTARTS || !lastStarter) { awake.drop(); state.reason = 'dropping'; return; }
+        launch([lastStarter], mine, true);
+    }
+
+    function retry(): void {
+        if (state.phase !== 'listening' || engine || !lastStarter) return;
+        state.reason = '';
+        quiet = 0;
+        launch([lastStarter], run, true);
+    }
+
+    function pause(): void {
+        if (state.phase !== 'listening' || !engine) return;
+        prefix = state.transcript;
+        release();
+        state.reason = 'paused';
+    }
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', pause);
+
     function start(): void {
+        if (state.phase === 'listening' && !engine) { retry(); return; }
         if (state.phase === 'listening' || state.phase === 'working') return;
         reset();
         const queue = [deps.speech, deps.record].filter((s): s is EngineStarter => s !== null);
@@ -111,12 +174,14 @@ export function createMic(deps: MicDeps) {
     }
 
     function done(): void {
-        if (state.phase !== 'listening' || !engine) return;
+        if (state.phase !== 'listening') return;
+        if (!engine) { finish(null); return; }
+        stopping = true;
         const mine = run;
         if (!state.live) state.phase = 'working';
         engine.stop();
         if (state.live) grace = setTimeout(() => { if (mine === run) finish(null); }, STOP_GRACE_MS);
     }
 
-    return { state, start, done, cancel: reset, dismiss: reset };
+    return { state, start, done, retry, cancel: reset, dismiss: reset };
 }

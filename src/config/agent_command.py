@@ -5,6 +5,8 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Callable, List, Optional, Sequence
 
+import structlog
+
 from src.config import mcp_launch
 from src.config.agents import AgentsConfig
 from src.config.launch_profiles import LAUNCH_PROFILES_KEY, LaunchProfile
@@ -75,6 +77,7 @@ def agent_command(
     purpose: Purpose = "pane",
     launch_line: Optional[str] = None,
     permission_hook: bool = False,
+    approved_resume_prefixes: Sequence[str] = (),
 ) -> str:
     profiles = profiles_for(profiles, agents)
     scripts_dir = wrapper_scripts_dir(resolve_state_dir())
@@ -83,8 +86,10 @@ def agent_command(
         model_is_explicit=model_is_explicit,
         scripts_dir=scripts_dir, disable_alternate_screen=disable_alternate_screen(), connections=tuple(connections),
     )
-    harness = pick_profile(base).harness
+    profile = pick_profile(base)
+    harness = profile.harness
     app_args = list(extra_args or [])
+    custom_resume_id = app_args[app_args.index("--resume") + 1] if harness == "custom" and "--resume" in app_args[:-1] else None
     if harness == DEFAULT_FAMILY:
         app_args = single_name_flag(app_args)
         app_args = mcp_config_args() + app_args
@@ -99,7 +104,9 @@ def agent_command(
     elif harness == "codex" and carnivore_mcp_url:
         app_args = mcp_launch.codex_args(carnivore_mcp_url) + app_args
     elif harness == "custom":
-        app_args = []
+        from src.core.agy.identity import is_agy_profile
+
+        app_args = _agy_safe_args(app_args) if is_agy_profile(profile) else []
     plan = resolve_launch(replace(base, app_args=tuple(app_args)), purpose)
     if plan_sink is not None:
         plan_sink.append(plan)
@@ -111,4 +118,49 @@ def agent_command(
     if plan.script_file is not None:
         path = Path(plan.script_file.path)
         write_private_file(path.parent, path.name, plan.script_file.content.encode("utf-8"), WRAPPER_SCRIPT_MODE)
-    return plan.command
+    from src.core.agy.launch import wrap_command
+
+    return wrap_command(profile, _custom_resume(profile, plan.command, custom_resume_id, approved_resume_prefixes), launch_line)
+
+
+_AGY_MODES = frozenset({"accept-edits", "auto", "plan"})
+
+
+def _agy_safe_args(args: Sequence[str]) -> List[str]:
+    from src.models.model_ids import is_valid_model_id
+
+    out: List[str] = []
+    i = 0
+    while i < len(args):
+        tok = args[i]
+        if tok == "--dangerously-skip-permissions":
+            out.append(tok)
+            i += 1
+        elif tok == "--mode" and i + 1 < len(args) and args[i + 1] in _AGY_MODES:
+            out.extend((tok, args[i + 1]))
+            i += 2
+        elif tok == "--model" and i + 1 < len(args) and is_valid_model_id(args[i + 1]):
+            out.extend((tok, args[i + 1]))
+            i += 2
+        elif tok == "--prompt-interactive" and i + 1 < len(args) and args[i + 1] and "\0" not in args[i + 1]:
+            out.extend((tok, args[i + 1]))
+            i += 2
+        else:
+            i += 1
+    return out
+
+
+def _custom_resume(profile: LaunchProfile, command: str, resume_id: Optional[str], approved: Sequence[str]) -> str:
+    from src.core.launch_profiles.agent_resume import ResumePrefixNotApproved, resume_command
+    from src.core.shell_init import rc_prefixed
+
+    if not resume_id or profile.agent is None:
+        return command
+    try:
+        resumed = resume_command(profile.agent, resume_id, approved)
+    except ResumePrefixNotApproved as exc:
+        structlog.get_logger().warning("custom_resume_prefix_not_approved", profile=profile.id, prefix=exc.prefix)
+        return command
+    if resumed is None:
+        return command
+    return rc_prefixed(resumed) if profile.shell_profile else resumed

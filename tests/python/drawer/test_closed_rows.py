@@ -24,7 +24,9 @@ def row(**kw):
     ({"lifecycle_source": "pane_dead", "claude_session_uuid": "c1"}, False),
     ({"lifecycle_source": "pane_dead"}, True),
     ({"archived_at": "2026-10-01T00:00:00"}, False),
+    ({"tmux_created_epoch": None, "parent_session_id": 2}, False),
     ({"tmux_created_epoch": None}, False),
+    ({"tmux_created_epoch": None, "claude_session_uuid": "c1"}, True),
     ({"lifecycle": "running"}, False),
 ])
 def test_is_closed(kw, expected):

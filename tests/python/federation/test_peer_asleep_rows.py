@@ -77,3 +77,70 @@ def test_the_asleep_route_serves_slim_peer_rows_without_a_500(monkeypatch):
     reply = TestClient(app).get("/api/v1/sessions/asleep")
     assert reply.status_code == 200
     assert reply.json() == slim
+
+
+def _insert_swarm_agent(conn, *, slug, rank, session_row_id=None, parked_row_id=None, torn_down_at=None):
+    now = "2026-11-24T00:00:00Z"
+    conn.execute(
+        "INSERT INTO swarm_agents (slug, rank, display_name, job, repo_dir, memory_scope, effort, character_seed, "
+        "color_slot, thread_key, session_row_id, parked_row_id, state, torn_down_at, created_at, updated_at) "
+        "VALUES (?, ?, ?, ?, '/work/B', 'project', 'medium', 1, 1, ?, ?, ?, ?, ?, ?, ?)",
+        (slug, rank, slug, f"job for {slug}", f"agent:{slug}", session_row_id, parked_row_id,
+         "torn_down" if torn_down_at else "asleep", torn_down_at, now, now),
+    )
+
+
+def test_active_swarm_agents_excluded_from_peer_listings_and_stale_shadows_cleaned(macs, monkeypatch):
+    a, b = macs
+    b.add_session("live_leader")
+    b.add_session("torn_live")
+    b.add_session("remote_body")
+    for name in ("regular_sleep", "swarm_feature_sleep", "swarm_leader_sleep", "parked_sleep", "torn_sleep"):
+        _sleep(b, name)
+
+    with closing(b.open_db()) as conn:
+        ids = {r[0]: int(r[1]) for r in conn.execute("SELECT tmux_name, id FROM sessions")}
+        pass
+
+    class Client:
+        def __init__(self, other):
+            self.other = other
+
+        async def request(self, method, path, **_kw):
+            if path == "/sessions/asleep":
+                body = await asyncio.to_thread(peer_serve.serve_asleep_to_peer, self.other.open_db)
+            else:
+                body = [i.model_dump(mode="json") for i in await self.other.list_body(as_peer=True)]
+            return Reply(json.loads(json.dumps(body)))
+
+    monkeypatch.setattr(type(a), "client", lambda self, _id: Client(self.other))
+
+    asyncio.run(a.list_body(as_peer=False))
+    asleep_before = {r.tmux_name for r in _asleep_records(a) if r.host_key not in (None, "local")}
+    assert {"swarm_feature_sleep", "swarm_leader_sleep", "regular_sleep", "parked_sleep", "torn_sleep"} <= asleep_before
+
+    with closing(b.open_db()) as conn:
+        _insert_swarm_agent(conn, slug="live-leader", rank="project", session_row_id=ids["live_leader"])
+        _insert_swarm_agent(conn, slug="torn-live", rank="feature", session_row_id=ids["torn_live"], torn_down_at="2026-11-19T00:00:00Z")
+        _insert_swarm_agent(conn, slug="feat-sleep", rank="feature", session_row_id=ids["swarm_feature_sleep"])
+        _insert_swarm_agent(conn, slug="lead-sleep", rank="project", session_row_id=ids["swarm_leader_sleep"])
+        _insert_swarm_agent(conn, slug="parked-left", rank="feature", session_row_id=None, parked_row_id=ids["parked_sleep"])
+        _insert_swarm_agent(conn, slug="torn-sleep", rank="feature", session_row_id=ids["torn_sleep"], torn_down_at="2026-11-19T00:00:00Z")
+        conn.execute(
+            "INSERT INTO swarm_remote_bodies (session_row_id, home_install_id, home_agent_id, project_uid, rank, slug, mirror_dir, created_at) "
+            "VALUES (?, 'home-iid', 99, 'proj-uid', 'task', 'remote-slug', '/work/B', '2026-11-24T00:00:00Z')",
+            (ids["remote_body"],),
+        )
+        conn.commit()
+
+    served_live = {i.tmux_session for i in peer_serve.serve_to_peer(b.own, b.open_db)}
+    assert served_live == {"bravo", "torn_live", "remote_body"}
+    served_asleep = {r["tmux_session"] for r in peer_serve.serve_asleep_to_peer(b.open_db)}
+    assert served_asleep == {"regular_sleep", "parked_sleep", "torn_sleep"}
+
+    peer_listing.reset()
+    live_after = asyncio.run(a.list_body(as_peer=False))
+    remote_live_after = {i.tmux_session for i in live_after if i.host_key != "local"}
+    assert remote_live_after == {"bravo", "torn_live", "remote_body"}
+    asleep_after = {r.tmux_name for r in _asleep_records(a) if r.host_key not in (None, "local")}
+    assert asleep_after == {"regular_sleep", "parked_sleep", "torn_sleep"}

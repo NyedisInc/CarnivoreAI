@@ -1,4 +1,4 @@
-
+<!-- the Task Manager -->
 <script lang="ts">
   import { swarmFace } from '../../plugins/sdk/swarm-face.svelte';
   import { statusTitle } from '../status-dot';

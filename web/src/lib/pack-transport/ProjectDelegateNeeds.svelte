@@ -65,7 +65,7 @@
           <Field label={t('pack.needs.prefer')} bind:value={draft[kind]!.prefer} disabled={busy} data-pt="needs-prefer" />
         </div>
         {#if own.stored}
-          <Button variant="quiet" size="sm" style="align-self: flex-start" disabled={busy} data-pt="needs-reset" onclick={() => void send({ [kind]: null })}>{t('pack.needs.reset')}</Button>
+          <Button size="sm" style="align-self: flex-start" disabled={busy} data-pt="needs-reset" onclick={() => void send({ [kind]: null })}>{t('pack.needs.reset')}</Button>
         {:else}
           <p class="pt-note" data-pt="needs-default">{t('pack.needs.default', { needs: join(own.default_filters) || t('pack.needs.nothing'), prefer: join(own.default_prefer) || t('pack.needs.nothing') })}</p>
         {/if}

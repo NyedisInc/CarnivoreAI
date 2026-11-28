@@ -3,6 +3,8 @@
 
 const crypto = require('crypto');
 const fs = require('fs');
+const http = require('http');
+const https = require('https');
 const path = require('path');
 const { execFile } = require('child_process');
 
@@ -23,22 +25,93 @@ const PINS = {
 };
 
 const MAX_ARCHIVE_BYTES = 100 * 1024 * 1024;
+const MAX_REDIRECTS = 10;
+const DOWNLOAD_TIMEOUT_MS = 120000;
 
 function sha256OfFile(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 }
 
-async function downloadFile(url, dest) {
-  const axios = require('axios');
-  const response = await axios({
-    url, method: 'GET', responseType: 'stream', timeout: 120000, maxContentLength: MAX_ARCHIVE_BYTES,
-  });
-  const writer = fs.createWriteStream(dest);
-  await new Promise((resolve, reject) => {
-    response.data.pipe(writer);
-    writer.on('finish', resolve);
-    writer.on('error', reject);
-    response.data.on('error', reject);
+function downloadFile(url, dest, redirectsLeft = MAX_REDIRECTS, deadline = Date.now() + DOWNLOAD_TIMEOUT_MS) {
+  return new Promise((resolve, reject) => {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch (err) {
+      reject(err);
+      return;
+    }
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      reject(new Error(`unsupported download protocol: ${parsed.protocol}`));
+      return;
+    }
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      reject(new Error(`download timed out after ${DOWNLOAD_TIMEOUT_MS}ms`));
+      return;
+    }
+    const client = parsed.protocol === 'https:' ? https : http;
+    let settled = false;
+    let writer = null;
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (writer) writer.destroy();
+      reject(err);
+    };
+    const req = client.get(parsed, { headers: { 'User-Agent': 'Carnivore' } }, (res) => {
+      const status = res.statusCode || 0;
+      if (status >= 300 && status < 400 && res.headers.location) {
+        res.resume();
+        if (redirectsLeft <= 0) {
+          fail(new Error('too many redirects'));
+          return;
+        }
+        clearTimeout(timer);
+        settled = true;
+        const nextUrl = new URL(res.headers.location, parsed).toString();
+        downloadFile(nextUrl, dest, redirectsLeft - 1, deadline).then(resolve, reject);
+        return;
+      }
+      if (status < 200 || status >= 300) {
+        res.resume();
+        fail(new Error(`download failed with HTTP ${status}`));
+        return;
+      }
+      const declaredLen = Number(res.headers['content-length']);
+      if (Number.isFinite(declaredLen) && declaredLen > MAX_ARCHIVE_BYTES) {
+        res.destroy();
+        fail(new Error(`archive exceeds maximum size (${declaredLen} > ${MAX_ARCHIVE_BYTES})`));
+        return;
+      }
+      let received = 0;
+      writer = fs.createWriteStream(dest);
+      res.on('data', (chunk) => {
+        received += chunk.length;
+        if (received > MAX_ARCHIVE_BYTES) {
+          const err = new Error(`archive exceeds maximum size (${MAX_ARCHIVE_BYTES})`);
+          res.destroy(err);
+          fail(err);
+        }
+      });
+      res.on('error', fail);
+      writer.on('error', fail);
+      writer.on('finish', () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        resolve();
+      });
+      res.pipe(writer);
+    });
+    const timer = setTimeout(() => {
+      const err = new Error(`download timed out after ${DOWNLOAD_TIMEOUT_MS}ms`);
+      req.destroy(err);
+      fail(err);
+    }, remaining);
+    if (timer.unref) timer.unref();
+    req.on('error', fail);
   });
 }
 

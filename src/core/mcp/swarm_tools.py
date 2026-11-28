@@ -11,6 +11,7 @@ from src.core import db
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp import lean_answers
 from src.core.mcp.common import ToolError, _ok
+from src.core.swarm.types import TurnOnError
 from src.core.swarm.cards import ops, port as card_port
 from src.plugins.sdk.cards import CardRefused
 from src.plugins.sdk.storage import CplugSchemaError
@@ -186,7 +187,7 @@ async def swarm_propose_naming(manager: Any, caller: AgentCaller, args: dict) ->
     try:
         agent = await spawn.parent_agent(manager, caller)
         return _ok({"item_id": await project_agent.propose_naming(agent, args.get("family"), args.get("persona"), args.get("reason"))})
-    except (spawn.SpawnRefused, project_agent.TurnOnError) as exc:
+    except (spawn.SpawnRefused, TurnOnError) as exc:
         raise ToolError(str(exc)) from None
 
 

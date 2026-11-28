@@ -14,16 +14,17 @@ from src.core.pack.relay import consent as consent_mod, targets
 logger = structlog.get_logger()
 
 
-def local_offers(open_db: Callable[[], sqlite3.Connection], auth_config_file: str) -> List[Dict[str, str]]:
-    from src.core.provider_ledger import accounts_store
+def local_offers(open_db: Callable[[], sqlite3.Connection], auth_config_file: str) -> Optional[List[Dict[str, str]]]:
+    from src.core.provider_ledger import accounts_store, poller_scan
 
     try:
-        rows = [a for a in accounts_store.list_accounts(Path(auth_config_file).expanduser()) if a.provider in ("claude", "codex")]
+        rows = [a for a in poller_scan.with_auto_default(accounts_store.list_accounts(Path(auth_config_file).expanduser()), include_relay=False)
+                if a.provider in ("claude", "codex")]
         with closing(open_db()) as conn:
             return consent_mod.clean_offers([{"account_key": a.id, "label": a.name, "provider": a.provider} for a in rows
                                              if targets.effective_on(conn, a.id)])
     except (OSError, ValueError, sqlite3.Error):
-        return []
+        return None
 
 
 def peer_offers(entries: Dict[str, Any], paired: Optional[Collection[str]] = None) -> List[Dict[str, str]]:

@@ -1,4 +1,4 @@
-import manifest from '../../../../src/plugins/argent/cplug.json';
+import manifest from '../../../../src/plugins/argent/carnivore.toml';
 import type { Component } from 'svelte';
 import type { CplugManifest, CplugWeb, Contribution } from '../sdk';
 import ArgentSettings from './ArgentSettings.svelte';

@@ -63,9 +63,8 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>web/src/popout/SingleWidget.svelte</code> (a one-tab zone: the same widget header, notice <code>.sw-notice</code>; its body is <code>PlacementBody.svelte</code>'s <code>.sw</code> and <code>.sw-body</code>, and a plugin widget's <code>web/src/popout/PluginTab.svelte</code> restates both, its menu <code>zone-shell/DeclaredTabMenu.svelte</code>) at <code>/static/popout.html?widget=core.&lt;cell&gt;</code>; it follows and never writes the Home layout.</dd>
     <dt>fold toggle</dt>
     <dd>The drawer panel's one button (<code>[data-ldp-toggle]</code>, a base quiet <code>IconButton</code>) steps compact, expanded, total only, glance, and back, and so does a
-        click on empty header space; the <code>.ldp-title</code> link itself opens the providers screen (the owner, 2026-11-17). The total only view is the all accounts
-        total alone: <code>.ldp-total</code> (name <code>.ldp-total-label</code>, account count, head <code>.ldp-total-head</code>) over the
-        one 5h and 7d line (<code>.ldp-mini</code>) the compact rows wear. The glance view is the widget's own tiles
+        click on empty header space; the <code>.ldp-title</code> link itself opens the providers screen (the owner, 2026-11-17), with the account count beside it in <code>.ldp-accounts-count</code>. The total only view is the all accounts
+        total alone: <code>.ldp-total</code> stacked one full-width 7d bar per provider (<code>.ldp-mini</code> <code>.ldp-mini--stacked</code>, with real provider marks and <code>LimitGauge</code>). The glance view is the widget's own tiles
         (<code>.ldp-glance</code>, each in <code>.ldp-glance-tile</code>, drawn by <code>ProviderGlanceTile</code>). The chevron alone shows
         which view is current; no step dots sit beside it (Joe (ccsliinc), 2026-10-02). Its accessible name says the view, what a press
         does and "view N of 4".</dd>
@@ -174,8 +173,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dt>pattern</dt>
     <dd>WAREZ (<code>web/src/lib/catalog/WarezScreen.svelte</code>, the menu's warez row, hotkey r, <code>#warez</code> with <code>#catalog</code> as its alias) is the signed catalog as its own page: every item of every kind, installed ones marked, titled "warez". It is a thin wrapper over this screen in its standalone overlay mode that adds the title and re-reads the list on the <code>catalog</code> push topic; the Skills and Themes pages are INSTALLED-ONLY and link here ("get more on warez"). THE SKILLS LIST in warez (INSTALLED > skills, <code>InstalledKindScreen</code>) wears three page tabs (<a href="#page-tabs">page tabs</a>, <code>.wik__tabs</code>) above its filter row: INSTALLED (the skills manager, <a href="#skills-manager-page">below</a>, its highlights strip first), STATS (the census) and PACK (the Pack skills table, only with two or more computers; the same component is the Pack page's skills tab). The tab is in the address, <code>#warez/installed/skills/stats</code>. Warez wears the shared page's nav frame (<code>Page.svelte</code>, <code>frame="nav" scroll="self"</code>, #2775): its search is the frame's header search slot (the omnibar on a phone), its header buttons and icon squares are the frame's (26px under a mouse, 44px under a touch screen), and the page's own column (<code>.screen</code>: the not-found line, the phone back bar and the split) fills the body's fixed box, the menu and the reading pane staying the page's own grid. Warez's title strip (#1554, the faceted shelf) carries the status line (<code>WarezStatusLine</code>, <code>.warez-stat</code>:
         serial, signer, count; stale, degraded and refused words), <code>WarezTools</code> (the desktop title strip's own tools, left of the acts: the sort picker and the grid/list pair in one hairline frame; there is no second toolbar row) and <code>WarezActs</code> (refresh, publish a skill, and sign in while signed out, base <code>Button</code>s marked <code>data-warez-act</code>), which the public browse page (catalog.carnivore.ai) leaves out together with every other write control when the screen is read only: its detail then swaps <code>DetailActions</code> for <code>ReadonlyActions</code> (an outlined <code>get carnivore</code> link, the item id as selectable text with a copy button, the source repository link when the index carries one) and the screen foot carries <code>TrustLine</code> (one quiet line: signed index serial, dates and signing key id, no trust mark) and the <code>?</code> keys menu (<code>KeyHelp</code>, <code>.keys-menu</code>,
-        an anchored menu of the shipped keys). WAREZ'S LEFT MENU (<code>WarezMenu</code>, <code>.wm</code>, #1904) replaces the filter rail on the warez page: no find field of its own on a desktop (the title strip's search narrows it), then groups STORE (everything, newest, updates, one row per kind with its count), INSTALLED (one row per kind, each expanding to its installed items with a right-aligned state word <code>.wm__word</code>; a count or word that changes washes its row once, <code>.wm__row--tint</code>, 600ms, reduced motion none; the phone's find field carries the magnifier <code>.wm__lens</code> over <code>.oc-field</code>) and NEEDS A LOOK when non-empty; a store node drives the grid, an installed kind (or an item under it) is that kind's real page embedded, in inset mode so it draws no second title bar (<code>InstalledKindScreen</code>, <code>.wik</code>: the Themes, Plugins, Skills and Mods screens), the item selected; the look pages and a catalog-installed item keep <code>InstalledPage</code> (<code>.wi</code>). The menu is as wide as its widest row (min 200px, max 300px). Its bottom-right corner holds a bare gray pi (<code>.wm__elite</code> in <code>.wm__foot</code>, no box, muted, a little brighter on hover, title and label ELITE ACCESS): the way into Elite Access, the BBS view of warez. On a phone the menu is the first screen and a node pushes its page under a back bar (<code>.screen__back</code>). The embedded skills tab still uses the older LEFT RAIL (<code>CatalogFilterRail</code>: <code>.cat-rail</code>, tracked <code>.cat-rail__label</code> over vertical <code>.cat-rail__row</code> toggles for KIND and STATE, the pressed row on the orange tint with a 2px orange left edge, publish a skill at the foot); the top bar (<code>CatalogToolbar</code>: search, sort, grid and list toggle) is ONE 44px bar. On a phone the toolbar draws <code>FilterGroup</code>s
-        <code>.filter-group</code> with a tracked label cell: KIND and STATE as <code>.oc-seg</code> segments, RISK, SOURCE and SORT as shared <code>.oc-facet</code> pickers, then the shared grid and list toggle <code>ViewToggle</code>, remembered per device as page "skills"; <code>.cat-rows</code> is the phone's layout group).
+        an anchored menu of the shipped keys). WAREZ'S LEFT MENU (<code>WarezMenu</code>, <code>.wm</code>, #1904) replaces the filter rail on the warez page: no find field of its own on a desktop (the title strip's search narrows it), then groups STORE (everything, newest, updates, one row per kind with its count), INSTALLED (one row per kind, each expanding to its installed items with a right-aligned state word <code>.wm__word</code>; a count or word that changes washes its row once, <code>.wm__row--tint</code>, 600ms, reduced motion none; the phone's find field carries the magnifier <code>.wm__lens</code> over <code>.oc-field</code>) and NEEDS A LOOK when non-empty; a store node drives the grid, an installed kind (or an item under it) is that kind's real page embedded, in inset mode so it draws no second title bar (<code>InstalledKindScreen</code>, <code>.wik</code>: the Themes, Plugins, Skills and Mods screens), the item selected; the look pages and a catalog-installed item keep <code>InstalledPage</code> (<code>.wi</code>). The menu is as wide as its widest row (min 200px, max 300px). Its bottom-right corner holds a bare gray pi (<code>.wm__elite</code> in <code>.wm__foot</code>, no box, muted, a little brighter on hover, title and label ELITE ACCESS): the way into Elite Access, the BBS view of warez. On a phone the menu is the first screen and a node pushes its page under a back bar (<code>.screen__back</code>). The embedded skills tab still uses the older LEFT RAIL (<code>CatalogFilterRail</code>: <code>.cat-rail</code>, tracked <code>.cat-rail__label</code> over vertical <code>.cat-rail__row</code> toggles for KIND and STATE, the pressed row on the orange tint with a 2px orange left edge, publish a skill at the foot); the top bar (<code>CatalogToolbar</code>: search, sort, grid and list toggle) is ONE 44px bar. On a phone the toolbar draws KIND and STATE as the base <code>Segmented</code> with a leading label cell (<code>caption</code>, <code>.oc-segmented__caption</code>; a kind option draws its colored <code>KindMark</code> through the option's <code>mark</code> snippet), RISK, SOURCE and SORT as shared <code>.oc-facet</code> pickers, then the shared grid and list toggle <code>ViewToggle</code>, remembered per device as page "skills"; <code>.cat-rows</code> is the phone's layout group).
         On a phone the bar is the scroll-away rows under the omnibar (<code>CatalogPhoneBar</code>, <code>.catalog-phonebar</code>). Every item wears a KIND MARK
         (<code>KindMark</code>: mods red, skills purple, themes black, a glyph tile before the title) and a 3px kind band (<code>.kind-band</code>). Then a GRID of cards by default
         (<code>WarezCard</code>, the ONE card every store and installed page draws (<code>CatalogCard</code>, the installed skills, themes, mods and plugins): a 16:9 frame, the theme miniature or the publisher art or the letter slab, the kind mark and name, the page's one state control top right, a brief clamped to three lines that are always reserved so a row of cards is one height; no meta line and no source line. A warning (untrusted key, a non-clean verdict, deprecated, writes instructions) adds a <code>.catalog-card__flags</code> row, an instructions-writing item shows <code>.catalog-card__warn</code>; the grid is <code>.warez-grid</code> and a favorite star beside a name is <code>.warez-star</code>.).
@@ -249,7 +247,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         (<code>ratings-reader.svelte.ts</code>) so the summary and the section never disagree. The same layout is the plugin and skill
         detail pane (<code>CatalogDetail</code>): the summary row and the id, source, developer and version block are
         <code>ItemSummary</code>, the RATINGS section, comments and bug icon are <code>ItemFeedback</code>, shared by both pages.
-        The pane opens on the kind band and a 160px hero (<code>.detail__hero</code>: the publisher art or <code>.detail__letter</code>) with the header laid over it on a top scrim (<code>.detail__scrim</code>); a THEME has no hero: <code>.detail__tins</code> holds the themes page inspector (<code>.tins</code>) with the store's acts as its action row, and the close X keeps the corner: the name and sub line (<code>.detail__sub</code>) top left, the rating and comment count top right (<code>.detail__ovrow</code>, <code>.detail__ov--tl</code>, <code>.detail__ov--tr</code>, <code>.detail__rate</code>), and the close X in the corner (<code>.detail__close</code>, the shared <code>.modal-close</code>); trust comes first in <code>TrustBlock</code> (the plate: <code>.tv-plate</code>, <code>.tv-grid</code>, grade, signer, pinned key, scripts, source and the copyable digest), then the full description in the brief's place (no fold), and the acts (<code>.acts</code>; installed items offer update, install to another scope and remove). Section labels use the accent, as the mockup's. The drawer is 400px wide by default and resizes by dragging <code>.detail-grip</code> on its left edge (or arrow keys, Home and End; 320 to 640px, the list keeps 280px); the width is remembered per device; the brief follows in larger text and the digest, bytes,
+        The pane opens on the kind band and a 160px hero (<code>.detail__hero</code>: the publisher art or <code>.detail__letter</code>) with the header laid over it on a top scrim (<code>.detail__scrim</code>); a THEME has no hero: <code>.detail__tins</code> holds the themes page inspector (<code>.tins</code>) with the store's acts as its action row, and the close X keeps the corner: the name and sub line (<code>.detail__sub</code>) top left, the rating and comment count top right (<code>.detail__ovrow</code>, <code>.detail__ov--tl</code>, <code>.detail__ov--tr</code>, <code>.detail__rate</code>), and the close X in the corner (<code>.detail__close</code>, the shared <code>.modal-close</code>); trust comes first in <code>TrustBlock</code> (the plate: <code>.tv-plate</code>, <code>.tv-grid</code>, grade, signer, pinned key, scripts, source and the copyable digest), then the full description in the brief's place (no fold), and the acts (<code>.acts</code>; installed items offer update, install to another scope and remove). Section labels use the accent, as the mockup's. The pane is the page frame's detail region (<code>.screen__detail</code> inside <code>[data-frame-region="detail"]</code>; Joe (ccsliinc), 2026-11-20, #2775 call A): 360 to 560px with the frame's head (the item's name and the one close key, so the pane draws no X of its own there, and a theme's <code>.detail__tins--bare</code> drops the row that cleared it), replacing the list below 900px of the frame, with no resize grip; the brief follows in larger text and the digest, bytes,
         files, install count and executable-files warning close the pane (<code>.detail__facts</code>);
         the catalog toolbar is one centred row at the themes bar's control height. Picking a theme
         here is the global choice (<code>Themes.applyGlobal</code>).</dd>
@@ -322,7 +320,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dd>The root carries <code>.pledger</code>, so <code>.pl-panel</code>, <code>.pl-titlebar</code>,
         <code>.pl-title</code> and <code>.pl-label</code> apply unchanged. <code>.oc-page</code> is the shared page frame (<code>web/src/opscenter/page.css</code>), <code>.mgr</code> stays only as the scope the manager-frame and settings-form rules are written under, and <code>.oc-field</code> copies <code>.oc-field</code>,
         <code>.oc-chip</code> copies the catalog's filter chips, <code>.oc-page__split--reading</code> (the list beside the reading pane, a plain layout INSIDE the frame's one body, never a second
-        <code>.oc-page__body</code>) copies <code>.screen__body--reading</code>, <code>.mgr-card</code> copies <code>.catalog-card</code>,
+        <code>.oc-page__body</code>) copies the warez split it was drawn from (warez itself now reads in the frame's detail region, #2775), <code>.mgr-card</code> copies <code>.catalog-card</code>,
         the switch is the shared <code>.oc-check</code> with <code>role="switch"</code>, and <code>.mgr-card__error</code> and
         <code>.oc-page__error</code> copy the base <code>State</code> error (<code>.oc-state</code>, <code>data-state="error"</code>). The rules live in
         <code>web/src/lib/manager-frame/manager-frame.css</code> and <code>web/src/lib/manager-frame/manager-card.css</code>,
@@ -534,6 +532,47 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <div class="sg-specimen__label"><span>live</span><code>WidgetsScreen.svelte</code><span>embedded, the real core widget manifests over the real adapter; switches and the activity log's settings act on memory only</span></div>
     <div class="sg-specimen__body"><div id="sg-live-widgets-page"></div></div>
 </div>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>declarative ui v2</span><code>Form</code><code>Input</code><code>Textarea</code><code>SelectNode</code><code>Toggle</code><code>Tabs</code><code>CodeBlock</code><code>MarkdownSafe</code><code>Progress</code><code>EmptyState</code><code>Sparkline</code></div>
+    <div class="sg-specimen__body">
+        <div class="cu-frame">
+            <div class="cu-box">
+                <div class="cu-root">
+                    <div class="cu-form">
+                        <div class="cu-control"></div>
+                        <div class="cu-control cu-toggle"></div>
+                        <div class="cu-form__actions"><span class="cu-form__line">saved</span></div>
+                    </div>
+                    <div class="cu-tabset">
+                        <div class="cu-tabpanel"></div>
+                    </div>
+                    <div class="cu-code">
+                        <div class="cu-code__head"><span class="cu-code__lang">json</span></div>
+                        <pre class="cu-code__pre"><code class="cu-code__text">{"ok":true}</code></pre>
+                    </div>
+                    <div class="cu-md">
+                        <h3 class="cu-md__h" data-level="3">heading</h3>
+                        <p class="cu-md__p"><strong class="cu-md__strong">bold</strong> <em class="cu-md__em">em</em> <code class="cu-md__code">code</code> <span class="cu-md__link">link</span></p>
+                        <blockquote class="cu-md__quote">quote</blockquote>
+                        <pre class="cu-md__pre"><code class="cu-md__code">block</code></pre>
+                        <ul class="cu-md__list"><li class="cu-md__item">item</li></ul>
+                        <hr class="cu-md__hr" />
+                        <p class="cu-md__refused">could not draw</p>
+                    </div>
+                    <div class="cu-progress">
+                        <div class="cu-progress__head"><span class="cu-progress__label">sync</span><span class="cu-progress__pct">50%</span></div>
+                        <div class="cu-progress__track"><div class="cu-progress__fill cu-progress__fill--indeterminate"></div></div>
+                    </div>
+                    <div class="cu-empty"></div>
+                    <div class="cu-sparkline">
+                        <span class="cu-sparkline__label">latency</span>
+                        <svg class="cu-sparkline__svg" viewBox="0 0 120 28"><polyline class="cu-sparkline__line" fill="none" points="2,20 60,8 118,14" /></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <dl class="sg-facts">
     <dt>when</dt>
     <dd>Plugins (issue #765, #482's "view all"): every plugin compiled into this build, with an on/off switch per plugin.
@@ -557,7 +596,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>.mgr__detail-title--kicked</code>) so the word stays the strip's one accent, and <code>detailBar</code> puts
         <code>PluginPaneStrip.svelte</code> after the name: the state word with its dot (<code>.plp-state</code>, the restart picker's
         <code>__state</code>: green on, yellow held, waiting for a grant or doing nothing) and the plugin's <code>.oc-check</code> switch with the state
-        in words. A core plugin and a removed folder have no switch. <code>detailFill</code> (<code>.mgr__detail-body--fill</code>) stops the pane body
+        in words. A core plugin and a removed folder have no switch. <code>detailFill</code> (the frame's <code>.oc-page__detail-body--fill</code>) stops the pane body
         padding and scrolling, so <code>PluginPane.svelte</code> (<code>.plp</code>) lays out its own fixed head and ONE scroll
         (<code>.plp__panel</code>). <b>The reason strip</b> (<code>.plp__why</code>, <code>.plp__why-text</code>, <code>.plp__why-more</code>, the
         restart picker's <code>__why</code> in yellow) shows ONLY while the plugin is held (it could not start; the host's own reason) or waiting for a
@@ -602,7 +641,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>allow-same-origin</code>: an opaque origin with no cookies, storage, network or parent access) for a view the plugin shipped under
         <code>views/&lt;name&gt;/</code>. <b>When to use:</b> only when the declarative nodes cannot draw it (pixel pets, a drawn gauge); anything a document can say stays a document.
         <b>A panel</b> (<code>.cu-view</code>) sits inside the host's frame (<code>HostFrame.svelte</code>), so the literal name and the third-party mark stay the host's.
-        <b>In a widget host there is ONE header</b>: the host's title strip. The frame is drawn <code>bar={false}</code> and the cell hands the mark (a base <code>Tag</code>, <code>data-cplug-mark</code>) up through the shell's controls into that strip, else into the body bar (<code>.cu-panelcell__mark</code> when the header is ticked off); the page, menu and overlay surfaces keep the frame's own bar.
+        <b>In a widget host there is ONE header</b>: the host's title strip (with the plugin's declared icon and literal name, no third-party/unverified badge per #3406). The frame is drawn <code>bar={false}</code>; the page, menu and overlay surfaces keep the frame's own bar.
         <b>The fill variant</b> (<code>.cu-frame--fill</code>) makes the frame and its box take the height of what holds them; the widget cell and the plugin page share it.
         A panel's frame sits behind a transparent host gate (<code>.cu-gate</code>, <code>.cu-gate__shield</code>): the owner's click on it hands the frame keyboard focus, and until then focus the script grabs is handed back.
         <b>An overlay</b> (<code>.cu-overlay</code>, mounted once by <code>OverlayRoot.svelte</code>) is one transparent full-viewport frame under every popover and modal; the host clips it
@@ -627,6 +666,8 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>GET /api/v1/cplugs/{id}/ui/{surface}</code> and re-reads on the <code>cplug_ui</code> push, never polling; the settings tab of an active
         third-party plugin is its <code>settings</code> document, and <code>StatusChip.svelte</code> draws the first badge of its <code>glance</code> document
         on its row and detail strip, behind the host's own third-party mark (<code>.cu-chip</code> wraps the <code>.cu-frame__mark</code> and the badge); the bar tooltip leads with the same mark. Colour is <code>--oc-*</code> only; rules: <code>cplug-ui.css</code>.</dd>
+    <dt>named ui.slots host</dt>
+    <dd><code>SlotHost.svelte</code> (<code>.cu-slot</code>, <code>.cu-slot--row</code>) subscribes to <code>pluginsStore</code> (<code>GET /api/v1/cplugs/slots</code>, <code>cplug_slots</code> push topic), re-validates every entry client-side via <code>slots.ts</code>, renders declarative UI v1/v2 fragments through <code>Renderer.svelte</code> inside <code>HostFrame.svelte</code>, and renders action or link descriptors in <code>.cu-slot__item</code> (<code>.cu-slot__head</code>, <code>.cu-slot__label</code>, <code>.cu-slot__desc</code>, <code>.cu-slot__error</code>, <code>.cu-slot__empty</code>) with base <code>Button</code>, <code>Tag</code>, and <code>Icon</code> controls. Colour and spacing use <code>--oc-*</code> tokens only in <code>cplug-ui.css</code>.</dd>
     <dt>a third-party plugin's page (issue #2562)</dt>
     <dd>A plugin that asks for a <code>page</code> gets one rail key, a slide-out and a main view, all host-drawn around the plugin's own frames.
         <b>When to use:</b> a sideloaded or catalog plugin with one view it wants as a menu plus a full-size page; a compiled-in plugin builds a tab.
@@ -634,15 +675,14 @@ under the header with one scrolling box, a header row, a capped and centred colu
         the main view (the <code>page</code> role frame, behind the click shield), both on <code>.cu-page</code> (<code>.cu-page--main</code> pads the main view,
         <code>.cu-page__step</code> holds one frame, <code>.cu-page__off</code> is the quiet "plugin is off" line). On a phone the slide-out is the whole screen,
         so <code>PageMenu.svelte</code> mounts both frames and <code>PageSwitch.svelte</code> draws the host's <code>menu | view</code> choice (the base
-        segmented control) in the slide-out's actions row. The rail key's tooltip and the slide-out title lead with the host's third-party (or unverified) mark. A menu
+        segmented control) in the slide-out's actions row, while <code>PluginTabBody.svelte</code> renders runtime <code>sidebar_tab</code> and <code>page</code> bodies inside sidebar or pop-out tabs without pulling drawer modules into the pop-out bundle. The rail key's tooltip and the slide-out title lead with the host's third-party (or unverified) mark. A menu
         drawn inside a frame is the author's business; the guide tells authors not to draw one.</dd>
     <dt>widgets page, the places podium (issues #1551, #2055)</dt>
     <dd>The widgets page, rebuilt as a PLACES PODIUM (Alex (example-owner), 2026-10-21, r4 pick m3). <b>When to use:</b> a catalog of things you browse by
         picture and put into several named places. The page wears the nav page frame (<code>scroll="self"</code>, #2775): the search is the
         header find slot, the sort and fits menus the tool row, "reset bars" and "?" the frame's one header button, and the rail
         (<code>.wp-rail</code>, <code>.wp-rail__group</code>, base row Buttons, counted by <code>places-lens.ts</code>) is the frame's side (a picker and
-        a sheet below 720px of the page); it filters by group, by what fits a place and by state. The body keeps its own split, the scroll
-        beside a 400px reading pane (<code>.wp-detail</code>); a section label (<code>.wp-sectionlabel</code>) leads the STICKY podium (<code>.wp-stick</code>) of five
+        a sheet below 720px of the page); it filters by group, by what fits a place and by state. The reading pane is the frame's DETAIL region (360 to 560px of the page, #2775, Joe (ccsliinc) 2026-11-20: the old fixed 400px pane is gone); a section label (<code>.wp-sectionlabel</code>) leads the STICKY podium (<code>.wp-stick</code>) of five
         Warez census panels (<code>.wp-podium</code>, <code>.wp-place</code>, the shared <code>.oc-rank</code>), one per place: right bar, bottom bar,
         drawer cards, glance row, dashboards. A place has a heading (a base row Button, <code>data-place-pick</code>, and <code>.wp-place__name</code>) with its letter
         (<code>.wp-pmark</code>, one hue per place: <code>--pl-right</code> to <code>--pl-board</code>, page tokens on <code>.wp-screen</code>) and a plus
@@ -654,8 +694,7 @@ under the header with one scrolling box, a header row, a capped and centred colu
         <code>.wp-mk</code>). Each card wears its widget GROUP colour (<code>--wg-overview</code> to <code>--wg-live</code>, page tokens, set through <code>data-group</code>) and shows the
         widget's own icon in a tile (<code>WidgetTile.svelte</code>, <code>.wp-tile</code>, <code>.wp-tile--board</code>) with the group word under the name
         (<code>.wp-card__titles</code>); the rail rows and the board place lead with a line glyph (<code>GroupGlyph.svelte</code>). The page is one title strip
-        (search, sort, fits, reset bars and a help Button) over a layout of three columns inside the frame's one body (<code>.wp-body</code>, <code>.wp-body--reading</code>, the pane's
-        <code>.wp-detail</code>), closed by a base close IconButton or Escape (one document-level handler, never the page). The title strip's find shows one clear x (<code>.wp-find</code>, a base close IconButton). At phone width a sticky strip of the five places (<code>PlaceDock.svelte</code>, <code>.wp-dockwrap</code>, <code>.wp-dock</code>, base quiet Buttons) shows under the title strip once the podium has scrolled away. The pane's yes/no settings are switch rows (the settings form, <code>.sf</code>, <code>.sf__row</code>, <code>.sf__label</code>, <code>.sf__control</code>, <code>.sf__title</code>, laid out under <code>.wp-screen</code> too). Every menu is <code>PlaceMenu.svelte</code> (<code>.wp-menu</code>, <code>.wp-menu__list</code>,
+        (search, sort, fits, reset bars and a help Button) over the scroll inside the frame's one body (<code>.wp-body</code>), the pane in the frame's detail region, closed by the frame head's close key or Escape (one document-level handler, never the page). The title strip's find shows one clear x (<code>.wp-find</code>, a base close IconButton). At phone width a sticky strip of the five places (<code>PlaceDock.svelte</code>, <code>.wp-dockwrap</code>, <code>.wp-dock</code>, base quiet Buttons) shows under the title strip once the podium has scrolled away. The pane's yes/no settings are switch rows (the settings form, <code>.sf</code>, <code>.sf__row</code>, <code>.sf__label</code>, <code>.sf__control</code>, <code>.sf__title</code>, laid out under <code>.wp-screen</code> too). Every menu is <code>PlaceMenu.svelte</code> (<code>.wp-menu</code>, <code>.wp-menu__list</code>,
         <code>.wp-menu__wicon</code>): the session row menu's look plus a find box, a heading line and an empty line, opaque, fixed on the viewport above the cards. The reading pane (the frame's detail pane, filled) is
         <code>WidgetPane.svelte</code>: a live hero (<code>WidgetHero.svelte</code>, sample or my data), the views seg, the SIZE seg
         (<code>.pn-sizes</code>), the title, brief, PLACED IN, OPTIONS and SWITCH sections (<code>.pn-detail</code>, <code>.pn-sec</code>, <code>.pn-place</code>).
@@ -683,10 +722,19 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dt>how</dt>
     <dd>Each page is a <code>ManagerFrame</code> over its adapter (<code>web/src/lib/plugins-page/cplugs-adapter.ts</code>,
         <code>web/src/lib/widgets-page/widgets-adapter.ts</code>), mounted as an overlay by the shared
-        <code>web/src/lib/manager-frame/overlay-host.ts</code>. The plugins adapter is <code>GET /api/v1/cplugs</code> and
-        <code>PUT /api/v1/cplugs/{id}</code>, one kind of card with one switch, its own icon, tier and surface tags and its author (grid by default, list one click away); a plugin that is off contributes to no
-        surface, because the plugin host wraps every contribution in its switch. The Plugins page lists plugins (store and sideloaded items) only; the compiled-in items are features, listed by the same page in its <code>features</code> scope under Settings > features (<code>scope</code> prop of <code>PluginsScreen.svelte</code>). The widgets adapter is <code>GET /api/v1/widgets</code> and
-        <code>PATCH /api/v1/item-settings/widget/{id}</code> with <code>{"enabled": false}</code>.</dd>
+        <code>web/src/lib/manager-frame/overlay-host.ts</code>. The plugins adapter reads <code>GET /api/v1/cplugs?include_agent_plugins=true</code> via
+        <code>pluginsStore</code> (<code>web/src/lib/plugins/store.svelte.ts</code>) and writes <code>PUT /api/v1/cplugs/{id}</code>, unifying built-in, app,
+        agent, and local dev plugins in ONE Plugins tab (badged <code>Built-in</code>, <code>App Plugin</code>, <code>Agent Plugin</code>, <code>Local Dev</code> with
+        6 <code>.oc-chip</code> filter pills and <code>.plug-card__badges</code>; per-project scope lives inside <code>PluginInstallSheet.svelte</code> and
+        <code>PluginOverview.svelte</code> for <code>agent-plugin</code> only). <code>PluginInstallSheet.svelte</code> (<code>.pl-sheet</code>, <code>GithubSourcePicker.svelte</code>
+        <code>.pl-gh-picker</code>, <code>CapabilityCards.svelte</code> <code>.pl-cap</code>, <code>InlineSecretsFields.svelte</code> <code>.pl-secrets</code>) collapses the
+        old multi-gate install flow into one sheet launched from <code>+ install from github</code> (<code>.plug-page__actions</code>), Warez catalog plugins, or
+        first-enable of sidecars needing consent/secrets/runtime activation; <code>PluginHealthPill.svelte</code> (<code>.pl-health-pill</code>) renders live
+        watchdog RSS/CPU/restarts and 1-click logs/restart/pause controls on sidecar cards and overviews. Compiled-in features also remain accessible in
+        Settings &gt; features (<code>scope="features"</code> of <code>PluginsScreen.svelte</code>). The widgets adapter merges core, compiled plugin, and
+        <code>DeclarativeWidgetCell.svelte</code> manifests (<code>GET /api/v1/widgets</code>, <code>PATCH /api/v1/item-settings/widget/{id}</code>), while Warez keeps
+        <code>Skills</code>, <code>Mods</code>, <code>Themes</code>, <code>Widgets</code>, and <code>Loadouts</code> as strictly separate browse tabs
+        (<code>InstalledKindScreen.svelte</code>, <code>.wik__empty</code>).</dd>
     <dt>facts</dt>
     <dd>A detail pane lists an item's facts as <code>dl.mgr-facts</code> (<code>manager-frame.css</code>): small tracked
         uppercase terms, mono values, copied from this guide's own <code>.sg-facts</code>. Use it for any page's details
@@ -718,6 +766,26 @@ under the header with one scrolling box, a header row, a capped and centred colu
         above the load button naming the folder or repository (<code>.sideload-form__warning</code>), and on a row after a re-sync that
         brought new code (<code>.sideload-row__warning</code>). <b>When to use:</b> only where unreviewed code is about to run; never as a tooltip
         or on hover. The words are the catalog's <code>plugins.page.sideload.warning.*</code>; the MCP tool reads the same risk sentence.</dd>
+    <dt>plugin dev inspector drawer</dt>
+    <dd><code>DevInspectorDrawer</code> (<code>web/src/lib/plugins-page/DevInspectorDrawer.svelte</code>) opens from any
+        sidecar card's <code>[logs]</code> control inside a floating <code>Sheet</code> (<code>place="float"</code>,
+        <code>width="var(--oc-sheet-w-wide)"</code>). Its header (<code>.pl-inspector__head</code>,
+        <code>.pl-inspector__head-main</code>, <code>.pl-inspector__kicker</code>, <code>.pl-inspector__title</code>,
+        <code>.pl-inspector__badges</code>, <code>.pl-inspector__head-actions</code>) pairs the status, trust, and
+        active dev-lease tags with a close <code>IconButton</code>; sidecars render <code>[restart]</code> and
+        <code>[pause]</code>/<code>[resume]</code> in <code>.pl-inspector__controls</code> /
+        <code>.pl-inspector__actions</code>. Widening re-consent, crash-loop alerts, and action errors render in
+        <code>.pl-inspector__banner</code> (<code>.pl-inspector__banner-text</code>,
+        <code>.pl-inspector__banner-detail</code>) and <code>.pl-inspector__error</code>. Five <code>Tabs</code>
+        (<code>trace</code>, <code>capabilities</code>, <code>watchdog</code>, <code>surfaces</code>, <code>logs</code>)
+        scroll inside <code>.pl-inspector__panel</code>, grouping sections (<code>.pl-inspector__section</code>,
+        <code>.pl-inspector__section-head</code>, <code>.pl-inspector__label</code>,
+        <code>.pl-inspector__subsection</code>, <code>.pl-inspector__sublabel</code>), hairline-ruled metric grids
+        (<code>.pl-inspector__facts</code>, <code>.pl-inspector__fact-term</code>, <code>.pl-inspector__fact-val</code>),
+        surface tag strips (<code>.pl-inspector__chips</code>, <code>.pl-inspector__muted</code>), and dense trace/log
+        rows (<code>.pl-inspector__list</code>, <code>.pl-inspector__row</code>, <code>.pl-inspector__row-top</code>,
+        <code>.pl-inspector__row-main</code>, <code>.pl-inspector__row-meta</code>, <code>.pl-inspector__row-ts</code>,
+        <code>.pl-inspector__row-detail</code>, <code>.pl-inspector__row-error</code>).</dd>
     <dt>catalog keys</dt>
     <dd><code>plugins.page.*</code>, the <code>cplug.&lt;id&gt;.name</code> and <code>cplug.&lt;id&gt;.description</code> keys (a plugin's row), <code>widgets.page.*</code>, <code>widgets.setting.*</code>.</dd>
 </dl>
@@ -1042,6 +1110,26 @@ under the header with one scrolling box, a header row, a capped and centred colu
     <dt>motion</dt>
     <dd>Transform and opacity only. The logo flies to the header over 420 ms (<code>.m1-flyer</code>) while the board fades in; the cursor
         (<code>.cur</code>) blinks five times after a key and stops; nothing loops. Reduced motion cuts the dial-up to the board.</dd>
+</dl>
+
+<h3 class="sg-h3" id="plugin-safety-surfaces">revocation, flagged warnings and permission diffs</h3>
+<p>Three bounded safety blocks reuse base <code>Tag</code>, <code>Button</code> and <code>Checkbox</code> with semantic tokens:
+    <code>RevokedBanner.svelte</code> (<code>.revoked-banner</code>, <code>--oc-coral</code> accent border, 1-click Disable &amp; Uninstall action on installed copies),
+    <code>FlaggedWarningBox.svelte</code> (<code>.flagged-box</code>, <code>--oc-yellow</code> / <code>--oc-coral</code> border, two-sentence AI summary, warning reasons and unticked <code>Checkbox</code> acknowledgement),
+    and <code>PermissionDiffPanel.svelte</code> (<code>.perm-diff</code>, category diffs, execution escalation alerts, <code>commit_sha_mismatch</code> blocked state and unticked re-consent <code>Checkbox</code>).</p>
+
+<h3 class="sg-h3" id="plugin-studio">plugin studio workbench &amp; shared inspector</h3>
+<dl class="sg-facts">
+    <dt>when</dt>
+    <dd>Opened from the Plugins page, the Widgets page, Command Palette (<code>build-plugin</code>) or Widget Lab through <code>screen-host.ts</code> (<code>ModalShell</code> with <code>look="titlerow"</code>, <code>fill</code> and <code>trapFocus={false}</code>).</dd>
+    <dt>workbench</dt>
+    <dd><code>StudioScreen.svelte</code> wears <code>Page</code> with <code>frame="nav"</code> and <code>scroll="self"</code>: the left <code>.ps-rail</code> lists workspaces (<code>.ps-workspace-list</code>, <code>.ps-workspace-item</code>, <code>.ps-workspace-item__pick</code>, <code>.ps-workspace-item__meta</code>) and hosts the scaffold/launch <code>.ps-form</code> across all seven templates and three coding agents (<code>.ps-rail__section</code>, <code>.ps-rail__headrow</code>, <code>.ps-rail__heading</code>, <code>.ps-rail__count</code>, <code>.ps-form__label</code>).</dd>
+    <dt>split panes &amp; live terminal</dt>
+    <dd>Inside <code>.ps-shell</code> and <code>.ps-workbench</code>, the left <code>.ps-pane</code> (<code>StudioTerminalPane.svelte</code>, with <code>.ps-pane__bar</code>, <code>.ps-pane__heading</code>, <code>.ps-pane__controls</code>) hosts the non-primary <code>.ps-terminal-wrap</code> / <code>.ps-terminal-host</code> (or <code>.ps-terminal-fallback</code>) and workspace files list (<code>.ps-terminal-files</code>, <code>.ps-file-list</code>, <code>.ps-file-row</code>, <code>.ps-file-row__path</code>). Errors render in <code>.ps-banner</code> (<code>.ps-banner__head</code>, <code>.ps-banner__title</code>, <code>.ps-banner__detail</code>, <code>.ps-banner__actions</code>).</dd>
+    <dt>multi-theme preview, inspector &amp; readiness</dt>
+    <dd>The right <code>.ps-pane</code> holds <code>Tabs</code> and <code>.ps-right-body</code> across three panels: <code>MultiThemePreview.svelte</code> (<code>.ps-preview-controls</code>, <code>.ps-theme-picker</code>, <code>.ps-theme-grid</code>, <code>.ps-stage</code>, <code>.ps-stage__head</code>, <code>.ps-stage__name</code>, <code>.ps-stage__canvas</code>, <code>.ps-stage__frame</code>), <code>StudioInspectorPane.svelte</code> (reusing shared <code>InspectorPanels.svelte</code> + <code>dev-inspector.css</code> plus <code>.ps-kv-grid</code>, <code>.ps-kv-grid__key</code>, <code>.ps-kv-grid__val</code>, <code>.ps-pre</code>) and <code>ReadinessChecklist.svelte</code> (<code>.ps-check-list</code>, <code>.ps-check-row</code>, <code>.ps-check-row__top</code>, <code>.ps-check-row__label</code>, <code>.ps-check-row__detail</code>, <code>.ps-findings</code>).</dd>
+    <dt>sandbox, install &amp; publish</dt>
+    <dd><code>StudioActionsBar.svelte</code> draws <code>.ps-actions-bar</code> (<code>.ps-actions-bar__group</code>) and the two-step publish confirmation drawer <code>.ps-publish-panel</code> (<code>.ps-publish-panel__grid</code>) using base <code>Button</code>, <code>Field</code>, <code>Segmented</code>, <code>Select</code>, <code>Checkbox</code>, <code>State</code> and <code>Tag</code> controls with <code>@layer components</code> rules and <code>--oc-*</code> tokens only.</dd>
 </dl>
 
 <h3 class="sg-h3" id="ledger-catalog-mistakes">common mistakes</h3>

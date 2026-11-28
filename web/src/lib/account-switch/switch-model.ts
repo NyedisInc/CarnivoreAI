@@ -1,6 +1,6 @@
 
 export interface ActiveAccountState {
-  provider: 'claude' | 'codex';
+  provider: 'claude' | 'codex' | 'antigravity';
   account_id: string | null;
   source: 'pointer' | 'default_login' | 'none';
   pointer: string | null;

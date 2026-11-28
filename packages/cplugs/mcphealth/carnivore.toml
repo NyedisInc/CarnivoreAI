@@ -1,0 +1,29 @@
+schema = 2
+api_version = 1
+id = "mcphealth"
+name = "mcp health"
+description = "Shows which MCP servers each live session has and which are down, with an allow or block list for warnings and an optional notification when one drops."
+version = "1.0.2"
+kind = "plugin"
+author = "carnivore"
+license = "MIT"
+min_app_version = "1.12.20"
+icon = "plug"
+tier = "catalog"
+default_enabled = false
+data = []
+
+[run]
+cmd = ["python3", "mcphealth_main.py"]
+mode = "rpc"
+
+[permissions]
+read = ["mcp.health"]
+write = ["notify"]
+
+[permissions.reasons]
+"mcp.health.read" = "reads which mcp servers each live session has, their link state and the names of the programs running under each agent"
+notify = "tells you once when an mcp server of a live session goes down, and once when it is back"
+
+[events]
+on = ["mcp.health"]

@@ -17,7 +17,7 @@ setLocale('en');
 const mounted: ReturnType<typeof mount>[] = [];
 
 beforeEach(() => {
-  cplugEnablement.enabled = { huddle: true };
+  cplugEnablement.enabled = { taskmanager: true };
   homeBoards.list = [
     { id: 'home', name: 'main' },
     { id: 'b-2', name: 'Ops wall' },

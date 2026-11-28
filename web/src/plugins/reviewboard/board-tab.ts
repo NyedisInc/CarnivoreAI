@@ -1,5 +1,6 @@
-import type { DynamicTabDef } from '../sdk';
-import BoardScreen from './BoardScreen.svelte';
+import { lazyComponent, type DynamicTabDef } from '../sdk';
+
+const BoardScreen = lazyComponent(() => import('./BoardScreen.svelte'));
 
 export const reviewboardTab: DynamicTabDef = {
   id: 'reviewboard',

@@ -1,8 +1,10 @@
 
+import json
+
 import pytest
 from fastapi import APIRouter
 
-from src.plugins.host import identity, routes
+from src.plugins.host import identity, registry_store, routes
 from src.plugins.sdk.routing import cplug_router
 
 
@@ -47,7 +49,7 @@ def test_registry_host_picks_the_layout():
 
 def test_third_party_router_lives_under_r():
     assert cplug_router("gh", third_party=True).prefix == "/cplugs/gh/r"
-    assert cplug_router("huddle").prefix == "/cplugs/huddle"
+    assert cplug_router("taskmanager").prefix == "/cplugs/taskmanager"
 
 
 @pytest.mark.parametrize("name,code", [
@@ -84,7 +86,7 @@ def test_removed_name_stays_reserved_to_its_catalog_id_until_purge(tmp_path):
 def test_corrupt_ledger_fails_closed_and_is_never_overwritten(tmp_path):
     identity.register_install(tmp_path, "gh", "acme/github", set())
     identity.register_install(tmp_path, "other", "acme/other", set())
-    path = tmp_path / "cplugs" / identity.LEDGER_FILE
+    path = registry_store.registry_path(tmp_path)
     path.write_bytes(path.read_bytes()[:20])
     before = path.read_bytes()
     with pytest.raises(identity.LedgerUnreadable):
@@ -95,9 +97,11 @@ def test_corrupt_ledger_fails_closed_and_is_never_overwritten(tmp_path):
 
 
 def test_bad_uuid_row_is_a_corrupt_ledger(tmp_path):
-    path = tmp_path / "cplugs" / identity.LEDGER_FILE
+    path = registry_store.registry_path(tmp_path)
     path.parent.mkdir(parents=True)
-    path.write_text('{"installs": {"gh": {"uuid": "../../../x", "catalog_id": "a/b"}}}')
+    doc = registry_store.new_document()
+    doc["items"]["gh"] = {"kind": "plugin", "install_uuid": "../../../x", "catalog_id": "a/b"}
+    path.write_text(json.dumps(doc))
     with pytest.raises(identity.LedgerUnreadable):
         identity.lookup(tmp_path, "gh")
 

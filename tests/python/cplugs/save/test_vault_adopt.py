@@ -19,11 +19,11 @@ def two_points(world: World) -> None:
     world.grow_history(1, seeds=[5])
 
 
-def incoming(source: World, rel_map=None) -> List[FallbackPoint]:
-    points = BackupTranscripts(vault=lambda: source.vault).list_points(CONV)
+def incoming(source: World, rel_map=None, conv: str = CONV) -> List[FallbackPoint]:
+    points = BackupTranscripts(vault=lambda: source.vault).list_points(conv)
     out = []
     for point in points:
-        manifest = source.vault.manifests.read(CONV, point.point_id)
+        manifest = source.vault.manifests.read(conv, point.point_id)
         files = []
         for pf, entry in zip(point.files, manifest.files):
             raw = b"".join(source.vault.blobs.get(c) for c in entry.chunks)

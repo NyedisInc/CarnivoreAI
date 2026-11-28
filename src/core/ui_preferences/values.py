@@ -1,9 +1,9 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, field_validator
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictFloat, StrictInt, field_validator
 
 from src.core.attention.kinds_choice import AttentionKindsChoice
 from src.core.widget_placement.widget_bars import WidgetBars
@@ -11,10 +11,31 @@ from src.core.ui_preferences.drawer_arrangement import DrawerArrangement
 from src.core.ui_preferences.drawer_row_icons import DrawerRowIcons
 from src.core.ui_preferences.drawer_zone import DrawerZone, SessionRail
 from src.core.ui_preferences.account_checks import check_builtin_login_label, check_owner_display_name, check_account_welcome_seen, check_time_zone
-from src.core.ui_preferences.activity_checks import check_toast_mode, check_terminal_screen_reader, check_deepsearch_index_scope, check_swarm_chat_muted, check_automation_runs_seen_at, check_warez_last_call, check_automation_runs_read, check_disabled_plugin_ids, check_terminal_layouts_size, check_home_layout_size
+from src.core.ui_preferences.activity_checks import check_comet_lap_seconds, check_comet_unread_color, check_toast_mode, check_terminal_screen_reader, check_deepsearch_index_scope, check_swarm_chat_muted, check_automation_runs_seen_at, check_warez_last_call, check_automation_runs_read, check_disabled_plugin_ids, check_terminal_layouts_size, check_home_layout_size
 from src.core.ui_preferences.keymap_checks import check_keymap
 from src.core.ui_preferences.desktop_checks import check_desktop_bools, check_desktop_hotkey, check_desktop_terminal_app, check_desktop_terminal_custom
-from src.core.ui_preferences.sidebar_checks import check_menu_order, check_rail_hidden_icons, check_density, check_rail_magnify, check_menu_page_width, check_sidebar_layout, check_widget_drawer_view, check_sidebar_tab_colors, check_drawer_arrangement_size, check_collapsed_paths, check_launchpad_sections, check_foot_bar_items, check_foot_bar_order
+from src.core.ui_preferences.sidebar_checks import (
+    check_analytics_filters,
+    check_analytics_timezone,
+    check_collapsed_paths,
+    check_density,
+    check_drawer_arrangement_size,
+    check_foot_bar_items,
+    check_foot_bar_order,
+    check_launchpad_sections,
+    check_layout_tabs,
+    check_menu_order,
+    check_menu_page_width,
+    check_rail_hidden_icons,
+    check_rail_magnify,
+    check_sidebar_layout,
+    check_sidebar_tab_colors,
+    check_stats_bar_rate,
+    check_stats_bar_window,
+    check_timeline_filters,
+    check_widget_drawer_view,
+    check_widget_state,
+)
 from src.core.ui_preferences.theme_checks import check_theme_id, check_favorite_theme_ids, check_script_consent, check_model_id, check_favorite_skill_names
 from src.core.ui_preferences.layouts import FootBarLayout, HomeLayout, TerminalLayouts, WarroomLayout
 
@@ -50,6 +71,8 @@ class UiPreferenceValues(BaseModel):
     sidebar_list_open_mobile: Optional[StrictBool] = None
     sidebar_list_sleeping: Optional[StrictBool] = None
     sidebar_list_sleeping_mobile: Optional[StrictBool] = None
+    sidebar_fold_sleeping: Optional[StrictBool] = None
+    sidebar_fold_sleeping_mobile: Optional[StrictBool] = None
     sidebar_hide_empty_sections: Optional[StrictBool] = None
     menu_order: Optional[List[str]] = None
     rail_hidden_icons: Optional[List[str]] = None
@@ -73,10 +96,20 @@ class UiPreferenceValues(BaseModel):
     warez_elite_seen: Optional[StrictBool] = None
     waiting_kinds: Optional[AttentionKindsChoice] = None
     animations: Optional[StrictBool] = None
+    comet_on: Optional[StrictBool] = None
+    comet_lap_seconds: Optional[Union[StrictInt, StrictFloat]] = None
+    comet_unread_color: Optional[str] = None
     row_lights_animate: Optional[StrictBool] = None
     rail_magnify: Optional[StrictInt] = None
     menu_page_width: Optional[StrictInt] = None
     rail_dock_names: Optional[StrictBool] = None
+    layout_tabs: Optional[List[str]] = None
+    stats_bar_rate: Optional[str] = None
+    stats_bar_window: Optional[str] = None
+    analytics_filters: Optional[Dict[str, Any]] = None
+    analytics_timezone: Optional[str] = None
+    timeline_filters: Optional[Dict[str, Any]] = None
+    widget_state: Optional[Dict[str, Dict[str, Any]]] = None
     notify_quiet_watched: Optional[StrictBool] = None
     disabled_plugins: Optional[List[str]] = None
     toast_mode: Optional[str] = None
@@ -119,6 +152,13 @@ class UiPreferenceValues(BaseModel):
     _launchpad_sections = field_validator("launchpad_collapsed")(check_launchpad_sections)
     _foot_bar_items = field_validator("foot_bar_items")(check_foot_bar_items)
     _foot_bar_order = field_validator("foot_bar_order")(check_foot_bar_order)
+    _layout_tabs = field_validator("layout_tabs")(check_layout_tabs)
+    _stats_bar_rate = field_validator("stats_bar_rate")(check_stats_bar_rate)
+    _stats_bar_window = field_validator("stats_bar_window")(check_stats_bar_window)
+    _analytics_filters = field_validator("analytics_filters")(check_analytics_filters)
+    _analytics_timezone = field_validator("analytics_timezone")(check_analytics_timezone)
+    _timeline_filters = field_validator("timeline_filters")(check_timeline_filters)
+    _widget_state = field_validator("widget_state")(check_widget_state)
     _theme_id = field_validator("theme")(check_theme_id)
     _favorite_theme_ids = field_validator("theme_favorites")(check_favorite_theme_ids)
     _script_consent = field_validator("theme_script_consent")(check_script_consent)
@@ -133,6 +173,8 @@ class UiPreferenceValues(BaseModel):
     _account_welcome_seen = field_validator("account_welcome_seen", mode="before")(check_account_welcome_seen)
     _time_zone = field_validator("time_zone")(check_time_zone)
     _toast_mode = field_validator("toast_mode")(check_toast_mode)
+    _comet_lap_seconds = field_validator("comet_lap_seconds")(check_comet_lap_seconds)
+    _comet_unread_color = field_validator("comet_unread_color")(check_comet_unread_color)
     _terminal_screen_reader = field_validator("terminal_screen_reader")(check_terminal_screen_reader)
     _deepsearch_index_scope = field_validator("deepsearch_index_scope")(check_deepsearch_index_scope)
     _swarm_chat_muted = field_validator("swarm_chat_muted")(check_swarm_chat_muted)

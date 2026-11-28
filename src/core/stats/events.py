@@ -13,6 +13,7 @@ from src.core.session_token_usage.model_table import readable_model_name
 
 from .store import StatsStore
 from src.core.product_identity import test_mode_enabled
+from src.core.stats import pack_queries
 
 logger = structlog.get_logger()
 
@@ -103,18 +104,10 @@ def _subject_label(kind: str, subject: str) -> str:
 
 
 def list_events(store: StatsStore, *, start: int, end: int, kind: str | None,
-                limit: int, cursor: int) -> dict:
+                limit: int, cursor: int, scope: str = "pack") -> dict:
     if kind is not None and kind not in KINDS:
         raise ValueError("unknown event kind")
-    where, args = "occurred_at>=? AND occurred_at<?", [start, end]
-    if kind:
-        where += " AND kind=?"
-        args.append(kind)
-    with store.connect(readonly=True) as conn:
-        rows = conn.execute(
-            f"SELECT id,occurred_at,kind,subject,data FROM stats_events WHERE {where} "
-            "ORDER BY occurred_at DESC,id DESC LIMIT ? OFFSET ?", (*args, limit + 1, cursor)).fetchall()
-    return {"items": [{"id": r["id"], "occurred_at": r["occurred_at"], "kind": r["kind"],
-                       "subject": r["subject"], "label": _subject_label(r["kind"], r["subject"]),
-                       "data": json.loads(r["data"])} for r in rows[:limit]],
-            "next_cursor": cursor + limit if len(rows) > limit else None}
+    return pack_queries.list_events_with_pack(
+        store, start=start, end=end, kind=kind, limit=limit, cursor=cursor,
+        scope=scope, subject_label=_subject_label,
+    )

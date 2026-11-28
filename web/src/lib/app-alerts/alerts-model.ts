@@ -13,6 +13,8 @@ export interface AlertAction {
   tone?: string;
   explain_key?: string;
   actions?: AlertAction[];
+  done_key?: string;
+  refusals?: Record<string, string>;
 }
 
 export interface AppAlert {

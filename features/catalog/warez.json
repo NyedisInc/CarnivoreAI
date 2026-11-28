@@ -42,14 +42,13 @@
     "web/src/lib/catalog/CatalogToolbar.svelte",
     "web/src/lib/catalog/KindMark.svelte",
     "web/src/lib/catalog/VerdictMark.svelte",
-    "web/src/lib/catalog/FilterGroup.svelte",
     "web/src/lib/catalog/WarezStatusLine.svelte",
     "web/src/lib/catalog/WarezActs.svelte",
     "web/src/lib/catalog/CatalogPhoneBar.svelte",
     "web/src/lib/catalog/TrustBlock.svelte",
     "src/api/catalog_theme_palette_routes.py"
   ],
-  "updated": "2026-10-15",
+  "updated": "2026-11-26",
   "where": [
     "Menu tab, Warez (hotkey r), under Themes.",
     "Also at /#warez, /#catalog, /#warez/<handle>/<name> to open one item, and /#warez/store/... or /#warez/installed/... for a menu node."

@@ -135,17 +135,6 @@ def world_client(w: World) -> Any:
     return ArgentClient(SERVER, lambda: "FIXTURE-asicli-not-a-secret", transport=httpx.MockTransport(w.handler))
 
 
-def test_a_card_from_an_argent_story_closes_its_story_and_no_other_card_does(world: World) -> None:
-    asyncio.run(close.on_card_closed({"origin": {"kind": "argent", "ref": "github:wi_story1"}}, "all validated"))
-    assert world.calls("/work-items/wi_story1/close") == [{"reason": "all validated", "comment": False}]
-    for origin in ({"kind": "owner", "ref": ""}, {"kind": "agent", "ref": "5"}, None):
-        asyncio.run(close.on_card_closed({"origin": origin}, "x"))
-    assert len(world.calls("/close")) == 1
-    world.on = False
-    asyncio.run(close.on_card_closed({"origin": {"kind": "argent", "ref": "github:wi_story1"}}, "again"))
-    assert len(world.calls("/close")) == 1
-
-
 def bind_session(name: str = "carnivore_api") -> str:
     return session_ref.ref_for_name("ten_1", name)
 
@@ -264,30 +253,171 @@ def test_a_close_refused_by_a_newer_tracker_state_names_that_state(world: World)
     assert plain["status_refused"] is True and "tracker_state" not in plain
 
 
-def test_a_rate_limited_card_close_is_retried_once_off_the_callers_path_and_a_user_close_says_busy(world: World, monkeypatch: pytest.MonkeyPatch) -> None:
-    inner, seen = world.handler, {"n": 0}
+def mirror_rows(milestone: str) -> List[Dict[str, Any]]:
+    import sqlite3
+    from contextlib import closing
+
+    from src.core.argent import store
+
+    with closing(store.open_db()) as conn:
+        conn.row_factory = sqlite3.Row
+        return [dict(r) for r in conn.execute("SELECT * FROM writeback WHERE milestone = ?", (milestone,))]
+
+
+def test_the_owner_route_close_that_worked_queues_no_mirror_row_and_a_transient_failure_queues_exactly_one(world: World) -> None:
+    asyncio.run(close.close_item("wi_story1", "shipped"))
+    assert mirror_rows(writeback.MOVE_CLOSE) == []
+    inner = world.handler
+    answers = {"status": 429}
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path.endswith("/close"):
-            seen["n"] += 1
-            if seen["n"] <= 2:
-                return httpx.Response(429, headers={"Retry-After": "60"}, json={"error": "rate limit exceeded"})
+            return httpx.Response(answers["status"], headers={"Retry-After": "60"}, json={"error": "rate limit exceeded"})
         return inner(request)
 
     work_items._pull.transport, work_items._pull.client = httpx.MockTransport(handler), None
-    waits: List[float] = []
+    assert refused(close.close_item("wi_story1", "shipped")).code == "rate_limited"
+    assert len(mirror_rows(writeback.MOVE_CLOSE)) == 1
+    assert refused(close.close_item("wi_story1", "shipped")).code == "rate_limited" and len(mirror_rows(writeback.MOVE_CLOSE)) == 1
+    answers["status"] = 404
+    world.http.clear()
+    mirror_rows(writeback.MOVE_CLOSE)
+    assert refused(close.close_item("wi_story2", "x")).code == "unavailable" and len(mirror_rows(writeback.MOVE_CLOSE)) == 1
 
-    async def no_sleep(seconds: float) -> None:
-        waits.append(seconds)
 
-    monkeypatch.setattr(close.asyncio, "sleep", no_sleep)
-    refusal = refused(close.close_item("wi_story1", ""))
-    assert refusal.status == 429 and "busy, try again in a minute" in str(refusal) and seen["n"] == 1
 
-    async def card_close() -> None:
-        await close.on_card_closed({"origin": {"kind": "argent", "ref": "github:wi_story1"}}, "done")
-        assert waits == []
-        await asyncio.gather(*list(close._retries))
+class FakeCards:
 
-    asyncio.run(card_close())
-    assert waits == [60.0] and seen["n"] == 3 and len(world.calls("/close")) == 1
+    def __init__(self) -> None:
+        self.rows = {1: self.make(1, "github:wi_story1", "review"), 2: dict(self.make(2, "", "review"), origin={"kind": "owner", "ref": ""})}
+
+    @staticmethod
+    def make(card_id: int, ref: str, column: str) -> Dict[str, Any]:
+        return {"id": card_id, "title": "Fixture Story", "parent": None, "list_key": "7", "level": "task", "column": column, "state": "open", "holder": None,
+                "origin": {"kind": "argent", "ref": ref}}
+
+    async def card(self, card_id: int) -> Any:
+        row = self.rows.get(card_id)
+        return dict(row) if row else None
+
+    async def policy_read(self, op: str, args: Any) -> Dict[str, Any]:
+        return {"rules": {"7": {"auto_done": True, "auto_validate": False}}}
+
+    async def act(self, op: str, card_id: Any, args: Any, by: str) -> Dict[str, Any]:
+        row = self.rows[int(card_id)]
+        before = row["column"]
+        row["column"] = {"done": "done", "set_column": args.get("column"), "start": "in_progress", "set_lane": "in_progress" if args.get("queued") else "todo"}[op]
+        if row["column"] != before and not args.get("from_tracker") and row["origin"]["kind"] == "argent" and row["column"] in ("done", "in_progress"):
+            from src.core.swarm.cards import port as card_port
+
+            await card_port._mirror(int(card_id), before, row["column"], str(args.get("reason") or ""))
+        return {"card": dict(row), "effects": [], "data": {"changed": before != row["column"]}}
+
+
+@pytest.fixture
+def cards(world: World, monkeypatch: pytest.MonkeyPatch) -> FakeCards:
+    from src.core.swarm.cards import notices as card_notices, ops, port as card_port
+
+    fake = FakeCards()
+    card_port.register(fake)
+    monkeypatch.setattr(card_notices, "note", lambda *a, **k: None)
+
+    async def anyone(*a: Any, **k: Any) -> Dict[str, Any]:
+        return {}
+
+    monkeypatch.setattr(ops, "_allow", anyone)
+    yield fake
+    card_port.register(None)
+
+
+def one_close_row(world: World) -> None:
+    rows = mirror_rows(writeback.MOVE_CLOSE)
+    assert len(rows) == 1 and rows[0]["item_id"] == "wi_story1" and rows[0]["state"] == "ready"
+    assert world.http == []
+
+
+def test_every_path_into_done_queues_one_close_row_and_none_calls_argent_inline(world: World, cards: FakeCards) -> None:
+    from src.core.swarm.cards import ops
+
+    app: Any = SimpleNamespace()
+    paths = {
+        "owner done": lambda: ops.done(app, 1, {}, by="owner"),
+        "board drag": lambda: ops.set_column(app, 1, {"column": "done"}, by="owner"),
+        "agent close": lambda: ops.close(app, 1, {"reason": "all validated"}, by="agent:1"),
+        "finish": lambda: ops._close_done(app, 1, "finished and validated by its agent", "agent:1"),
+    }
+    for name, call in paths.items():
+        cards.rows[1]["column"] = "review"
+        world.http.clear()
+        for row in mirror_rows(writeback.MOVE_CLOSE):
+            writeback._set(row["id"], None, state=writeback.POSTED)
+        asyncio.run(call())
+        pending = [r for r in mirror_rows(writeback.MOVE_CLOSE) if r["state"] == "ready"]
+        assert len(pending) == 1 and pending[0]["item_id"] == "wi_story1", name
+        assert world.http == [], name
+    reasons = {json.loads(r["payload"]).get("reason") for r in mirror_rows(writeback.MOVE_CLOSE)}
+    assert "all validated" in reasons
+
+
+def test_a_card_that_is_not_an_argent_story_or_is_already_done_or_feature_off_queues_nothing(world: World, cards: FakeCards) -> None:
+    from src.core.swarm.cards import ops
+
+    app: Any = SimpleNamespace()
+    asyncio.run(ops.done(app, 2, {}, by="owner"))
+    cards.rows[1]["column"] = "done"
+    asyncio.run(ops.set_column(app, 1, {"column": "done"}, by="owner"))
+    assert mirror_rows(writeback.MOVE_CLOSE) == []
+    cards.rows[1]["column"] = "review"
+    world.on = False
+    asyncio.run(ops.done(app, 1, {}, by="owner"))
+    assert mirror_rows(writeback.MOVE_CLOSE) == []
+
+
+def test_a_tracker_driven_move_to_done_is_never_posted_back(world: World, cards: FakeCards) -> None:
+    from src.core.swarm.cards import ops
+
+    asyncio.run(ops.set_column(SimpleNamespace(), 1, {"column": "done", "from_tracker": True}, by="owner"))
+    assert cards.rows[1]["column"] == "done" and mirror_rows(writeback.MOVE_CLOSE) == []
+
+
+def test_a_story_card_entering_in_progress_queues_one_picked_row(world: World, cards: FakeCards) -> None:
+    from src.core.swarm.cards import ops
+
+    cards.rows[1]["column"] = "todo"
+    asyncio.run(ops.set_column(SimpleNamespace(), 1, {"column": "in_progress"}, by="owner"))
+    asyncio.run(ops.set_column(SimpleNamespace(), 1, {"column": "in_progress"}, by="owner"))
+    assert len(mirror_rows(writeback.MOVE_PICKED)) == 1 and world.http == []
+    cards.rows[1]["column"] = "todo"
+    asyncio.run(ops.set_column(SimpleNamespace(), 1, {"column": "review"}, by="owner"))
+    assert len(mirror_rows(writeback.MOVE_PICKED)) == 1
+
+
+def test_a_root_declare_queues_one_picked_row_only_when_the_item_changed_and_a_card_start_adds_none(world: World, monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.core.argent import declare, timeline
+
+    monkeypatch.setattr(timeline, "is_running", lambda: True)
+    monkeypatch.setattr(timeline, "poke", lambda: None)
+    ref = bind_session()
+    asyncio.run(declare.declare("carnivore_api", "wi_story1", "picker"))
+    asyncio.run(declare.declare("carnivore_api", "wi_story1", "picker"))
+    rows = mirror_rows(writeback.MOVE_PICKED)
+    assert len(rows) == 1 and rows[0]["item_id"] == "wi_story1" and rows[0]["session_ref"] == ref
+    asyncio.run(declare.declare("carnivore_api", "wi_story2", "card"))
+    assert len(mirror_rows(writeback.MOVE_PICKED)) == 1
+    asyncio.run(declare.declare("carnivore_api", "wi_story2", "picker", "sub1"))
+    assert len(mirror_rows(writeback.MOVE_PICKED)) == 1
+
+
+def test_the_plugin_seam_reaches_the_mirror_from_its_write_thread_and_a_stale_record_is_dropped(world: World, cards: FakeCards) -> None:
+    from src.core.swarm.cards import port as card_port
+
+    async def scenario() -> None:
+        card_port.register(cards, asyncio.get_running_loop())
+        cards.rows[1]["column"] = "done"
+        await asyncio.to_thread(card_port.card_moved, 1, "review", "done")
+        cards.rows[1]["column"] = "review"
+        await asyncio.to_thread(card_port.card_moved, 1, "todo", "done")
+        await asyncio.sleep(0.3)
+
+    asyncio.run(scenario())
+    one_close_row(world)

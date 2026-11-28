@@ -6,13 +6,12 @@ import json
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from src.plugins.host import owner_switch, sidecar_boot
+from src.plugins.host import owner_switch, registry_store, sidecar_boot
 from src.plugins.runtime import sandbox
 from src.plugins.runtime.children import ChildLedger
 from src.plugins.runtime.dispatch import PluginContext
@@ -67,7 +66,7 @@ def test_switch_off_or_env_safe_mode_spawns_nothing_and_raises_the_alert(tmp_pat
         assert [k for k, _ in alerts] == ["cplug.probe.safe_mode"]
         assert not (rt.state_dir / "cplugs" / "children.json").exists()
     assert not owner_switch.read(tmp_path / "False" / "state")
-    assert not owner_switch.switch_path(tmp_path / "False" / "state").exists()
+    assert not registry_store.registry_path(tmp_path / "False" / "state").exists()
 
 
 @needs_sandbox

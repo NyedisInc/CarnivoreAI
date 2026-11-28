@@ -16,7 +16,7 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 
 from src.core import config_writer, setup_state
-from src.core.computers import commit, forget, join_job, link_rotate, membership, roster_source, store
+from src.core.computers import commit, forget, join_job, link_rotate, membership, mesh, roster_source, store
 from src.core.computers.door import Door
 from src.core.computers.invites import Invites
 from src.core.computers.join_server import JoinServer
@@ -129,16 +129,15 @@ class LazyPack:
 
     def adopt(self, doc: settings_doc.PackSettings, signature: Optional[Dict[str, Any]] = None) -> bool:
         rt = self._wired().runtime
-        changed = rt.custody.adopt(doc, signature)
-        rt.custody.clear_roster()
+        changed = rt.custody.adopt_join(doc, signature)
         rt.skills_settings_changed("local_edit", "")
         return changed
 
     def clear_roster(self) -> bool:
         return self._wired().runtime.custody.clear_roster()
 
-    def roster(self) -> Optional[roster_doc.Roster]:
-        return self._wired().runtime.custody.roster()
+    def held_lists(self) -> Optional[Tuple[Any, Optional[Dict[str, Any]]]]:
+        return self._wired().runtime.custody.held_lists()
 
     def roster_wire(self) -> Optional[Dict[str, Any]]:
         return self._wired().runtime.custody.roster_wire()
@@ -201,7 +200,7 @@ class ComputersRuntime:
                  phone_link: Callable[[], Any] = lambda: None, link_domain: str = DEFAULT_LINK_DOMAIN) -> None:
         self._phone_link, self._link_domain = phone_link, link_domain
         self._roster: Optional[LazyPack] = pack if isinstance(pack, LazyPack) else None
-        self._roster_cache: Optional[Tuple[roster_doc.Roster, Dict[str, Any]]] = None
+        self._roster_cache: Optional[Tuple[Any, Optional[Dict[str, Any]]]] = None
         self._open_db, self.pack, self._fed_dir, self._listener_path = open_db, pack, fed_dir, listener_path
         self._config_path, self._host, self._label, self._version = config_path, host, label, app_version
         self.open_db, self.fed_dir, self.config_path, self.label = open_db, fed_dir, config_path, label
@@ -318,6 +317,7 @@ class ComputersRuntime:
                                               host=ALL_BIND if bind == LOOPBACK_BIND else bind,
                                               on_state=lambda _state: self.notify(topics.COMPUTERS), follow_hello=self._follow_hello)
         self.takeover = TakeoverDriver(self) if self._roster is not None else None
+        mesh.attach(self)
         self.invites = Invites(on_change=self._invites_changed, on_notice=self._on_notice, is_member=self.is_joiner)
         self.knocks = KnockDesk(self.invites, self._label, notify=self.notify, emit=owner_notices.knock)
         self.join_server = JoinServer(invites=self.invites, identity=self.identity, fed_key=self.fed_key, public_key=self.public_key,
@@ -361,6 +361,7 @@ class ComputersRuntime:
                 await phone.reconcile()
             except (OSError, RuntimeError, sqlite3.Error) as exc:
                 log.warning("pack_relay_detach_failed", error_type=type(exc).__name__)
+        await mesh.detach()
         for part in (self.door, self.join_server, self.beacon_sender, self.beacon_listener, self.dialer, self.listener, self.member_listener, self.member_relay, self.pack_relay):
             if part is not None:
                 try:
@@ -613,7 +614,7 @@ class ComputersRuntime:
         if (relay_id and reconnect_config.valid_relay_id(relay_id) and relay is not None and relay.enabled()
                 and self.links is not None and pack_caps.has(self.links.capabilities(iid), CAP_RELAY_V1)):
             extras["relay_id"] = relay_id
-        if (self._roster_cache is not None and self.links is not None
+        if (self._roster_cache is not None and self._roster_cache[1] is not None and self.links is not None
                 and pack_caps.has(self.links.capabilities(iid), pack_caps.CAP_ROSTER)):
             extras["roster"] = self._roster_cache[1]
         return roster_doc.fit_hello(extras)
@@ -652,11 +653,10 @@ class ComputersRuntime:
         if self._roster is None:
             return
         try:
-            wire = await asyncio.to_thread(self._roster.roster_wire)
-            parsed = roster_doc.from_wire(wire)
-            self._roster_cache = (parsed[0], wire) if parsed is not None and wire is not None else None
+            self._roster_cache = await asyncio.to_thread(self._roster.held_lists)
             if self.member_listener is not None and self.identity is not None:
                 await self._sync_member_listener(False)
+            await mesh.list_changed()
         except (OSError, ValueError, RuntimeError) as exc:
             log.warning("pack_roster_reload_failed", error_type=type(exc).__name__)
             return
@@ -667,8 +667,7 @@ class ComputersRuntime:
         if self._roster is None or self.identity is None or self.listener is None:
             return
         try:
-            held_wire = await asyncio.to_thread(self._roster.roster_wire)
-            if held_wire != (self._roster_cache[1] if self._roster_cache is not None else None):
+            if await asyncio.to_thread(self._roster.held_lists) != self._roster_cache:
                 await self.after_roster_change()
             if not self.listener.members():
                 return

@@ -20,13 +20,13 @@ def project_row(project_uid: str) -> Optional[Dict[str, Any]]:
         return dict(row) if row is not None else None
 
 
-async def default_carry(project_root: str, project_uid: str, peer_install_id: str) -> Optional[Dict[str, Any]]:
+async def default_carry(project_root: str, project_uid: str, peer_install_id: str, copy_send: bool = False) -> Optional[Dict[str, Any]]:
     from src.api import project_transport_routes
 
     if is_ssh(peer_install_id):
         return await ssh_seed(project_root, project_uid, peer_install_id)
     project = await asyncio.to_thread(project_row, project_uid) or {"root": project_root, "uid": project_uid, "air_gap": 1}
-    return await project_transport_routes.carry_to(project, peer_install_id, peer_install_id, False)
+    return await project_transport_routes.carry_to(project, peer_install_id, peer_install_id, False, mesh=True, copy_send=copy_send)
 
 
 async def ssh_seed(project_root: str, project_uid: str, peer_install_id: str, store: Optional[JobStore] = None) -> Optional[Dict[str, Any]]:

@@ -20,8 +20,11 @@ from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt 
 
 NAME, ITEM = "clock", "acme/clock"
 TOOL = {"name": "refresh_all", "description": "Refresh.", "gate": "read", "inputSchema": {"type": "object"}}
-CPLUG = {"schema": 1, "id": NAME, "name": "Clock", "description": "Tells the time.", "version": "1.0.0", "entry": "main.py",
-         "permissions": {"app": []}, "tools": [TOOL], "routes": ["refresh", "toggle"]}
+CARNIVORE = {
+    "schema": 2, "kind": "plugin", "id": NAME, "name": "Clock", "description": "Tells the time.",
+    "version": "1.0.0", "author": "acme", "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    "permissions": {}, "mcp": {"tools": [TOOL]}, "ui": {"routes": ["refresh", "toggle"]},
+}
 ROUTES, TOOLS = ("refresh", "toggle"), ("refresh_all",)
 GOOD = {"schema": 1, "data": {"open": 3}, "root": {"type": "section", "title": "pull requests", "children": [
     {"type": "row", "gap": 2, "wrap": True, "children": [
@@ -75,7 +78,7 @@ REFUSED = [
     ("bad_string", doc(type="text", value="x" * (ui_doc.MAX_TEXT + 1))),
     ("too_large", {"schema": 1, "root": {"type": "column", "children": [{"type": "text", "value": "x" * 1900}] * 40}}),
     ("bad_bind", doc(type="text", value={"bind": "../../etc"})),
-    ("bad_schema", {"schema": 2, "root": {"type": "text", "value": "x"}}),
+    ("bad_schema", {"schema": 3, "root": {"type": "text", "value": "x"}}),
     ("bad_document", {"schema": 1, "root": {"type": "text", "value": "x"}, "script": "x"}),
     ("badge_needs_status_or_text", doc(type="badge", status="working", text="x")),
     ("bad_status", doc(type="badge", status="purple")),
@@ -134,7 +137,7 @@ def world(tmp_path, monkeypatch):
     state = tmp_path / "state"
     root = state / "plugins" / NAME
     root.mkdir(parents=True)
-    (root / "cplug.json").write_text(json.dumps(CPLUG))
+    (root / "carnivore.json").write_text(json.dumps(CARNIVORE))
     (root / "main.py").write_text("x = 1\n")
     record = identity.register_install(state, NAME, ITEM, {d.id for d in runtime.definitions()})
     rows = [SimpleNamespace(item_id=ITEM, kind="cplug", source_index_url="https://index.example/v1", publisher_key_id="K")]

@@ -169,10 +169,10 @@ describe('views (Joe (ccsliinc), 2026-10-10)', () => {
   });
 
   test('both old ids of a pair become two copies of the merged widget, nothing lost', () => {
-    const items = normalizeZone({ v: 1, items: [{ widget: 'core.task-manager' }, { widget: 'core.task-manager-all' }] })!;
+    const items = normalizeZone({ v: 1, items: [{ widget: 'core.task-manager-mk2' }, { widget: 'core.task-manager-mk2-all' }] })!;
     expect(items).toEqual([
-      { widget: 'core.task-manager', look: null },
-      { widget: 'core.task-manager', look: null, view: 'all', instance: 'i2' },
+      { widget: 'core.task-manager-mk2', look: null },
+      { widget: 'core.task-manager-mk2', look: null, view: 'all', instance: 'i2' },
     ]);
   });
 

@@ -7,6 +7,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.auth import require_auth
+from src.api.catalog_signin_finish import finish_signin
 from src.api.catalog_email_signin_routes import _proof_of_work
 from src.api.catalog_google_signin_routes import _mailbox_proof
 from src.api.catalog_hosted_routes import (
@@ -18,7 +19,6 @@ from src.api.catalog_hosted_routes import (
     _seconds,
     _state_dir,
 )
-from src.core.catalog import catalog_auth
 from src.core.catalog.device_label import device_fields
 from src.core.catalog.web_signin_flows import WebFlowStore, challenge_of, new_verifier
 from src.models.catalog_signin import (
@@ -121,6 +121,6 @@ async def catalog_web_poll(
         _relay(answer)
     for field in ("login", "access_token", "refresh_token"):
         _required_string(answer.body, field)
-    session = catalog_auth.save_session(_state_dir(request), answer.body, flow.provider)
+    session = await finish_signin(request, answer.body, flow.provider)
     _flows.finish(body.flow_id)
     return CatalogSessionResponse.held(session.login, session.provider)

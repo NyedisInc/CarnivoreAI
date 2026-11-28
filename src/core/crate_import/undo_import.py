@@ -197,9 +197,9 @@ def undo_entries(env: ImportEnv, records: List[Dict[str, Any]], journal: Optiona
 
 
 def _notify(plan: UndoPlan) -> None:
-    topics = [resource_topics.PROJECTS, "cplug.huddle.list:all"]
+    topics = [resource_topics.PROJECTS, "cplug.taskmanager.list:all"]
     if plan.project_id is not None:
-        topics.append(f"cplug.huddle.list:{plan.project_id}")
+        topics.append(f"cplug.taskmanager.list:{plan.project_id}")
     stores = (plan.record.get("stores") or {}).keys()
     topics += [t for store, t in ((AUTOMATIONS, resource_topics.AUTOMATIONS), (BOOKMARKS, resource_topics.BOOKMARKS)) if store in stores]
     for topic in topics:

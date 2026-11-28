@@ -7,7 +7,7 @@ from fastapi import Request, UploadFile
 
 from src.plugins.reviewboard import scratch, wire
 from src.plugins.reviewboard.errors import BadRequest, BoardError, LengthRequired, TooLarge
-from src.plugins.reviewboard.routes import Ctx, router
+from src.plugins.reviewboard.routes_common import Ctx, router
 from src.plugins.reviewboard.schema import MAX_VIEW_BYTES
 from src.plugins.sdk import CplugContext
 from src.plugins.sdk.uploads import caps, is_form_file

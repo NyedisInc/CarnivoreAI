@@ -27,7 +27,7 @@ while [ $# -gt 0 ]; do
             if [ -n "${TAG}" ]; then
                 die "unexpected extra argument: $1 (tag already given as ${TAG})"
             fi
-            TAG="$1"
+            TAG="${1#[vV]}"
             shift
             ;;
     esac
@@ -133,8 +133,9 @@ echo ""
 log_step "git fetch --tags"
 (cd "${INSTALL_DIR}" && git fetch --tags "${REMOTE}") || die "git fetch --tags ${REMOTE} failed"
 
-log_step "git checkout tags/${TAG}"
-(cd "${INSTALL_DIR}" && git checkout --detach "tags/${TAG}") || die "git checkout tags/${TAG} failed — install left on its previous commit, server is stopped. Restore with: git checkout ${CURRENT} (or the branch you were on) and re-run ./reset.sh"
+TAG_REF="$(resolve_release_ref "${INSTALL_DIR}" "${TAG}")" || die "neither tags/v${TAG} nor tags/${TAG} exists after fetching - install left on its previous commit, server is stopped. Restore with: git checkout ${CURRENT} (or the branch you were on) and re-run ./reset.sh"
+log_step "git checkout ${TAG_REF}"
+(cd "${INSTALL_DIR}" && git checkout --detach "${TAG_REF}") || die "git checkout ${TAG_REF} failed - install left on its previous commit, server is stopped. Restore with: git checkout ${CURRENT} (or the branch you were on) and re-run ./reset.sh"
 
 
 if [ -x "${INSTALL_DIR}/venv/bin/pip" ]; then

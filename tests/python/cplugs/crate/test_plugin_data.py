@@ -224,11 +224,11 @@ def test_a_carried_db_is_blocked_until_it_has_row_claims(rig: SimpleNamespace) -
 
 
 def test_a_stray_backup_in_an_undeclared_plugin_folder_blocks_nothing(tmp_path: Path) -> None:
-    folder = tmp_path / "cplugs" / "huddle"
+    folder = tmp_path / "cplugs" / "taskmanager"
     folder.mkdir(parents=True)
     for name in ("huddle.db.bak-pre-rung12-1", "huddle.db.pre-cards-2", "notes.txt"):
         (folder / name).write_bytes(b"")
-    undeclared = dataclasses.replace(next(m for m in plugin_stores.manifests_of(Locations(state_dir=tmp_path, config_path=tmp_path / "c.json", plugin_settings={})) if m.id == "huddle"), data=None)
+    undeclared = dataclasses.replace(next(m for m in plugin_stores.manifests_of(Locations(state_dir=tmp_path, config_path=tmp_path / "c.json", plugin_settings={})) if m.id == "taskmanager"), data=None)
     locs = Locations(state_dir=tmp_path, config_path=tmp_path / "config.json", plugin_settings={}, plugin_manifests=[undeclared])
     assert plugin_claims.undeclared_artifacts(locs) == []
     (folder / "mystery.db").write_bytes(b"")

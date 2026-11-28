@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -85,6 +86,36 @@ async def read_pane_profile(socket: str, tmux_name: str, variable: str) -> PaneP
     if not profile.inherited:
         return profile
     return await _read_global(socket, variable)
+
+
+_PROFILE_CACHE: Dict[Tuple[str, str, str, Optional[int]], Tuple[float, PaneProfile]] = {}
+_PROFILE_CACHE_TTL_S = 30.0
+_PROFILE_UNREADABLE_TTL_S = 3.0
+
+
+def clear_profile_cache() -> None:
+    _PROFILE_CACHE.clear()
+
+
+async def read_pane_profile_cached(
+    socket: str,
+    tmux_name: str,
+    variable: str,
+    *,
+    epoch: Optional[int] = None,
+    ttl: float = _PROFILE_CACHE_TTL_S,
+) -> PaneProfile:
+    now = time.monotonic()
+    key = (socket, tmux_name, variable, epoch)
+    hit = _PROFILE_CACHE.get(key)
+    if hit is not None and now < hit[0]:
+        return hit[1]
+    profile = await read_pane_profile(socket, tmux_name, variable)
+    span = ttl if profile.readable else min(ttl, _PROFILE_UNREADABLE_TTL_S)
+    if len(_PROFILE_CACHE) > 256:
+        _PROFILE_CACHE.clear()
+    _PROFILE_CACHE[key] = (now + span, profile)
+    return profile
 
 
 async def _read_global(socket: str, variable: str) -> PaneProfile:

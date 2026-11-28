@@ -67,7 +67,7 @@
    "fallback": 2
   },
   "web/src/lib/account-switch/AutoSwitchIcon.svelte": {
-   "duration": 3
+   "duration": 2
   },
   "web/src/lib/account-switch/AutoSwitchPanel.svelte": {
    "line-height": 2
@@ -124,8 +124,8 @@
   },
   "web/src/lib/auto-sleep/KeepAwakeIcon.svelte": {
    "border-width": 1,
-   "duration": 4,
-   "fallback": 3
+   "duration": 2,
+   "fallback": 1
   },
   "web/src/lib/automations/auto-list.css": {
    "border-width": 8,
@@ -339,7 +339,7 @@
   },
   "web/src/lib/catalog/CatalogScreen.svelte": {
    "border-width": 2,
-   "fallback": 4,
+   "fallback": 2,
    "font": 2,
    "radius": 1,
    "spacing": 5,
@@ -392,12 +392,6 @@
    "spacing": 2,
    "tracking": 1
   },
-  "web/src/lib/catalog/CplugFacts.svelte": {
-   "border-width": 2,
-   "line-height": 5,
-   "radius": 1,
-   "tracking": 1
-  },
   "web/src/lib/catalog/DeprecatedMark.svelte": {
    "border-width": 1,
    "font": 1,
@@ -411,20 +405,9 @@
    "spacing": 3,
    "tracking": 1
   },
-  "web/src/lib/catalog/DetailGrip.svelte": {
-   "z-index": 1
-  },
   "web/src/lib/catalog/DriftFacts.svelte": {
    "font": 2,
    "spacing": 1,
-   "tracking": 1
-  },
-  "web/src/lib/catalog/FilterGroup.svelte": {
-   "border-width": 1,
-   "fallback": 1,
-   "font": 2,
-   "radius": 2,
-   "spacing": 5,
    "tracking": 1
   },
   "web/src/lib/catalog/GradeBlock.svelte": {
@@ -871,10 +854,7 @@
    "spacing": 4
   },
   "web/src/lib/info-tip/InfoTip.svelte": {
-   "border-width": 1,
-   "fallback": 2,
-   "font": 2,
-   "line-height": 2
+   "line-height": 1
   },
   "web/src/lib/install-report/InstallReportPrivacyPanel.svelte": {
    "border-width": 1,
@@ -954,7 +934,7 @@
    "fallback": 1,
    "line-height": 3,
    "spacing": 1,
-   "tracking": 2,
+   "tracking": 1,
    "weight": 2
   },
   "web/src/lib/ledger-drawer/ProviderGlanceTile.svelte": {
@@ -1016,7 +996,7 @@
    "weight": 1
   },
   "web/src/lib/manager-frame/manager-frame.css": {
-   "border-width": 2,
+   "border-width": 1,
    "fallback": 3
   },
   "web/src/lib/markdown-editor/MarkdownEditor.svelte": {
@@ -1176,7 +1156,7 @@
   },
   "web/src/lib/plugins-page/PluginsScreen.svelte": {
    "fallback": 1,
-   "spacing": 3
+   "spacing": 1
   },
   "web/src/lib/plugins-page/SideloadConsent.svelte": {
    "fallback": 2
@@ -1426,12 +1406,9 @@
    "fallback": 2
   },
   "web/src/lib/sidebar-shell/PackSection.svelte": {
-   "border-width": 1,
    "duration": 1,
-   "font": 5,
-   "line-height": 2,
-   "spacing": 4,
-   "tracking": 1
+   "font": 4,
+   "line-height": 2
   },
   "web/src/lib/sidebar-shell/ShowPathModal.svelte": {
    "border-width": 1
@@ -1615,6 +1592,20 @@
   "web/src/lib/swarm-membership/SwarmRowFace.svelte": {
    "fallback": 2
   },
+  "web/src/lib/task-status-list/ListBody.svelte": {
+   "spacing": 2,
+   "tracking": 1
+  },
+  "web/src/lib/task-status-list/ListRow.svelte": {
+   "spacing": 5
+  },
+  "web/src/lib/task-status-list/ListRowOpen.svelte": {
+   "line-height": 1,
+   "spacing": 2
+  },
+  "web/src/lib/task-status-list/MissingPopup.svelte": {
+   "line-height": 1
+  },
   "web/src/lib/terminal-background/TerminalBackgroundButton.svelte": {
    "duration": 1,
    "spacing": 3
@@ -1679,10 +1670,8 @@
    "line-height": 2
   },
   "web/src/lib/themes-page/ThemesScreen.svelte": {
-   "fallback": 1,
    "font": 1,
-   "line-height": 2,
-   "spacing": 1
+   "line-height": 1
   },
   "web/src/lib/toast-mode/ToastModePanel.svelte": {
    "spacing": 4
@@ -1755,7 +1744,7 @@
    "border-width": 5,
    "color": 1,
    "duration": 1,
-   "fallback": 29,
+   "fallback": 27,
    "font": 2,
    "line-height": 10,
    "spacing": 2,
@@ -1863,46 +1852,6 @@
   },
   "web/src/opscenter/cells/skills/Cell.svelte": {
    "border-width": 1
-  },
-  "web/src/opscenter/cells/task-list/ListBody.svelte": {
-   "spacing": 2,
-   "tracking": 1
-  },
-  "web/src/opscenter/cells/task-list/ListRow.svelte": {
-   "spacing": 5
-  },
-  "web/src/opscenter/cells/task-list/ListRowOpen.svelte": {
-   "line-height": 1,
-   "spacing": 2
-  },
-  "web/src/opscenter/cells/task-list/MissingPopup.svelte": {
-   "line-height": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2Crosstalk.svelte": {
-   "border-width": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2DeleteClosedModal.svelte": {
-   "line-height": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2Frame.svelte": {
-   "border-width": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2Subtasks.svelte": {
-   "tracking": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2TaskTabs.svelte": {
-   "tracking": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/mk2-design.css": {
-   "border-width": 11,
-   "fallback": 2,
-   "line-height": 1,
-   "radius": 2,
-   "tracking": 1,
-   "weight": 2
-  },
-  "web/src/opscenter/cells/task-manager/Cell.svelte": {
-   "spacing": 1
   },
   "web/src/opscenter/cells/tasks-all/Cell.svelte": {
    "tracking": 1
@@ -2257,293 +2206,6 @@
    "spacing": 25,
    "tracking": 3
   },
-  "web/src/plugins/huddle/CrosstalkTrail.svelte": {
-   "border-width": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/HuddleBody.svelte": {
-   "fallback": 4,
-   "line-height": 5,
-   "spacing": 2,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/HuddleReply.svelte": {
-   "border-width": 1,
-   "line-height": 1
-  },
-  "web/src/plugins/huddle/HuddleReview.svelte": {
-   "border-width": 1,
-   "line-height": 2,
-   "tracking": 2
-  },
-  "web/src/plugins/huddle/HuddleThread.svelte": {
-   "border-width": 1,
-   "fallback": 3,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/HuddleViewSwitch.svelte": {
-   "border-width": 2,
-   "line-height": 1
-  },
-  "web/src/plugins/huddle/SwarmDecisionKeys.svelte": {
-   "spacing": 4,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerActionTag.svelte": {
-   "line-height": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerAnswerBox.svelte": {
-   "border-width": 1
-  },
-  "web/src/plugins/huddle/TaskManagerArtifactCard.svelte": {
-   "border-width": 1
-  },
-  "web/src/plugins/huddle/TaskManagerChips.svelte": {
-   "border-width": 1
-  },
-  "web/src/plugins/huddle/TaskManagerCommandBox.svelte": {
-   "fallback": 1,
-   "font": 1,
-   "spacing": 1
-  },
-  "web/src/plugins/huddle/TaskManagerEmptyGroup.svelte": {
-   "tracking": 1,
-   "weight": 1
-  },
-  "web/src/plugins/huddle/TaskManagerFiles.svelte": {
-   "border-width": 2
-  },
-  "web/src/plugins/huddle/TaskManagerForkedFrom.svelte": {
-   "border-width": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerFormAnswer.svelte": {
-   "border-width": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerFromInbox.svelte": {
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerFromProject.svelte": {
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerGithubIssue.svelte": {
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerInboxRow.svelte": {
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerMarkdown.svelte": {
-   "border-width": 1,
-   "font": 5,
-   "tracking": 2,
-   "weight": 2
-  },
-  "web/src/plugins/huddle/TaskManagerMarkerFilter.svelte": {
-   "border-width": 2,
-   "spacing": 1
-  },
-  "web/src/plugins/huddle/TaskManagerNewGroup.svelte": {
-   "line-height": 1
-  },
-  "web/src/plugins/huddle/TaskManagerProgress.svelte": {
-   "border-width": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerProjectHead.svelte": {
-   "border-width": 3,
-   "spacing": 1,
-   "tracking": 1,
-   "weight": 2,
-   "z-index": 1
-  },
-  "web/src/plugins/huddle/TaskManagerRoundCard.svelte": {
-   "border-width": 2
-  },
-  "web/src/plugins/huddle/TaskManagerRow.svelte": {
-   "border-width": 2,
-   "line-height": 3,
-   "spacing": 2,
-   "tracking": 1,
-   "weight": 1
-  },
-  "web/src/plugins/huddle/TaskManagerRowPeek.svelte": {
-   "line-height": 2
-  },
-  "web/src/plugins/huddle/TaskManagerRowPosts.svelte": {
-   "border-width": 2,
-   "duration": 1,
-   "line-height": 1,
-   "tracking": 1,
-   "weight": 1
-  },
-  "web/src/plugins/huddle/TaskManagerSchedule.svelte": {
-   "border-width": 1,
-   "line-height": 2,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerScheduleOffer.svelte": {
-   "border-width": 1
-  },
-  "web/src/plugins/huddle/TaskManagerSections.svelte": {
-   "border-width": 1,
-   "line-height": 1,
-   "tracking": 1,
-   "weight": 1,
-   "z-index": 1
-  },
-  "web/src/plugins/huddle/TaskManagerSend.svelte": {
-   "border-width": 2,
-   "fallback": 1,
-   "line-height": 2,
-   "spacing": 1,
-   "tracking": 2,
-   "z-index": 1
-  },
-  "web/src/plugins/huddle/TaskManagerStatusFilter.svelte": {
-   "duration": 2,
-   "font": 1,
-   "line-height": 1,
-   "spacing": 1,
-   "weight": 1,
-   "z-index": 1
-  },
-  "web/src/plugins/huddle/TaskManagerStatusSections.svelte": {
-   "border-width": 1,
-   "fallback": 2,
-   "z-index": 1
-  },
-  "web/src/plugins/huddle/TaskManagerSteps.svelte": {
-   "border-width": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerSubHead.svelte": {
-   "border-width": 1,
-   "fallback": 1
-  },
-  "web/src/plugins/huddle/TaskManagerTagged.svelte": {
-   "border-width": 1
-  },
-  "web/src/plugins/huddle/TaskManagerThumb.svelte": {
-   "border-width": 1
-  },
-  "web/src/plugins/huddle/TaskManagerTickConfirm.svelte": {
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerTitleEdit.svelte": {
-   "line-height": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/TaskManagerWait.svelte": {
-   "border-width": 1
-  },
-  "web/src/plugins/huddle/agents/AgentChatFrame.svelte": {
-   "border-width": 2,
-   "spacing": 2
-  },
-  "web/src/plugins/huddle/ask/ask-form.css": {
-   "fallback": 4,
-   "line-height": 2,
-   "spacing": 1
-  },
-  "web/src/plugins/huddle/chat/AuthorPath.svelte": {
-   "border-width": 1,
-   "fallback": 1,
-   "tracking": 2,
-   "weight": 1
-  },
-  "web/src/plugins/huddle/chat/ChatAskForm.svelte": {
-   "fallback": 2
-  },
-  "web/src/plugins/huddle/chat/ChatAvatar.svelte": {
-   "border-width": 1,
-   "font": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/chat/ChatBar.svelte": {
-   "fallback": 2,
-   "spacing": 2,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/chat/ChatCard.svelte": {
-   "border-width": 1,
-   "fallback": 1,
-   "tracking": 5
-  },
-  "web/src/plugins/huddle/chat/ChatMarkdown.svelte": {
-   "border-width": 2,
-   "line-height": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/chat/ChatWidget.svelte": {
-   "border-width": 3,
-   "duration": 3,
-   "fallback": 3,
-   "line-height": 1,
-   "radius": 1,
-   "tracking": 2
-  },
-  "web/src/plugins/huddle/chat/EventCard.svelte": {
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/chat/MemoryPanel.svelte": {
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/chat/RewindView.svelte": {
-   "tracking": 2
-  },
-  "web/src/plugins/huddle/chat/TrafficCard.svelte": {
-   "border-width": 1,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/chat/WaitingTray.svelte": {
-   "tracking": 2
-  },
-  "web/src/plugins/huddle/swarm/SwarmLedger.svelte": {
-   "border-width": 5,
-   "line-height": 1,
-   "radius": 4,
-   "spacing": 7,
-   "tracking": 3,
-   "weight": 1
-  },
-  "web/src/plugins/huddle/swarm/SwarmOrg.svelte": {
-   "border-width": 5,
-   "fallback": 1,
-   "line-height": 1,
-   "radius": 4,
-   "spacing": 3
-  },
-  "web/src/plugins/huddle/swarm/SwarmPanel.svelte": {
-   "border-width": 3,
-   "duration": 1,
-   "fallback": 1,
-   "line-height": 2,
-   "radius": 3,
-   "spacing": 11,
-   "tracking": 2,
-   "weight": 1,
-   "z-index": 1
-  },
-  "web/src/plugins/huddle/swarm/SwarmSettingsForm.svelte": {
-   "fallback": 3,
-   "spacing": 5,
-   "tracking": 1
-  },
-  "web/src/plugins/huddle/swarm/characters/characters.css": {
-   "duration": 50,
-   "fallback": 11,
-   "radius": 7,
-   "spacing": 1,
-   "z-index": 1
-  },
-  "web/src/plugins/huddle/task-manager-tail.css": {
-   "border-width": 1,
-   "font": 1,
-   "line-height": 1,
-   "spacing": 1
-  },
   "web/src/plugins/reviewboard/ClosedReviews.svelte": {
    "fallback": 3,
    "spacing": 1,
@@ -2583,15 +2245,319 @@
    "spacing": 7,
    "tracking": 1
   },
-  "web/src/plugins/save/SessionTab.svelte": {
-   "border-width": 1,
-   "fallback": 1,
-   "line-height": 1,
-   "spacing": 1
-  },
   "web/src/plugins/share/ShareModal.svelte": {
    "font": 4,
    "spacing": 9
+  },
+  "web/src/plugins/taskmanager/CrosstalkTrail.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/HuddleBody.svelte": {
+   "fallback": 4,
+   "line-height": 5,
+   "spacing": 2,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/HuddleReply.svelte": {
+   "border-width": 1,
+   "line-height": 1
+  },
+  "web/src/plugins/taskmanager/HuddleReview.svelte": {
+   "border-width": 1,
+   "line-height": 2,
+   "tracking": 2
+  },
+  "web/src/plugins/taskmanager/HuddleThread.svelte": {
+   "border-width": 1,
+   "fallback": 3,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/HuddleViewSwitch.svelte": {
+   "border-width": 2,
+   "line-height": 1
+  },
+  "web/src/plugins/taskmanager/SwarmDecisionKeys.svelte": {
+   "spacing": 4,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerActionTag.svelte": {
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerAnswerBox.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerArtifactCard.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerChips.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerCommandBox.svelte": {
+   "fallback": 1,
+   "font": 1,
+   "spacing": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerEmptyGroup.svelte": {
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerFiles.svelte": {
+   "border-width": 2
+  },
+  "web/src/plugins/taskmanager/TaskManagerForkedFrom.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerFormAnswer.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerFromInbox.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerFromProject.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerGithubIssue.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerInboxRow.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerMarkdown.svelte": {
+   "border-width": 1,
+   "font": 5,
+   "tracking": 2,
+   "weight": 2
+  },
+  "web/src/plugins/taskmanager/TaskManagerMarkerFilter.svelte": {
+   "border-width": 2,
+   "spacing": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerNewGroup.svelte": {
+   "line-height": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerProgress.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerProjectHead.svelte": {
+   "border-width": 3,
+   "spacing": 1,
+   "tracking": 1,
+   "weight": 2,
+   "z-index": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerRoundCard.svelte": {
+   "border-width": 2
+  },
+  "web/src/plugins/taskmanager/TaskManagerRow.svelte": {
+   "border-width": 2,
+   "line-height": 3,
+   "spacing": 2,
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerRowPeek.svelte": {
+   "line-height": 2
+  },
+  "web/src/plugins/taskmanager/TaskManagerRowPosts.svelte": {
+   "border-width": 2,
+   "duration": 1,
+   "line-height": 1,
+   "tracking": 1,
+   "weight": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerSchedule.svelte": {
+   "border-width": 1,
+   "line-height": 2,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerScheduleOffer.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerSections.svelte": {
+   "border-width": 1,
+   "line-height": 1,
+   "tracking": 1,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerSend.svelte": {
+   "border-width": 2,
+   "fallback": 1,
+   "line-height": 2,
+   "spacing": 1,
+   "tracking": 2,
+   "z-index": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerStatusFilter.svelte": {
+   "duration": 2,
+   "font": 1,
+   "line-height": 1,
+   "spacing": 1,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerStatusSections.svelte": {
+   "border-width": 1,
+   "fallback": 2,
+   "z-index": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerSteps.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerSubHead.svelte": {
+   "border-width": 1,
+   "fallback": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerTagged.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerThumb.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerTickConfirm.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerTitleEdit.svelte": {
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/TaskManagerWait.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/agents/AgentChatFrame.svelte": {
+   "border-width": 2,
+   "spacing": 2
+  },
+  "web/src/plugins/taskmanager/ask/ask-form.css": {
+   "fallback": 4,
+   "line-height": 2,
+   "spacing": 1
+  },
+  "web/src/plugins/taskmanager/chat/AuthorPath.svelte": {
+   "border-width": 1,
+   "fallback": 1,
+   "tracking": 2,
+   "weight": 1
+  },
+  "web/src/plugins/taskmanager/chat/ChatAskForm.svelte": {
+   "fallback": 2
+  },
+  "web/src/plugins/taskmanager/chat/ChatAvatar.svelte": {
+   "border-width": 1,
+   "font": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/chat/ChatBar.svelte": {
+   "fallback": 2,
+   "spacing": 2,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/chat/ChatCard.svelte": {
+   "border-width": 1,
+   "fallback": 1,
+   "tracking": 5
+  },
+  "web/src/plugins/taskmanager/chat/ChatMarkdown.svelte": {
+   "border-width": 2,
+   "line-height": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/chat/ChatWidget.svelte": {
+   "border-width": 3,
+   "duration": 3,
+   "fallback": 3,
+   "line-height": 1,
+   "radius": 1,
+   "tracking": 2
+  },
+  "web/src/plugins/taskmanager/chat/EventCard.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/chat/MemoryPanel.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/chat/RewindView.svelte": {
+   "tracking": 2
+  },
+  "web/src/plugins/taskmanager/chat/TrafficCard.svelte": {
+   "border-width": 1,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/chat/WaitingTray.svelte": {
+   "tracking": 2
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2Crosstalk.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2DeleteClosedModal.svelte": {
+   "line-height": 1
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2Frame.svelte": {
+   "border-width": 1
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2Subtasks.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2TaskTabs.svelte": {
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/mk2/mk2-design.css": {
+   "border-width": 11,
+   "fallback": 2,
+   "line-height": 1,
+   "radius": 2,
+   "tracking": 1,
+   "weight": 2
+  },
+  "web/src/plugins/taskmanager/swarm/SwarmLedger.svelte": {
+   "border-width": 5,
+   "line-height": 1,
+   "radius": 4,
+   "spacing": 7,
+   "tracking": 3,
+   "weight": 1
+  },
+  "web/src/plugins/taskmanager/swarm/SwarmOrg.svelte": {
+   "border-width": 5,
+   "fallback": 1,
+   "line-height": 1,
+   "radius": 4,
+   "spacing": 3
+  },
+  "web/src/plugins/taskmanager/swarm/SwarmPanel.svelte": {
+   "border-width": 3,
+   "duration": 1,
+   "fallback": 1,
+   "line-height": 2,
+   "radius": 3,
+   "spacing": 11,
+   "tracking": 2,
+   "weight": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/taskmanager/swarm/SwarmSettingsForm.svelte": {
+   "fallback": 3,
+   "spacing": 5,
+   "tracking": 1
+  },
+  "web/src/plugins/taskmanager/swarm/characters/characters.css": {
+   "duration": 50,
+   "fallback": 11,
+   "radius": 7,
+   "spacing": 1,
+   "z-index": 1
+  },
+  "web/src/plugins/taskmanager/task-manager-tail.css": {
+   "border-width": 1,
+   "font": 1,
+   "line-height": 1,
+   "spacing": 1
   },
   "web/src/popout/AgentPopout.svelte": {
    "tracking": 1
@@ -2615,18 +2581,18 @@
   }
  },
  "totals": {
-  "border-width": 585,
+  "border-width": 578,
   "color": 5,
   "color-def": 60,
-  "duration": 122,
-  "fallback": 668,
-  "font": 454,
+  "duration": 119,
+  "fallback": 657,
+  "font": 449,
   "inline": 0,
-  "line-height": 397,
-  "radius": 135,
-  "spacing": 1386,
-  "tracking": 334,
+  "line-height": 389,
+  "radius": 132,
+  "spacing": 1372,
+  "tracking": 330,
   "weight": 224,
-  "z-index": 90
+  "z-index": 89
  }
 }

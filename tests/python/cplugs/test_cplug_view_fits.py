@@ -2,17 +2,27 @@ from __future__ import annotations
 
 import pytest
 
-from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
+from src.plugins.host.plugin_manifest import from_manifest_v2
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, parse_manifest_v2
 
-BASE = {"schema": 1, "id": "pillpanic", "name": "Pill Panic", "description": "d", "version": "1.0.0", "entry": "main.py", "tools": [],
-        "permissions": {"app": []}, "default_enabled": False, "routes": []}
+BASE = {
+    "schema": 2,
+    "id": "pillpanic",
+    "name": "Pill Panic",
+    "description": "d",
+    "version": "1.0.0",
+    "kind": "plugin",
+    "author": "me",
+    "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+}
 
 
 def views(fits=None, omit=False):
     view = {"name": "game", "surfaces": ["panel"], "files": ["index.html"]}
     if not omit:
         view["fits"] = fits
-    return parse_sidecar_manifest({**BASE, "views": [view]}, "pillpanic", "d").views[0]
+    v2 = parse_manifest_v2({**BASE, "ui": {"views": [view]}})
+    return from_manifest_v2(v2, "d").views[0]
 
 
 def test_a_clean_fits_is_kept_ordered_and_an_absent_one_is_the_default():
@@ -30,5 +40,5 @@ def test_a_clean_fits_is_kept_ordered_and_an_absent_one_is_the_default():
     {"sizes": ["small", "large"], "min": {"w": 1, "h": 2}},
 ])
 def test_a_bad_fits_refuses_the_manifest(bad):
-    with pytest.raises(SidecarManifestError):
+    with pytest.raises(ManifestV2Error):
         views(bad)

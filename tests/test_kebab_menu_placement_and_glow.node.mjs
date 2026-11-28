@@ -181,8 +181,8 @@ test('a shimmer arc rides in its own conic-gradient border-box layer, on top of 
     assert.ok(body, 'expected the .popup-focus rule');
     const conic = conicGradientArgs(body);
     assert.ok(conic, 'expected a conic-gradient for the shimmer layer');
-    assert.match(conic.args, /^\s*from var\(--pf-angle\)/,
-        'the shimmer must be a conic-gradient positioned by the registered angle');
+    assert.match(conic.args, /^\s*from var\(--pf-angle,\s*0deg\)/,
+        'the shimmer must be a conic-gradient positioned by --pf-angle');
     assert.match(conic.after, /^\s*border-box/,
         'the shimmer layer must be clipped to the border box, same as the static gradient underneath it');
     const stops = [...conic.args.matchAll(/(-?\d+(?:\.\d+)?)deg/g)].map((m) => parseFloat(m[1]));
@@ -195,20 +195,15 @@ test('a shimmer arc rides in its own conic-gradient border-box layer, on top of 
     assert.ok(litSpan >= 80 && litSpan <= 120, `expected a longer soft arc (80-120deg), got ${litSpan}deg of fade-in-to-fade-out`);
 });
 
-test('the shimmer travels: a registered angle, animated 6s linear infinite, distinct from the box-shadow', () => {
+test('the shimmer travels on the 24 fps shared ambient clock with no @property or infinite CSS loop', () => {
     const css = clientCss('popup-focus.css');
     const codeOnly = css.replace(/\/\*[\s\S]*?\*\//g, '');
     const body = ruleBody(codeOnly, '.popup-focus');
     assert.ok(body, 'expected the .popup-focus rule to survive comment stripping');
-    assert.match(body, /animation\s*:\s*popup-focus-orbit\s+6s\s+linear\s+infinite\s*;/,
-        'the shimmer must run on a 6s linear infinite loop');
-    assert.match(codeOnly, /@property\s+--pf-angle\s*\{[^}]*syntax:\s*'<angle>'[^}]*\}/s,
-        'the angle must be registered as an <angle> so it interpolates smoothly');
-    const keyframes = atBlock(codeOnly, '@keyframes popup-focus-orbit');
-    assert.ok(keyframes, 'expected @keyframes popup-focus-orbit');
-    assert.match(keyframes, /from\s*\{\s*--pf-angle:\s*0deg;?\s*\}/, 'the lap must start at 0deg');
-    assert.match(keyframes, /to\s*\{\s*--pf-angle:\s*360deg;?\s*\}/, 'the lap must end at 360deg (same frame as the start)');
-    assert.doesNotMatch(keyframes, /box-shadow/, 'the keyframes must only move the angle, never the box-shadow');
+    assert.match(body, /animation\s*:\s*amb-join-dialog-glow\s+1ms\s*;/,
+        'the shimmer must join the shared 24 fps dialog-glow clock');
+    assert.doesNotMatch(codeOnly, /@property\s+--pf-angle\b/, 'no registered @property angle');
+    assert.doesNotMatch(codeOnly, /@keyframes\s+popup-focus-orbit\b/, 'no infinite CSS keyframes');
     assert.doesNotMatch(codeOnly, /@keyframes\s+srm-orbit\b/, 'the old orbit keyframes name must not resurface');
     assert.doesNotMatch(codeOnly, /@keyframes\s+session-row-menu-halo/, 'the breathing keyframes must stay gone');
     assert.doesNotMatch(codeOnly, /@supports\s*\(width:\s*calc\(1px \* sin\(1deg\)\)\)/,

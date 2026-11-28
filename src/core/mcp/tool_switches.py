@@ -13,6 +13,12 @@ logger = structlog.get_logger()
 
 RARELY_USED: frozenset[str] = frozenset({
     "session_external_stop",
+    "stats_coverage_get", "stats_maintenance_get", "stats_contributions_list", "stats_dimensions_list",
+    "stats_conversations_list", "stats_impact_get", "stats_events_list", "stats_annotations_list",
+    "stats_charts_list", "stats_chart_get", "stats_tripwires_list", "stats_tripwire_get",
+    "projects_authority_get", "projects_presence_get", "project_storage_get", "project_root_check", "company_accounts_get",
+    "item_settings_list", "row_looks_list", "project_storage_check", "company_accounts_set", "session_group_icon_set",
+    "session_group_rule_set", "project_merge_run",
 })
 SHIPPED_DEFAULT_OFF: frozenset[str] = DEPRECATED | RARELY_USED
 DEFAULT_OFF: frozenset[str] = SHIPPED_DEFAULT_OFF

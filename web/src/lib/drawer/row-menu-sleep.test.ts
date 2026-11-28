@@ -5,6 +5,9 @@ import {
     offerFresh, pickAndWake, releaseThisTab, runArchive, runKillAsleep, runReopen, runSleep, runWake,
 } from './row-menu-sleep';
 
+const reach = vi.hoisted(() => vi.fn());
+vi.mock('../../opscenter/api/sessions.svelte', () => ({ reachWokenSession: reach }));
+
 type Win = Record<string, any>;
 const win = window as unknown as Win;
 
@@ -98,6 +101,30 @@ describe('runWake', () => {
         expect(await runWake(CTX)).toBe(false);
         expect(said[0]).toContain('its transcript is gone');
         expect(focus).toEqual([]);
+    });
+
+    const legacy409 = (code: string) => Object.assign(new Error('server sentence'), { status: 409, detail: { code }, body: { detail: { code } } });
+
+    it('a not-asleep 409 with the row in the list is started, quiet, and focuses the live session (#3271)', async () => {
+        const focus: unknown[][] = [];
+        reach.mockResolvedValue({ session: { id: 'ses_live' } });
+        standUp({ wakeSession: async () => { throw legacy409('session_not_asleep'); } },
+            { NavigationGeneration: { begin: () => 7 }, WakeFocus: { afterWake: (...a: unknown[]) => focus.push(a) } });
+        expect(await runWake(CTX)).toBe(true);
+        expect(said).toEqual([]);
+        expect(focus).toEqual([['u-a', 7, 'ses_live']]);
+    });
+
+    it('a not-asleep 409 with no row in the list, and any other 409 code, still say why', async () => {
+        reach.mockReset();
+        reach.mockResolvedValue(null);
+        standUp({ wakeSession: async () => { throw legacy409('session_not_asleep'); } });
+        expect(await runWake(CTX)).toBe(false);
+        expect(said[0]).toContain('server sentence');
+        standUp({ wakeSession: async () => { throw legacy409('restart_in_progress'); } });
+        expect(await runWake(CTX)).toBe(false);
+        expect(said[0]).toContain('server sentence');
+        expect(reach).toHaveBeenCalledTimes(1);
     });
 
     describe('wrapper_needed (#714)', () => {

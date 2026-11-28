@@ -6,7 +6,7 @@ import DrawerMenu from './DrawerMenu.svelte';
 import { setLocale } from '../i18n/index.svelte';
 import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
-cplugEnablement.enabled = { huddle: true };
+cplugEnablement.enabled = { taskmanager: true };
 setLocale('en');
 
 type Win = Record<string, unknown>;

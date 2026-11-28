@@ -1,8 +1,7 @@
-<!-- Escape closes it -->
+
 <script lang="ts">
-  import { tick } from 'svelte';
+  import { tick, untrack } from 'svelte';
   import { t } from '../../i18n/index.svelte';
-  import Button from '../../base/Button.svelte';
   import { closeDrawer, closePane, data } from '../page-store.svelte';
   import { claimEscape, escapeTaken } from '../logic/escape';
   import { resetDrawer } from './drawer-state.svelte';
@@ -11,31 +10,26 @@
   import './drawer.css';
 
   let el = $state<HTMLElement>();
-  let last = $state(data.drawer);
-  let opener: HTMLElement | null = null;
 
-  const open = $derived(data.drawer !== null);
-  const automation = $derived(last?.kind === 'automation' ? (data.automations.find((a) => a.automation_id === last!.id) ?? null) : null);
-
+  // the page frame
+  // svelte-ignore state_referenced_locally
+  let subject = $state(data.drawer);
   $effect(() => {
-    const subject = data.drawer;
-    if (subject) last = subject;
+    if (data.drawer) subject = data.drawer;
   });
+  const automation = $derived(subject?.kind === 'automation' ? (data.automations.find((a) => a.automation_id === subject?.id) ?? null) : null);
 
-  let was = false;
   $effect(() => {
-    if (open === was) return;
-    was = open;
-    if (open) {
-      const active = typeof document !== 'undefined' ? document.activeElement : null;
-      opener = active instanceof HTMLElement && !el?.contains(active) ? active : null;
+    const active = typeof document !== 'undefined' ? document.activeElement : null;
+    const opener = active instanceof HTMLElement && !el?.contains(active) ? active : null;
+    untrack(() => {
       if (data.paneOpen) closePane();
-      void tick().then(() => el?.focus({ preventScroll: true }));
-    } else {
+    });
+    void tick().then(() => el?.focus({ preventScroll: true }));
+    return () => {
       resetDrawer();
       if (opener && typeof document !== 'undefined' && document.contains(opener)) opener.focus({ preventScroll: true });
-      opener = null;
-    }
+    };
   });
 
   $effect(() => {
@@ -43,7 +37,7 @@
   });
 
   function keys(e: KeyboardEvent): void {
-    if (!open || e.key !== 'Escape' || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (!subject || e.key !== 'Escape' || e.metaKey || e.ctrlKey || e.altKey) return;
     if (escapeTaken(e)) return;
     claimEscape(e);
     closeDrawer();
@@ -80,22 +74,15 @@
   tabindex="-1"
   aria-label={t('automations.simple.dr.aria')}
   data-ap-drawer
-  data-open={open ? '' : undefined}
-  data-kind={last?.kind}
+  data-open=""
+  data-kind={subject?.kind}
   onkeydown={trap}
 >
-  <div class="pl-titlebar ap-dr-bar">
-    <Button size="sm" data-dr-back data-dr-close onclick={closeDrawer}>{t('automations.simple.dr.back')}</Button>
-    <span class="pl-label ap-dr-lab">{t(last?.kind === 'run' ? 'automations.simple.dr.label_run' : 'automations.simple.dr.label_automation')}</span>
-    <Button size="sm" data-dr-x data-dr-close onclick={closeDrawer}>{t('automations.simple.dr.close')}</Button>
-  </div>
-  <div class="ap-dr-scroll">
-    {#if open && last}
-      {#if last.kind === 'run'}
-        {#key last.id}<RunDrawer id={last.id} />{/key}
-      {:else if automation}
-        {#key automation.automation_id}<AutomationDrawer {automation} />{/key}
-      {/if}
+  {#if subject}
+    {#if subject.kind === 'run'}
+      {#key subject.id}<RunDrawer id={subject.id} />{/key}
+    {:else if automation}
+      {#key automation.automation_id}<AutomationDrawer {automation} />{/key}
     {/if}
-  </div>
+  {/if}
 </div>

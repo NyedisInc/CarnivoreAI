@@ -1,26 +1,36 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
 from src.plugins.host import sidecar_spec
-from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
+from src.plugins.host.plugin_manifest import from_manifest_v2
 from src.plugins.host.sidecar_registry import SidecarDefinition
 from src.plugins.runtime import sandbox
 from src.plugins.runtime.supervisor import Supervisor
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, parse_manifest_v2
 
 PINNED = "3463B8E83B44738B"
 
 
 def _definition(tmp_path: Path, tier: str, key_id: str, trust: bool = True) -> SidecarDefinition:
-    raw = {"schema": 1, "id": "tv", "name": "Tv", "description": "d", "version": "1.0.0", "entry": "main.py", "tools": []}
+    raw = {
+        "schema": 2,
+        "id": "tv",
+        "name": "Tv",
+        "description": "d",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "author": "me",
+        "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    }
     if trust:
         raw["trust"] = "unrestricted"
-    manifest = replace(parse_sidecar_manifest(raw, "tv", "abc"), tier=tier)
+    v2 = parse_manifest_v2(raw, tier=tier, allow_tier_override=True)
+    manifest = from_manifest_v2(v2, "abc", allow_local=(tier == "local"))
     return SidecarDefinition(manifest, "carnivore/tv", "uuid", tmp_path / "code", tmp_path / "data", key_id)
 
 
@@ -70,6 +80,16 @@ def test_a_local_unrestricted_plugin_without_consent_is_not_launched(tmp_path):
 
 
 def test_the_manifest_refuses_any_other_trust_value(tmp_path):
-    raw = {"schema": 1, "id": "tv", "name": "Tv", "description": "d", "version": "1.0.0", "entry": "main.py", "trust": "full"}
-    with pytest.raises(SidecarManifestError):
-        parse_sidecar_manifest(raw, "tv", "abc")
+    raw = {
+        "schema": 2,
+        "id": "tv",
+        "name": "Tv",
+        "description": "d",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "author": "me",
+        "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+        "trust": "full",
+    }
+    with pytest.raises(ManifestV2Error):
+        parse_manifest_v2(raw)

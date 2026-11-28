@@ -15,6 +15,7 @@
   ],
   "how_to": [
     "Read the light: green is working, yellow is waiting on you, light blue wants attention, grey is idle, red is dead or disconnected.",
+    "A slow grey spinning light means only background work runs: a shell or parked sub-agent while the agent sits at its prompt. A shell that listens on a port is a server and does not count.",
     "A ring around it marks an unread turn; hover for the exact state and where it came from.",
     "A moon means the session is asleep; a green moon means you flagged it unread to follow up.",
     "A red skull means the session hit its usage limit; hover for when it resets.",
@@ -26,7 +27,9 @@
     762,
     786,
     1323,
-    2733
+    2733,
+    3101,
+    3118
   ],
   "keywords": [
     "status",

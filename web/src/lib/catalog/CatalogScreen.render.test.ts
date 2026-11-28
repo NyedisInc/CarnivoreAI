@@ -310,7 +310,7 @@ describe('the rows, the search and the filters', () => {
         expect(strip.querySelector('.wtools [data-facet="sort"]')).not.toBeNull();
         expect(strip.querySelectorAll('.wtools .oc-page__view .oc-ibtn')).toHaveLength(2);
         expect(strip.querySelector('[data-warez-act]')).not.toBeNull();
-        expect(document.querySelector('.oc-page__bar')).toBeNull();
+        expect(document.querySelector('.oc-page__bar:not(.oc-page__bar--picker)')).toBeNull();
         expect(document.querySelector('.oc-toolbar')).toBeNull();
         expect(document.querySelectorAll('input[type="search"]')).toHaveLength(1);
     });
@@ -408,7 +408,7 @@ describe('the reading pane', () => {
     test('back closes the pane and leaves the list where it was', async () => {
         await paint();
         await open(0);
-        (document.querySelector('[data-detail-close]') as HTMLButtonElement).click();
+        (document.querySelector('[data-frame-region="detail"] .oc-page__detail-head [data-btn]') as HTMLButtonElement).click();
         await settle();
         expect(document.querySelector('.detail')).toBeNull();
         expect(titles()).toHaveLength(3);
@@ -416,11 +416,10 @@ describe('the reading pane', () => {
 });
 
 describe('the phone layout', () => {
-    test('below the 767px breakpoint the reading pane REPLACES the list', async () => {
+    test('the screen draws no split of its own: the frame\'s detail region replaces the list on a narrow page (#2775, call A)', async () => {
         const css = styleOf('CatalogScreen.svelte');
         expect(css).toContain('max-width: 767px');
-        expect(css).toMatch(/screen__body--reading\s*\{\s*grid-template-columns:\s*1fr/);
-        expect(css).toMatch(/screen__body--reading\s+:global\(\.rows\)\s*\{\s*display:\s*none/);
+        expect(css).not.toMatch(/screen__body--reading|--cat-detail-w|grid-template-columns:\s*minmax/);
     });
 
     test('a row is 40px, and goes two-line at 56px when its list is narrow', () => {
@@ -437,7 +436,6 @@ describe('the phone layout', () => {
 
     test('every control a thumb has to hit is at least 44px at phone width', () => {
         for (const component of [
-            'CatalogToolbar.svelte',
             'ConsentScripts.svelte',
             'OneShotPicker.svelte',
         ]) {
@@ -447,15 +445,22 @@ describe('the phone layout', () => {
         }
     });
 
-    test('at a desktop width the two panes are side by side', async () => {
+    test('the item pane is the frame\'s detail region beside the list, with the frame\'s head and close key and no grip (#2775, call A)', async () => {
         await paint();
         const opener = document.querySelector('.catalog-card__open') as HTMLButtonElement;
         opener.click();
         await settle();
-        const body = document.querySelector('.screen__body');
-        expect(body?.classList.contains('screen__body--reading')).toBe(true);
-        expect(document.querySelector('.rows')).not.toBeNull();
-        expect(document.querySelector('.screen__detail')).not.toBeNull();
+        const region = document.querySelector('.cat .oc-page__frame--detail > [data-frame-region="detail"]') as HTMLElement | null;
+        expect(region).not.toBeNull();
+        expect(region?.querySelector('.oc-page__detail-body .detail')).not.toBeNull();
+        expect(region?.querySelector('.oc-page__detail-title')?.textContent?.trim()).toBeTruthy();
+        expect(document.querySelector('.cat .oc-page__col .rows')).not.toBeNull();
+        expect(document.querySelector('.screen__body .detail, [data-detail-grip]')).toBeNull();
+        expect(region?.querySelectorAll('[data-detail-close]')).toHaveLength(0);
+        (region?.querySelector('.oc-page__detail-head [data-btn]') as HTMLButtonElement).click();
+        await settle();
+        expect(document.querySelector('[data-frame-region="detail"]')).toBeNull();
+        expect(document.querySelector('.detail')).toBeNull();
     });
 });
 
@@ -576,7 +581,7 @@ describe('opening on one kind (the themes page opens it on theme)', () => {
         expect(titles()).toEqual(['Neon Glass']);
     });
 
-    test('a theme opens in the installed inspector width, 380px, with no grip; a skill keeps its grip (Alex, 2026-10-20)', async () => {
+    test('a theme and a skill both open in the frame\'s detail region, with no grip (#2775 call A replaces the 380px theme width)', async () => {
         await paint(hostFor(WITH_THEME));
         const open = (title: string) => {
             const card = Array.from(document.querySelectorAll('.catalog-card')).find((c) => c.textContent?.includes(title));
@@ -584,12 +589,12 @@ describe('opening on one kind (the themes page opens it on theme)', () => {
         };
         open('Neon Glass');
         await settle();
-        const body = document.querySelector('.screen__body') as HTMLElement;
-        expect(body.style.getPropertyValue('--cat-detail-w')).toBe('380px');
-        expect(document.querySelector('.screen__detail [data-detail-grip]')).toBeNull();
+        expect(document.querySelector('[data-frame-region="detail"] .detail')?.getAttribute('aria-label')).toBe('Neon Glass');
+        expect(document.querySelector('[data-detail-grip]')).toBeNull();
         open('Deploy Runner');
         await settle();
-        expect(document.querySelector('.screen__detail [data-detail-grip]')).not.toBeNull();
+        expect(document.querySelector('[data-frame-region="detail"] [data-detail-hero]')).not.toBeNull();
+        expect(document.querySelector('[data-detail-grip]')).toBeNull();
     });
 
     test('NEGATIVE CONTROL: an open with no kind leaves every row listed', async () => {

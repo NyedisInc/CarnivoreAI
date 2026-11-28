@@ -7,6 +7,10 @@ import pytest
 
 from src.core.auto_sleep.idle_seed import (
     ALL_SOURCES,
+    SOURCE_AGY_STORE,
+    SOURCE_AGY_TRANSCRIPT,
+    SOURCE_CLAUDE_ACTIVITY,
+    SOURCE_CLAUDE_REGISTRY_STATUS,
     SOURCE_CLAUDE_REGISTRY,
     SOURCE_CLAUDE_TRANSCRIPT,
     SOURCE_CODEX_ROLLOUT,
@@ -144,7 +148,11 @@ def test_all_sources_are_exhaustively_named():
     assert ALL_SOURCES == {
         SOURCE_CLAUDE_REGISTRY,
         SOURCE_CLAUDE_TRANSCRIPT,
+        SOURCE_CLAUDE_ACTIVITY,
+        SOURCE_CLAUDE_REGISTRY_STATUS,
         SOURCE_CODEX_ROLLOUT,
         SOURCE_CODEX_STATUS,
+        SOURCE_AGY_TRANSCRIPT,
+        SOURCE_AGY_STORE,
         SOURCE_FALLBACK_NOW,
     }

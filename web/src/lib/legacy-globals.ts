@@ -25,6 +25,7 @@ export type LegacyGlobalName =
   | 'TerminalInputOwnership'
   | 'TerminalInputDrops'
   | 'ClipboardTools'
+  | 'AmbientTicker'
   | `SessionSidebar${string}`;
 
 export function legacyGlobal<T = unknown>(name: LegacyGlobalName): T | undefined {

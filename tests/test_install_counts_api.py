@@ -9,8 +9,11 @@ import pytest
 from tests.helpers import hosted_catalog_fake as fake
 from tests.helpers import submissions_harness as h
 
-TODAY = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-YESTERDAY = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+def _day(offset_days: int = 0) -> str:
+    return (datetime.now(timezone.utc) - timedelta(days=offset_days)).strftime("%Y-%m-%d")
+
 
 ITEM = "example-owner/work"
 
@@ -201,7 +204,7 @@ def test_two_accounts_reporting_the_same_version_both_count(api):
 def test_the_fifty_first_report_in_a_day_is_refused_and_counts_nothing(api):
     _table(api, api.store.USERS_TABLE).seed(
         {"user_id": h.OTHER_ID},
-        {"installs_day": TODAY, "installs_today": api.store.INSTALL_LIMIT},
+        {"installs_day": _day(), "installs_today": api.store.INSTALL_LIMIT},
     )
     response = _report(api)
     assert response["statusCode"] == 429
@@ -212,7 +215,7 @@ def test_the_fifty_first_report_in_a_day_is_refused_and_counts_nothing(api):
 def test_a_rate_limited_report_records_no_install_row(api):
     _table(api, api.store.USERS_TABLE).seed(
         {"user_id": h.OTHER_ID},
-        {"installs_day": TODAY, "installs_today": api.store.INSTALL_LIMIT},
+        {"installs_day": _day(), "installs_today": api.store.INSTALL_LIMIT},
     )
     _report(api)
     installs_table = _table(api, api.store.INSTALLS_TABLE)
@@ -223,11 +226,11 @@ def test_yesterdays_install_counter_is_reset_rather_than_refused(api):
     users = _table(api, api.store.USERS_TABLE)
     users.seed(
         {"user_id": h.OTHER_ID},
-        {"installs_day": YESTERDAY, "installs_today": api.store.INSTALL_LIMIT},
+        {"installs_day": _day(1), "installs_today": api.store.INSTALL_LIMIT},
     )
     assert _report(api)["statusCode"] == 200
     stored = users.stored({"user_id": h.OTHER_ID})
-    assert stored["installs_day"] == TODAY
+    assert stored["installs_day"] == _day()
     assert stored["installs_today"] == 1
 
 
@@ -235,8 +238,8 @@ def test_the_install_counter_is_separate_from_votes_and_submissions(api):
     _table(api, api.store.USERS_TABLE).seed(
         {"user_id": h.OTHER_ID},
         {
-            "votes_day": TODAY, "votes_today": 50,
-            "submissions_day": TODAY, "submissions_today": 5,
+            "votes_day": _day(), "votes_today": 50,
+            "submissions_day": _day(), "submissions_today": 5,
         },
     )
     assert _report(api)["statusCode"] == 200

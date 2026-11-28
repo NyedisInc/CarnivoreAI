@@ -19,7 +19,7 @@
     --_btn-ink-hover: var(--oc-text-secondary);
   }
 
-  :where(:is([data-btn=''], [data-btn='secondary'])[data-size='icon'][aria-pressed='true'], .oc-ibtn:not(.oc-ibtn--bare, .oc-ibtn--float)[aria-pressed='true']) {
+  :where(:is([data-btn=''], [data-btn='secondary'])[data-size='icon']:is([aria-pressed='true'], [data-active]), .oc-ibtn:not(.oc-ibtn--bare, .oc-ibtn--float):is([aria-pressed='true'], [data-active])) {
     --_btn-edge: var(--oc-orange);
     --_btn-fill: var(--oc-ground-hover);
     --_btn-ink: var(--oc-orange);
@@ -59,6 +59,11 @@
     --_btn-ink: var(--oc-coral);
     --_btn-ink-hover: var(--oc-coral);
     --_btn-fill-hover: transparent;
+  }
+
+  :where([data-btn][data-size='icon'][data-tone='strong']) {
+    --_btn-ink: var(--oc-text-primary);
+    --_btn-ink-hover: var(--oc-text-primary);
   }
 
   :where([data-btn][data-size='icon'][data-tone='close'], .oc-ibtn--close) {

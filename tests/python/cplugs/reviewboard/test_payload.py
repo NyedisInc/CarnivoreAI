@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
 from src.api.auth import require_auth
-from src.plugins.huddle import board_port
+from src.plugins.taskmanager import board_port
 from src.plugins.reviewboard import document, payloads, round_text
 from src.plugins.reviewboard.requests import SaveBody
 from src.plugins.reviewboard.schema import MAX_PAYLOAD_BYTES, MAX_SAVES

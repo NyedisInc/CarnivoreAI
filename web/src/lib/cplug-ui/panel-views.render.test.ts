@@ -3,15 +3,31 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import type { CplugRow } from '../plugins-page/cplugs-adapter';
 
-vi.mock('./api', () => ({
-    fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/hello/view/game/t/index.html' })),
-    callViewRoute: vi.fn(),
-}));
+vi.mock('./api', async (original) => {
+    const actual = await original<typeof import('./api')>();
+    return {
+        ...actual,
+        fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/hello/view/game/t/index.html' })),
+        fetchSurface: vi.fn(async () => ({
+            surface: 'widget',
+            stale: false,
+            document: { schema: 1, root: { type: 'text', value: 'Hello declarative widget' } },
+        })),
+        callViewRoute: vi.fn(),
+        callViewTool: vi.fn(),
+        runAction: vi.fn(async () => {}),
+    };
+});
 
 import PanelCell from '../../opscenter/cells/plugin-view/Cell.svelte';
-import { fitsOf, landingFit, livePanelManifests, panelEntries, panels, setPanels } from './panel-views.svelte';
-import { CORE_MANIFESTS } from '../../opscenter/widgets/core-manifests';
+import DeclarativeWidgetCell from './DeclarativeWidgetCell.svelte';
+import { fitsOf, landingFit, livePanelManifests, panelEntries, panels, setPanels, type PanelRow } from './panel-views.svelte';
+import { overlayEntries } from './overlay-views.svelte';
+import { toCplugItem } from '../plugins-page/cplugs-adapter';
+import { CORE_MANIFESTS, allPluginManifests, manifestById } from '../../opscenter/widgets/core-manifests';
+import { pluginDeclarationFor } from '../../opscenter/widgets/fit-declarations';
 import { fitsFor } from '../../opscenter/widgets/fits';
+import { entryFor } from '../../opscenter/cells/registry';
 import { pluginKindMeta, panels as panelProvider } from '../../opscenter/engine/plugin-kinds';
 import { registerPluginKind } from '../../opscenter/engine/plugin-kinds';
 import { drawerGroups, groupRows } from '../../opscenter/layout-editor/drawer-groups';
@@ -124,5 +140,96 @@ describe('panel views in the widget drawer (#2379 follow-up)', () => {
         expect(where('hello.game')?.category).toBe('plugins');
         expect(groups.find((g) => g.category === 'plugins')?.rows[0]?.type).toBe('plugin');
         expect(where('core.notes')?.category).toBe(CORE_MANIFESTS['core.notes']!.category);
+    });
+});
+
+describe('live unregistration and Tier 0 declarative [ui.widget] (M3.2)', () => {
+    test('disabling or removing a panel prunes all 7 registries and updates isPanel', () => {
+        setPanels([row({})]);
+        expect(panelProvider().isPanel('hello.game')).toBe(true);
+        expect(panelProvider().info('hello.game')).toBeDefined();
+        expect(pluginKindMeta('hello.game')).toBeDefined();
+        expect(pluginDeclarationFor('hello.game')).toBeDefined();
+        expect(manifestById('hello.game')).toBeDefined();
+        expect(allPluginManifests()['hello.game']).toBeDefined();
+        expect(entryFor('hello.game:panel-k1' as SlotId)?.component).toBe(PanelCell);
+
+        setPanels([row({ enabled: false })]);
+        expect(panelProvider().isPanel('hello.game')).toBe(false);
+        expect(panelProvider().info('hello.game')).toBeUndefined();
+        expect(livePanelManifests()['hello.game']).toBeUndefined();
+        expect(pluginKindMeta('hello.game')).toBeUndefined();
+        expect(pluginDeclarationFor('hello.game')).toBeUndefined();
+        expect(manifestById('hello.game')).toBeUndefined();
+        expect(allPluginManifests()['hello.game']).toBeUndefined();
+        expect(entryFor('hello.game:panel-k1' as SlotId)).toBeUndefined();
+    });
+
+    test('declarative [ui.widget] registers as a live widget, renders via CplugSurface surface="widget", and unregisters cleanly when disabled', async () => {
+        const declRow: PanelRow = {
+            id: 'zero',
+            runtime: 'sidecar',
+            enabled: true,
+            state: 'active',
+            name: 'Zero Widget',
+            install_key: 'kzero',
+            unverified: true,
+            declarative_widget: {
+                id: 'clock',
+                title: 'Zero Clock',
+                sizes: ['medium', 'large'],
+            },
+        } as unknown as PanelRow;
+
+        expect(panelEntries([{ ...declRow, enabled: false }])).toEqual([]);
+        setPanels([declRow]);
+        expect(Object.keys(livePanelManifests())).toEqual(['zero.clock']);
+        expect(allPluginManifests()['zero.clock']).toBeDefined();
+        expect(panelProvider().isPanel('zero.clock')).toBe(true);
+        expect(entryFor('zero.clock:panel-kzero' as SlotId)?.component).toBe(DeclarativeWidgetCell);
+
+        cell = mount(DeclarativeWidgetCell, { target: document.body, props: { instance: 'zero.clock:panel-kzero' } as never });
+        await tick(); await tick();
+        await vi.waitFor(() => expect(document.body.textContent).toContain('Hello declarative widget'));
+
+        setPanels([{ ...declRow, enabled: false }]);
+        flushSync();
+        expect(Object.keys(livePanelManifests())).toEqual([]);
+        expect(allPluginManifests()['zero.clock']).toBeUndefined();
+        expect(panelProvider().isPanel('zero.clock')).toBe(false);
+        expect(entryFor('zero.clock:panel-kzero' as SlotId)).toBeUndefined();
+        expect(document.body.textContent).not.toContain('Hello declarative widget');
+        expect(document.querySelector('[data-widget-note="none"]')).not.toBeNull();
+    });
+
+    test('compiled built-in plugins with declared views are admitted by panelEntries, overlayEntries, and toCplugItem (21b)', () => {
+        const compiledWithView = row({
+            id: 'builtdash',
+            runtime: 'compiled',
+            tier: 'builtin',
+            name: undefined,
+            name_key: 'cplug.huddle.name',
+            description_key: 'cplug.huddle.description',
+            install_key: null,
+            unverified: false,
+            views: [{ name: 'dash', surfaces: ['panel', 'overlay'] }],
+        });
+        const compiledWithoutView = row({
+            id: 'plainbuilt',
+            runtime: 'compiled',
+            tier: 'builtin',
+            views: null,
+        });
+
+        const item = toCplugItem(compiledWithView, t);
+        expect(item.views).toEqual([{ name: 'dash', surfaces: ['panel', 'overlay'] }]);
+        expect(toCplugItem(compiledWithoutView, t).views).toBeUndefined();
+
+        const panelsOut = panelEntries([compiledWithView, compiledWithoutView]);
+        expect(panelsOut.map((e) => e.kind)).toEqual(['builtdash.dash']);
+        expect(panelsOut[0]?.view).toBe('dash');
+
+        const overlaysOut = overlayEntries([compiledWithView, compiledWithoutView]);
+        expect(overlaysOut.map((e) => `${e.plugin.cplugId}.${e.view}`)).toEqual(['builtdash.dash']);
     });
 });

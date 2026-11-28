@@ -15,7 +15,7 @@ OLD_TILDE = "~/cloude-projects"
 OLD_EXPANDED = str(Path(OLD_TILDE).expanduser())
 
 
-@pytest.mark.parametrize("old", [OLD_TILDE, OLD_EXPANDED, OLD_TILDE + "/"])
+@pytest.mark.parametrize("old", [OLD_TILDE, OLD_EXPANDED, OLD_TILDE + "/"], ids=["tilde", "expanded", "tilde-slash"])
 def test_old_default_maps_to_new(old: str) -> None:
     assert Settings(default_working_dir=old).default_working_dir == "~/carnivore-projects"
 

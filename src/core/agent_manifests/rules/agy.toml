@@ -1,0 +1,41 @@
+
+id = "agy"
+version = "2026.11.21.1"
+min_engine_version = 1
+updated_at = "2026-11-21T00:00:00Z"
+aliases = ["antigravity"]
+
+[[rules]]
+id = "onboarding_blocked"
+state = "blocked"
+priority = 320
+region = "whole_recent"
+visible_blocker = true
+any = [
+  { contains = ["welcome to antigravity cli!", "choose your color scheme:"] },
+  { contains = ["terms of service & data use", "↑/↓ navigate"] },
+]
+
+[[rules]]
+id = "approval_blocked"
+state = "blocked"
+priority = 300
+region = "bottom_non_empty_lines(12)"
+visible_blocker = true
+any = [
+  { contains = ["allow once", "↑/↓ navigate"] },
+  { contains = ["allow always", "↑/↓ navigate"] },
+  { contains = ["approve", "deny", "↑/↓ navigate"] },
+]
+
+[[rules]]
+id = "interrupt_working"
+state = "working"
+priority = 100
+region = "bottom_non_empty_lines(6)"
+visible_working = true
+any = [
+  { contains = ["esc to interrupt"] },
+  { contains = ["esc to cancel"] },
+  { contains = ["ctrl+c to cancel"] },
+]

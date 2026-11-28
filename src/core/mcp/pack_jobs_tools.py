@@ -190,11 +190,11 @@ def _wishes(args: dict) -> Dict[str, List[str]]:
 
 
 def _body(args: dict, info: Any) -> JobBody:
-    unknown = set(args) - {"command", "kind", "folder", "outputs", "time_cap_minutes", "needs", "prefer"}
+    unknown = set(args) - {"command", "kind", "folder", "outputs", "time_cap_minutes", "needs", "prefer", "commit"}
     if unknown:
         raise ToolError(f"unknown argument: {sorted(unknown)[0]}")
     fields: Dict[str, Any] = {"command": args.get("command"), "folder": _folder(info, args.get("folder"))}
-    for key in ("kind", "outputs", "time_cap_minutes"):
+    for key in ("kind", "outputs", "time_cap_minutes", "commit"):
         if args.get(key) is not None:
             fields[key] = args[key]
     try:
@@ -246,6 +246,7 @@ def _card(args: dict, request: Any, rec: JobRecord) -> Dict[str, Any]:
     installs = load_ctx(rec).get("install") or []
     shown: Dict[str, Any] = {"computer": rec.peer_label, "folder": request.folder, "kind": request.kind, "job_id": rec.id,
                              **({"installs": installs} if installs else {}),
+                             **({"commit": request.commit} if request.commit else {}),
                              **({"ssh": True} if (rec.peer_install_id or "").startswith(SSH_PREFIX) else {}),
                              **({"outputs": request.outputs} if request.outputs else {}),
                              **({"time_cap_minutes": args["time_cap_minutes"]} if args.get("time_cap_minutes") else {})}
@@ -278,6 +279,7 @@ async def delegate(manager: Any, caller: AgentCaller, args: dict) -> dict:
         rec = await eng.propose(request)
     except JobError as exc:
         raise ToolError(f"{exc.code}: {exc.detail}") from exc
+    precheck.MEMORY.note_delegated(caller.tmux_name)
     if rec.state in (JobState.HERE, JobState.REFUSED):
         if rec.state == JobState.HERE:
             precheck.MEMORY.note_here(caller.tmux_name)
@@ -361,6 +363,7 @@ WRITE_TOOLS: Dict[str, tuple] = {
                    "description": "hard requirements, e.g. xcode, gpu:nvidia, ffmpeg, mem_gb>=32, label:<name>; refused when no computer has them"},
          "prefer": {"type": "array", "items": {"type": "string"}, "maxItems": 8,
                     "description": "soft wishes, same words; they only order computers that already qualify"},
+         "commit": {"type": "string", "pattern": "^[0-9a-f]{40}$", "description": "with command: run this commit's tree of the folder's repository, not the working tree"},
          "time_cap_minutes": {"type": "integer", "minimum": 1, "maximum": 360}},
         [], delegate,
     ),

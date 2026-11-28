@@ -1,5 +1,5 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
-import { scheduleFields, type EditorDraft } from '../../plugins/huddle/task-manager-schedule';
+import { scheduleFields, type EditorDraft } from '../../plugins/taskmanager/task-manager-schedule';
 import type { TaskManagerSchedule } from './task-manager-scheduled';
 
 export type Fetcher = typeof authFetch;

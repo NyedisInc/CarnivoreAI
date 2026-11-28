@@ -57,6 +57,9 @@ import BaseElements from './specimens/BaseElements.svelte';
 import BaseElementsThemes from './specimens/BaseElementsThemes.svelte';
 import ReviewPanel from './specimens/ReviewPanel.svelte';
 import AutomationsPageDemo from './specimens/AutomationsPageDemo.svelte';
+import { bootPluginCells } from '../plugins/host/cell-boot';
+
+bootPluginCells();
 
 interface Specimen {
     id: string;

@@ -99,7 +99,7 @@
     "huddle drawer panel bar: swarm page link",
     "main area page #swarm",
     "web/src/lib/huddle-swarm/",
-    "web/src/plugins/huddle/swarm/"
+    "web/src/plugins/taskmanager/swarm/"
   ],
   "updated": "2026-10-28",
   "where": [

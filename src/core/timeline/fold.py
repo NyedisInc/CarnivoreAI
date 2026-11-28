@@ -85,6 +85,7 @@ class ConvState:
     shape: ShapeLedger = field(default_factory=ShapeLedger)
     starts: RecordStarts = field(default_factory=RecordStarts)
     newest_append: SuffixExtreme = field(default_factory=newest)
+    newest_activity: SuffixExtreme = field(default_factory=newest)
     newest_assistant: SuffixExtreme = field(default_factory=newest)
     newest_prompt: SuffixExtreme = field(default_factory=newest)
     newest_enqueue: SuffixExtreme = field(default_factory=newest)
@@ -107,7 +108,7 @@ class ConvState:
             extreme.coverage_start = self.coverage_start
 
     def extremes(self) -> Tuple[SuffixExtreme, ...]:
-        return (self.newest_append, self.newest_assistant, self.newest_prompt, self.newest_enqueue, self.newest_reply,
+        return (self.newest_append, self.newest_activity, self.newest_assistant, self.newest_prompt, self.newest_enqueue, self.newest_reply,
                 self.newest_local_command, self.earliest_main)
 
     @property
@@ -174,6 +175,7 @@ def _note_record(state: ConvState, record: Mapping[str, Any], start: int, at: Op
     kind = record.get("type")
     if kind not in BOOKKEEPING_RECORD_TYPES:
         state.blocked.set(_last_call(record), start)
+        state.newest_activity.observe(at, start)
     if record.get("isSidechain") is not True:
         if isinstance(record.get("uuid"), str):
             state.leaf_uuid = record["uuid"]

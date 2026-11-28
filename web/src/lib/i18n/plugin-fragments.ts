@@ -1,5 +1,5 @@
 
-import { registerFragment } from '../../../../client/js/i18n/catalogs.js';
+import { registerLocalFragment } from './fallback';
 
 export type PluginSlice = Record<string, string | Record<string, string>>;
 
@@ -27,7 +27,7 @@ export function registerSlices(
   const failures: SliceFailure[] = [];
   for (const [pluginId, slice] of slices) {
     try {
-      registerFragment(pluginId, slice);
+      registerLocalFragment(pluginId, slice);
       also?.(pluginId, slice);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);

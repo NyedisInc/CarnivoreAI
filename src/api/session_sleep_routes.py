@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 
 from src.api import asleep_themes, asleep_wake_listing
 from src.api import recreate_routes as rr
+from src.api.asleep_offloaded import stamp_offloaded
 from src.api.peer_auth import require_peer_sessions
 from src.api.session_record_payload import _session_record_payload, attach_host_labels
 from src.core import restart_inflight, session_change_notice, session_sleep
@@ -24,6 +25,8 @@ from src.models import SessionRecord, SuccessResponse
 from src.api.error_response import api_error
 
 logger = structlog.get_logger()
+
+WAKE_NOT_ASLEEP_CODE = "session_not_asleep"
 
 router = APIRouter(tags=["sessions"])
 
@@ -199,10 +202,7 @@ async def wake_by_uuid(
         with restart_inflight.claim(session_uuid):
             row = rr._resolved(await run_in_threadpool(row_probe.read_row, session_uuid), session_uuid)
             if not session_sleep.is_asleep(row):
-                raise HTTPException(
-                    status_code=409,
-                    detail="this session is not asleep, so there is nothing to wake",
-                )
+                raise api_error(409, WAKE_NOT_ASLEEP_CODE, None, session_uuid=session_uuid)
             old_epoch = (row or {}).get("tmux_created_epoch")
             if session_sleep.is_dead_pane_stop(row) and not (fork or fresh or start_fresh or extra_env):
                 presence = await run_in_threadpool(
@@ -334,42 +334,95 @@ async def kill_asleep_session(request: Request, session_uuid: str, confirm_name:
     response_model=List[SessionRecord],
     dependencies=[Depends(require_peer_sessions)],
 )
-async def list_asleep_sessions(request: Request):
+async def list_asleep_sessions(request: Request, include_swarm: bool = False) -> Any:
     """Every asleep session, newest first. A paired computer gets only the rows this one owns, slim (``peer_serve.serve_asleep_to_peer``).
 
     Description: read from the stored rows; an asleep session has no tmux
       session for a live listing to find. Empty when the datastore does not
-      exist yet.
+      exist yet. Peer callers may pass ``include_swarm=true`` for read-only
+      Swarm asleep summaries (#3385).
+    Inputs: request (Request); include_swarm (bool).
+    Output: list[SessionRecord] or JSONResponse of slim peer rows.
     Raises: HTTPException 503 - the datastore exists but is unreadable.
     """
-    if getattr(request.state, "peer_grant", None) is not None:
-        return JSONResponse(await _peer_asleep_rows())
+    grant = getattr(request.state, "peer_grant", None)
+    if grant is not None:
+        caller_iid = getattr(grant, "peer_install_id", None)
+        return JSONResponse(await _peer_asleep_rows(include_swarm=include_swarm, caller_install_id=caller_iid))
     return await asleep_record_rows(request.app.state)
 
 
-async def _peer_asleep_rows() -> List[Dict[str, Any]]:
+async def _peer_asleep_rows(
+    *,
+    include_swarm: bool = False,
+    caller_install_id: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     from src.api import peer_auth
     from src.core.federation import peer_serve
 
+    if include_swarm or caller_install_id is not None:
+        return list(
+            await run_in_threadpool(
+                peer_serve.serve_asleep_to_peer,
+                peer_auth.open_db,
+                include_swarm=include_swarm,
+                caller_install_id=caller_install_id,
+            )
+        )
     return list(await PEER_ASLEEP_CACHE.get(lambda: run_in_threadpool(peer_serve.serve_asleep_to_peer, peer_auth.open_db)))
 
 
 @router.get("/sessions/list-and-asleep", dependencies=[Depends(require_peer_sessions)])
-async def list_and_asleep(request: Request):
+async def list_and_asleep(
+    request: Request,
+    include_swarm: bool = False,
+    include_relayed: bool = True,
+) -> JSONResponse:
     """``/sessions/list`` and ``/sessions/asleep`` in ONE call: ``{"list": [...], "asleep": [...]}`` (issue #2632).
 
     Description: each half is exactly what its own route answers THIS caller (the owner's rows plus the paired computers', or a paired
-      computer's own-rows-only slim copy), so a client that read both gets the same data for one request. The two old routes stay.
+      computer's own-rows-only slim copy), so a client that read both gets the same data for one request. For peer callers,
+      ``relayed`` carries additive 1-hop read-only summaries of other connected non-one-way peers (#3385) while keeping ``list``
+      strictly 1-hop owned rows for loop guard F8. The two old routes stay.
+    Inputs: request (Request); include_swarm (bool); include_relayed (bool).
+    Output: JSONResponse.
     Example: GET /api/v1/sessions/list-and-asleep -> {"list": [SessionInfo...], "asleep": [SessionRecord...]}
     """
+    import asyncio
+    from src.api import peer_auth
     from src.api.session_crud_routes import list_sessions
+    from src.core.federation import peer_listing
 
-    infos = await list_sessions(request)
-    if getattr(request.state, "peer_grant", None) is not None:
-        asleep: List[Any] = await _peer_asleep_rows()
-    else:
-        asleep = [r.model_dump(mode="json") for r in await asleep_record_rows(request.app.state)]
-    return JSONResponse({"list": [i.model_dump(mode="json") for i in infos], "asleep": asleep})
+    grant = getattr(request.state, "peer_grant", None)
+    is_peer = grant is not None
+    caller_iid = getattr(grant, "peer_install_id", None)
+    asleep_coro = (
+        _peer_asleep_rows(include_swarm=include_swarm, caller_install_id=caller_iid)
+        if is_peer
+        else asleep_record_rows(request.app.state)
+    )
+    infos, asleep_raw = await asyncio.gather(
+        list_sessions(request, include_swarm=include_swarm, include_relayed=False),
+        asleep_coro,
+    )
+    relayed_infos: Optional[List[Any]] = None
+    if is_peer and include_relayed:
+        relayed_infos = await asyncio.to_thread(
+            peer_listing.relayed_for_peer,
+            peer_auth.open_db,
+            None,
+            caller_install_id=caller_iid,
+            include_swarm=include_swarm,
+        )
+
+    def _serialize() -> Dict[str, Any]:
+        asleep_out = asleep_raw if is_peer else [r.model_dump(mode="json") for r in asleep_raw]
+        payload: Dict[str, Any] = {"list": [i.model_dump(mode="json") for i in infos], "asleep": asleep_out}
+        if relayed_infos is not None:
+            payload["relayed"] = [i.model_dump(mode="json") for i in relayed_infos]
+        return payload
+
+    return JSONResponse(await asyncio.to_thread(_serialize))
 
 
 PEER_ASLEEP_CACHE: TtlFlight = TtlFlight("peer_asleep_rows", 1.0)
@@ -412,7 +465,12 @@ async def _assemble_asleep_rows(app_state: Any, infos: Optional[List[Any]] = Non
     themes = getattr(manager, "_theme_store", None)
     if themes is not None:
         themes = asleep_themes.PrefetchedThemes(themes, dotfile_themes)
-    records = await run_in_threadpool(lambda: [_session_record_payload(row, store, themes) for row in rows])
+    def project() -> List[SessionRecord]:
+        projected = [_session_record_payload(row, store, themes) for row in rows]
+        stamp_offloaded(rows, projected)
+        return projected
+
+    records = await run_in_threadpool(project)
     await asleep_wake_listing.stamp_next_wake(app_state, records, infos, wake_shared)
     from src.api.swarm_member_listing import mark_swarm_members
 

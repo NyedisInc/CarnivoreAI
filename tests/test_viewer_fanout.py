@@ -129,7 +129,8 @@ def test_a_stalled_viewer_never_delays_a_healthy_one():
         for i in range(50):
             handler(f"line-{i}\r\n".encode())
             frame = await asyncio.wait_for(healthy.get(), timeout=1.0)
-            assert base64.b64decode(frame.payload) == f"line-{i}\r\n".encode()
+            raw = frame.payload if isinstance(frame.payload, bytes) else base64.b64decode(frame.payload)
+            assert raw == f"line-{i}\r\n".encode()
 
         assert healthy.queued_items == 0
         assert stalled.queued_items == 50
@@ -176,7 +177,9 @@ def test_session_isolation_survives_the_rewrite():
 
         assert a.queued_items == 1
         assert b.queued_items == 0
-        assert base64.b64decode((await a.get()).payload) == b"only-for-A"
+        got = (await a.get()).payload
+        raw = got if isinstance(got, bytes) else base64.b64decode(got)
+        assert raw == b"only-for-A"
 
     asyncio.run(scenario())
 

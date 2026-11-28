@@ -20,6 +20,17 @@ def _whole(args: dict, key: str, low: int, high: int) -> Any:
     return value
 
 
+async def _state(call: ra.Call) -> Any:
+    answer = await call.route(call.request, call.session_uuid)
+    target = call.target
+    sleeper = getattr(call.request.app.state, "auto_sleeper", None)
+    if isinstance(answer, dict) and sleeper is not None and target is not None and target.live:
+        verdict = sleeper.verdict_for(target.info.session.id)
+        if verdict is not None:
+            answer = {**answer, "auto_sleep": verdict.model_dump(mode="json")}
+    return answer
+
+
 async def _events(call: ra.Call) -> Any:
     args = call.args
     names = args.get("kinds")
@@ -65,10 +76,11 @@ SPECS = (
     ra.RouteTool(
         name="session_state_get", route="src.api.timeline.routes:timeline_state", gate=ra.READ, redact=True,
         reach=session_target.STORED, needs_uuid=True,
-        description="A Claude Code session's state read from its transcript: the open turn, the last turn end, background agents "
-                    "and workflows still open, a queued re-invoke, the newest prompt and reply times, and for a live session the "
-                    "lights' answer. Refused while session chat is off.",
-        invoke=lambda call: call.route(call.request, call.session_uuid), example={},
+        description="A Claude Code session's state from its transcript: open turn, last turn end, open background agents and workflows, a q"
+                    "ueued re-invoke, newest prompt and reply times. A live session adds the lights' answer and auto_sleep: why auto sleep "
+                    "has not slept it (open_in_window, idle_waiting, listening, work_running, keep_awake_list), idle_since, threshold_minut"
+                    "es. Refused while session chat is off.",
+        invoke=_state, example={},
     ),
 )
 

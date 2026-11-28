@@ -234,5 +234,7 @@ export function filteredProjectBuckets<T extends BucketRow>(
 }
 
 export function keepBandSection(key: string, rows: readonly unknown[], dragging: boolean, q: string, hideEmpty = true): boolean {
-    return rows.length > 0 || dragging || (!hideEmpty && !q && key !== 'pinned');
+    if (key === 'pinned') return rows.length > 0 || dragging;
+    if (G.groupUuidOf(key)) return rows.length > 0 || dragging || !q;
+    return rows.length > 0 || dragging || (!hideEmpty && !q);
 }

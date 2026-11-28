@@ -17,7 +17,7 @@ from src.plugins.reviewboard.public.health import HEALTH
 from src.plugins.reviewboard.public.service import SERVICE
 from src.plugins.sdk import CplugContext, cplug_context
 from src.plugins.reviewboard.public.port import port
-from src.plugins.reviewboard.routes import router
+from src.plugins.reviewboard.routes_common import router
 
 GATE = [Depends(require_public_links)]
 STORE_GATE = [Depends(require_public_links), Depends(require_available)]

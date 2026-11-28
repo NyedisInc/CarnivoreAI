@@ -315,7 +315,7 @@ def test_m6_a_tell_whose_lookup_returned_none_still_records_a_data_row_before_th
     import src.api.one_shot_routes as one_shot
     from src.core.sessions import guarded_paste
     from src.plugins.host import capabilities
-    from src.plugins.huddle import swarm_tell, service, sending
+    from src.plugins.taskmanager import swarm_tell, service, sending
 
     seen = []
 
@@ -550,8 +550,8 @@ def test_e_the_caller_lookup_makes_no_listing_pass(env, calls):
 
 
 def test_s4_an_agent_cannot_edit_move_or_mark_answered_a_swarm_card_but_the_owner_and_plain_items_work(tmp_path):
-    from src.plugins.huddle import rules
-    from src.plugins.huddle.public import TaskManagerStore
+    from src.plugins.taskmanager import rules
+    from src.plugins.taskmanager.public import TaskManagerStore
     from src.core.work.storage import WorkStorage
 
     store_ = TaskManagerStore(WorkStorage(tmp_path), notify=lambda key: None)

@@ -66,9 +66,41 @@ def run_summary(run: Dict[str, Any]) -> Dict[str, Any]:
     return {**{k: v for k, v in run.items() if k != "report"}, "has_report": bool(run.get("report_bytes"))}
 
 
+def _attach_last_run(automation: Dict[str, Any], latest: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+    return {**automation, "last_run": run_summary(latest) if latest else None}
+
+
 async def _with_last_run(store: Any, automation: Dict[str, Any]) -> Dict[str, Any]:
     latest = await asyncio.to_thread(store.runs, automation["automation_id"], 1)
-    return {**automation, "last_run": run_summary(latest[0]) if latest else None}
+    return _attach_last_run(automation, latest[0] if latest else None)
+
+
+_with_last_run._accepts_batch_latest = True  # type: ignore[attr-defined]
+_with_last_run._attach_summary = _attach_last_run  # type: ignore[attr-defined]
+
+
+def _assemble_plain_list(store: Any, project_id: int, enabled: Optional[bool], target_kind: Optional[str]) -> Dict[str, Any]:
+    rows = store.list_all(project_id or None)
+    rows = [r for r in rows if (enabled is None or r["enabled"] == enabled) and (target_kind is None or r["target"].get("kind") == target_kind)]
+    latest_by_id = store.latest_runs() if callable(getattr(store, "latest_runs", None)) else {
+        r["automation_id"]: (store.runs(r["automation_id"], 1) or [None])[0] for r in rows
+    }
+    full = [_attach_last_run(r, latest_by_id.get(r["automation_id"])) for r in rows]
+    paused = pause.is_paused()
+    extras = run_feed.table_fields(store, full)
+    try:
+        inputs = session_tree.read_inputs()
+        listed = {s["session_uuid"]: s for s in inputs["sessions"] if s.get("session_uuid") and not s.get("archived_at")}
+        project_ids: Optional[set] = {p["id"] for p in inputs["projects"] if p.get("id") is not None}
+    except (OSError, sqlite3.Error, DatastoreUnreadableError) as exc:
+        logger.warning("automations.list.files_under_unavailable", error=type(exc).__name__)
+        listed, project_ids = {}, None
+    return {
+        "automations": [{**a, **extras[a["automation_id"]], "files_under": session_tree.file_of(a, listed, project_ids)} for a in full],
+        "tz": run_feed.zone_name(),
+        "scheduler": {"paused": paused},
+        "timers_status": automation_timers_listing.global_status(store, paused),
+    }
 
 
 async def _with_table_fields(store: Any, view: Dict[str, Any]) -> Dict[str, Any]:
@@ -110,9 +142,13 @@ async def list_automations(request: Request, project_id: int = Query(default=0, 
     evaluated in) and, on each automation, ``recent`` (its 12 newest runs, newest first), ``median_took_s``, ``newest_output_empty``,
     ``run_count``, ``newest_number``, ``spends`` and ``files_under`` ({session_uuid, project_id}, both null = unassigned). Pushed:
     re-read when the ``automations`` / ``automation_runs`` topics are named."""
-    view = await list_view(request, get_store(request), _with_last_run, project_id, session, enabled, target_kind, group_by)
-    paused = await asyncio.to_thread(pause.is_paused)
     store = get_store(request)
+    if session is None and group_by is None:
+        if target_kind is not None and target_kind not in m.TARGET_KINDS:
+            raise HTTPException(422, detail={"code": "target_kind_invalid", "message": f"target_kind is one of: {', '.join(sorted(m.TARGET_KINDS))}"})
+        return await asyncio.to_thread(_assemble_plain_list, store, project_id, enabled, target_kind)
+    view = await list_view(request, store, _with_last_run, project_id, session, enabled, target_kind, group_by)
+    paused = await asyncio.to_thread(pause.is_paused)
     if group_by is None:
         view = await _with_table_fields(store, view)
     return {**view, "scheduler": {"paused": paused},

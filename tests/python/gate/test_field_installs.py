@@ -88,8 +88,44 @@ def test_master_skips_the_version_floor_and_a_field_cell_refuses_on_it() -> None
     assert fi.floor_check("1.16.3", "1.16.3", upcoming=False) == ("", "")
 
 
-def test_the_live_known_table_names_only_what_p49_accepted() -> None:
+def test_the_live_known_table_has_no_field_entries() -> None:
     from scripts.gate.known_defects import KNOWN
-    assert sorted(k for k in KNOWN if k.startswith("field:")) == [
-        "field:v1.16.2:external/cleanyourtv", "field:v1.16.3:external/cleanyourtv"]
-    assert all(KNOWN[k][0] == 2507 for k in KNOWN if k.startswith("field:"))
+    assert [k for k in KNOWN if k.startswith("field:")] == [], "the canaries have no accepted defect; a non-canary one is not a bump failure"
+
+
+def test_only_canaries_are_checked_and_a_missing_one_is_refused() -> None:
+    def item(i: str, kind: str) -> dict:
+        return {"id": i, "kind": kind, "name": i.split("/")[1], "publisher": i.split("/")[0], "latest": "1", "versions": [
+            {"v": "1", "digest": "d", "src": {"path": "p", "repo": "r", "commit": "c"}}]}
+    index = {"items": [item("a/one", "plugin"), item("a/two", "cplug"), item("a/other", "plugin")]}
+    assert [j["id"] for j in fi.plugin_jobs(index, ("a/one", "a/two"))] == ["a/one", "a/two"]
+    with pytest.raises(fi.Refused, match="a/gone"):
+        fi.plugin_jobs(index, ("a/one", "a/gone"))
+    assert {"plugin", "cplug"} == {j["kind"] for j in fi.plugin_jobs({"items": [item("carnivore/mcphealth", "cplug"), item("external/rea", "plugin")]})}
+
+
+def test_v2_canary_reads_carnivore_toml_on_master_and_falls_back_to_v1_on_pre_v2_cores(tmp_path: Path) -> None:
+    index = {"items": [{
+        "id": "carnivore/mcphealth", "kind": "cplug", "name": "mcphealth", "publisher": "carnivore", "latest": "1.0.2",
+        "versions": [
+            {"v": "1.0.1", "manifest_schema": 1, "digest": "d1", "src": {"path": "plugins/carnivore/mcphealth", "repo": "r", "commit": "c1"}},
+            {"v": "1.0.2", "manifest_schema": 2, "digest": "d2", "src": {"path": "plugins/carnivore/mcphealth", "repo": "r", "commit": "c2"}},
+        ],
+    }]}
+    (row,) = fi.plugin_jobs(index, ("carnivore/mcphealth",))
+    assert row["v"] == "1.0.2" and row["manifest_schema"] == 2
+    assert row["v1_fallback"]["v"] == "1.0.1" and row["v1_fallback"]["commit"] == "c1"
+
+    pkg = fi.REPO / "packages" / "cplugs" / "mcphealth"
+    tarball = tmp_path / "mcphealth-v2.tgz"
+    with tarfile.open(tarball, "w:gz") as tar:
+        for f in sorted(pkg.rglob("*")):
+            if f.is_file() and "__pycache__" not in f.parts:
+                rel = f.relative_to(pkg).as_posix()
+                info = tarfile.TarInfo(f"{ROOT}/plugins/carnivore/mcphealth/{rel}")
+                body = f.read_bytes()
+                info.size = len(body)
+                tar.addfile(info, io.BytesIO(body))
+    v2_row = dict(row, digest=digest_directory(pkg)[0])
+    (res,) = fi.run_cell("master", fi.REPO, [v2_row], {"carnivore/mcphealth": str(tarball)}, upcoming=True)
+    assert res["ok"] and res["step"] == "ok", res

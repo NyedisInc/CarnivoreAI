@@ -49,7 +49,7 @@ function nativeTarget(url, appOrigin) {
   if (u.username || u.password) return null;
   const row = soloRowOf(url);
   if (row) return { kind: 'solo', path: `/?solo=${row}` };
-  if (u.pathname === POPOUT_PATH && u.search.length <= MAX_POPOUT_SEARCH) return { kind: 'popout', path: u.pathname + u.search };
+  if (u.pathname === POPOUT_PATH && u.hash === '' && u.search.length <= MAX_POPOUT_SEARCH) return { kind: 'popout', path: u.pathname + u.search };
   return null;
 }
 

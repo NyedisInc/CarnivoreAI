@@ -76,7 +76,11 @@ def build_attention_watcher(
         died_tracker=DiedTracker(manager, app_state),
         beast_prompts=build_beast_prompts(lambda: manager, lambda: watcher),
         auto_answer=AutoAnswerEngine(app_state, lambda: manager, on_pressed=record_and_announce(lambda: manager)),
-        pipeline_feed=LiveFeed(paths_for=lambda: read_evidence.paths_for, rollout_for=lambda: read_evidence.rollout_for),
+        pipeline_feed=LiveFeed(
+            paths_for=lambda: read_evidence.paths_for,
+            rollout_for=lambda: read_evidence.rollout_for,
+            agy_for=lambda: read_evidence.agy_transcript_for,
+        ),
         raise_skill_notice=make_notice_raiser(manager, app_state, send),
         raise_stall_notice=make_stall_notice_raiser(manager, app_state, send),
         raise_login_notice=make_login_notice_raiser(manager, app_state, send),

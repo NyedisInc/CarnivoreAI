@@ -4,6 +4,12 @@ from __future__ import annotations
 import json
 from typing import Any, Iterable, List, Mapping, Tuple
 
+try:
+    import orjson as _orjson
+    _json_loads = _orjson.loads
+except ImportError:
+    _json_loads = json.loads
+
 from src.core.transcript_contract.claude_parse import parse_claude_obj
 from src.core.transcript_contract.parsed import ParsedLine
 
@@ -20,7 +26,7 @@ def decode_window(window: bytes, *, drop_first_line: bool = False) -> Tuple[dict
         if not raw:
             continue
         try:
-            obj = json.loads(raw)
+            obj = _json_loads(raw)
         except (ValueError, UnicodeDecodeError):
             continue
         if isinstance(obj, dict):

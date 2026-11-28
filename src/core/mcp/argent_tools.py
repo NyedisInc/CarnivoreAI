@@ -69,6 +69,10 @@ def _holds(call: ra.Call) -> Any:
     return call.route()
 
 
+def _budget_requests_list(call: ra.Call) -> Any:
+    return call.route()
+
+
 async def _budget_request(call: ra.Call) -> Any:
     from src.api.argent.cost import BudgetRequest
 
@@ -121,12 +125,20 @@ SPECS = (
     ),
     ra.RouteTool(
         name="argent_budget_request", route="src.api.argent.cost:request_budget", gate=ra.ACT,
-        description="Ask the budget owner of an argent work item for more budget (item_id, optional note). Raising a cap or granting an overage is the owner's, in the app. "
-                    "Waits for the owner.",
-        properties={"item_id": {"type": "string", "minLength": 1, "maxLength": 200}, "note": {"type": "string", "maxLength": 500}},
-        required=("item_id",), invoke=_budget_request,
-        summary=lambda args, _t: f"ask for more argent budget on {str(args.get('item_id'))[:80]}",
-        example={"item_id": "wi_fixture"},
+        description="Ask the budget owner of an argent work item for more budget: item_id, amount_micros (extra added to your allotment on approval, not a new cap) and reason (1 to 500 characters). "
+                    "Argent's owner approves or denies it in argent; a second ask while one waits is refused (budget_request_pending), and 501 budget_request_unavailable means "
+                    "argent does not take the ask yet. Waits for the owner.",
+        properties={"item_id": {"type": "string", "minLength": 1, "maxLength": 200}, "amount_micros": {"type": "integer", "minimum": 1, "description": "the EXTRA amount added to your current allotment on approval, not a new cap, in whole millionths of a dollar, above zero"},
+                    "reason": {"type": "string", "minLength": 1, "maxLength": 500}},
+        required=("item_id", "amount_micros", "reason"), invoke=_budget_request,
+        summary=lambda args, _t: f"ask for {args.get('amount_micros')} micros more argent budget on {str(args.get('item_id'))[:80]}",
+        example={"item_id": "wi_fixture", "amount_micros": 5000000, "reason": "fixture"},
+    ),
+    ra.RouteTool(
+        name="argent_budget_requests_list", route="src.api.argent.cost:list_budget_requests", gate=ra.READ,
+        description="The asks for more argent budget this computer filed: id, item_id, requested_micros, approved_micros, state (pending, approved, denied, expired), decision_reason, "
+                    "times. Read from the local record, no call to argent. Read only.",
+        invoke=_budget_requests_list, example={},
     ),
     ra.RouteTool(
         name="argent_work_item_close", route="src.api.argent.close:close_work_item", gate=ra.ACT,

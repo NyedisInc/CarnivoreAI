@@ -131,20 +131,22 @@ test('status window: one instance, locked down, closing hides, button clicks run
   assert.deepEqual(ran, ['server.start'], 'a sub-frame of our own window is ignored (main-frame check)');
   assert.equal(fe.handlers.get(`h:${FACTS_CHANNEL}`)(sub), null);
   assert.equal(fe.handlers.get(`h:${FACTS_CHANNEL}`)({ sender: win.webContents, senderFrame: null }), null);
-  let prevented = false;
-  win.ev.close({ preventDefault: () => { prevented = true; } });
-  assert.equal(prevented, true);
-  assert.equal(w.isOpen(), false, 'close hides');
+  assert.equal(win.ev.close, undefined, 'close is not intercepted with preventDefault');
+  win.ev.closed();
+  assert.equal(w.isOpen(), false, 'closed window clears state');
   assert.equal(w.open(), true);
-  assert.equal(fe.wins.length, 1, 'still one instance');
+  assert.equal(fe.wins.length, 2, 'reopening creates a fresh window');
+  const win2 = fe.wins[1];
+  win2.once_['ready-to-show']();
   w.update();
-  assert.equal(win.sent.at(-1)[0], FACTS_CHANNEL);
+  assert.equal(win2.sent.at(-1)[0], FACTS_CHANNEL);
   facts = null;
   w.update();
   assert.equal(w.isOpen(), false, 'the server came back: the window goes away');
+  assert.equal(win2.destroyed, true, 'server-up destroys the status window');
   assert.equal(w.open(), false, 'nothing to show while up');
   w.destroy();
-  assert.equal(win.destroyed, true);
+  assert.equal(win2.destroyed, true);
 });
 
 test('the page: local file, strict CSP, no inline script, no remote anything, tokens only', () => {

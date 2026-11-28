@@ -58,7 +58,7 @@ class ManifestPreview:
 def read_manifest_text(
     directory: Path, kind: str = kinds.KIND_SKILL
 ) -> tuple[str, bool]:
-    source = directory / kinds.manifest_name(kind)
+    source = kinds.resolve_manifest_path(kind, directory)
     with open(source, "rb") as handle:
         raw = handle.read(MAX_MANIFEST_TEXT_BYTES + 1)
     if len(raw) > MAX_MANIFEST_TEXT_BYTES:

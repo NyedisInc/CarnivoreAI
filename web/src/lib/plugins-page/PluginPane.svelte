@@ -2,10 +2,13 @@
 <script lang="ts">
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';
     import { Button } from '../base';
+    import RevokedBanner from '../catalog/RevokedBanner.svelte';
+    import { installedRevocationReason, isInstalledRevoked } from '../catalog/revocation';
     import Tabs, { panelAttrs } from '../../opscenter/ui/Tabs.svelte';
     import type { Translate } from '../sessions/types';
+    import type { PluginInspectorSnapshot } from '../plugins/store.svelte';
     import ActivityLog from './ActivityLog.svelte';
-    import type { ActivityRow, CplugItem } from './cplugs-adapter';
+    import type { ActivityRow, CplugItem, CplugUiSlotRow } from './cplugs-adapter';
     import DisableConfirm from './DisableConfirm.svelte';
     import PermissionSheet from './PermissionSheet.svelte';
     import PluginData from './PluginData.svelte';
@@ -24,29 +27,43 @@
         error?: string | null;
         onConfirmOff: () => void;
         onCancelOff: () => void;
-        onGrant: (ticks: string[]) => void;
+        onGrant: (ticks: string[], slotTicks?: string[]) => void;
+        uiSlots?: readonly CplugUiSlotRow[];
         sheetStamp?: string;
         loadActivity: (cplugId: string) => Promise<ActivityRow[]>;
         purge?: (cplugId: string, confirmToken?: string) => Promise<PurgePrice>;
         onPurged?: () => void;
         onUninstall?: () => void;
+        onDisableAndUninstall?: () => void;
         uninstalling?: boolean;
         uninstallError?: string | null;
         health?: HealthRow;
         canActHealth?: boolean;
         onHealth?: () => void;
+        inspector?: PluginInspectorSnapshot | null;
+        onInspectLogs?: (cplugId: string) => void;
         t: Translate;
     }
 
-    const { plugin, tab, onTab, asking = false, busy = false, error = null, onConfirmOff, onCancelOff, onGrant, sheetStamp = '', loadActivity, purge, onPurged, onUninstall, uninstalling = false, uninstallError = null, health, canActHealth = false, onHealth, t }: Props = $props();
+    const { plugin, tab, onTab, asking = false, busy = false, error = null, onConfirmOff, onCancelOff, onGrant, uiSlots = [], sheetStamp = '', loadActivity, purge, onPurged, onUninstall, onDisableAndUninstall, uninstalling = false, uninstallError = null, health, canActHealth = false, onHealth, inspector = null, onInspectLogs, t }: Props = $props();
 
     const reason = $derived(paneReason(plugin, t));
+    const revoked = $derived(isInstalledRevoked(plugin));
+    const revocationReason = $derived(installedRevocationReason(plugin));
     const tabs = $derived(paneTabs(plugin, t));
     const idBase = $derived(`plugin-pane-${plugin.cplugId}`);
 </script>
 
 <div class="plp" data-plugin-pane={plugin.cplugId}>
-    {#if reason}
+    {#if revoked}
+        <RevokedBanner
+            reason={revocationReason}
+            since={plugin.revokedSince ?? null}
+            onDisableUninstall={onDisableAndUninstall ?? onUninstall}
+            busy={uninstalling || busy}
+            {t}
+        />
+    {:else if reason}
         <div class="plp__why" data-plugin-reason={reason.kind}>
             <p class="plp__why-text">{reason.lead} <span class="plp__why-more">{reason.more}</span></p>
             {#if reason.kind === 'grant'}
@@ -62,13 +79,14 @@
     <div class="plp__panel" {...panelAttrs(idBase, tab)} data-plugin-panel={tab}>
         {#key plugin.id}
             {#if tab === 'overview'}
-                <PluginOverview {plugin} {health} canAct={canActHealth} onHealth={onHealth} {t} />
+                <PluginOverview {plugin} {health} canAct={canActHealth} onHealth={onHealth} {inspector} {onInspectLogs} {t} />
             {:else if tab === 'settings'}
                 <PluginSettings {plugin} {t} />
             {:else if tab === 'permissions'}
                 {#key sheetStamp}
                     <PermissionSheet
                         rows={plugin.permissions}
+                        {uiSlots}
                         missing={plugin.missing}
                         waiting={plugin.state === 'needs_approval'}
                         off={plugin.state === 'disabled'}

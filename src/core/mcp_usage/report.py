@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from src.plugins.sdk import old_names as sdk_old_names
 from src.core.mcp_usage import store as usage_store
+from src.core.stats import pack_queries
 
 MAX_DAYS = usage_store.RETENTION_DAYS
 DEFAULT_DAYS = 30
@@ -13,7 +15,8 @@ OLD_NAME_RECENT_DAYS = 7
 
 
 def build(days: int, registered: Iterable[str], store: Optional[usage_store.UsageStore] = None,
-          now: Optional[datetime] = None) -> Dict[str, Any]:
+          now: Optional[datetime] = None, *, scope: str = "pack",
+          app_db: Optional[Path] = None) -> Dict[str, Any]:
     store = store or usage_store.get_store()
     days = max(1, min(int(days), MAX_DAYS))
     today = (now or datetime.now(timezone.utc)).astimezone(timezone.utc).date()
@@ -25,7 +28,9 @@ def build(days: int, registered: Iterable[str], store: Optional[usage_store.Usag
         row["total"] += calls
         row["by_caller_kind"][kind] = row["by_caller_kind"].get(kind, 0) + calls
         row["by_outcome"][outcome] = row["by_outcome"].get(outcome, 0) + calls
-    last = store.last_called_days()
+    last = dict(store.last_called_days())
+    if scope == "pack":
+        pack_queries.mcp_usage_merge_pack(per, last, first, today, app_db=app_db)
     tools = []
     for tool in sorted(names | set(per)):
         row = per.get(tool, {"total": 0, "by_caller_kind": {}, "by_outcome": {}})

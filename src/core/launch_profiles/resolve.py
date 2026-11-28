@@ -18,6 +18,7 @@ from src.core.byoai.contracts import Connection
 from src.core.launch_profiles.endpoints import EndpointLaunch, UnsupportedEndpoint, endpoint_launch
 from src.core.launch_profiles.plan import PURPOSES, LaunchDisplay, LaunchPlan, Purpose, ScriptFile
 from src.core.launch_profiles.render import render_custom, render_structured
+from src.core.agy.identity import is_agy_profile
 from src.core.sessions import launch_overlay
 from src.core.launch_profiles.seed_from_wrappers import profile_from_wrapper
 from src.core.launch_wrappers.family_defaults import standard_wrapper
@@ -155,6 +156,19 @@ def _own_route(harness: str, env_set: tuple, secret_names: list, endpoint_flags:
     return launch_overlay.UpstreamRoute(json.loads(words[base_key]), json.loads(env_key) if env_key else "", tuple(endpoint_flags))
 
 
+def runs_copilot(profile: LaunchProfile) -> bool:
+    if profile.harness != "custom":
+        return False
+    words = (profile.custom_command.script if profile.custom_command else "").split()
+    return (words[:1] == ["copilot"]) or (profile.agent is not None and profile.agent.process == "copilot")
+
+
+def custom_tool(profile: LaunchProfile) -> str:
+    if profile.harness != "custom":
+        return ""
+    return "copilot" if runs_copilot(profile) else "agy" if is_agy_profile(profile) else ""
+
+
 def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchPlan:
     if purpose not in PURPOSES:
         raise ValueError(f"purpose must be one of {PURPOSES}")
@@ -195,12 +209,14 @@ def resolve_launch(request: LaunchRequest, purpose: Purpose = "pane") -> LaunchP
         route = _own_route(profile.harness, env_set, secret_names, endpoint.flags if endpoint else ())
         overlay = (launch_overlay.chain_plan_for(profile.harness, purpose, route) if route is not None
                    else launch_overlay.plan_for(profile.harness, purpose) if endpoint is None else None)
+    if overlay is None and custom_tool(profile):
+        overlay = launch_overlay.plan_for(custom_tool(profile), purpose)
     script_file: Optional[ScriptFile] = None
     if launch_profile.custom_command is not None:
         path = request.scripts_dir / f"{profile.id}.zsh"
         script_file = ScriptFile(str(path), profile.custom_command.script)
         command = render_custom(profile.custom_command.entry, path, model, app_args, request.disable_alternate_screen,
-                                profile.shell_profile, secret_names, env_set, env_unset)
+                                profile.shell_profile, secret_names, env_set, env_unset, overlay.preamble if overlay else "")
         tail = ([model] if model else []) + [a for a in app_args if a]
     else:
         if transparent_codex:

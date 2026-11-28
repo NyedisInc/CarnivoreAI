@@ -16,6 +16,7 @@ from src.api.peer_auth import Principal, require_peer
 from src.config import settings
 from src.core.db import transaction
 from src.core.pack.identity import home, replicas
+from src.core.pack.jobs import host_admit
 from src.core.pack.machines import capabilities as pack_capabilities
 from src.core.pack.migrate import code
 from src.core.pack.transport import blobs, bundles
@@ -26,14 +27,23 @@ _require_replica = require_peer("replica", also=("migrate",))
 pack_capabilities.register("pack.transport")
 
 
-def inbox() -> blobs.Inbox:
-    return blobs.Inbox(Path(settings.get_state_dir()) / "pack" / "inbox")
+def inbox(member: bool = False) -> blobs.Inbox:
+    directory = Path(settings.get_state_dir()) / "pack" / "inbox"
+    if member:
+        return blobs.Inbox(directory, max_peer_bytes=blobs.MAX_BLOB_BYTES, max_total_bytes=blobs.MAX_TOTAL_INBOX_BYTES - blobs.MAX_BLOB_BYTES)
+    return blobs.Inbox(directory)
 
 
 def _peer_only(principal: Principal) -> str:
     if not principal.is_peer or principal.grant is None:
         raise HTTPException(403, {"code": "peer_token_required", "detail": "only a paired computer sends a blob"})
     return principal.grant.peer_install_id
+
+
+def is_member(principal: Principal) -> bool:
+    from src.core.federation.mesh_grants import MeshGrant
+
+    return isinstance(principal.grant, MeshGrant)
 
 
 def _refuse(exc: blobs.BlobError) -> JSONResponse:
@@ -74,9 +84,10 @@ def _note(blob_id: str, peer: str, kind: Any, size: int, state: str, **extra: An
 async def put_chunk(blob_id: str, request: Request, offset: int = Query(ge=0), principal: Principal = Depends(_require_replica)) -> Any:
     """Append one chunk at exactly the current size (the sender resumes from ``received`` on a 409). Output: {received}."""
     peer = _peer_only(principal)
+    member = is_member(principal)
     data = await request.body()
     try:
-        size = await run_in_threadpool(inbox().put, blob_id, offset, data, request.headers.get("x-chunk-sha256", ""), peer)
+        size = await run_in_threadpool(lambda: inbox(member).put(blob_id, offset, data, request.headers.get("x-chunk-sha256", ""), peer, strict_owner=member))
         if offset == 0:
             await run_in_threadpool(_note, blob_id, peer, None, size, "receiving")
     except blobs.BlobError as exc:
@@ -88,8 +99,9 @@ async def put_chunk(blob_id: str, request: Request, offset: int = Query(ge=0), p
 async def seal_blob(blob_id: str, body: SealBody, principal: Principal = Depends(_require_replica)) -> Any:
     """Verify the whole blob (size and sha256) and make it readable. Output: {sealed: true, size}."""
     peer = _peer_only(principal)
+    member = is_member(principal)
     try:
-        path = await run_in_threadpool(inbox().seal, blob_id, body.size, body.sha256, body.kind)
+        path = await run_in_threadpool(lambda: inbox(member).seal(blob_id, body.size, body.sha256, body.kind, peer=peer, strict_owner=member))
     except blobs.BlobError as exc:
         return _refuse(exc)
     await run_in_threadpool(lambda: _note(blob_id, peer, body.kind, body.size, "sealed", sha256=body.sha256, path=str(path)))
@@ -99,9 +111,10 @@ async def seal_blob(blob_id: str, body: SealBody, principal: Principal = Depends
 @router.get("/blobs/{blob_id}")
 async def blob_status(blob_id: str, principal: Principal = Depends(_require_replica)) -> Any:
     """How much of a blob is here and whether it is sealed (resume after a link loss). Output: {received, sealed}."""
-    _peer_only(principal)
+    peer = _peer_only(principal)
+    member = is_member(principal)
     try:
-        return await run_in_threadpool(inbox().status, blob_id)
+        return await run_in_threadpool(lambda: inbox(member).status(blob_id, peer=peer, strict_owner=member))
     except blobs.BlobError as exc:
         return _refuse(exc)
 
@@ -115,6 +128,7 @@ async def apply_bundle(body: ApplyBody, request: Request, principal: Principal =
       ``project_moved_away`` / ``bundle_unverified`` / ``bundle_apply_failed``.
     """
     sender = _peer_only(principal)
+    member = is_member(principal)
     applied: Dict[str, Any] = {}
 
     def run() -> Dict[str, Any]:
@@ -130,6 +144,11 @@ async def apply_bundle(body: ApplyBody, request: Request, principal: Principal =
                 else {project.get("home_install_id")}
             if sender not in counterparts:
                 raise HTTPException(403, {"code": "not_a_counterpart", "detail": "that computer is neither this project's home nor its replica"})
+            if member:
+                company = conn.execute("SELECT c.uid FROM projects p JOIN companies c ON c.id = p.company_id WHERE p.uid = ?", (project["uid"],)).fetchone()
+                host_admit.enforce_member_hosting(project["uid"], company[0] if company else None)
+                if project["pack_state"] == home.REPLICA and bundles.inside_other_repo(project["root"], air_gap=bool(project.get("air_gap"))):
+                    raise HTTPException(403, {"code": "member_root_refused", "detail": "this copy's folder is not its own git repository"})
         try:
             path = inbox().sealed_path(body.blob_id, peer=sender)
         except blobs.BlobError as exc:

@@ -12,6 +12,76 @@ export interface PlanContext {
   quotaWindow?: string;
   marker?: { from: string; to: string } | null;
   rolling?: boolean;
+  selfInstallId?: string | null;
+}
+
+export function explicitHostId(host: string | undefined, selfInstallId?: string | null): string | undefined {
+  if (!host) return undefined;
+  if (host === 'local' && selfInstallId) return selfInstallId;
+  return host;
+}
+
+export function normalizeHostFiltersForSave(filters: StatsFilters | undefined, selfInstallId?: string | null): StatsFilters {
+  if (!filters || typeof filters !== 'object') return {};
+  const next: StatsFilters = { ...filters };
+  if (next.host === 'local' && selfInstallId) next.host = selfInstallId;
+  if (Array.isArray(next.hosts) && selfInstallId) {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const entry of next.hosts) {
+      const mapped = entry === 'local' ? selfInstallId : entry;
+      if (mapped && !seen.has(mapped)) {
+        seen.add(mapped);
+        out.push(mapped);
+      }
+    }
+    next.hosts = out;
+  }
+  return next;
+}
+
+export function displayHostFilterValue(
+  host: string | undefined,
+  items: readonly { filter_value: string | null }[],
+  selfInstallId?: string | null,
+): string {
+  if (!host) return '';
+  if (items.some((item) => item.filter_value === host)) return host;
+  if (selfInstallId && host === selfInstallId && items.some((item) => item.filter_value === 'local')) return 'local';
+  if (selfInstallId && host === 'local' && items.some((item) => item.filter_value === selfInstallId)) return selfInstallId;
+  return host;
+}
+
+export function matchesHostFilter(selected: readonly string[], itemValue: string, selfInstallId?: string | null): boolean {
+  if (selected.includes(itemValue)) return true;
+  if (!selfInstallId) return false;
+  if (itemValue === 'local') return selected.includes(selfInstallId);
+  if (itemValue === selfInstallId) return selected.includes('local');
+  return false;
+}
+
+export function resolveQueryHostFilters(filters: StatsFilters, selfInstallId?: string | null): StatsFilters {
+  if (!selfInstallId) return filters;
+  let changed = false;
+  const next: StatsFilters = { ...filters };
+  if (next.host === selfInstallId) {
+    next.host = 'local';
+    changed = true;
+  }
+  if (Array.isArray(next.hosts) && next.hosts.includes(selfInstallId)) {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const entry of next.hosts) {
+      const mapped = entry === selfInstallId ? 'local' : entry;
+      if (mapped && !seen.has(mapped)) {
+        seen.add(mapped);
+        out.push(mapped);
+      }
+    }
+    next.hosts = out;
+    changed = true;
+  }
+  return changed ? next : filters;
 }
 
 export const DEFAULT_QUOTA_WINDOW = 'five_hour';
@@ -57,8 +127,11 @@ export function seriesBody(config: ChartConfig, series: ChartSeries, range: { fr
   return {
     metric: series.metric, operation: op, ...(rolling ? { rolling } : { from: range.from, to: range.to }), timezone: ctx.timezone,
     resolution: config.resolution ?? 'auto',
-    filters: allowedFilters(series.metric, mergeFilters(ctx.filters, config.filters, series.filters), ctx.quotaWindow),
-    ...(series.metric === 'quota_utilization' ? {} : { scope: 'pack' as const }),
+    filters: resolveQueryHostFilters(
+      allowedFilters(series.metric, mergeFilters(ctx.filters, config.filters, series.filters), ctx.quotaWindow),
+      ctx.selfInstallId,
+    ),
+    scope: 'pack' as const,
     transform: series.transform || 'total',
     ...(series.group_by ? { group_by: series.group_by } : {}),
     ...((series.operation === 'ranking' && !series.group_by) ? { group_by: series.metric === 'quota_utilization' ? 'account_id' : 'model' } : {}),

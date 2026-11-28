@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import structlog
 
-from src.plugins.registry import MANIFEST_FILE, PLUGINS_ROOT, plugin_folders
+from src.plugins.registry import PLUGINS_ROOT, TOML_FILE, plugin_folders
 from src.core.skills.bundled_install import BundledSkillError, bundled_digest, bundled_version
 from src.core.skills.required import REQUIRED_SKILLS
 from src.models.catalog_builtins import BuiltinEntry
@@ -16,7 +17,6 @@ logger = structlog.get_logger()
 
 THEMES_ROOT = Path(__file__).resolve().parents[3] / "client" / "css" / "themes"
 FIRST_PARTY_PUBLISHER = "nyedis"
-SIDECAR_FILE = "carnivore.json"
 
 
 def _read_json(path: Path) -> Optional[Dict[str, Any]]:
@@ -28,14 +28,23 @@ def _read_json(path: Path) -> Optional[Dict[str, Any]]:
     return doc if isinstance(doc, dict) else None
 
 
+def _read_toml(path: Path) -> Optional[Dict[str, Any]]:
+    try:
+        doc = tomllib.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        logger.warning("builtins_manifest_unreadable", path=str(path), error=type(exc).__name__)
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
 def plugin_entries(root: Path) -> List[BuiltinEntry]:
     out: List[BuiltinEntry] = []
     for folder in plugin_folders(root):
-        manifest = _read_json(root / folder / MANIFEST_FILE)
+        toml_path = root / folder / TOML_FILE
+        manifest = _read_toml(toml_path)
         if manifest is None or not manifest.get("version"):
             continue
-        sidecar = _read_json(root / folder / SIDECAR_FILE) if (root / folder / SIDECAR_FILE).is_file() else None
-        name = (sidecar or {}).get("name") or manifest.get("name") or folder
+        name = manifest.get("name") or folder
         out.append(BuiltinEntry(id=f"{FIRST_PARTY_PUBLISHER}/{folder}", kind="cplug", name=str(name), version=str(manifest["version"]),
                                 since_app_version=manifest.get("min_app_version")))
     return sorted(out, key=lambda e: e.id)

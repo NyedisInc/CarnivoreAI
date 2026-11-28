@@ -84,7 +84,7 @@ describe.skipIf(DRAFT_ROOT !== '')('every plugin widget under cplugs/ meets the 
   const known = (plugin: string, f: MenuFinding): boolean => PLUGIN_KNOWN.some((row) => row.plugin === plugin && row.file === f.path && row.rule === f.rule);
 
   it('looked at the plugins (a scan of nothing is not a pass)', () => {
-    expect(scans.find((one) => one.plugin === 'huddle')).toBeDefined();
+    expect(scans.find((one) => one.plugin === 'taskmanager')).toBeDefined();
     expect(scans.find((one) => one.plugin === 'devwidgetlab')!.findings.length).toBeGreaterThan(0);
   });
 

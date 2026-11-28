@@ -1,0 +1,217 @@
+schema = 2
+api_version = 1
+id = "taskmanager"
+renamed_from = "huddle"
+renamed_from_keeps = ["strings", "widgets"]
+name = "task manager"
+description = "a shared list between you and claude, one per project plus one shared list"
+name_key = "cplug.huddle.name"
+description_key = "cplug.huddle.description"
+version = "1.0.0"
+kind = "plugin"
+icon = "chat"
+author = "Joe (ccsliinc)"
+license = "MIT"
+min_app_version = "1.12.20"
+tier = "builtin"
+default_enabled = true
+css_prefix = "hdr"
+tool_family = "task_manager"
+data = []
+
+[legacy_ids]
+nudge = "nudgeEnabled"
+
+[permissions]
+read = ["sessions.read"]
+write = ["sessions.message", "notify", "agent_writes", "swarm", "work"]
+
+[ui]
+routes = true
+storage = true
+plugins = ["session-card-action", "settings-panel"]
+topics = ["list", "delta", "cards", "focus", "held", "sendq", "told", "progress", "prefs"]
+widgets = ["huddle.chat"]
+tabs = ["huddle"]
+menu_links = []
+popout = { enabled = true, multi = true }
+
+[mcp]
+tools = [
+  "task_manager_tasks_list",
+  "task_manager_changes",
+  "task_manager_schedules_list",
+  "task_manager_add",
+  "task_manager_update",
+  "task_manager_state_request",
+  "task_manager_ask",
+  "task_manager_reply",
+  "task_manager_move",
+  "task_manager_group_create",
+  "task_manager_group_update",
+  "task_manager_answered_set",
+  "task_manager_fork",
+  "task_manager_batch_run",
+  "task_manager_artifact_add",
+  "task_manager_entries_list",
+  "task_manager_entry_import",
+  "task_manager_progress_set",
+  "task_manager_role_set",
+  "task_manager_lead_set",
+  "task_manager_leads_list",
+  "task_manager_leads_update",
+  "task_manager_wait_update",
+  "task_manager_file_remove",
+  "task_manager_guide",
+]
+
+[owns]
+strings = ["cplug.huddle."]
+styles = [
+  "task-manager-tail.css",
+  "task-manager-tree.css",
+  "task-manager-bubble.css",
+  "ask/ask-form.css",
+  "swarm/characters/characters.css",
+  "mk2/mk2-design.css",
+]
+tests = ["tests/python/cplugs/taskmanager/"]
+style_guide = [
+  "web/src/cplugs/taskmanager/HuddleSwarmSettings.svelte",
+  "web/src/cplugs/taskmanager/swarm/SwarmMemberFace.svelte",
+]
+contributions = [
+  "chat.widget_kind",
+  "settings.panel",
+  "style_guide.specimen",
+  "session.schedules",
+  "session.roles",
+  "session.member_face",
+]
+
+[widgets."huddle.chat"]
+instancing = "per-target"
+fits = { sizes = ["medium", "large", "full"], anySize = true }
+
+[settings_schema]
+version = 1
+
+[settings_schema.fields.showTab]
+kind = "boolean"
+labelKey = "cplug.huddle.settings.show_tab"
+hintKey = "cplug.huddle.settings.show_tab_help"
+default = true
+
+[settings_schema.fields.showEmptyGroups]
+kind = "boolean"
+labelKey = "cplug.huddle.settings.show_empty_groups"
+default = false
+
+[settings_schema.fields.hideCompleted]
+kind = "boolean"
+labelKey = "cplug.huddle.settings.hide_completed"
+default = false
+
+[settings_schema.fields.view]
+kind = "enum"
+labelKey = "cplug.huddle.settings.view"
+options = ["status", "area"]
+default = "status"
+
+[settings_schema.fields.density]
+kind = "enum"
+labelKey = "cplug.huddle.settings.density"
+options = ["compact", "normal", "full"]
+default = "normal"
+
+[settings_schema.fields.accordion]
+kind = "boolean"
+labelKey = "cplug.huddle.settings.accordion"
+default = false
+
+[settings_schema.fields.heldSendMinutes]
+kind = "number"
+labelKey = "cplug.huddle.settings.held_send_minutes"
+min = 1
+max = 1440
+default = 30
+
+[settings_schema.fields.sendQuietSeconds]
+kind = "number"
+labelKey = "cplug.huddle.settings.send_quiet_seconds"
+min = 1
+max = 300
+default = 10
+
+[settings_schema.fields.sendCapSeconds]
+kind = "number"
+labelKey = "cplug.huddle.settings.send_cap_seconds"
+min = 5
+max = 600
+default = 45
+
+[settings_schema.fields.inboxFallbackSeconds]
+kind = "number"
+labelKey = "cplug.huddle.settings.inbox_fallback_seconds"
+hintKey = "cplug.huddle.settings.inbox_fallback_seconds_help"
+min = 15
+max = 3600
+default = 120
+
+[settings_schema.fields.nudgeEnabled]
+kind = "boolean"
+labelKey = "cplug.huddle.settings.nudge_enabled"
+hintKey = "cplug.huddle.settings.nudge_enabled_help"
+default = false
+
+[settings_schema.fields.nudgeMinutes]
+kind = "number"
+labelKey = "cplug.huddle.settings.nudge_minutes"
+hintKey = "cplug.huddle.settings.nudge_minutes_help"
+min = 15
+max = 1440
+default = 60
+
+[settings_schema.fields.nudgeTries]
+kind = "number"
+labelKey = "cplug.huddle.settings.nudge_tries"
+hintKey = "cplug.huddle.settings.nudge_tries_help"
+min = 1
+max = 10
+default = 3
+
+[settings_schema.fields.nudgeMaxItems]
+kind = "number"
+labelKey = "cplug.huddle.settings.nudge_max_items"
+hintKey = "cplug.huddle.settings.nudge_max_items_help"
+min = 1
+max = 10
+default = 5
+
+[settings_schema.fields.unclaimedText]
+kind = "string"
+labelKey = "cplug.huddle.settings.nudge_unclaimed_text"
+hintKey = "cplug.huddle.settings.nudge_unclaimed_text_help"
+maxLength = 600
+default = 'huddle nudge: "{item}" has sat open and unclaimed for {minutes} min. If you are free, take it: claim it with task_manager_update state working and keep going, ask with task_manager_ask if blocked, or leave it open if you cannot.'
+
+[settings_schema.fields.pickupText]
+kind = "string"
+labelKey = "cplug.huddle.settings.nudge_pickup_text"
+hintKey = "cplug.huddle.settings.nudge_pickup_text_help"
+maxLength = 600
+default = 'huddle nudge: you have been idle for {minutes} min and hold no swarm item. Pick up the next open item, "{item}": claim it with task_manager_update state working and keep going, or ask with task_manager_ask if blocked.'
+
+[settings_schema.fields.claimedText]
+kind = "string"
+labelKey = "cplug.huddle.settings.nudge_claimed_text"
+hintKey = "cplug.huddle.settings.nudge_claimed_text_help"
+maxLength = 600
+default = "huddle nudge: no progress for {minutes} min on {items}. For each: post task_manager_progress_set and keep going, set review or waiting, ask with task_manager_ask if blocked, or set open if you stopped."
+
+[settings_schema.fields.waitCheckHosts]
+kind = "string"
+labelKey = "cplug.huddle.settings.wait_check_hosts"
+hintKey = "cplug.huddle.settings.wait_check_hosts_help"
+maxLength = 1000
+default = ""

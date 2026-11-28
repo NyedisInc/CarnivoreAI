@@ -1,15 +1,19 @@
 import Foundation
 
-struct NotifyMedia: Equatable {
+struct NotifyMedia: Equatable, Sendable {
     let id: String
     let mime: String
     let bytes: Int
     var w: Int? = nil
     var h: Int? = nil
     var dur: Double? = nil
+
+    static func isValidId(_ value: String) -> Bool {
+        value.range(of: "\\A[0-9a-f]{32}\\z", options: .regularExpression) != nil
+    }
 }
 
-struct NotifySettle: Equatable {
+struct NotifySettle: Equatable, Sendable {
     let place: String
     let agent: String
     let working: Bool
@@ -23,7 +27,7 @@ struct NotifySettle: Equatable {
     }
 }
 
-struct NotifyEnvelope: Equatable {
+struct NotifyEnvelope: Equatable, Sendable {
     var kind: NotifyKind
     var type: String? = nil
     var sub: String? = nil
@@ -51,7 +55,10 @@ struct NotifyEnvelope: Equatable {
             .map { [$0[0], String($0[1].prefix(NotifyContract.limitActLabel))] }
         if let card = object["card"] as? [String: Any] { env.cardJSON = try? JSONSerialization.data(withJSONObject: card) }
         env.more = (object["more"] as? Bool) ?? false
-        if let m = object["media"] as? [String: Any], let id = m["id"] as? String, let mime = m["mime"] as? String, let bytes = m["bytes"] as? Int {
+        if let m = object["media"] as? [String: Any],
+           let id = m["id"] as? String, NotifyMedia.isValidId(id),
+           let mime = m["mime"] as? String,
+           let bytes = m["bytes"] as? Int, bytes >= 0 {
             env.media = NotifyMedia(id: id, mime: mime, bytes: bytes, w: m["w"] as? Int, h: m["h"] as? Int, dur: m["dur"] as? Double)
         }
         if let s = object["settle"] as? [String: Any], let place = s["where"] as? String, let agent = s["agent"] as? String {

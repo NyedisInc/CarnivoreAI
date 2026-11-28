@@ -22,11 +22,13 @@ function draw(value: string, onPick = vi.fn()) {
 const checked = () => [...document.querySelectorAll('[aria-checked="true"]')];
 
 test('one swatch per soft color; a pick reports its hex and the current one is selected', () => {
-    const onPick = draw('#817040');
+    const first = SOFT_PROJECT_COLORS[0].hex;
+    const sixth = SOFT_PROJECT_COLORS[5].hex;
+    const onPick = draw(sixth);
     expect(document.querySelectorAll('button[data-project-color]').length).toBe(SOFT_PROJECT_COLORS.length);
-    expect(checked().map((e) => e.getAttribute('data-project-color'))).toEqual(['#817040']);
-    (document.querySelector('[data-project-color="#966356"]') as HTMLElement).click();
-    expect(onPick).toHaveBeenCalledWith('#966356');
+    expect(checked().map((e) => e.getAttribute('data-project-color'))).toEqual([sixth]);
+    (document.querySelector(`[data-project-color="${first}"]`) as HTMLElement).click();
+    expect(onPick).toHaveBeenCalledWith(first);
 });
 
 test('a legacy color name selects nothing and adds no swatch (hex only since 2026-10-22)', () => {
@@ -90,9 +92,10 @@ test('no color swatch: absent by default, drawn first with allowNone, pressed wh
     expect(none.getAttribute('aria-checked')).toBe('true');
     expect(none.getAttribute('aria-label')).toBe('default color');
     expect(document.querySelectorAll('button[data-project-color]').length).toBe(SOFT_PROJECT_COLORS.length);
-    (document.querySelector('[data-project-color="#966356"]') as HTMLElement).click();
+    const first = SOFT_PROJECT_COLORS[0].hex;
+    (document.querySelector(`[data-project-color="${first}"]`) as HTMLElement).click();
     none.click();
-    expect(onPick.mock.calls).toEqual([['#966356'], ['']]);
+    expect(onPick.mock.calls).toEqual([[first], ['']]);
 });
 
 test('the popover previews every change live; cancel ends the preview, OK leaves it for the caller to end', () => {

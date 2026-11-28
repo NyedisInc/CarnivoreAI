@@ -1,4 +1,5 @@
 'use strict';
+// cannot be read
 
 const fs = require('node:fs');
 const path = require('node:path');
@@ -31,11 +32,11 @@ function parsePins(pkg) {
 function checkBuildConfig(pkg, pins) {
     const mac = (pkg.build && pkg.build.mac) || {};
     const targets = Array.isArray(mac.target) ? mac.target : [];
-    if (targets.length === 0) throw new PolicyError('build.mac.target is empty: a universal dmg and zip are required');
+    if (targets.length === 0) throw new PolicyError('build.mac.target is empty: split arm64 and x64 dmg and zip are required');
     for (const t of targets) {
         const arch = JSON.stringify(t && t.arch);
-        if (arch !== '["universal"]') {
-            throw new PolicyError(`build.mac.target "${t && t.target}" has arch ${arch}: universal required (arm64 and x64 in one app)`);
+        if (arch !== '["arm64","x64"]') {
+            throw new PolicyError(`build.mac.target "${t && t.target}" has arch ${arch}: split ["arm64","x64"] required`);
         }
     }
     if (mac.minimumSystemVersion !== MACOS_FLOOR) {
@@ -79,18 +80,34 @@ function newestStable(times) {
     return best;
 }
 
-function checkRegistry(pin, registry) {
+const WAIVER_VAR = 'CARNIVORE_ELECTRON_WAIVER';
+const WAIVER_FORMAT = /^(\d+\.\d+\.\d+):(\d+\.\d+\.\d+):(.*\S) (\d{4}-\d{2}-\d{2})$/;
+
+function parseWaiver(raw) {
+    if (raw === undefined || raw.trim() === '') return null;
+    const m = WAIVER_FORMAT.exec(raw.trim());
+    if (m === null) throw new PolicyError(`${WAIVER_VAR} is malformed: expected "<pin>:<newest>:<operator> <YYYY-MM-DD>"`);
+    return { pin: m[1], newest: m[2], who: m[3], date: m[4] };
+}
+
+function checkRegistry(pin, registry, waiverRaw) {
     const newest = newestStable(registry.time);
     if (newest === null) throw new PolicyError('could not determine: the registry lists no stable electron release');
     if (newest !== registry.latest) {
         throw new PolicyError(`could not determine: the registry's newest stable electron is ${newest} but its latest tag is ${registry.latest}`);
     }
     if (compareVersions(newest, pin) > 0) {
-        throw new PolicyError(`electron ${newest} is the newest stable and the pin is ${pin}: bump the pin`);
+        const waiver = parseWaiver(waiverRaw);
+        if (waiver !== null && waiver.pin === pin && waiver.newest === newest) {
+            return `WAIVED: electron pin ${pin} lags the newest stable ${newest}; waived by ${waiver.who} ${waiver.date}`;
+        }
+        const have = waiver === null ? '' : ` (the waiver given names ${waiver.pin} and ${waiver.newest}, which is not this pair)`;
+        throw new PolicyError(`electron ${newest} is the newest stable and the pin is ${pin}${have}: bump the pin, or the operator approves shipping on ${pin} and you rerun with ${WAIVER_VAR}="${pin}:${newest}:<operator> <YYYY-MM-DD>" macOS/scripts/release-build.sh <same arguments>`);
     }
     if (compareVersions(newest, pin) < 0) {
         throw new PolicyError(`electron ${pin} is not on the registry's stable list (newest stable is ${newest}): pin the newest stable`);
     }
+    return null;
 }
 
 function fetchRegistry() {
@@ -108,12 +125,12 @@ function fetchRegistry() {
     }
 }
 
-function check(macOSDir, registrySource = fetchRegistry) {
+function check(macOSDir, registrySource = fetchRegistry, env = process.env) {
     const pkg = JSON.parse(fs.readFileSync(path.join(macOSDir, 'package.json'), 'utf8'));
     const pins = parsePins(pkg);
     checkBuildConfig(pkg, pins);
     checkInstalled(macOSDir, pins);
-    checkRegistry(pins.electron, registrySource());
+    return checkRegistry(pins.electron, registrySource(), env[WAIVER_VAR]);
 }
 
 function outputDirFromArgs(args) {
@@ -137,8 +154,10 @@ function finish(macOSDir, builderArgs, required) {
     } else {
         let text = fs.readFileSync(manifest, 'utf8');
         const zips = [...text.matchAll(/^\s*-?\s*url:\s*(\S+)/gm)].map((m) => m[1]).filter((u) => u.endsWith('.zip'));
-        if (zips.length !== 1 || !/universal/.test(zips[0]) || /arm64|x64/.test(zips[0])) {
-            throw new PolicyError(`latest-mac.yml must name exactly one universal zip (no arm64 or x64 in its name), it names: ${zips.join(', ') || 'none'}`);
+        const hasArm64 = zips.some((u) => /arm64/.test(u) && !/universal/.test(u));
+        const hasX64 = zips.some((u) => !/arm64|universal/.test(u));
+        if (zips.length !== 2 || !hasArm64 || !hasX64) {
+            throw new PolicyError(`latest-mac.yml must name two split arch zips (arm64 and x64, no universal), it names: ${zips.join(', ') || 'none'}`);
         }
         text = text.replace(/^minimumSystemVersion:.*\n?/gm, '');
         if (!text.endsWith('\n')) text += '\n';
@@ -156,7 +175,8 @@ function main(argv) {
     const builderArgs = split === -1 ? [] : rest.slice(split + 1);
     try {
         if (cmd === 'check') {
-            check(macOSDir);
+            const waived = check(macOSDir);
+            if (waived) process.stderr.write(`electron-policy: ${waived}\n`);
             return 0;
         }
         if (cmd === 'finish') {
@@ -175,6 +195,6 @@ function main(argv) {
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
 
 module.exports = {
-    PINNED_PACKAGES, MACOS_FLOOR, MANIFEST_MIN_SYSTEM_VERSION, PolicyError,
-    parsePins, checkBuildConfig, checkInstalled, compareVersions, newestStable, checkRegistry, check, outputDirFromArgs, finish,
+    PINNED_PACKAGES, WAIVER_VAR, MACOS_FLOOR, MANIFEST_MIN_SYSTEM_VERSION, PolicyError,
+    parsePins, checkBuildConfig, checkInstalled, compareVersions, newestStable, parseWaiver, checkRegistry, check, outputDirFromArgs, finish,
 };

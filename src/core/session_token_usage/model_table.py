@@ -101,7 +101,24 @@ def cost_tier_for_model(model: Optional[str]) -> Optional[int]:
 
 def display_name_for_model(model: Optional[str]) -> Optional[str]:
     facts = facts_for_model(model)
-    return facts.display_name if facts is not None else None
+    if facts is not None and facts.display_name:
+        return facts.display_name
+    return short_model_name(model)
+
+
+_CLAUDE_NAME_RE = re.compile(
+    r"^(?:claude[\s_-]+)?(fable|mythos|opus|sonnet|haiku)[\s_-]+(\d+)(?:[._-](\d+))?"
+    r"(?:[\s_-](?:\d{8}|\d{4}-\d{2}-\d{2}))?$",
+    re.IGNORECASE,
+)
+
+
+def short_model_name(raw: Optional[str]) -> Optional[str]:
+    match = _CLAUDE_NAME_RE.match((raw or "").strip())
+    if not match:
+        return None
+    family, major, minor = match.groups()
+    return f"{family.capitalize()} {major}" + (f".{minor}" if minor else "")
 
 
 _DROPPED_PREFIX = "claude-"

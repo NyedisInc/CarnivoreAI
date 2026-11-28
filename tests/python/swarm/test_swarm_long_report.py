@@ -23,7 +23,7 @@ from src.core.db_steps import run_chain
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import delivery, reports, spawn, store, thread_port
 from src.plugins.host import runtime
-from src.plugins.huddle.public import TaskManagerSwarmPort
+from src.plugins.taskmanager.public import TaskManagerSwarmPort
 from tests.python.cplugs.owner import turn_on
 
 
@@ -39,7 +39,7 @@ def test_a_3000_character_report_posts_whole_in_the_thread(tmp_path: Path, monke
     host = runtime.install(FastAPI(), tmp_path)
     host.publish = lambda topic: None
     turn_on(host)
-    port = TaskManagerSwarmPort(host.context("huddle"))
+    port = TaskManagerSwarmPort(host.context("taskmanager"))
     thread_port.register(port)
     told = []
 

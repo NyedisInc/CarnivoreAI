@@ -36,6 +36,7 @@ export function asleepRows(records: SessionRecord[], liveNames: Set<string>): As
       agent_type: rec.agent_type,
       agent_family: rec.agent_family,
       agent_family_source: null,
+      agent_wrapper_icon: rec.agent_wrapper_icon ?? null,
       agent_wrapper_label: null,
       pinned_theme: rec.pinned_theme ?? null,
       activity_status: null,

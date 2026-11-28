@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSafeThemeValue } from './frame-theme';
+import { FRAME_OC_TOKENS, isSafeThemeValue } from './frame-theme';
 
 describe('isSafeThemeValue', () => {
   it('lets colors and font stacks through', () => {
@@ -22,5 +22,21 @@ describe('isSafeThemeValue', () => {
   it('refuses markup characters and over-long values', () => {
     expect(isSafeThemeValue('red;}</style>')).toBe(false);
     expect(isSafeThemeValue('a'.repeat(161))).toBe(false);
+  });
+});
+
+describe('FRAME_OC_TOKENS', () => {
+  it('includes the full Military Terminal surface, accent, typography, spacing, and motion tokens without duplicates', () => {
+    expect(new Set(FRAME_OC_TOKENS).size).toBe(FRAME_OC_TOKENS.length);
+    for (const tok of [
+      '--oc-orange-bright', '--oc-orange-dim', '--oc-orange-tint',
+      '--oc-green-bright', '--oc-green-dim',
+      '--oc-surface-1', '--oc-surface-2', '--oc-surface-sunken', '--oc-surface-raised', '--oc-surface-band',
+      '--oc-state-hover', '--oc-state-selected', '--oc-ground-chrome', '--oc-line-hairline', '--oc-radius-panel',
+      '--oc-fs-micro', '--oc-fs-hint', '--oc-fs-figure', '--oc-tracking-label', '--oc-tracking-caps',
+      '--oc-space-0-5', '--oc-space-6', '--oc-motion-fast', '--oc-motion',
+    ]) {
+      expect(FRAME_OC_TOKENS).toContain(tok);
+    }
   });
 });

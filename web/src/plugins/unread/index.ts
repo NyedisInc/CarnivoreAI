@@ -1,4 +1,4 @@
-import manifest from '../../../../src/plugins/unread/cplug.json';
+import manifest from '../../../../src/plugins/unread/carnivore.toml';
 import { t } from '../sdk';
 import type { CplugManifest, CplugWeb, Contribution } from '../sdk';
 

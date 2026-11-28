@@ -75,9 +75,7 @@ describe('the shipped surface', () => {
     });
 
     test('it contributes to no other surface', () => {
-        expect(surfacesOf('sidebar-item')).toEqual([]);
-        expect(surfacesOf('launchpad-panel')).toEqual([]);
-        expect(surfacesOf('status-source')).toEqual([]);
+        expect(surfacesOf('settings-panel').some((c) => c.id === ACTION_ID)).toBe(false);
     });
 });
 
@@ -250,5 +248,53 @@ describe('a contribution that still carries the retired shortcut field (#1785, E
     expect(await actions.runSessionCardAction('legacy-shortcut-item', row(), ctx({}))).toBe(true);
     expect(legacy.run).toHaveBeenCalledOnce();
     expect(surfacesOf('session-card-action').some((c) => c.id === 'legacy-shortcut-item')).toBe(false);
+  });
+});
+
+describe('SessionCardAction localOnly and requiresSessionUuid flags', () => {
+  test('localOnly hides and refuses peer sessions while requiresSessionUuid withholds rows without sessionUuid', async () => {
+    vi.resetModules();
+    const fresh = await import('./registry');
+    const actions = await import('./session-card-actions');
+    const localRun = vi.fn();
+    const uuidRun = vi.fn();
+    fresh.register({
+      id: 'flag-test-plugin',
+      contributions: [
+        {
+          id: 'local-flag-action',
+          surface: 'session-card-action',
+          order: 991,
+          enabled: () => true,
+          payload: { localOnly: true, label: () => 'local only', run: localRun },
+        },
+        {
+          id: 'uuid-flag-action',
+          surface: 'session-card-action',
+          order: 992,
+          enabled: () => true,
+          payload: { requiresSessionUuid: true, label: () => 'uuid keyed', run: uuidRun },
+        },
+      ],
+    });
+
+    const context = ctx({});
+    expect(actions.sessionCardMenuItems(row({ hostKey: 'peer-mac', sessionUuid: 'u1' }), context).map((i) => i.id))
+      .not.toContain('local-flag-action');
+    expect(actions.sessionCardMenuItems(row({ hostKey: 'local', sessionUuid: 'u1' }), context).map((i) => i.id))
+      .toContain('local-flag-action');
+    expect(await actions.runSessionCardAction('local-flag-action', row({ hostKey: 'peer-mac' }), context)).toBe(false);
+    expect(await actions.runSessionCardAction('local-flag-action', row({ hostKey: 'local' }), context)).toBe(true);
+    expect(localRun).toHaveBeenCalledTimes(1);
+
+    expect(actions.sessionCardMenuItems(row({ sessionUuid: null }), context).map((i) => i.id))
+      .not.toContain('uuid-flag-action');
+    expect(actions.sessionCardMenuItems(row({ sessionUuid: '' }), context).map((i) => i.id))
+      .not.toContain('uuid-flag-action');
+    expect(actions.sessionCardMenuItems(row({ sessionUuid: 'uuid-123' }), context).map((i) => i.id))
+      .toContain('uuid-flag-action');
+    expect(await actions.runSessionCardAction('uuid-flag-action', row({ sessionUuid: null }), context)).toBe(false);
+    expect(await actions.runSessionCardAction('uuid-flag-action', row({ sessionUuid: 'uuid-123' }), context)).toBe(true);
+    expect(uuidRun).toHaveBeenCalledTimes(1);
   });
 });

@@ -97,6 +97,69 @@ describe('Segmented', () => {
     });
 });
 
+describe('Segmented onreselect', () => {
+    test('choosing the picked option again by click reports onreselect and never onchange', () => {
+        const again: string[] = [];
+        const changed: string[] = [];
+        const { items } = seg({ onreselect: (v: string) => again.push(v), onchange: (v: string) => changed.push(v) });
+        items[0]!.click();
+        expect(again).toEqual(['global']);
+        expect(changed).toEqual([]);
+        items[1]!.click();
+        flushSync();
+        expect(again).toEqual(['global']);
+        expect(changed).toEqual(['sessions']);
+    });
+
+    test('Enter and Space on the picked option reach it as a click (the browser activates a button), and the key handler adds no second call', () => {
+        const again: string[] = [];
+        const { items } = seg({ onreselect: (v: string) => again.push(v) });
+        for (const key of ['Enter', ' ']) {
+            press(items[0]!, key);
+            items[0]!.click();
+        }
+        expect(again).toEqual(['global', 'global']);
+    });
+
+    test('arrow keys, Home and End never report onreselect, even when they land on the picked option', () => {
+        const again: string[] = [];
+        const { items } = seg({ value: 'sessions', onreselect: (v: string) => again.push(v) });
+        for (const key of ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End']) {
+            press(document.activeElement ?? items[1]!, key);
+            flushSync();
+        }
+        expect(again).toEqual([]);
+        const one = seg({ options: [{ value: 'only', label: 'only' }], value: 'only', onreselect: (v: string) => again.push(v) });
+        press(one.items[0]!, 'ArrowRight');
+        expect(again).toEqual([]);
+    });
+
+    test('a disabled group or option never reports onreselect', () => {
+        const again: string[] = [];
+        const group = seg({ disabled: true, onreselect: (v: string) => again.push(v) });
+        group.items[0]!.click();
+        const opt = seg({ value: 'gone', onreselect: (v: string) => again.push(v) });
+        opt.items[2]!.click();
+        expect(again).toEqual([]);
+    });
+});
+
+describe('Segmented caption and mark', () => {
+    test('a caption is a leading label cell outside the options, hidden from assistive tech; the group keeps its label', () => {
+        const { group, items } = seg({ caption: 'scope' });
+        const cell = group.querySelector('.oc-segmented__caption');
+        expect(cell?.textContent).toBe('scope');
+        expect(cell?.getAttribute('aria-hidden')).toBe('true');
+        expect(group.firstElementChild).toBe(cell);
+        expect(items).toHaveLength(4);
+        expect(group.getAttribute('aria-label')).toBe('scope');
+    });
+
+    test('no caption draws no cell', () => {
+        expect(seg().group.querySelector('.oc-segmented__caption')).toBeNull();
+    });
+});
+
 describe('Segmented iconOnly', () => {
     test('an icon option draws only its icon, and its label is the accessible name and the tip; one without an icon keeps its words', () => {
         const { items } = seg({ iconOnly: true });

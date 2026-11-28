@@ -29,6 +29,14 @@ def answers(conn: sqlite3.Connection) -> Dict[str, str]:
     return {r[0]: r[1] for r in conn.execute("SELECT install_id, answer FROM pack_relay_approval")}
 
 
+def forget(conn: sqlite3.Connection, install_id: str) -> bool:
+    if not conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'pack_relay_approval'").fetchone():
+        return False
+    gone = conn.execute("DELETE FROM pack_relay_approval WHERE install_id = ?", (install_id,)).rowcount > 0
+    conn.commit()
+    return gone
+
+
 def pending(recorded: Dict[str, str], candidates: Iterable[str]) -> List[str]:
     return [iid for iid in candidates if iid not in recorded]
 

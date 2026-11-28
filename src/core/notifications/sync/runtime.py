@@ -8,6 +8,7 @@ from src.core.federation import peer_links
 from src.core.notifications.destinations.service import get_service
 from src.core.notifications.sync.manager import SyncManager
 from src.core.notifications.sync.peers import LinkGateway
+from src.core.pack.machines import capabilities
 
 
 def start(app_state: Any, open_db: Callable[[], Any]) -> "asyncio.Task[None]":
@@ -16,6 +17,10 @@ def start(app_state: Any, open_db: Callable[[], Any]) -> "asyncio.Task[None]":
     manager = SyncManager(service.docs, service.secrets, gateway)
     manager.attach()
     app_state.notification_sync = manager
+    if capabilities.mesh_on():
+        from src.core.notifications.sync import mesh_notify
+
+        mesh_notify.attach(service.docs)
     if peer_links.LINKS is not None:
         peer_links.LINKS.add_connect_listener(lambda install_id: manager.request_sync())
     return asyncio.create_task(manager.run(), name="notification-settings-sync")

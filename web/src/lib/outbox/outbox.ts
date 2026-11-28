@@ -129,6 +129,7 @@ export function entries(): OutboxEntry[] {
   return listEntries();
 }
 
+/* the Task Manager */
 export function startOutbox(): void {
   if (started) return;
   started = true;

@@ -35,14 +35,14 @@
   }
 
   const root = $derived<MenuNode[]>([
+    ...newSessionKinds().flatMap((kind): MenuNode[] => {
+      const node: MenuNode = { id: kind, label: t(`drawer.new.${kind}`), run: leaf(() => chooseKind(kind)) };
+      return kind === 'agent'
+        ? [node, { id: 'project', label: t('drawer.new.project'), run: leaf(startNewProject) }]
+        : [node];
+    }),
+    { id: 'group', label: t('drawer.new.group'), sep: true, run: leaf(newGroup, false) },
     { id: 'company', label: t('drawer.new.company'), run: leaf(() => newCompanyPrompt(null)) },
-    ...newSessionKinds().map((kind) => ({
-      id: kind,
-      label: t(`drawer.new.${kind}`),
-      run: leaf(() => chooseKind(kind)),
-    })),
-    { id: 'project', label: t('drawer.new.project'), sep: true, run: leaf(startNewProject) },
-    { id: 'group', label: t('drawer.new.group'), run: leaf(newGroup, false) },
   ]);
 </script>
 

@@ -35,6 +35,9 @@ describe('reconnect model', () => {
     expect(list.find((c) => c.id === 'old')).toMatchObject({ viaRelay: false, needsUpdate: true });
     expect(list.find((c) => c.id === 'me')?.needsUpdate).toBe(false);
     expect(strandedCount(list)).toBe(1);
+    const three = roster([m('me', { rank: 0 }), m('old', { rank: 1, roster_v1: false }), m('never', { rank: 2, roster_v1: null }), m('cur', { rank: 3 })]);
+    expect(three.filter((c) => c.needsUpdate).map((c) => c.id)).toEqual(['old']);
+    expect(strandedCount(three)).toBe(1);
     expect(roster([m('me'), machine('dock')]).every((c) => !c.needsUpdate && !c.viaRelay)).toBe(true);
   });
 
@@ -62,5 +65,17 @@ describe('reconnect model', () => {
     expect(situationOf(view([m('me', { is_master: true })], { interim: true }))).toBe('main_now');
     expect(situationOf(view([m('me', { is_master: true })]))).toBe('normal');
     expect(situationOf(null)).toBe('normal');
+  });
+});
+
+describe('member sessions join the card (9c-1)', () => {
+  const host = (key: string, over: Record<string, unknown> = {}) => ({ key, label: key, local: false, ssh_target: '', computer_install_id: null, ...over });
+  const build = (mesh: unknown) => buildRoster({
+    view: { self: { install_id: 'me' }, computers: [entry('dock')], mesh } as never,
+    machines: [machine('me'), machine('dock')] as never, hosts: [host('h-dock', { computer_install_id: 'dock' }), host('h-other', { computer_install_id: 'other' })] as never, peers: [],
+  });
+  test('with the mesh on a member mesh row key is in its hostKeys by exact install id and another computer\'s row is not', () => {
+    expect(build({ links: [] }).find((c) => c.id === 'dock')!.hostKeys).toEqual(['h-dock']);
+    expect(build({ links: [] }).find((c) => c.id === 'me')!.hostKeys).toEqual([]);
   });
 });

@@ -31,9 +31,12 @@ def _locate(name: str) -> Optional[str]:
     found = shutil.which(name)
     if found:
         return found
-    if name != "claude":
-        return None
-    for candidate in CLAUDE_INSTALL_CANDIDATES:
+    candidates = (
+        CLAUDE_INSTALL_CANDIDATES if name == "claude"
+        else CODEX_INSTALL_CANDIDATES if name == "codex"
+        else ()
+    )
+    for candidate in candidates:
         path = Path(candidate).expanduser()
         if path.is_file() and os.access(path, os.X_OK):
             return str(path)

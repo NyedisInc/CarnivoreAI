@@ -1,4 +1,4 @@
-import manifest from '../../../../src/plugins/share/cplug.json';
+import manifest from '../../../../src/plugins/share/carnivore.toml';
 import { openModal, requireAccount, t } from '../sdk';
 import type { CplugManifest, CplugWeb, Contribution } from '../sdk';
 import ShareModal from './ShareModal.svelte';
@@ -12,6 +12,7 @@ const contribution: Contribution<'session-card-action'> = {
   feature: 'share_link',
   enabled: () => true,
   payload: {
+    localOnly: true,
     label: () => t('cplug.share.item'),
     async run(row): Promise<void> {
       const sessionId = row.sessionId;

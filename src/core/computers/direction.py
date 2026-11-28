@@ -6,6 +6,7 @@ import threading
 from typing import Any, Set
 
 from src.core.computers import store
+from src.core.pack.machines.roster_v2 import RosterV2
 
 ONE_WAY_ALLOWED = frozenset({
     "/api/v1/federation/hello", "/api/v1/federation/link", "/api/v1/federation/grants/self",
@@ -31,6 +32,11 @@ def path_allowed(path: str) -> bool:
     return path in ONE_WAY_ALLOWED
 
 
+def listed_one_way(lst: Any, install_id: str) -> bool:
+    entry = lst.entry(install_id) if isinstance(lst, RosterV2) else None
+    return entry is not None and entry.one_way
+
+
 def contained(peer_install_id: str) -> bool:
     row = store.CACHE.get(peer_install_id)
     return row is not None and row.inbound_control == 0
@@ -49,3 +55,7 @@ def note_restrictions(peer_install_id: str, restrictions: Any) -> None:
 def is_one_way_toward(peer_install_id: str) -> bool:
     with _TOWARD_LOCK:
         return peer_install_id in _ONE_WAY_TOWARD
+
+
+def one_way_ids() -> list:
+    return sorted(row.peer_install_id for row in store.CACHE.rows() if row.inbound_control == 0)

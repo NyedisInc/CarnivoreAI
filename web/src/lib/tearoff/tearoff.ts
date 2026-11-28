@@ -1,7 +1,21 @@
 import { rowIdOfSlot } from '../../opscenter/engine/slot-identity';
 import { widgetIdOfTab, widgetTargetOfTab, WIDGET_TAB_PREFIX } from '../../opscenter/engine/widget-tabs';
+import { panels } from '../../opscenter/engine/plugin-kinds';
+import { isWidgetId, parseWidgetTarget } from '../../popout/popout';
+import { popoutWidgetFor } from '../../plugins/host/popout-widgets';
+import { popoutTabOn } from '../dynamic-tabs/popout-tabs';
 
-export type TearOffKind = 'terminal' | 'widget';
+export type TearOffKind = 'terminal' | 'widget' | 'tab';
+
+const TAB_ID = /^[a-z][a-z0-9-]{0,95}$/;
+
+function canPopOutWidgetSlot(slot: string): boolean {
+  if (!isWidgetId(slot)) return false;
+  if (slot.startsWith('core.')) return true;
+  const { kind } = parseWidgetTarget(slot);
+  if (panels().canPopOut?.(kind) === true) return true;
+  return popoutWidgetFor(slot)?.enabled === true;
+}
 
 export interface TearOffTarget {
   kind: TearOffKind;
@@ -40,14 +54,27 @@ export function releaseTearOff(win: Window, target: TearOffTarget | null, up: Re
 export function tabTearOffTarget(tab: string): TearOffTarget | null {
   const row = rowIdOfSlot(tab);
   if (row !== null) return { kind: 'terminal', id: String(row) };
-  if (widgetTargetOfTab(tab) !== null) return null;
+  const targetTail = widgetTargetOfTab(tab);
   const widget = widgetIdOfTab(tab);
-  return widget === null ? null : { kind: 'widget', id: widget };
+  if (widget !== null) {
+    if (targetTail !== null) {
+      const full = `${widget}:${targetTail}`;
+      return canPopOutWidgetSlot(full) ? { kind: 'widget', id: full } : null;
+    }
+    return canPopOutWidgetSlot(widget) ? { kind: 'widget', id: widget } : null;
+  }
+  if (TAB_ID.test(tab) && popoutTabOn(tab) !== null) {
+    return { kind: 'tab', id: tab };
+  }
+  return null;
 }
 
 export function cellTearOffTarget(slot: string): TearOffTarget | null {
+  if (isWidgetId(slot)) {
+    return canPopOutWidgetSlot(slot) ? { kind: 'widget', id: slot } : null;
+  }
   const widget = widgetIdOfTab(WIDGET_TAB_PREFIX + slot);
-  return widget === null ? null : { kind: 'widget', id: widget };
+  return widget !== null && canPopOutWidgetSlot(widget) ? { kind: 'widget', id: widget } : null;
 }
 
 export function tearOffCell(slot: string, up: ReleasePoint): boolean {

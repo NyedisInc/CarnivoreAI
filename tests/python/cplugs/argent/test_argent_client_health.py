@@ -321,3 +321,34 @@ def test_no_argent_string_says_plugin_and_none_has_a_dash() -> None:
     assert [line for line in lines if re.search(r"plugin", line, re.I)] == []
     assert [line for line in lines if "—" in line or "–" in line] == []
     assert re.search(r"plugin", "'argent.shell.x': 'a plugin'", re.I)
+
+
+def test_a_token_answer_without_a_tenant_takes_it_from_the_cli_config(env: Dict[str, Any]) -> None:
+    seen: List[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/v1/my/cli/device":
+            return httpx.Response(200, json=fixture("device_start.json"))
+        if path == "/v1/my/cli/token":
+            return httpx.Response(200, json={"access_token": TOKEN, "token_type": "Bearer", "expires_in": 43200, "identity_display": "Live Person"})
+        if path == "/v1/my/cli/config":
+            seen.append(request.headers.get("authorization", ""))
+            return httpx.Response(200, json={"tenant_slug": "live-tenant", "identity_display": "Live Person"})
+        return httpx.Response(404, json={})
+
+    runtime = status_routes.get_runtime()
+    set_runtime(Runtime(store=runtime.store, tokens=runtime.tokens, login=DeviceLogin(runtime.store, runtime.tokens, transport=httpx.MockTransport(handler), sleep=no_sleep)))
+
+    async def run() -> Any:
+        await status_routes.get_runtime().login.start(SERVER)
+        for _ in range(300):
+            await asyncio.sleep(0.01)
+            if status_routes.get_runtime().login.public()["state"] != "pending":
+                break
+        return status_routes.get_runtime().login.public()
+
+    assert asyncio.run(run())["state"] == "done"
+    assert seen == [f"Bearer {TOKEN}"]
+    assert env["keychain"].items == {(relay_keychain.ARGENT_CLI_SERVICE, "live-tenant"): TOKEN}
+    assert env["store"].get_login()["display_name"] == "Live Person"

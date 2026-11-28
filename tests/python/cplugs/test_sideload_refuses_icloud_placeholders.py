@@ -18,7 +18,7 @@ def test_placeholder_is_a_stub_name_or_the_dataless_flag():
 def test_copy_tree_refuses_a_stub_and_names_the_fix(tmp_path):
     src = tmp_path / "src"
     src.mkdir()
-    (src / "cplug.json").write_text("{}")
+    (src / "carnivore.toml").write_text('[plugin]\nid = "x"\n')
     (src / ".main.py.icloud").write_text("stub")
     with pytest.raises(sideload.SideloadRefused) as caught:
         sideload_copy.copy_tree(src, tmp_path / "dest")

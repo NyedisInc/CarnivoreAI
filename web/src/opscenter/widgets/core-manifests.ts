@@ -122,10 +122,8 @@ const EXTRAS: Readonly<Record<CellId | CoreKind, CoreExtras>> = {
   notes: { category: 'tools', type: 'tool', capabilities: ['server-write'], scope: 'session' },
   files: { category: 'tools', type: 'tool', capabilities: ['navigate', 'server-write'], scope: 'session', settings: FILES_SETTINGS },
   changes: { category: 'tools', type: 'list', capabilities: [], scope: 'session' },
-  'task-manager': { category: 'tools', type: 'feed', capabilities: ['server-write'], scope: 'session', views: viewsFor('task-manager'), remembers: TASK_MANAGER_REMEMBERS },
   'task-manager-mk2': { category: 'tools', type: 'feed', capabilities: ['server-write'], scope: 'session', views: viewsFor('task-manager-mk2'), remembers: TASK_MANAGER_REMEMBERS },
   'task-manager-mk2-all': { category: 'tools', type: 'feed', capabilities: ['server-write'], viewOf: 'core.task-manager-mk2', remembers: TASK_MANAGER_REMEMBERS },
-  'task-manager-all': { category: 'tools', type: 'feed', capabilities: ['server-write'], viewOf: 'core.task-manager', remembers: TASK_MANAGER_REMEMBERS },
   crosstalk: { category: 'tools', type: 'feed', capabilities: [], scope: 'session' },
   tasks: { category: 'tools', type: 'list', capabilities: [], scope: 'session', views: viewsFor('tasks') },
   'tasks-all': { category: 'tools', type: 'list', capabilities: [], viewOf: 'core.tasks' },
@@ -139,10 +137,10 @@ const EXTRAS: Readonly<Record<CellId | CoreKind, CoreExtras>> = {
   'scheduled-tasks': { category: 'monitoring', type: 'monitor', capabilities: [] },
   'machine-stats': { category: 'monitoring', type: 'monitor', capabilities: [] },
   'keep-awake': { category: 'monitoring', type: 'monitor', capabilities: ['server-write'] },
-  // waiting on you
-  'task-list': { category: 'tools', type: 'feed', capabilities: ['server-write', 'navigate'] },
   'session-contents': { category: 'tools', type: 'list', capabilities: [], scope: 'session' },
   warroom: { category: 'monitoring', type: 'monitor', capabilities: [] },
+  // waiting on you
+  // the Task Manager
   questions: { category: 'monitoring', type: 'feed', capabilities: ['server-write', 'navigate'] },
   shell: { category: 'tools', type: 'pane', capabilities: ['terminal-input'], scope: 'session' },
   terminal: {
@@ -228,6 +226,14 @@ export function registerPluginManifest(kind: InstanceKind, meta: CellMeta, extra
   const manifest = checked(manifestFromMeta(kind, meta, WIDGET_CANVASES, 'per-target', extras, { id: kind, version: semverOf(version) }));
   PLUGIN_MANIFESTS.set(kind, manifest);
   return manifest;
+}
+
+export function unregisterPluginManifest(kind: string): boolean {
+  return PLUGIN_MANIFESTS.delete(kind);
+}
+
+export function allPluginManifests(): Readonly<Record<string, WidgetManifest>> {
+  return Object.fromEntries(PLUGIN_MANIFESTS);
 }
 
 function semverOf(version: string): string {

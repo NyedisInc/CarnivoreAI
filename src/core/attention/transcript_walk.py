@@ -50,6 +50,7 @@ class WindowWalk:
     workflows: Optional[int] = None
     notes: List[str] = field(default_factory=list)
     newest_append_at: Optional[datetime] = None
+    newest_activity_at: Optional[datetime] = None
     newest_assistant_at: Optional[datetime] = None
     newest_user_prompt_at: Optional[datetime] = None
     newest_enqueue_at: Optional[datetime] = None
@@ -75,6 +76,8 @@ class WindowWalk:
             self.last_meaningful = record
         at = parse_timestamp(record.get("timestamp"))
         self.newest_append_at = _later(self.newest_append_at, at)
+        if record.get("type") not in BOOKKEEPING_RECORD_TYPES:
+            self.newest_activity_at = _later(self.newest_activity_at, at)
         kind = record.get("type")
         if kind == "system":
             self._system(record, at)

@@ -87,3 +87,9 @@ def codex_args(url: str) -> List[str]:
         "-c", f'{p}http_headers={{"{TOOL_TIMEOUT_HEADER}"="{CODEX_TOOL_TIMEOUT_SEC}"}}',
         "-c", f"{p}tool_timeout_sec={CODEX_TOOL_TIMEOUT_SEC}",
     ]
+
+
+def agy_server_doc(bridge_script: Optional[Path] = BRIDGE_SCRIPT) -> Optional[dict]:
+    if bridge_script is None or not bridge_script.is_file():
+        return None
+    return {"command": bridge_command(), "args": [str(bridge_script)]}

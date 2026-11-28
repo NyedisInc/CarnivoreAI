@@ -12,12 +12,15 @@ from src.api.catalog_views import (
     item_views,
     ledger_rows_by_item,
 )
+from src.core import resource_push
 from src.core.catalog.fetch_stream import FetchRefusal
 from src.core.catalog.index_cache import IndexSnapshot
+from src.core.resource_push import topics as resource_topics
 from src.models.catalog_api import (
     CatalogItemResponse,
     CatalogListResponse,
     IndexStatus,
+    RevocationsRefreshResponse,
 )
 
 logger = structlog.get_logger()
@@ -76,10 +79,10 @@ async def list_catalog_items(request: Request) -> CatalogListResponse:
     return CatalogListResponse(
         index=index_status(snapshot),
         items=item_views(
-            items, rows=rows, snapshot=snapshot, untrusted=False
+            items, rows=rows, snapshot=snapshot, untrusted=False, cache=services.catalog.index_cache
         ),
         untrusted=item_views(
-            untrusted, rows=rows, snapshot=snapshot, untrusted=True
+            untrusted, rows=rows, snapshot=snapshot, untrusted=True, cache=services.catalog.index_cache
         ),
     )
 
@@ -122,6 +125,7 @@ async def get_catalog_item(request: Request, item_id: str) -> CatalogItemRespons
             installed=rows.get(item.id),
             snapshot=snapshot,
             untrusted=untrusted,
+            cache=services.catalog.index_cache,
         ),
     )
 
@@ -158,6 +162,9 @@ async def refresh_catalog_on_open(request: Request) -> IndexStatus:
     """
     catalog = request.app.state.services.catalog
     snapshot, refreshed = await catalog.index_cache.refresh_if_due()
+    refresher = getattr(request.app.state, "catalog_index_refresher", None) or getattr(catalog, "index_refresher", None)
+    if refresher is not None and snapshot.verified is not None and snapshot.refusal is None:
+        await refresher.notify_after_pass(snapshot)
     status = index_status(snapshot)
     status.refreshed = refreshed
     return status
@@ -185,8 +192,9 @@ async def refresh_catalog_index(request: Request) -> IndexStatus:
     """
     catalog = request.app.state.services.catalog
     snapshot, refreshed = await catalog.index_cache.refresh_now()
-    if snapshot.verified is not None and snapshot.refusal is None:
-        await request.app.state.catalog_index_refresher.notify_after_pass(snapshot)
+    refresher = getattr(request.app.state, "catalog_index_refresher", None) or getattr(catalog, "index_refresher", None)
+    if refresher is not None and snapshot.verified is not None and snapshot.refusal is None:
+        await refresher.notify_after_pass(snapshot)
     logger.info(
         "catalog_index_refresh_requested",
         held=snapshot.verified is not None,
@@ -196,3 +204,35 @@ async def refresh_catalog_index(request: Request) -> IndexStatus:
     status = index_status(snapshot)
     status.refreshed = refreshed
     return status
+
+
+@router.post(
+    "/catalog/revocations/refresh",
+    response_model=RevocationsRefreshResponse,
+    dependencies=[Depends(require_auth)],
+)
+async def refresh_catalog_revocations(request: Request) -> RevocationsRefreshResponse:
+    """Force an immediate index/revocation sync and stop any revoked sidecar plugins."""
+    import asyncio
+
+    catalog = request.app.state.services.catalog
+    snapshot, refreshed = await catalog.index_cache.refresh_now()
+    refresher = getattr(request.app.state, "catalog_index_refresher", None) or getattr(catalog, "index_refresher", None)
+    if refresher is not None and snapshot.verified is not None and snapshot.refusal is None:
+        await refresher.notify_after_pass(snapshot)
+    revoked_keys: frozenset = frozenset()
+    revoked_versions: frozenset = frozenset()
+    if snapshot.verified is not None:
+        revoked_keys, revoked_versions = await asyncio.to_thread(
+            catalog.index_cache.revoked_sets, snapshot.verified
+        )
+    resource_push.notify(resource_topics.CATALOG)
+    resource_push.notify("cplugs")
+    verified = snapshot.verified
+    return RevocationsRefreshResponse(
+        serial=None if verified is None else verified.serial,
+        generated_at=None if verified is None else verified.generated_at.isoformat(),
+        revoked_keys=sorted(revoked_keys),
+        revoked_versions=sorted(revoked_versions),
+        refreshed=refreshed,
+    )

@@ -95,8 +95,8 @@ export const OLD_DEFAULT_LAYOUT: Layout = {
     "keep-awake",
     "machine-stats",
     "changes",
-    "task-manager",
-    "task-manager-all",
+    "task-manager-mk2",
+    "task-manager-mk2-all",
     "crosstalk",
     "tasks",
     "tasks-all",
@@ -109,7 +109,6 @@ export const OLD_DEFAULT_LAYOUT: Layout = {
     "timeline",
     "questions",
     "developer",
-    "task-list",
     "session-contents",
     "warroom"
   ],

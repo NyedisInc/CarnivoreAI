@@ -10,13 +10,14 @@ from typing import Any, Awaitable, Callable, Dict, Mapping, Optional
 import asyncio
 import structlog
 
+from src.core.agy.identity import row_is_agy
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.pack.identity import home
 from src.core.pack.machines import restrictions as restrict
 from src.core.pack.migrate import transcripts
 from src.core.pack.migrate.manifest import SESSION_COLUMNS
 from src.core.pack.migrate.receive import MigrateRefused, TargetEnv, check_allowed
-from src.core.pack.move import account, ops
+from src.core.pack.move import account, agy_files, ops
 from src.core.pack.transport import blobs
 from src.core.trail_entry import utc_now
 
@@ -29,12 +30,17 @@ ProfileCheck = Callable[[Optional[str]], None]
 PROFILE_CODE = "launch_profile_not_on_target"
 
 
+def is_agy(body: Mapping[str, Any]) -> bool:
+    return row_is_agy({"agent_family": body.get("agent_family"), "agent_type": (body.get("row") or {}).get("agent_type")})
+
+
 @dataclass
 class MoveTarget:
 
     env: TargetEnv
     launch_for: LaunchFor
     profile_check: Optional[ProfileCheck] = None
+    agy_home: Optional[Path] = None
 
 
 def _working_dir(root: str, rel: str) -> str:
@@ -85,6 +91,10 @@ def _file_conversation(target: MoveTarget, sender: str, body: Mapping[str, Any],
         archive = target.env.inbox.sealed_path(body["transcripts_blob_id"], peer=sender)
     except (KeyError, blobs.BlobError) as exc:
         raise MigrateRefused("unknown_blob", "the conversation files did not arrive") from exc
+    if is_agy(body):
+        agy_files.file_conversation(str(archive), body["files"], body["row"].get("claude_session_uuid"), target.agy_home)
+        target.env.inbox.remove(body["transcripts_blob_id"])
+        return
     roots = [target.env.transcripts_root]
     relay = (seen["launch"].get("extra_env") or {}).get("CLAUDE_CONFIG_DIR")
     if relay:

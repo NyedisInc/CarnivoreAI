@@ -11,9 +11,9 @@ from typing import Any, Dict, List
 from fastapi import FastAPI
 
 from src.plugins.host import runtime, state as owner_state
-from src.plugins.huddle import board_port, service as task_manager_service
+from src.plugins.taskmanager import board_port, service as task_manager_service
 from src.plugins.reviewboard import layout
-from src.plugins.huddle.public import TaskManagerStore
+from src.plugins.taskmanager.public import TaskManagerStore
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.plugins.reviewboard import routes
@@ -62,13 +62,13 @@ def task_manager_on(env: Env, monkeypatch: Any, infos: Any = None) -> Any:
     infos = infos or one_session
 
     monkeypatch.setattr(task_manager_service, "project_names", lambda ctx: {"12": "carnivore", "13": "blog"})
-    ctx = env.host.context("huddle", infos=infos, background=True)
+    ctx = env.host.context("taskmanager", infos=infos, background=True)
     board_port.register(ctx)
     return ctx
 
 
 def task_manager_store(env: Env) -> TaskManagerStore:
-    return TaskManagerStore(env.host.storage("huddle"), notify=lambda key: None)
+    return TaskManagerStore(env.host.storage("taskmanager"), notify=lambda key: None)
 
 
 def make_env(tmp: Path, *, on: bool = True) -> Env:
@@ -82,7 +82,7 @@ def make_env(tmp: Path, *, on: bool = True) -> Env:
     root.mkdir(parents=True)
     (tmp / "repo" / ".git").mkdir()
     (root / MARKER).write_text("marker\n")
-    turn_on(host, "huddle")
+    turn_on(host, "taskmanager")
     if on:
         turn_on(host, "reviewboard")
     env = Env(app, host, root, published)

@@ -4,9 +4,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable, Dict, Optional, Tuple
 
+from src.core.transcript_contract.agy_parse import parse_agy_line
 from src.core.transcript_contract.claude_parse import parse_claude_line
 from src.core.transcript_contract.codex_parse import parse_codex_line
 from src.core.transcript_contract.parsed import (
+    FAMILY_AGY,
     FAMILY_CLAUDE,
     FAMILY_CODEX,
     STATUS_UNPARSEABLE,
@@ -17,6 +19,7 @@ from src.core.transcript_manifest.tail import line_serial
 PARSERS: Dict[str, Callable[[str], ParsedLine]] = {
     FAMILY_CLAUDE: parse_claude_line,
     FAMILY_CODEX: parse_codex_line,
+    FAMILY_AGY: parse_agy_line,
 }
 
 

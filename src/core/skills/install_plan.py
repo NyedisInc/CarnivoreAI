@@ -41,7 +41,7 @@ from src.core.skills.ledger import (
     SCOPE_PROJECT,
     InstallLedger,
 )
-from src.core.skills.kinds import manifest_name
+from src.core.skills.kinds import resolve_manifest_path
 from src.core.skill_manager.root_create import creation_boundary
 from src.core.live_install_roots import HARNESS_CLAUDE, HARNESS_CODEX
 from src.core.skills.roots import (
@@ -321,7 +321,8 @@ def plan_install(
                     ),
                 )
 
-    body_sha, _size = hash_file(staged.path / manifest_name(item.kind))
+    body_sha, _size = hash_file(resolve_manifest_path(item.kind, staged.path))
+    prov = getattr(version, "provenance", None)
     plan = InstallPlan(
         item_id=item.id,
         publisher=item.publisher,
@@ -336,6 +337,9 @@ def plan_install(
         targets=tuple(planned),
         replaces=bool(occupied),
         exec_paths=executable_members(staged.archive) if allow_scripts else (),
+        provenance_repo=str(getattr(prov, "repo", "") or ""),
+        provenance_tag=str(getattr(prov, "tag", "") or ""),
+        commit_sha=str(getattr(prov, "commit_sha", "") or ""),
     )
     logger.info(
         "skill_install_planned",

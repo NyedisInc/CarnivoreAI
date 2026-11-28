@@ -1,6 +1,12 @@
 import { t } from '../i18n/index.svelte';
 import * as GroupStore from '../drawer/group-store';
-import { promptText } from './company-actions';
+import { isExpanded as isLayoutExpanded } from '../drawer/layouts-model';
+import { LAYOUT_ITEM_FOLD_PREFIX } from '../drawer/store-keys';
+import { toggleBandFold } from './heading-fold';
+import { openModal } from '../modal';
+import { groupContainerChoices } from './group-containers';
+import { judgeGroupName } from './group-name';
+import NewGroupModal, { type NewGroupAnswer } from './NewGroupModal.svelte';
 import {
     announce, announceFailure, applyGroups, hg, reasonOf, refreshGroups, repaintDrawerRows, usableGroups,
     type GroupsBody,
@@ -26,24 +32,40 @@ export async function commitAssignment(name: string, groupUuid: string | null): 
     return true;
 }
 
-export async function createGroupThenAssign(name: string | null): Promise<void> {
-    const raw = await promptText({
-        title: t('sidebar.group.new.title'),
-        label: t('sidebar.group.new.label'),
-        placeholder: t('sidebar.group.new.placeholder'),
-        confirmLabel: t('sidebar.group.new.create'),
-        cancelLabel: t('sidebar.group.new.cancel'),
-    });
-    if (raw === null) return;
+export async function createGroupThenAssign(
+    name: string | null, onFiled?: () => void, parentKey?: string | null,
+): Promise<void> {
+    const answer = await openModal<NewGroupAnswer, { initialParent: string; choices: ReturnType<typeof groupContainerChoices> }>(
+        NewGroupModal,
+        { initialParent: parentKey ?? '', choices: groupContainerChoices() },
+    );
+    if (answer === null) return;
+    const raw = answer.name;
+    const scopeParent = answer.parentKey || null;
+    const siblings = GroupStore.current().groups.filter((g) => (g.parent_key ?? null) === scopeParent);
+    const verdict = judgeGroupName(raw, siblings.map((g) => g.name));
+    if (!verdict.ok) {
+        announceFailure(t(`sidebar.group.new.refused.${verdict.reason}`));
+        return;
+    }
     const api = hg().API;
     try {
         if (!api) throw new Error(t('error.server_unreachable'));
-        const body = await api.createSessionGroup(raw);
+        const known = new Set(GroupStore.current().groups.map((g) => g.group_uuid));
+        const body = scopeParent
+            ? await api.createSessionGroup(verdict.value, scopeParent)
+            : await api.createSessionGroup(verdict.value);
+        if (scopeParent?.startsWith(LAYOUT_ITEM_FOLD_PREFIX) && !isLayoutExpanded(scopeParent.slice(LAYOUT_ITEM_FOLD_PREFIX.length))) {
+            toggleBandFold(scopeParent);
+        }
         applyGroups(body);
-        const squeezed = raw.split(/\s+/).filter(Boolean).join(' ');
-        const made = (body.groups ?? []).find((g) => g.name === String(raw).trim() || g.name === squeezed);
-        if (name && made) await commitAssignment(name, made.group_uuid);
-        else announce(t('sidebar.group.created', { name: raw }));
+        const fresh = (body.groups ?? []).filter((g) => !known.has(g.group_uuid));
+        const made = fresh.filter((g) => g.name === verdict.value).pop() ?? fresh.pop();
+        if (name && made) {
+            if (await commitAssignment(name, made.group_uuid)) onFiled?.();
+        } else if (name) {
+            announceFailure(t('sidebar.group.create_failed', { reason: t('sidebar.group.new.not_found') }));
+        } else announce(t('sidebar.group.created', { name: verdict.value }));
     } catch (err) {
         announceFailure(t('sidebar.group.create_failed', { reason: reasonOf(err) }));
     }

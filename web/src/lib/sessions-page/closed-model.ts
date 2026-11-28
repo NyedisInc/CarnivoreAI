@@ -14,7 +14,7 @@ export function historyKeyOf(g: LensGroup): string {
 }
 
 export function closedShown(r: PageRow, f: Filters, labels: { noCompany: string; thisComputer: string }, showHidden = false): boolean {
-    const kind = r.s.state === 'removed' ? f.on.includes('archived') || (showHidden && f.on.includes('closed')) : f.on.includes('closed');
+    const kind = r.s.state === 'removed' && !r.s.offloaded ? f.on.includes('archived') || (showHidden && f.on.includes('closed')) : f.on.includes('closed');
     return kind && (r.computer === null || f.computer !== '') && passesFacets(r, f, labels);
 }
 

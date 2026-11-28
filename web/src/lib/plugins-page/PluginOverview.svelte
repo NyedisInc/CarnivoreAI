@@ -1,9 +1,12 @@
 
 <script lang="ts">
+    import { pluginsStore, type PluginInspectorSnapshot } from '../plugins/store.svelte';
+    import ScreenshotGallery from '../catalog/ScreenshotGallery.svelte';
     import type { Translate } from '../sessions/types';
     import type { CplugItem } from './cplugs-adapter';
     import DependencyPanel from './DependencyPanel.svelte';
     import PluginHealthLine from './PluginHealthLine.svelte';
+    import PluginHealthPill from './PluginHealthPill.svelte';
     import type { HealthRow } from './plugin-health';
     import { surfaceChips } from './plugin-pane';
 
@@ -12,18 +15,39 @@
         health?: HealthRow;
         canAct?: boolean;
         onHealth?: () => void;
+        inspector?: PluginInspectorSnapshot | null;
+        onInspectLogs?: (cplugId: string) => void;
+        onRestart?: (cplugId: string) => Promise<unknown>;
+        onPauseToggle?: (cplugId: string, paused: boolean) => Promise<unknown>;
         t: Translate;
     }
 
-    const { plugin, health, canAct = false, onHealth = () => {}, t }: Props = $props();
+    const {
+        plugin,
+        health,
+        canAct = false,
+        onHealth = () => {},
+        inspector = null,
+        onInspectLogs,
+        onRestart = (id) => pluginsStore.restartPlugin(id),
+        onPauseToggle = (id, paused) => (paused ? pluginsStore.pausePlugin(id) : pluginsStore.resumePlugin(id)),
+        t,
+    }: Props = $props();
 
     const chips = $derived(surfaceChips(plugin.surfaces, t));
     const removed = $derived(plugin.state === 'removed');
+    const isSidecarRuntime = $derived(plugin.thirdParty && plugin.pluginKind !== 'agent-plugin' && !removed);
+    const isAgentPlugin = $derived(plugin.pluginKind === 'agent-plugin');
 </script>
 
 {#if plugin.brief}
     <div class="plp-region">
         <p class="plp-brief" data-plugin-brief>{plugin.brief}</p>
+    </div>
+{/if}
+{#if plugin.screenshots && plugin.screenshots.length > 0}
+    <div class="plp-region" data-plugin-screenshots>
+        <ScreenshotGallery screenshots={plugin.screenshots} itemName={plugin.name} {t} />
     </div>
 {/if}
 <div class="plp-region">
@@ -41,6 +65,34 @@
         {/if}
     </dl>
 </div>
+{#if isSidecarRuntime}
+    <div class="plp-region" data-plugin-health-pill-region>
+        <h3 class="pl-label">{t('plugins.page.health_pill.label')}</h3>
+        <PluginHealthPill
+            {plugin}
+            snapshot={inspector}
+            onLogs={onInspectLogs}
+            {onRestart}
+            {onPauseToggle}
+            {t}
+        />
+    </div>
+{/if}
+{#if isAgentPlugin}
+    <div class="plp-region" data-agent-plugin-scope>
+        <h3 class="pl-label">{t('plugins.page.pane.scope.heading')}</h3>
+        <dl class="mgr-facts">
+            <dt>{t('plugins.page.pane.scope.label')}</dt>
+            <dd data-agent-scope-value>
+                {plugin.scope === 'project' ? t('plugins.page.pane.scope.project') : t('plugins.page.pane.scope.global')}
+            </dd>
+            {#if plugin.scope === 'project' && plugin.projectPath}
+                <dt>{t('plugins.page.pane.scope.project_path')}</dt>
+                <dd data-agent-scope-project>{plugin.projectPath}</dd>
+            {/if}
+        </dl>
+    </div>
+{/if}
 {#if health}
     <div class="plp-region" data-plugin-health-region>
         <h3 class="pl-label">{t('plugins.page.health.label')}</h3>

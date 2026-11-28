@@ -115,7 +115,8 @@ def test_boot_seeding_retires_the_catchup_row_and_the_restore_point_alerts(world
     assert outcome[K.KEY_USB] == "resolved"
     assert set(outcome) - {K.KEY_USB} == {
         K.KEY_VAULT_UNAVAILABLE, K.KEY_VAULT_STALE, K.KEY_VAULT_UNCOVERED, K.KEY_VAULT_OVER_CAP, K.KEY_VAULT_DAMAGED,
-        K.KEY_VAULT_MASS_GONE}
+        K.KEY_VAULT_MASS_GONE, K.KEY_VAULT_FROZEN, K.KEY_TRANSCRIPTS_GONE_UNPROTECTED,
+        K.KEY_VAULT_PURGE_UNVERIFIED, K.KEY_VAULT_SCRUB_DAMAGED, K.KEY_VAULT_RESTORE_FAILED, K.KEY_VAULT_LEDGER_UNREADABLE}
 
 
 def test_usb_alert_from_a_named_drive_resolves_when_the_check_goes_off(world, monkeypatch):

@@ -1,3 +1,4 @@
+/* the Task Manager */
 
 export interface TaskManagerFold {
   action: 'fold' | 'unfold' | 'close';
@@ -17,6 +18,7 @@ export function registerTaskManagerView(v: TaskManagerView): void {
   view = v;
 }
 
+/* the Task Manager */
 export function taskManagerView(): TaskManagerView | null {
   return view;
 }

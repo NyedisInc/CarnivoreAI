@@ -33,7 +33,9 @@ def test_jsonl_one_line_per_record() -> None:
 
 
 @pytest.mark.parametrize("value", [0, -5, 2**62, 1.5, -0.25, "text", "", None, b"", b"\x00\xff", RawText(b"\xff"),
-                                   math.inf, -math.inf])
+                                   math.inf, -math.inf],
+                         ids=["int-0", "int-neg", "int-big", "float-pos", "float-neg", "text", "text-empty", "none",
+                              "blob-empty", "blob-bytes", "rawtext", "inf", "neg-inf"])
 def test_encode_decode_round_trip(value) -> None:
     encoded = canonical.encode_value(value)
     canonical.dumps(encoded)

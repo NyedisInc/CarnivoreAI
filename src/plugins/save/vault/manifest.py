@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -24,6 +25,20 @@ _UNIT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._@-]{2,199}$")
 
 HOME_CLAUDE, HOME_CODEX, HOME_STATE, HOME_FOLDER = "claude", "codex", "state", "folder"
 HOMES = (HOME_CLAUDE, HOME_CODEX, HOME_STATE, HOME_FOLDER)
+HOME_CODEX_ACCOUNT_PREFIX = "codex@"
+_ACCOUNT_HOME_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}")
+_HOME_DIGEST_CHARS = 12
+
+
+def codex_account_home_key(home: Path, managed_account_id: Optional[str] = None) -> str:
+    if managed_account_id and _ACCOUNT_HOME_NAME.fullmatch(managed_account_id):
+        return HOME_CODEX_ACCOUNT_PREFIX + managed_account_id
+    digest = hashlib.sha256(os.path.realpath(home).encode("utf-8")).hexdigest()[:_HOME_DIGEST_CHARS]
+    return f"{HOME_CODEX_ACCOUNT_PREFIX}h-{digest}"
+
+
+def is_codex_account_home(home: str) -> bool:
+    return home.startswith(HOME_CODEX_ACCOUNT_PREFIX) and _ACCOUNT_HOME_NAME.fullmatch(home[len(HOME_CODEX_ACCOUNT_PREFIX):]) is not None
 
 
 class ManifestError(RuntimeError):
@@ -84,7 +99,7 @@ class FileEntry:
                               sha_kind=str(data.get("sha_kind", K.SHA_CONTENT)), digests=list(data.get("digests") or []))
         except (KeyError, TypeError, ValueError) as exc:
             raise ManifestError(f"malformed file entry: {exc}") from exc
-        if entry.home not in HOMES:
+        if entry.home not in HOMES and not is_codex_account_home(entry.home):
             raise ManifestError(f"unknown home {entry.home!r}")
         if entry.sha_kind not in (K.SHA_CONTENT, K.SHA_CHAIN):
             raise ManifestError(f"unknown sha kind {entry.sha_kind!r}")

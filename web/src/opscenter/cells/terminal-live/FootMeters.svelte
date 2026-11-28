@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { UsageRow, UsageWindowView, SessionTokenUsage, sessionUsageLabels } from '../../api';
+  import { modelColorKey } from '../../../lib/model-color';
   import ProviderMark from '../../../lib/byoai/ProviderMark.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
   import Icon from '../../ui/Icon.svelte';
@@ -72,7 +73,7 @@
       {#if markPreset}
         <span class="oc-tf-mark" data-fw="model-mark" data-mark={markPreset}><ProviderMark preset={markPreset} size={12} /></span>
       {/if}
-      <span class="oc-tf-model-name" data-tier={rowsByKey.model.spans[0]?.tier ?? ''}
+      <span class="oc-tf-model-name" data-tier={rowsByKey.model.spans[0]?.tier ?? ''} data-color={modelColorKey(rowsByKey.model.spans[0]?.text)}
         >{rowsByKey.model.spans[0]?.text}</span>
       {#if a.effort && hasEffort && rowsByKey.model.spans.length > 2}
         <span class="oc-tf-effort {effortClass(payload?.effort)}" data-fw="effort" data-word={rowsByKey.model.spans[2]?.text}
@@ -304,6 +305,15 @@
       white-space: nowrap;
       color: var(--oc-text-primary);
     }
+
+    .oc-tf-model-name[data-color='fable'], .oc-tf-model-name[data-color='mythos'] { color: var(--oc-coral); }
+    .oc-tf-model-name[data-color='opus'] { color: color-mix(in oklab, var(--oc-yellow-bright) 55%, var(--oc-coral)); }
+    .oc-tf-model-name[data-color='sonnet'] { color: var(--oc-yellow-bright); }
+    .oc-tf-model-name[data-color='haiku'] { color: var(--oc-cyan); }
+    .oc-tf-model-name[data-color='neon'] { color: var(--oc-model-neon); }
+    .oc-tf-model-name[data-color='carbon'] { color: var(--oc-model-carbon); }
+    .oc-tf-model-name[data-color='argon'] { color: var(--oc-model-argon); }
+    .oc-tf-model-name[data-color='hydrogen'] { color: var(--oc-model-hydrogen); }
 
     .oc-tf-model-name[data-tier='1'] { color: var(--oc-green-bright); }
 

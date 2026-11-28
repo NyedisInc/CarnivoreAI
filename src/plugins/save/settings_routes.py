@@ -12,7 +12,7 @@ from src.plugins.save import location_check
 from src.plugins.save.engine import constants as C, scope
 from src.plugins.save.service import RUNTIME
 from src.plugins.save.vault import constants as K
-from src.plugins.save.vault import health, location, retention
+from src.plugins.save.vault import gone_watch, health, location, retention
 from src.plugins.sdk.blob_codec import default_codec
 from src.plugins.save.vault.location import VaultUnavailable
 from src.plugins.sdk import transcript_files as tf
@@ -77,6 +77,8 @@ class HealthView(BaseModel):
     damaged: int = 0
     pending: int = 0
     legacy_unmigrated: int = Field(0, description="restore points of the old format that could not be moved into the vault yet; they are retried")
+    frozen: bool = Field(False, description="a mass-gone event froze the vault: it prunes, thins and collects nothing until the owner clears it (POST /mass-gone/clear)")
+    frozen_over_cap: bool = Field(False, description="frozen AND over the size cap: the vault still captures every change, so it is growing past its limit")
 
 
 class SettingsBody(BaseModel):
@@ -131,7 +133,7 @@ def summary_now() -> Summary:
         return Summary(used_bytes=0, conversations=0, points=0, pinned=0, **base)
     vault = RUNTIME.vault()
     saved = retention.read_state(vault.root)
-    if "history_bytes" not in saved:
+    if "history_bytes" not in saved or vault.summary_stale():
         saved = retention.assess(vault, base["cap_bytes"])
     return Summary(used_bytes=int(saved.get("used_bytes") or 0), conversations=int(saved.get("units") or 0),
                    points=int(saved.get("points") or 0), pinned=int(saved.get("pinned") or 0),
@@ -139,7 +141,8 @@ def summary_now() -> Summary:
 
 
 def health_now() -> HealthView:
-    return HealthView(**health.evaluate(health.read(tf.state_dir())))
+    facts = health.evaluate(health.read(tf.state_dir()))
+    return HealthView(**{**facts, "frozen": bool(facts["frozen"])})
 
 
 def settings_now() -> SettingsView:
@@ -190,6 +193,17 @@ def add_to(router: APIRouter) -> None:
     async def get_health() -> HealthView:
         """Coverage, staleness and availability of the vault."""
         return await run_in_threadpool(health_now)
+
+    @router.post("/mass-gone/clear")
+    async def clear_mass_gone_freeze() -> dict:
+        """The owner's yes: lift the mass-gone freeze so pruning, retention and supersede resume (#3141). 500 when it cannot be removed."""
+        try:
+            cleared = await run_in_threadpool(lambda: gone_watch.clear_freeze(RUNTIME.vault().root))
+        except (VaultUnavailable, OSError) as exc:
+            logger.error("save_freeze_clear_failed", error=str(exc), error_type=type(exc).__name__)
+            raise HTTPException(status_code=500, detail="could not clear the freeze")
+        await run_in_threadpool(lambda: health.update(tf.state_dir(), frozen=None))
+        return {"cleared": cleared}
 
     @router.get("/capture-scope", response_model=ScopeView)
     async def get_capture_scope() -> ScopeView:

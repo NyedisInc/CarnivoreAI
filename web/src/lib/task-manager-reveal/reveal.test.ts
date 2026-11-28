@@ -38,7 +38,7 @@ import { sidebarTabs } from '../dynamic-tabs/tab-store.svelte';
 import { t } from '../i18n/index.svelte';
 import { mountedWidget, openTaskManagerItem, revealInTaskManager, showTaskManager } from './reveal';
 
-const ALL = { widget: 'core.task-manager', view: 'all', look: null };
+const ALL = { widget: 'core.task-manager-mk2', view: 'all', look: null };
 
 function mountWidget(attrs: Record<string, string>, inside: HTMLElement = document.body): HTMLElement {
   const el = document.createElement('div');
@@ -101,7 +101,7 @@ describe('the widget is in a bar that is shut or hidden', () => {
     h.rail.side = [{ widget: 'core.files', look: null }, ALL];
     const result = await revealInTaskManager('12', 345);
     expect(result.outcome).toBe('raised');
-    expect(h.press).toHaveBeenCalledWith('side', 'core.task-manager');
+    expect(h.press).toHaveBeenCalledWith('side', 'core.task-manager-mk2');
     expect(h.setBar).not.toHaveBeenCalled();
     expect(h.lead).toHaveBeenCalledWith('side');
     expect(h.focus).toHaveBeenCalledWith('12', 345);
@@ -115,12 +115,12 @@ describe('the widget is in a bar that is shut or hidden', () => {
     const result = await revealInTaskManager('12', 345);
     expect(result.outcome).toBe('raised');
     expect(h.setBar).toHaveBeenCalledWith('bottom', { show: true });
-    expect(h.press).toHaveBeenCalledWith('bottom', 'core.task-manager');
+    expect(h.press).toHaveBeenCalledWith('bottom', 'core.task-manager-mk2');
   });
 
   test('a slide-out that is already out is left alone', async () => {
     h.rail.side = [ALL];
-    h.shown.side = ['core.task-manager'];
+    h.shown.side = ['core.task-manager-mk2'];
     await revealInTaskManager('12', 345);
     expect(h.press).not.toHaveBeenCalled();
     expect(h.focus).toHaveBeenCalled();
@@ -184,7 +184,7 @@ describe('showTaskManager brings the widget up without writing any item focus (d
     expect(await showTaskManager()).toBe('missing');
     h.rail.side = [ALL];
     expect(await showTaskManager()).toBe('raised');
-    expect(h.press).toHaveBeenCalledWith('side', 'core.task-manager');
+    expect(h.press).toHaveBeenCalledWith('side', 'core.task-manager-mk2');
     const widget = mountWidget({ 'data-task-manager-all-cell': '' });
     widget.scrollIntoView = vi.fn();
     expect(await showTaskManager()).toBe('shown');

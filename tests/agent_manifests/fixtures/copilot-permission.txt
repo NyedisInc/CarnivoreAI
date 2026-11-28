@@ -1,0 +1,40 @@
+ [Current]  Sessions   Issues   Pull requests   Gists
+
+ ● Folder /work has been added to trusted folders.                                                                      ┃
+                                                                                                                                           ┃
+ ● MCP Servers reloaded: 1 server connected                                                                                                ┃
+                                                                                                                                           ┃
+ ❯ say hi in 3 words                                                                                                                 12:04 ┃
+                                                                                                                                           ┃
+ ● Copilot Fusion selected MAI Code 2 Flash because it was the best choice out of the models available in your plan.                       ┃
+                                                                                                                                           ┃
+ ● Hi, there!                                                                                                                              ┃
+                                                                                                                                           ┃
+ ❯ run the shell command: sleep 20 && echo done                                                                                      12:05 ┃
+                                                                                                                                           ┃
+ $ Shell Wait 20 seconds and print done 1 line…                                                                                        20s ┃
+   sleep 20 && echo done                                                                                                                   ┃
+                                                                                                                                           ┃
+ ● Done.                                                                                                                                   ┃
+                                                                                                                                           ┃
+ ❯ create a file named zz.txt containing hello, using shell redirect                                                                 12:05 ┃
+                                                                                                                                           ┃
+ ○ Shell Create zz.txt containing hello                                                                                                    ┃
+   printf 'hello' > zz.txt                                                                                                                 ┃
+                                                                                                                                           ┃
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Create zz.txt containing hello                                                                                                           │
+│ ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── │
+│ ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮ │
+│ │ printf 'hello' > zz.txt                                                                                                              │ │
+│ ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ │
+│                                                                                                                                          │
+│ Do you want to run this command?                                                                                                         │
+│                                                                                                                                          │
+│ ❯ 1. Yes                                                                                                                                 │
+│   2. Yes, and don't ask again for `printf` in this directory (/work)                                                  │
+│   3. No, and tell Copilot what to do differently (Esc to stop)                                                                           │
+│                                                                                                                                          │
+│ ↑/↓ to navigate · enter to select · esc to cancel                                                                                        │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+probe bar

@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from typing import Any, Iterable, Optional
 
 from src.api.subagent_listing import fresh_claude_observation
+from src.core.agent_families import DEFAULT_FAMILY
+from src.core.attention.fresh_observation import fresh_observation
 from src.core.attention.background_claims import (
     measurement_overrules_claims, standing_background_claims,
 )
@@ -34,6 +36,13 @@ def parked_summary_for(watcher: Any, info: Any, now: datetime) -> Optional[str]:
     return _open_background_summary(evidence)
 
 
+def stalled_agents_for(watcher: Any, info: Any, now: datetime) -> Optional[int]:
+    observation = fresh_claude_observation(watcher, info, now)
+    parked = getattr(observation.evidence, "parked_work", None) if observation is not None else None
+    count = getattr(parked, "stalled", 0) or 0
+    return count if count > 0 else None
+
+
 def mark_parked_work(session_manager: Any, infos: Iterable[Any]) -> None:
     watcher = getattr(session_manager, "_attention_watcher", None)
     now = datetime.now(timezone.utc)
@@ -41,6 +50,7 @@ def mark_parked_work(session_manager: Any, infos: Iterable[Any]) -> None:
         if not isinstance(info, SessionInfo):
             continue
         info.parked_summary = parked_summary_for(watcher, info, now)
+        info.stalled_agents = stalled_agents_for(watcher, info, now)
         info.background_open = background_open_for(watcher, info, now)
         info.background_processes = background_processes_for(watcher, info, now)
         info.usage_limit = usage_limit_for(watcher, info, now)
@@ -54,6 +64,16 @@ def prompt_suggestion_for(watcher: Any, info: Any, now: datetime) -> Optional[st
 
 
 def background_open_for(watcher: Any, info: Any, now: datetime) -> Optional[int]:
+    session = getattr(info, "session", None)
+    family = getattr(info, "agent_family", None)
+    if family is not None and family != DEFAULT_FAMILY:
+        if watcher is None or session is None:
+            return None
+        observation = fresh_observation(watcher, session.id, now)
+        if observation is None:
+            return None
+        measured = getattr(observation.evidence, "background_open", None)
+        return int(measured) if measured is not None else None
     observation = fresh_claude_observation(watcher, info, now)
     if observation is None:
         return None
@@ -100,7 +120,14 @@ def login_expired_for(watcher: Any, info: Any, now: datetime) -> Optional[LoginE
 
 
 def background_processes_for(watcher: Any, info: Any, now: datetime) -> Optional[BackgroundProcessesInfo]:
-    observation = fresh_claude_observation(watcher, info, now)
+    family = getattr(info, "agent_family", None)
+    if family is not None and family != DEFAULT_FAMILY:
+        session = getattr(info, "session", None)
+        if watcher is None or session is None:
+            return None
+        observation = fresh_observation(watcher, session.id, now)
+    else:
+        observation = fresh_claude_observation(watcher, info, now)
     if observation is None:
         return None
     measure = getattr(observation.evidence, "background_process", None)

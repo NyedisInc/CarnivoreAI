@@ -31,12 +31,14 @@ afterEach(() => {
 const slot = (): HTMLElement => document.getElementById('session-sidebar-bar-slot')!;
 
 describe('the account chip', () => {
-    test('the spiral turns smoothly inside a still mask, and rests under reduced motion', () => {
+    test('the spiral turns smoothly on the 24 fps shared clock inside a still full-bleed mask, and rests under reduced motion', () => {
         const css = readFileSync(resolve(__dirname, '../../../../client/css/session-sidebar-account-chip.css'), 'utf8');
-        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*animation: avatar-spiral-turn 2s linear infinite/);
-        expect(css).toMatch(/@keyframes avatar-spiral-turn\s*\{\s*to \{ transform: rotate\(-360deg\); \}/);
+        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*animation: amb-join-avatar-spiral 1ms/);
+        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*transform: rotate\(var\(--amb-spiral-deg, 0deg\)\)/);
+        expect(css).toMatch(/\.spiral-turn\s*\{[^}]*overflow: visible/);
         expect(css).toMatch(/\.session-sidebar-bar__avatar > \.spiral-mask\s*\{[^}]*overflow: hidden/);
-        expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*\.spiral-turn\s*\{\s*animation: none/);
+        expect(css).toMatch(/\.session-sidebar-bar__avatar > \.spiral-mask\s*\{[^}]*contain: strict/);
+        expect(css).toMatch(/prefers-reduced-motion: reduce\)\s*\{[^}]*\.spiral-turn\s*\{[^}]*animation: none/);
     });
 
     test('signed out: SysOp with the turning spiral, no identicon, no status dot', () => {

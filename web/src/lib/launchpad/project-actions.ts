@@ -1,5 +1,5 @@
 import { PROJECT_CREATE_KEYS } from '../../../../client/js/labels/project-create.js';
-import { setListInbox, setListNudge } from '../../plugins/huddle/task-list-prefs';
+import { setListInbox, setListNudge } from '../../plugins/taskmanager/task-list-prefs';
 import type { ProjectRow, Translate } from '../sessions/types';
 import type { CreateHost } from './create-host';
 import { reasonOf } from './failure-reason';

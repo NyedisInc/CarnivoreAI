@@ -40,7 +40,7 @@ def _enhanced_settings() -> Optional[Any]:
     wired = machines_runtime.wiring()
     if wired is None:
         return None
-    settings = wired.runtime.settings()
+    settings = wired.runtime.operating_settings()
     return settings if settings.placement_mode == "enhanced" else None
 
 

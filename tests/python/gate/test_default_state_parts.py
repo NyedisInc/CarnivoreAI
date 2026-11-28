@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 
 from scripts.gate import default_state as ds
+from src.core.work import folders as work_folders
 
 
 def test_the_walk_finds_every_screen_the_router_serves() -> None:
@@ -15,7 +16,8 @@ def test_the_walk_finds_every_screen_the_router_serves() -> None:
 
 def test_default_plugin_states_follow_each_manifest() -> None:
     states = ds.default_plugin_states()
-    assert states["huddle"] is True and states["share"] is True and states["unread"] is True
+    assert states[work_folders.CURRENT_ID] is True and work_folders.OLD_ID not in states
+    assert states["share"] is True and states["unread"] is True
     assert states["save"] is False and states["flow"] is False
     assert "tmdevtools" not in states and "devwidgetlab" not in states, "the dev tier is hidden on a fresh install"
 

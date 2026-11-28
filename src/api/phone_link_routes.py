@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import io
 from typing import Any, Dict, List, Optional
 
 import qrcode
@@ -15,6 +14,7 @@ from pydantic import BaseModel, Field
 from src.api import account_gates
 from src.api.auth import _totp_rate_limit, decode_refresh_token, limiter, require_auth
 from src.api.auth_routes import redeem_totp_code
+from src.core.media.image_ops import qr_matrix_to_png
 from src.core.native_push import wiring as native_wiring
 from src.core.phone_link import acme
 from src.core.phone_link.custom_domain import names
@@ -65,12 +65,11 @@ class PairBody(BaseModel):
 
 
 def _qr_png(url: str) -> str:
-    qr = qrcode.QRCode(version=None, box_size=8, border=3)
+    qr = qrcode.QRCode(version=None, box_size=8, border=0)
     qr.add_data(url)
     qr.make(fit=True)
-    buffer = io.BytesIO()
-    qr.make_image(fill_color="black", back_color="white").save(buffer, format="PNG")
-    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
+    png_bytes = qr_matrix_to_png(qr.get_matrix(), box_size=8, border=3)
+    return "data:image/png;base64," + base64.b64encode(png_bytes).decode()
 
 
 @router.get("")
@@ -91,9 +90,11 @@ async def _gate_enable(body: EnableBody, request: Request) -> None:
 
 
 @router.put("", dependencies=[Depends(_gate_enable)])
-async def set_link_enabled(body: EnableBody, request: Request) -> Dict[str, Any]:
+async def set_link_enabled(body: EnableBody, request: Request) -> Any:
     """Switch the link on or off (off by default). Output: the new status."""
     manager = _manager(request)
+    if body.enabled and manager.is_pack_member():
+        return _refusal(409, "joined_local_only")
     await manager.set_enabled(body.enabled)
     return {**manager.status(), "cert": await asyncio.to_thread(manager.cert_info)}
 
@@ -117,6 +118,8 @@ async def open_pairing_window(request: Request) -> Dict[str, Any]:
     owner must ``POST /pairing-window/acknowledge`` first); 503 when the link could not start (its error is in the detail).
     """
     manager = _manager(request)
+    if manager.is_pack_member():
+        return _refusal(409, "joined_local_only")
     if not manager.pairing.enabled:
         raise HTTPException(status_code=409, detail="switch mobile sync on first")
     try:

@@ -1,4 +1,5 @@
-import { agentIdFromHash, agentPage, type AgentDrawerTab } from '../../plugins/huddle/agents/agent-page.svelte';
+/* the Task Manager */
+import { agentIdFromHash, agentPage, type AgentDrawerTab } from '../../plugins/taskmanager/agents/agent-page.svelte';
 import { DEFAULT_WIDTH_PX, readWidth as readLeftWidth } from '../drawer/resize';
 
 export const AGENT_DRAWER_WIDTH_KEY = 'carnivore.huddle.agent-drawer.width';

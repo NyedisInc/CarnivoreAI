@@ -1,8 +1,7 @@
 <!-- the reading pane -->
 <script lang="ts">
     import { Button } from '../base';
-    import { clearToasts } from '../../opscenter/ui/detail-clearance';
-    import { onMount, type Snippet } from 'svelte';
+    import { onMount } from 'svelte';
     import type { Translate } from '../sessions/types';
     import PlaceMenu, { type MenuEntry } from './PlaceMenu.svelte';
     import { MANAGER_KEYS } from '../manager-frame/manager-model';
@@ -33,11 +32,10 @@
         onRetry: () => void;
         onClear: () => void;
         limits?: readonly string[];
-        detail?: Snippet;
         openMenu?: (anchor: HTMLElement, id: string) => void;
     }
 
-    let { items, query, status, t, selectedId, onOpen, live, onRetry, onClear, limits = [], detail, openMenu = $bindable() }: Props = $props();
+    let { items, query, status, t, selectedId, onOpen, live, onRetry, onClear, limits = [], openMenu = $bindable() }: Props = $props();
 
     onMount(startPlaceStores);
 
@@ -137,7 +135,7 @@
     const nothing = $derived(sections.length === 0);
 </script>
 
-<div class="wp-body" class:wp-body--reading={selectedId !== null && detail !== undefined}>
+<div class="wp-body">
 {#if status.kind === 'loading'}
     <div class="oc-page__scroll"><div class="oc-page__main"><p class="oc-page__state" role="status">{t(MANAGER_KEYS.loading)}</p></div></div>
 {:else if status.kind === 'error'}
@@ -245,9 +243,6 @@
             {/if}
         </div>
     </div>
-{/if}
-{#if selectedId !== null && detail}
-    <aside class="oc-page__detail wp-detail" aria-label={t('widgets.page.label')} use:clearToasts>{@render detail()}</aside>
 {/if}
 </div>
 

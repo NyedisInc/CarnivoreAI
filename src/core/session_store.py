@@ -10,6 +10,7 @@ import structlog
 
 from src.core.companion_shell.rows import exclude_clause
 from src.core.db import column_exists, table_exists
+from src.core.lineage.row import NOT_LINEAGE_SQL
 from src.core.hosts.ddl import LOCAL_HOST_KEY, host_scope
 from src.core.sessions import errors as session_errors
 from src.core.db_models import (
@@ -107,9 +108,7 @@ def list_sessions(
     if not include_archived:
         clauses.append("s.archived_at IS NULL")
     if not include_lineage:
-        clauses.append(
-            "(s.parent_session_id IS NULL OR s.tmux_created_epoch IS NOT NULL)"
-        )
+        clauses.append(NOT_LINEAGE_SQL)
     if not include_automated and column_exists(conn, "sessions", "kind"):
         clauses.append("COALESCE(s.kind, '') <> ?")
         values.append(SESSION_KIND_AUTOMATED)

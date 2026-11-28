@@ -18,12 +18,15 @@ from fastapi.testclient import TestClient  # noqa: E402
 from starlette.websockets import WebSocketDisconnect  # noqa: E402
 
 from src.api.auth import require_auth  # noqa: E402
+from src.api import mesh_dark  # noqa: E402
 from src.api.checkpoint_revert_routes import require_owner  # noqa: E402
 from src.main import app  # noqa: E402
 from src.plugins.sdk import public_routes  # noqa: E402
+from src.core.pack.machines import capabilities  # noqa: E402
 
 PUBLIC_HTTP = {
     ("GET", "/api/v1/cplugs/{cplug_id}/view/{name}/{ticket}/{rest:path}"): "a plugin view frame loads in an iframe, which cannot send a bearer; the signed one-hour ticket in the path is the credential (A15, sidecar_view.py)",
+    ("POST", "/api/v1/cplugs/{cplug_id}/webhook/{hook_name}"): "external webhook callback; HMAC-SHA256 signature verified against the host-held secret with replay, skew, and per-source rate limits (InboundVerifier, #2651)",
     ("POST", "/api/v1/notify/act"): "the X-Carnivore-Cap capability token is the credential, checked by notify_caps.verify (unknown, expired or unpaired is a uniform 404/410); passes the phone gate only through is_cap_route, R4",
     ("GET", "/api/v1/notify/card"): "the X-Carnivore-Cap capability token is the credential, checked by notify_caps.verify (unknown, expired or unpaired is a uniform 404/410); passes the phone gate only through is_cap_route, R4",
     ("GET", "/api/v1/notify/media/{media_id}"): "the X-Carnivore-Cap capability token is the credential, checked by notify_caps.verify (unknown, expired or unpaired is a uniform 404/410); passes the phone gate only through is_cap_route, R4",
@@ -55,6 +58,7 @@ PUBLIC_HTTP = {
     ("POST", "/api/v1/federation/pair/complete"): "the single-use pairing code is the credential; gated inside",
     ("POST", "/api/v1/federation/pair/finish"): "the initiator's accept or cancel, signed with the key it paired with; gated inside (P10)",
     ("POST", "/api/v1/federation/token"): "a signature by a granted Ed25519 key is the credential; gated inside",
+    ("POST", "/api/v1/federation/mesh/token"): "a member's signature over its pinned mesh session is the credential; 404 unless the mesh build switch is on; gated inside",
     ("POST", "/api/v1/federation/prove"): "signs a caller's own nonce with the federation key; carries no secret",
     ("POST", "/mcp"): "the agent MCP endpoint; the pane's hook token plus its session id is the credential, loopback only, checked by require_agent (issue #152)",
     ("POST", "/api/v1/beast-mode/permission-request"): "the PermissionRequest hook of a Beast Mode launch asks whether to allow one call; the pane's hook token is the credential, checked by require_agent; an external token always answers none (#3063)",
@@ -64,7 +68,9 @@ PUBLIC_HTTP = {
     ("POST", "/api/v1/sessions/{session_id}/agent-message"): "an agent notifies the owner about its OWN session; the pane's hook token is the credential, checked by require_agent, which also refuses another session's path and any external or read token (issue #1278)",
     ("POST", "/api/v1/sessions/{session_id}/messaging/send"): "a bound agent texts the owner as its OWN session; the pane's hook token is the credential, checked by require_agent, which also refuses another session's path and any external or read token (issue #1499)",
     ("POST", "/api/v1/cplugs/huddle/items/{item_id}/wait/resolve"): "the wait callback a script calls when the thing a task waits on is done: the wait's one-time token is the credential, checked and spent atomically (wait_resolve.py, waits.WaitStore.claim_end); every refusal is the same 403 and never says whether the item exists (docs/task-manager.md, Part 1b-2a)",
+    ("POST", "/api/v1/cplugs/taskmanager/items/{item_id}/wait/resolve"): "the wait callback a script calls when the thing a task waits on is done: the wait's one-time token is the credential, checked and spent atomically (wait_resolve.py, waits.WaitStore.claim_end); every refusal is the same 403 and never says whether the item exists (docs/task-manager.md, Part 1b-2a)",
     ("GET", "/api/v1/cplugs/huddle/artifact-view/{ticket}"): "the huddle artifact viewer: an iframe cannot send a bearer, so a signed one-hour ticket naming one item and one page is the credential (artifact_ticket.py); served under its own sandboxing CSP (docs/task-manager.md section 61)",
+    ("GET", "/api/v1/cplugs/taskmanager/artifact-view/{ticket}"): "the huddle artifact viewer: an iframe cannot send a bearer, so a signed one-hour ticket naming one item and one page is the credential (artifact_ticket.py); served under its own sandboxing CSP (docs/task-manager.md section 61)",
     ("GET", "/mcp"): "answers 405 with no data; mcp.enabled false answers 404",
     ("DELETE", "/mcp"): "answers 405 with no data; mcp.enabled false answers 404",
     ("GET", "/manifest.webmanifest"): "add-to-home-screen manifest, static",
@@ -169,6 +175,8 @@ def _fill(path: str) -> str:
     return re.sub(r"\{[^}]+\}", "x", path)
 
 
+MESH_DARK = set(mesh_dark.DARK) - {("POST", "/api/v1/federation/mesh/token")}
+
 GUARDED = [(m, p) for m, p, guarded in _http_routes() if guarded]
 
 
@@ -176,6 +184,9 @@ GUARDED = [(m, p) for m, p, guarded in _http_routes() if guarded]
 def test_an_unauthenticated_request_is_refused_with_401(method: str, path: str) -> None:
     client = TestClient(app, raise_server_exceptions=False)
     response = client.request(method, _fill(path))
+    if (method, path) in MESH_DARK and not capabilities.mesh_on():
+        assert response.status_code == 404, (method, path, response.status_code)
+        return
     assert response.status_code == 401, (method, path, response.status_code)
 
 
@@ -253,3 +264,60 @@ def test_browser_socket_with_a_valid_jwt_reaches_the_id_check(valid_jwt: str, mo
 @pytest.mark.parametrize("path", sorted(_ws_paths()))
 def test_every_websocket_route_refuses_an_unauthenticated_handshake(path: str) -> None:
     assert _handshake_close_code(path, None) == 4401, path
+
+
+VOLATILE_HEADERS: Set[str] = set()
+_BODIES = [None, b"{", b"\xff\xfe", b"[]", b'{"machine": 5, "on": "x", "unexpected": [1]}']
+
+
+def _answer(client: TestClient, method: str, path: str, body: Optional[bytes], content_type: Optional[str]) -> Tuple[int, Tuple[Tuple[str, str], ...], bytes]:
+    headers = {"content-type": content_type} if content_type and body is not None else {}
+    response = client.request(method, path, content=body, headers=headers, follow_redirects=False)
+    return response.status_code, tuple(sorted((k, v) for k, v in response.headers.items() if k not in VOLATILE_HEADERS)), response.content
+
+
+def _raw_answer(app_asgi, method: str, path: str) -> Tuple[int, bytes]:
+    import asyncio
+
+    sent: List[dict] = []
+
+    async def receive() -> dict:
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def send(message: dict) -> None:
+        sent.append(message)
+
+    scope = {"type": "http", "asgi": {"version": "3.0"}, "http_version": "1.1", "method": method, "path": path, "raw_path": path.encode(),
+             "root_path": "", "query_string": b"", "headers": [], "client": ("1.1.1.1", 1), "server": ("x", 80), "scheme": "http"}
+    asyncio.run(app_asgi(scope, receive, send))
+    start = next(m for m in sent if m["type"] == "http.response.start")
+    return start["status"], b"".join(m.get("body", b"") for m in sent if m["type"] == "http.response.body")
+
+
+def test_every_dark_path_answers_exactly_like_an_unknown_path(monkeypatch) -> None:
+    from starlette.routing import Match
+
+    from src.core.federation.peer_listener import PeerLinkTag
+
+    monkeypatch.setattr(capabilities, "MESH_BUILD_ON", False)
+    served = {(m, p) for m, p, _ in _http_routes()}
+    assert all(pair in served for pair in mesh_dark.DARK), "a dark pair names a route the app does not serve"
+    client = TestClient(app, raise_server_exceptions=False)
+    methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]
+    for path in sorted(mesh_dark.DARK_PATHS):
+        sibling = path + "-no-such-route"
+        probe = {"type": "http", "method": "GET", "path": sibling, "root_path": "", "headers": []}
+        assert all(r.matches(probe)[0] == Match.NONE for r in app.router.routes), "the sibling must be a path no route knows"
+        for suffix in ("", "/"):
+            for method in methods:
+                for body in _BODIES:
+                    for ctype in (("application/json", "text/plain") if body is not None else (None,)):
+                        got = _answer(client, method, path + suffix, body, ctype)
+                        want = _answer(client, method, sibling + suffix, body, ctype)
+                        assert got == want, (method, path + suffix, body, ctype, got[0], want[0])
+            tag = PeerLinkTag(app)
+            for method in methods:
+                assert _raw_answer(tag, method, path + suffix) == _raw_answer(tag, method, sibling + suffix), (method, path + suffix)
+    monkeypatch.setattr(capabilities, "MESH_BUILD_ON", True)
+    live = _answer(client, "PUT", "/api/v1/pack/link-peers", b"{", "application/json")
+    assert live != _answer(client, "PUT", "/api/v1/pack/link-peers-no-such-route", b"{", "application/json")

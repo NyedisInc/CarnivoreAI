@@ -425,7 +425,7 @@ export function fitRows(layout: Layout, availablePx: number, gutter: number, met
 }
 
 /* the home screen */
-export const HIDDEN_BY_DEFAULT: readonly CellId[] = ['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects'];
+export const HIDDEN_BY_DEFAULT: readonly CellId[] = ['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects'];
 
 export function offSurfaceIds(layout: Layout): SlotId[] {
   const missing = HIDDEN_BY_DEFAULT.filter(

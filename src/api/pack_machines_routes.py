@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import asyncio
+import sqlite3
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError
 
 from src.api.error_response import api_error
 from src.api.auth import require_auth
@@ -13,7 +14,7 @@ from src.core import resource_push
 from src.core.computers import runtime as computers_runtime
 from src.core.federation import peer_links
 from src.core.pack.reconnect import config as reconnect_config
-from src.core.pack.machines import capabilities as caps_mod, exchange, reconnect_view, runtime
+from src.core.pack.machines import capabilities as caps_mod, exchange, operating, reconnect_view, runtime, settings_doc
 from src.core.pack.machines.settings_doc import PlacementModel
 from src.core.relay_identity.device_key import DeviceKeyUnavailable
 from src.core.resource_push import topics
@@ -96,6 +97,7 @@ class RestrictionsBody(BaseModel):
     may_install_tools: Optional[StrictBool] = None
     may_receive_credentials: Optional[StrictBool] = None
     may_receive_global_setup: Optional[StrictBool] = None
+    may_receive_pack_ui: Optional[StrictBool] = None
     may_update_carnivore: Optional[StrictBool] = None
     may_host_agents: Optional[StrictBool] = None
     may_receive_projects: Optional[StrictBool] = None
@@ -170,16 +172,20 @@ def _reconnect_fields(wired: runtime.Wiring, view: Dict[str, Any]) -> Dict[str, 
         relayed = frozenset(hub.relayed()) if hub is not None else frozenset()
     except RuntimeError:
         relayed = frozenset()
-    return reconnect_view.augment(
+    view = reconnect_view.augment(
         view, roster=custody.roster(), home_state=custody.home_state(), relayed=relayed,
         relay_known=lambda iid: path is not None and reconnect_config.learned_relay_id(path, iid) is not None,
         relay_on=reconnect_config.relay_on(path) if path is not None else False,
         takeover_on=reconnect_config.takeover_on(path) if path is not None else False)
+    if caps_mod.mesh_on():
+        held = custody.held_lists()
+        reconnect_view.link_switches(view, held[0] if held is not None else None)
+    return view
 
 
 async def _edit(wired: Any, changes: Dict[str, Any]) -> None:
     try:
-        await asyncio.to_thread(wired.runtime.edit_settings, changes)
+        await asyncio.to_thread(operating.edit, wired.runtime, changes)
     except DeviceKeyUnavailable:
         raise HTTPException(503, {"code": "signing_unavailable",
                                   "detail": "this computer's federation key could not be read, so the change was not signed"}) from None
@@ -196,6 +202,22 @@ async def put_master(body: MasterBody, request: Request) -> Dict[str, Any]:
     return await machines_view()
 
 
+_SETTING_CODES = {"placement_mode": "settings_invalid_placement_mode", "placement_model": "settings_invalid_placement_model",
+                  "auto_distribute": "settings_invalid_auto_distribute"}
+
+
+def _settings_invalid(exc: ValueError) -> HTTPException:
+    fields = sorted({str(e["loc"][0]) for e in exc.errors() if e.get("loc")}) if isinstance(exc, ValidationError) else []
+    code = _SETTING_CODES.get(fields[0], "settings_invalid") if len(fields) == 1 else "settings_invalid"
+    return api_error(422, code, None, error_type=type(exc).__name__, fields=fields)
+
+
+def _settings_refused(exc: ValueError) -> HTTPException:
+    if isinstance(exc, ValidationError):
+        return _settings_invalid(exc)
+    return api_error(503, "settings_unavailable", None, error_type=type(exc).__name__)
+
+
 @router.put("/settings")
 async def put_settings(body: SettingsBody, request: Request) -> Dict[str, Any]:
     """Change Pack-wide settings (placement mode, auto-distribute, the enhanced placement model)."""
@@ -204,13 +226,41 @@ async def put_settings(body: SettingsBody, request: Request) -> Dict[str, Any]:
     if not changes:
         raise HTTPException(422, {"code": "nothing_to_change", "detail": "name at least one setting"})
     held = await asyncio.to_thread(wired.runtime.settings)
-    if held.master_install_id != wired.runtime.install_id:
+    own = wired.runtime.install_id
+    is_alpha = held.master_install_id == own
+    can_record = await asyncio.to_thread(operating.may_write, own)
+    if not is_alpha and not can_record:
         raise HTTPException(409, {"code": "not_alpha", "alpha": held.master_install_id,
                                   "detail": "pack settings are changed on alpha; change them there"})
     try:
+        await asyncio.to_thread(settings_doc.edited, held, changes, own)
+    except ValueError as exc:
+        raise _settings_refused(exc) from None
+    if is_alpha and not can_record and caps_mod.mesh_on() and await asyncio.to_thread(operating.records_expected, wired.runtime, own):
+        raise HTTPException(503, {"code": "meshdata_unavailable",
+                                  "detail": "the shared data store is not open on this computer, so the change was not made; try again"})
+    if can_record:
+        try:
+            written = await asyncio.to_thread(operating.write_own, changes)
+        except DeviceKeyUnavailable:
+            raise HTTPException(503, {"code": "signing_unavailable",
+                                      "detail": "this computer's federation key could not be read, so the change was not signed"}) from None
+        except sqlite3.Error:
+            raise HTTPException(503, {"code": "meshdata_unavailable", "detail": "the shared data store could not be written"}) from None
+        missing = await asyncio.to_thread(operating.missing, changes)
+        if missing:
+            raise HTTPException(409, {"code": "ops_not_signed", "fields": missing,
+                                      "detail": "this computer could not sign the change as a shared record, so nothing changed here"})
+        if not is_alpha:
+            if not written:
+                raise HTTPException(409, {"code": "nothing_changed", "detail": "these settings already have those values"})
+            wired.runtime.settings_changed()
+            wired.runtime.kick()
+            return await machines_view()
+    try:
         await _edit(wired, changes)
     except ValueError as exc:
-        raise HTTPException(422, {"code": "settings_invalid", "detail": " ".join(str(exc).split())[:300]}) from None
+        raise _settings_refused(exc) from None
     wired.runtime.kick()
     return await machines_view()
 
@@ -386,7 +436,8 @@ async def put_labels(machine: str, body: LabelsBody, request: Request) -> Dict[s
     return {"machine": target, **await _forward_call(target, "PUT", exchange.LABELS_PATH, {"labels": body.labels})}
 
 
-async def _roster_edit(wired: Any, peers: list, *, order: Optional[List[str]] = None, eligible: Optional[Dict[str, bool]] = None) -> Dict[str, Any]:
+async def _roster_edit(wired: Any, peers: list, *, order: Optional[List[str]] = None, eligible: Optional[Dict[str, bool]] = None,
+                       link_peers: Optional[Dict[str, bool]] = None) -> Dict[str, Any]:
     held = await asyncio.to_thread(wired.runtime.settings)
     if held.master_install_id != wired.runtime.install_id:
         raise HTTPException(409, {"code": "not_alpha", "alpha": held.master_install_id,
@@ -396,7 +447,7 @@ async def _roster_edit(wired: Any, peers: list, *, order: Optional[List[str]] = 
         raise HTTPException(503, {"code": "pack_unavailable", "detail": "the computers layer is not running"})
     try:
         inputs = await rt.roster_inputs()
-        result = await asyncio.to_thread(wired.runtime.refresh_roster, inputs, order=order, eligible=eligible)
+        result = await asyncio.to_thread(wired.runtime.refresh_roster, inputs, order=order, eligible=eligible, link_peers=link_peers)
     except ValueError as exc:
         raise api_error(422, "roster_invalid", exc) from None
     except RuntimeError as exc:

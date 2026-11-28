@@ -1,3 +1,4 @@
+/* the Task Manager */
 import { resourcePush } from '../resource-push/boot';
 import { taskManagerAddonOn } from '../task-manager-schedules/task-manager-addon.svelte';
 import { readTaskManagerSchedules, TASK_MANAGER_TOPICS, type TaskManagerSchedule } from '../task-manager-schedules/task-manager-scheduled';
@@ -7,6 +8,7 @@ const POLL_MS = 30000;
 
 export const scheduled = $state({ rows: [] as TaskManagerSchedule[], answered: false });
 
+/* the Task Manager */
 export async function loadScheduled(): Promise<void> {
   if (!taskManagerAddonOn()) {
     scheduled.rows = [];

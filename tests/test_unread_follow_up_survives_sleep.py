@@ -29,7 +29,7 @@ from src.api import session_sleep_routes
 from src.core.session_ops import sleep as sleep_ops
 from src.api.auth import require_auth
 from src.api.session_record_payload import _session_record_payload
-from src.core import session_sleep, session_store
+from src.core import restart_live_gate, session_sleep, session_store
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.session_manager import SessionManager
@@ -226,7 +226,7 @@ def _asleep_client(mgr: SessionManager) -> TestClient:
 
 
 async def _sleep(mgr: SessionManager, monkeypatch) -> None:
-    async def _close(manager, *, name, socket):
+    async def _close(manager, *, name, socket, session_id=None):
         return {"closed_registrations": 1, "direct_kill_rc": None}
 
     outcomes = [TMUX_PRESENT, TMUX_GONE]
@@ -238,6 +238,7 @@ async def _sleep(mgr: SessionManager, monkeypatch) -> None:
                                           detail="test"),
         raising=True,
     )
+    monkeypatch.setattr(restart_live_gate, "probe_line", lambda name, socket: f"0|{EPOCH_BEFORE}|{name}|$1", raising=True)
     app_state = SimpleNamespace(session_manager=mgr, local_servers=_LocalServers())
     result = await sleep_ops.sleep_session(app_state, ROW_UUID)
     assert result.status == "asleep", result

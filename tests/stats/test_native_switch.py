@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.api.stats_routes import router
-from src.plugins.host import runtime, state as owner_state
+from src.plugins.host import registry_store, runtime
 from src.core.stats import config
 from tests.stats import seed
 from tests.stats.test_clear_and_off import CONV, _fixture, _line, _usage
@@ -77,9 +77,11 @@ def test_a_new_install_collects_by_default(tmp_path, monkeypatch):
 def test_a_stale_usagestats_plugin_entry_changes_nothing(tmp_path):
     _, store = _fixture(tmp_path)
     config.update_settings(store, enabled=True, revision=config.get_settings(store)["revision"])
-    path = owner_state.state_path(tmp_path)
+    path = registry_store.registry_path(tmp_path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"version": 1, "cplugs": {"usagestats": {"enabled": False, "revision": 3}}}))
+    doc = registry_store.new_document()
+    doc["items"]["usagestats"] = {"kind": "feature", "enabled": False, "revision": 3}
+    path.write_text(json.dumps(doc))
     app = _app(store)
     runtime.install(app, Path(tmp_path))
     assert runtime.find("usagestats") is None

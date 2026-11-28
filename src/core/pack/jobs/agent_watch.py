@@ -22,6 +22,7 @@ STRAIGHT_READS = 2
 PARK_S = 600.0
 UNREADABLE_S = 300.0
 USAGE_EVERY_S = 30.0
+FINISHED_GRACE_S = 600.0
 RESULT_MAX = 16384
 TIME_CAP_CODE = 124
 ASK_KINDS = ("question", "plan_approval", "input")
@@ -178,7 +179,30 @@ def _codex_rollout(profile_root: Optional[str], conversation: str) -> Optional[P
     return real if sessions in real.parents else None
 
 
+def _read_agy_transcript(conversation: Optional[str]) -> Read:
+    from src.core.agy import transcripts as agy_transcripts
+
+    if not conversation:
+        return Read(None, None)
+    path = agy_transcripts.transcript_path(conversation)
+    if path is None:
+        return Read(None, None)
+    text: Optional[str] = None
+    last_at: Optional[float] = None
+    for msg in agy_transcripts.read_messages(path):
+        if msg.get("role") != "assistant":
+            continue
+        at = _epoch(msg.get("at"))
+        if at is not None and (last_at is None or at > last_at):
+            last_at = at
+        if msg.get("text"):
+            text = msg["text"]
+    return Read(text, last_at)
+
+
 def read_transcript(family: str, conversation: Optional[str], working_dir: Optional[str], profile_root: Optional[str]) -> Read:
+    if family == "agy":
+        return _read_agy_transcript(conversation)
     path = transcript_path(family, conversation, working_dir, profile_root)
     if path is None:
         return Read(None, None)
@@ -224,6 +248,11 @@ class _Streaks:
     unreadable_since: Optional[float] = None
     usage_at: float = 0.0
     parked_text: Optional[str] = None
+    finished_since: Optional[float] = None
+
+
+def asks_question(text: Optional[str]) -> bool:
+    return bool(text) and any(line.lstrip().startswith("\u2753") for line in str(text).splitlines())
 
 
 class AgentWatch:
@@ -252,7 +281,14 @@ class AgentWatch:
 
     async def _closing(self, row: HostJob, st: _Streaks) -> bool:
         got = await self._read_result(row)
-        if got.last_at is None or got.last_at <= self._floor(row.job_id) or got.text is None:
+        waited = st.finished_since is not None and self._clock() - st.finished_since >= FINISHED_GRACE_S
+        if not waited and (got.last_at is None or got.last_at <= self._floor(row.job_id) or got.text is None):
+            return False
+        if asks_question(got.text):
+            text = clip_result(got.text)
+            if st.parked_text != text:
+                await self._park(row, "question", text)
+                st.parked_text = text
             return False
         return await self._end(row, Ending(0), clip_result(got.text))
 
@@ -271,6 +307,7 @@ class AgentWatch:
             st.kind = look.kind
             if look.kind != "unreadable":
                 st.unreadable_since = None
+            st.finished_since = (now if st.finished_since is None else st.finished_since) if look.kind == "finished" else None
             if look.kind == "working":
                 if row.state == HostState.PARKED and not self._replying(job_id):
                     await self._unpark(row)

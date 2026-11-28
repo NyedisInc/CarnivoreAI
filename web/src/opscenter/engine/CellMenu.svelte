@@ -16,6 +16,7 @@
   import { isPluginSlot, panels } from './plugin-kinds';
   import { drawerZone } from '../../lib/drawer-zone/zone-store.svelte';
   import { isWidgetId, openWidgetPopout } from '../../popout/popout';
+  import { popoutWidgetFor } from '../../plugins/host/popout-widgets';
   import { CORE_ID, type ArrangeEntry } from '../../lib/widget-menu/model';
   import PlacementMenuHost from '../../lib/zone-shell/PlacementMenuHost.svelte';
   import DeclaredTabMenu from '../../lib/zone-shell/DeclaredTabMenu.svelte';
@@ -76,7 +77,12 @@
     !!manifest && !instance && store.page === 'home' && !drawerZone.items.some((item) => item.widget === manifest.id),
   );
 
-  const pluginPopOutFits = $derived(isPluginSlot(id) && isWidgetId(id) && !panels().isPanel(id.split(':')[0] ?? '') ? fitsForSlot(id) : null);
+  const pluginPopOutFits = $derived.by(() => {
+    if (!isPluginSlot(id) || !isWidgetId(id)) return null;
+    const kind = id.split(':')[0] ?? '';
+    if (panels().canPopOut?.(kind) !== true && popoutWidgetFor(id)?.enabled !== true) return null;
+    return fitsForSlot(id);
+  });
 
   const canPopOut = $derived((!!manifest && !instance && isWidgetId(manifest.id)) || pluginPopOutFits !== null);
 

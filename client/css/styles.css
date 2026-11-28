@@ -381,7 +381,7 @@ body.home-header-active {
     border-radius: var(--radius-full);
     cursor: pointer;
     font-size: 16px;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -423,24 +423,20 @@ body.home-header-active {
     background: var(--color-status-pending);
     display: inline-block;
     box-shadow: 0 0 4px var(--color-status-pending-glow);
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
     position: relative;
 }
 
 .status.connected {
     background: var(--color-status-connected);
     box-shadow: 0 0 6px var(--color-status-connected-glow);
-    animation: pulse 2s infinite;
+    animation: amb-join-status-lights 1ms;
+    opacity: var(--amb-led-op);
 }
 
 .status.error {
     background: var(--color-status-error);
     box-shadow: 0 0 6px var(--color-status-error-glow);
-}
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
 }
 
 
@@ -641,7 +637,7 @@ body.home-header-active {
     padding: 14px 72px 14px 16px;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     position: relative;
     overflow: hidden;
 }
@@ -707,7 +703,7 @@ body.home-header-active {
     font-family: inherit;
     letter-spacing: 0.02em;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .launchpad-archived-toggle:hover {
@@ -914,7 +910,7 @@ body.home-header-active {
     font-family: var(--font-mono);
     font-size: 1rem;
     border-radius: var(--oc-radius-sm);
-    transition: all var(--oc-motion) ease;
+    transition: border-color var(--oc-motion) ease, box-shadow var(--oc-motion) ease, background-color var(--oc-motion) ease;
 }
 
 .modal-input:focus {
@@ -1009,7 +1005,7 @@ body.home-header-active {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, color 0.2s ease, opacity 0.2s ease;
 }
 
 .modal-close:hover {

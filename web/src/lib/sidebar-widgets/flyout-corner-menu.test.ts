@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { afterEach, beforeEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { flushSync } from 'svelte';
 
 import { setLocale } from '../i18n/index.svelte';
@@ -7,7 +7,11 @@ import { editorSeams } from '../../opscenter/layout-editor/editor.svelte';
 import { SWARM_FLYOUT } from './widget-ids';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 import { flyout, press, railOn, setupRail, teardownRail } from './fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/taskmanager/swarm-flyout';
+import { setPages } from '../cplug-ui/page-views.svelte';
+import { setPluginTabs } from '../cplug-ui/plugin-tabs.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
+import type { CplugRow } from '../plugins-page/cplugs-adapter';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();
@@ -26,6 +30,11 @@ beforeEach(async () => {
 
 afterEach(async () => {
   Object.assign(editorSeams, realSeams);
+  setPages([]);
+  setPluginTabs([]);
+  cplugEnablement.read = false;
+  cplugEnablement.enabled = {};
+  vi.restoreAllMocks();
   await teardownRail();
 });
 
@@ -92,4 +101,49 @@ test('a page with nothing to edit still offers remove widget, written once, and 
   await Promise.resolve();
   expect(writes).toEqual([['rail_hidden_icons', [SWARM_FLYOUT]]]);
   delete g.PreferenceBridge;
+});
+
+test('flyout title row renders popout IconButton for popout:true dynamic tab and opens /static/popout.html?tab=... on click', async () => {
+  cplugEnablement.enabled = { taskmanager: true };
+  cplugEnablement.read = true;
+  const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+  await railOn();
+  await press(SWARM_FLYOUT);
+  const popBtn = flyout().querySelector<HTMLButtonElement>('[data-flyout-popout="huddle"]');
+  expect(popBtn).not.toBeNull();
+  popBtn!.click();
+  expect(openSpy).toHaveBeenCalledTimes(1);
+  expect(String(openSpy.mock.calls[0]?.[0])).toContain('/static/popout.html?tab=huddle');
+});
+
+test('flyout renders runtime popout:true sidebar_tab popout button and keeps HostFrame bar inside flyout', async () => {
+  const rows: CplugRow[] = [
+    {
+      id: 'fly-plug',
+      install_key: 'fly12345',
+      runtime: 'sidecar',
+      kind: 'declarative',
+      enabled: true,
+      state: 'active',
+      name: 'Fly Plug',
+      version: '1.0.0',
+      trust_tier: 'verified',
+      sidebar_tab: {
+        id: 'panel',
+        title: 'Fly Tab',
+        mode: 'declarative',
+        popout: true,
+      },
+    },
+  ];
+  setPages(rows);
+  const openSpy = vi.spyOn(window, 'open').mockReturnValue(null);
+  await railOn();
+  await press('tab.cplug-fly-plug-panel');
+  const popBtn = flyout().querySelector<HTMLButtonElement>('[data-flyout-popout="cplug-fly-plug-panel"]');
+  expect(popBtn).not.toBeNull();
+  expect(flyout().querySelector('.cu-frame__bar')).not.toBeNull();
+  popBtn!.click();
+  expect(openSpy).toHaveBeenCalledTimes(1);
+  expect(String(openSpy.mock.calls[0]?.[0])).toContain('/static/popout.html?tab=cplug-fly-plug-panel');
 });

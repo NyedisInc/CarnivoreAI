@@ -14,6 +14,7 @@ from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readon
 from src.core.db import connect
 from src.core.transcript_corpus_discover import CorpusEntry, DiscoveryOutcome
 from src.core.transcript_manifest import constants as K
+from src.core.transcript_manifest import gone_guard
 from src.core.transcript_manifest import store
 from src.core.transcript_manifest.scan import Observed, ScanResult, scan
 
@@ -61,12 +62,56 @@ def codex_observed(entry: CorpusEntry) -> Observed:
                     Path(entry.abs_path).stem[-_UUID_CHARS:], K.KIND_CONVERSATION)
 
 
+def agy_observed(conversation: dict, root: str) -> Observed:
+    return Observed(conversation["path"], K.FAMILY_AGY, root, f"brain/{conversation['id']}/.system_generated/logs/transcript.jsonl",
+                    conversation["id"], K.KIND_CONVERSATION)
+
+
 def _resolved(root: Path) -> str:
     return str(Path(root).expanduser().resolve())
 
 
-def walk(claude_roots: Optional[Sequence[Path]] = None, codex_home: Optional[str] = None) -> Walk:
+def _codex_session_roots(codex_home: Optional[str]) -> List[Path]:
+    import os
     from src.core.attention.codex_gather import DEFAULT_CODEX_HOME
+
+    if codex_home is not None:
+        if not codex_home:
+            return []
+        sessions = Path(codex_home) / "sessions"
+        return [sessions] if sessions.is_dir() else []
+    candidates: List[Path] = [Path(DEFAULT_CODEX_HOME) / "sessions"]
+    try:
+        from src.config import settings
+        from src.config.provider_accounts import profile_dir_for
+        from src.core.provider_ledger import accounts_store
+
+        config_path = Path(settings.auth_config_file).expanduser()
+        for account in accounts_store.list_accounts(config_path):
+            if account.provider != "codex":
+                continue
+            profile = profile_dir_for(account)
+            if profile:
+                candidates.append(Path(os.path.expanduser(profile)) / "sessions")
+    except (FileNotFoundError, ValueError, OSError):
+        pass
+    roots: List[Path] = []
+    seen = set()
+    for candidate in candidates:
+        try:
+            if not candidate.is_dir():
+                continue
+            real = os.path.realpath(candidate)
+        except OSError:
+            continue
+        if real in seen:
+            continue
+        seen.add(real)
+        roots.append(candidate)
+    return roots
+
+
+def walk(claude_roots: Optional[Sequence[Path]] = None, codex_home: Optional[str] = None) -> Walk:
     from src.core.claude_config.transcript_roots import claude_transcript_roots
     from src.core.stats.discovery_shared import merged_claude_discovery, shared_discovery
 
@@ -83,13 +128,17 @@ def walk(claude_roots: Optional[Sequence[Path]] = None, codex_home: Optional[str
     claude = merged_claude_discovery(roots, fresh=True)
     observed.extend(claude_observed(e) for e in claude.entries)
     _account(claude, [_resolved(r) for r in roots if Path(r).is_dir()])
-    home = DEFAULT_CODEX_HOME if codex_home is None else codex_home
-    if home:
-        sessions = Path(home) / "sessions"
-        if sessions.is_dir():
-            codex = shared_discovery("codex", sessions, fresh=True)
-            observed.extend(codex_observed(e) for e in codex.entries)
-            _account(codex, [_resolved(sessions)])
+    for sessions in _codex_session_roots(codex_home):
+        codex = shared_discovery("codex", sessions, fresh=True)
+        observed.extend(codex_observed(e) for e in codex.entries)
+        _account(codex, [_resolved(sessions)])
+    if codex_home is None:
+        from src.core.agy import transcripts as agy_transcripts
+
+        brain = agy_transcripts.AGY_HOME / "brain"
+        if brain.is_dir():
+            observed.extend(agy_observed(c, str(brain)) for c in agy_transcripts.iter_conversations())
+            complete.append(_resolved(brain))
     return Walk(observed, complete, unreadable, dirs[0])
 
 
@@ -98,21 +147,22 @@ def refresh(db_path: Path, *, write: bool = True, claude_roots: Optional[Sequenc
     found = walk(claude_roots, codex_home)
     now = utc_now()
     if conn is not None:
-        return _scan_on(conn, found, now, write)
+        return _scan_on(conn, found, now, write, Path(db_path).parent)
     if write:
         opened = connect(Path(db_path), create=False)
     else:
         opened = connect_readonly(db_path, timeout=READONLY_TIMEOUT_LONG_S)
     with closing(opened):
-        return _scan_on(opened, found, now, write)
+        return _scan_on(opened, found, now, write, Path(db_path).parent)
 
 
-def _scan_on(conn: sqlite3.Connection, found: Walk, now: str, write: bool) -> ScanResult:
+def _scan_on(conn: sqlite3.Connection, found: Walk, now: str, write: bool, state_dir: Path) -> ScanResult:
     result = scan(store.load_scan_rows(conn, (obs.path for obs in found.observed)), found.observed,
                   complete_roots=found.complete_roots, unreadable_roots=found.unreadable_roots, now=now)
     result.discovery_unreadable = found.unreadable_dirs
     if write and store.table_present(conn):
         store.persist(conn, result, now)
+        gone_guard.audit(state_dir, conn, result.removed)
     logger.info("transcript_manifest_scan", write=write, **{k: v for k, v in result.counts.items()},
                 files=len(result.present), unreadable_roots=len(found.unreadable_roots))
     return result

@@ -2,7 +2,7 @@ const { exec, execFile } = require('child_process');
 const portTrust = require('./tray-menu/port-trust');
 const path = require('path');
 const { persistBindHost } = require('./bind-settings');
-const axios = require('axios');
+const http = require('http');
 const { app } = require('electron');
 const net = require('net');
 const fs = require('fs');
@@ -14,6 +14,46 @@ const { terminateProcess, isAlive } = require('./process-teardown');
 const { decideAdoption } = require('./adoption-decision');
 const { decideLifecycleAction } = require('./ownership-policy');
 const EXPOSURE_REFRESH_EVERY = 4;
+const HEALTH_COALESCE_MS = 250;
+const NETIF_CACHE_TTL_MS = 2000;
+
+function httpGetJson(url, timeoutMs = 3000) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const finish = (err, value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (err) reject(err); else resolve(value);
+    };
+    const req = http.get(url, (res) => {
+      const status = res.statusCode || 0;
+      if (status < 200 || status >= 300) {
+        res.resume();
+        finish(new Error(`HTTP ${status}`));
+        return;
+      }
+      const chunks = [];
+      res.on('data', (chunk) => chunks.push(chunk));
+      res.on('end', () => {
+        const text = Buffer.concat(chunks).toString('utf8');
+        try {
+          finish(null, JSON.parse(text));
+        } catch (_) {
+          finish(null, text);
+        }
+      });
+      res.on('error', (err) => finish(err));
+    });
+    const timer = setTimeout(() => {
+      const err = new Error(`request timed out after ${timeoutMs}ms`);
+      req.destroy(err);
+      finish(err);
+    }, timeoutMs);
+    if (timer.unref) timer.unref();
+    req.on('error', (err) => finish(err));
+  });
+}
 const { createSupervisor, SUPERVISOR_RESTART } = require('./supervisor-policy');
 const { createSlowRetry } = require('./supervisor-slow-retry');
 const setupVerdict = require('./setup-verdict');
@@ -77,6 +117,87 @@ class ServerManager {
     // and the real
     this.reportedBind = null;
     this.reportedSetupStatus = null;
+
+    this._fileCache = new Map();
+    this._localSetupCache = null;
+    this._netIfCache = null;
+    this._healthInFlight = new Map();
+    this.lastHealth = null;
+    this.lastHealthAt = 0;
+    this.lastHealthPort = null;
+  }
+
+  _readCachedFile(filePath) {
+    let st;
+    try {
+      st = fs.statSync(filePath);
+    } catch (err) {
+      if (this._fileCache) this._fileCache.delete(filePath);
+      return { exists: false, text: null, parsed: null, parseError: null, error: err };
+    }
+    if (!this._fileCache) this._fileCache = new Map();
+    const hit = this._fileCache.get(filePath);
+    if (hit && hit.mtimeMs === st.mtimeMs && hit.size === st.size && hit.ino === st.ino) {
+      return hit;
+    }
+    let text;
+    try {
+      text = fs.readFileSync(filePath, 'utf8');
+    } catch (err) {
+      this._fileCache.delete(filePath);
+      return { exists: true, text: null, parsed: null, parseError: null, error: err };
+    }
+    const entry = {
+      exists: true,
+      text,
+      parsed: undefined,
+      parseError: null,
+      envValues: new Map(),
+      mtimeMs: st.mtimeMs,
+      size: st.size,
+      ino: st.ino,
+      error: null,
+    };
+    this._fileCache.set(filePath, entry);
+    return entry;
+  }
+
+  _readCachedJson(filePath) {
+    const entry = this._readCachedFile(filePath);
+    if (!entry.exists || entry.text === null) return null;
+    if (entry.parsed === undefined && !entry.parseError) {
+      try {
+        entry.parsed = JSON.parse(entry.text);
+      } catch (err) {
+        entry.parseError = err;
+        entry.parsed = null;
+      }
+    }
+    return entry.parseError ? null : entry.parsed;
+  }
+
+  _readCachedEnvValue(key) {
+    const entry = this._readCachedFile(path.join(this.baseDir, '.env'));
+    if (!entry.exists) return { exists: false, value: null, error: entry.error };
+    if (entry.text === null) return { exists: true, value: null, error: entry.error };
+    if (!entry.envValues) entry.envValues = new Map();
+    if (!entry.envValues.has(key)) {
+      entry.envValues.set(key, readEnvValue(entry.text, key));
+    }
+    return { exists: true, value: entry.envValues.get(key), error: null };
+  }
+
+  getCachedHealth(maxAgeMs = 1500, portOverride) {
+    if (!this.lastHealth || !this.lastHealthAt) return null;
+    if ((Date.now() - this.lastHealthAt) > maxAgeMs) return null;
+    if (portOverride && this.lastHealthPort && portOverride !== this.lastHealthPort) return null;
+    return this.lastHealth;
+  }
+
+  _clearCachedHealth() {
+    this.lastHealth = null;
+    this.lastHealthAt = 0;
+    this.lastHealthPort = null;
   }
 
   // ---------------------------------------------------------------------
@@ -111,8 +232,7 @@ class ServerManager {
 
   readConfigBindHost() {
     try {
-      const raw = fs.readFileSync(this.getConfigPath(), 'utf8');
-      const parsed = JSON.parse(raw);
+      const parsed = this._readCachedJson(this.getConfigPath());
       const prefs = parsed && parsed.server_prefs;
       const host = prefs && prefs.bind_host;
       return (typeof host === 'string' && host.trim()) ? host.trim() : null;
@@ -128,17 +248,17 @@ class ServerManager {
   }
 
   getPort() {
-    const envPath = path.join(this.baseDir, '.env');
-    if (!fs.existsSync(envPath)) {
+    const res = this._readCachedEnvValue('PORT');
+    if (!res.exists) {
+      if (res.error && res.error.code !== 'ENOENT') {
+        throw new Error(`could not read .env to resolve PORT: ${res.error.message}`);
+      }
       return DEFAULT_PORT;
     }
-    let envText;
-    try {
-      envText = fs.readFileSync(envPath, 'utf8');
-    } catch (err) {
-      throw new Error(`could not read .env to resolve PORT: ${err.message}`);
+    if (res.error) {
+      throw new Error(`could not read .env to resolve PORT: ${res.error.message}`);
     }
-    const raw = readEnvValue(envText, 'PORT');
+    const raw = res.value;
     if (raw === null || raw === '') {
       return DEFAULT_PORT;
     }
@@ -166,8 +286,14 @@ class ServerManager {
   }
 
   getLocalInterfaceIps() {
+    const now = Date.now();
+    if (this._netIfCache && (now - this._netIfCache.at) < NETIF_CACHE_TTL_MS) {
+      return this._netIfCache.ips;
+    }
     try {
-      return listBindableIps();
+      const ips = listBindableIps();
+      this._netIfCache = { at: now, ips };
+      return ips;
     } catch (err) {
       console.warn('[bind-host] networkInterfaces() failed:', err.message);
       return [];
@@ -230,12 +356,9 @@ class ServerManager {
 
   getCurrentOtp() {
     try {
-      const envPath = path.join(this.baseDir, '.env');
-      if (!fs.existsSync(envPath)) return null;
-      const envText = fs.readFileSync(envPath, 'utf8');
-      const secret = readEnvValue(envText, 'TOTP_SECRET');
-      if (!secret) return null;
-      return currentTotp(secret);
+      const res = this._readCachedEnvValue('TOTP_SECRET');
+      if (!res.exists || res.error || !res.value) return null;
+      return currentTotp(res.value);
     } catch (err) {
       console.warn('[otp] getCurrentOtp failed:', err.message);
       return null;
@@ -365,9 +488,10 @@ class ServerManager {
     const portInUse = await require('./engine/port-settle').engineInUse(this, port);
     if (portInUse) {
       console.log(`Port ${port} already in use, checking if it's our server...`);
-      const health = await this.getHealth();
+      const health = this.getCachedHealth(1500, port) || await this.getHealth(port);
       if (health) {
-        const foreign = portTrust.holderRefusal(await portTrust.listenersStrict(port, { execFile }), process.getuid());
+        const holders = await portTrust.listenersStrict(port, { execFile });
+        const foreign = portTrust.holderRefusal(holders, process.getuid());
         if (foreign) {
           this.state = 'stopped';
           this.startBlockedReason = `holder-${foreign.reason}`;
@@ -378,7 +502,7 @@ class ServerManager {
           runningVersion: health && health.version,
           bundleVersion,
         });
-        const holderPid = await this.findPortHolderPid(port);
+        const holderPid = (holders && holders.length ? holders[0].pid : null) || await this.findPortHolderPid(port);
         this.engineRecord = await engineLifecycle.recordEngine(holderPid, port, verdict.runningVersion);
 
         if (!verdict.adopt) {
@@ -439,6 +563,7 @@ class ServerManager {
     this.lastExitUnexpected = false;
     this.stopRequested = false;
     this.startBlockedReason = null;
+    this._clearCachedHealth();
 
     const binDir = path.join(this.baseDir, 'bin');
     const env = this.engineBaseEnv(binDir, process.env);
@@ -611,7 +736,7 @@ class ServerManager {
     return engineLifecycle.restartAdoptedEngine(this, options);
   }
 
-  async waitForPortFree(port, budgetMs = 5000, pollMs = 150) {
+  async waitForPortFree(port, budgetMs = 5000, pollMs = 75) {
     const deadline = Date.now() + budgetMs;
     for (;;) {
       if (!(await this.isPortInUse(port))) return true;
@@ -718,13 +843,19 @@ class ServerManager {
       }
     }
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    if (pid && isAlive(pid)) {
+      const waitDeadline = Date.now() + 500;
+      while (isAlive(pid) && Date.now() < waitDeadline) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
 
     if (pid && isAlive(pid)) {
       console.error(`PID ${pid} is still alive after stop(); not reporting stopped.`);
       return { stopped: false, outcome, pid };
     }
 
+    this._clearCachedHealth();
     this.process = null;
     this.processPid = null;
     this.ownedProcess = false;
@@ -769,14 +900,22 @@ class ServerManager {
       return { restarted: false, refused: false, stopFailed: true, reason: stopResult.reason || stopResult.outcome, pid: stopResult.pid };
     }
 
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    let port = null;
+    try {
+      port = this.getPort();
+    } catch (_) {
+      port = null;
+    }
+    if (port !== null) {
+      await this.waitForPortFree(port, 5000, 75);
+    }
 
     await this.start();
     console.log('Server restarted');
     return { restarted: true, refused: false, tookOwnership: false };
   }
 
-  async getHealth(portOverride) {
+  async getHealth(portOverride, options = {}) {
     let port;
     try {
       port = portOverride || this.getPort();
@@ -785,15 +924,34 @@ class ServerManager {
       return null;
     }
 
+    if (!options.fresh) {
+      const cached = this.getCachedHealth(HEALTH_COALESCE_MS, port);
+      if (cached) return cached;
+    }
+    if (!this._healthInFlight) this._healthInFlight = new Map();
+    const existing = this._healthInFlight.get(port);
+    if (existing) return existing;
+
+    const promise = this._probeHealth(port).finally(() => {
+      if (this._healthInFlight.get(port) === promise) this._healthInFlight.delete(port);
+    });
+    this._healthInFlight.set(port, promise);
+    return promise;
+  }
+
+  async _probeHealth(port) {
     for (const host of this.probeHostCandidates()) {
       const base = `http://${host}:${port}`;
       let stats;
       try {
-        const response = await axios.get(`${base}/api/v1/health`, { timeout: 3000 });
-        stats = response.data;
+        stats = await httpGetJson(`${base}/api/v1/health`, 3000);
       } catch (err) {
         continue;
       }
+
+      this.lastHealth = stats;
+      this.lastHealthAt = Date.now();
+      this.lastHealthPort = port;
 
       this.healthProbeCount = (this.healthProbeCount || 0) + 1;
       const exposureKnown = this.reportedBind && this.reportedSetupStatus === 'complete';
@@ -801,16 +959,16 @@ class ServerManager {
         return stats;
       }
       try {
-        const exposure = await axios.get(`${base}/health`, { timeout: 3000 });
-        const bind = exposure.data && exposure.data.bind;
+        const exposureData = await httpGetJson(`${base}/health`, 3000);
+        const bind = exposureData && exposureData.bind;
         this.reportedBind = bind || null;
         this.reportedSetupStatus =
-          (exposure.data && exposure.data.setup_status) || null;
-        this.reportedJoined = exposure.data && typeof exposure.data.joined === 'boolean'
-          ? exposure.data.joined : null;
-        this.reportedRebindRequested = Boolean(exposure.data && exposure.data.rebind_requested);
-        this.reportedDoorFile = exposure.data && typeof exposure.data.door_file === 'string'
-          ? exposure.data.door_file : null;
+          (exposureData && exposureData.setup_status) || null;
+        this.reportedJoined = exposureData && typeof exposureData.joined === 'boolean'
+          ? exposureData.joined : null;
+        this.reportedRebindRequested = Boolean(exposureData && exposureData.rebind_requested);
+        this.reportedDoorFile = exposureData && typeof exposureData.door_file === 'string'
+          ? exposureData.door_file : null;
       } catch (err) {
         // could not be read
         this.reportedBind = null;
@@ -821,6 +979,7 @@ class ServerManager {
       }
       return stats;
     }
+    this._clearCachedHealth();
     this.healthProbeCount = 0;
     this.reportedBind = null;
     this.reportedSetupStatus = null;
@@ -893,7 +1052,24 @@ class ServerManager {
   }
 
   getSetupVerdict() {
-    const local = setupVerdict.evaluateLocalSetup(this.readSetupFacts());
+    const facts = this.readSetupFacts();
+    let local;
+    if (
+      this._localSetupCache
+      && this._localSetupCache.envText === facts.envText
+      && this._localSetupCache.configText === facts.configText
+      && this._localSetupCache.pairedExists === facts.pairedExists
+    ) {
+      local = this._localSetupCache.local;
+    } else {
+      local = setupVerdict.evaluateLocalSetup(facts);
+      this._localSetupCache = {
+        envText: facts.envText,
+        configText: facts.configText,
+        pairedExists: facts.pairedExists,
+        local,
+      };
+    }
     const resolved = setupVerdict.resolveSetupVerdict({
       serverStatus: this.getSetupStatus(),
       local,
@@ -902,13 +1078,8 @@ class ServerManager {
   }
 
   readSetupFacts() {
-    const read = (file) => {
-      try {
-        return fs.readFileSync(path.join(this.baseDir, file), 'utf8');
-      } catch (err) {
-        return null;
-      }
-    };
+    const envEntry = this._readCachedFile(path.join(this.baseDir, '.env'));
+    const cfgEntry = this._readCachedFile(this.getConfigPath());
 
     let pairedExists;
     try {
@@ -918,8 +1089,8 @@ class ServerManager {
     }
 
     return {
-      envText: read('.env'),
-      configText: read('config.json'),
+      envText: envEntry.exists ? envEntry.text : null,
+      configText: cfgEntry.exists ? cfgEntry.text : null,
       pairedExists,
     };
   }

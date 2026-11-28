@@ -12,10 +12,11 @@ from typing import Any, Dict, Mapping, Optional
 
 import structlog
 
-from src.core.argent import gateway_reach, health, mint, notices, overlay_codex, row_state, upstream, upstream_registry
+from src.core.argent import gateway_reach, health, mint, notices, overlay_agy, overlay_codex, row_state, upstream, upstream_registry
 from src.core.argent import session_ref as refs
 from src.core.argent import settings as settings_module
 from src.core.argent.runtime import get_runtime
+from src.config import settings as app_settings
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.session_transcript_presence import family_conversation_presence
 from src.core.sessions.launch_overlay import OverlayContext, OverlayDelivery, OverlayPlan, OverlayRefused, UpstreamRoute
@@ -24,6 +25,12 @@ logger = structlog.get_logger()
 
 SECRET_NAME = "CARNIVORE_ARGENT_KEY"
 OVERRIDE_KEYS = ("ANTHROPIC_BASE_URL", "ANTHROPIC_CUSTOM_HEADERS")
+COPILOT = "copilot"
+COPILOT_ENV_NAMES = ("COPILOT_PROVIDER_BASE_URL", "COPILOT_PROVIDER_TYPE", "COPILOT_PROVIDER_API_KEY", "COPILOT_MODEL", "NODE_EXTRA_CA_CERTS")
+COPILOT_DEFAULT_MODEL = "claude-sonnet-5-5"
+COPILOT_BASE_NAME = "CARNIVORE_ARGENT_COPILOT_BASE"
+CLAUDE_BASE_NAME = "CARNIVORE_ARGENT_CLAUDE_BASE"
+AGY_BASE_NAME = "CARNIVORE_ARGENT_AGY_BASE"
 WAIT_SECONDS = 10
 
 
@@ -41,20 +48,39 @@ def _read_key() -> str:
 def preamble(gateway_url: str, ca_path: str, proxy: str = "") -> str:
     ca = f"export NODE_EXTRA_CA_CERTS={shlex.quote(ca_path)}; " if ca_path else ""
     return (
-        _read_key() +
+        _read_key() + _read_tool_base(CLAUDE_BASE_NAME, gateway_url) +
         f'if [ -n "$_ak" ] && [ "$_ak" != "-" ]; then '
-        f'export ANTHROPIC_BASE_URL={shlex.quote(gateway_url)}; {ca}{proxy}'
+        f'export ANTHROPIC_BASE_URL="$_cb"; {ca}{proxy}'
         f'export ANTHROPIC_CUSTOM_HEADERS="x-api-key: $_ak"; '
-        f'else unset ANTHROPIC_BASE_URL ANTHROPIC_CUSTOM_HEADERS; fi; unset _ak _i'
+        f'else unset ANTHROPIC_BASE_URL ANTHROPIC_CUSTOM_HEADERS; fi; unset _ak _i _cb'
     )
 
 
-def codex_preamble(ca_path: str, proxy: str = "") -> str:
+def codex_preamble(ca_path: str, proxy: str = "", gateway_url: str = "") -> str:
     ca = f"export CODEX_CA_CERTIFICATE={shlex.quote(ca_path)}; " if ca_path else ""
     return (
-        _read_key() +
+        _read_key() + _read_tool_base(overlay_codex.BASE_DELIVERY, gateway_url.rstrip("/") + overlay_codex.TOKEN_PATH) + f'export {overlay_codex.BASE_ENV}="$_cb"; ' +
+        _read_tool_base(overlay_codex.AUTH_DELIVERY, "false") + f'export {overlay_codex.AUTH_ENV}="$_cb"; unset _cb; ' +
         f'if [ -n "$_ak" ] && [ "$_ak" != "-" ]; then {ca}{proxy}export {overlay_codex.HEADER_ENV}="$_ak"; '
         f'else unset {overlay_codex.HEADER_ENV}; fi; unset _ak _i'
+    )
+
+
+def _read_tool_base(n: str, gateway_url: str) -> str:
+    return (
+        f'_cb="${{{n}-}}"; unset {n}; '
+        f'[ -z "$_cb" ] && {{ _cb="$(tmux show-environment {n} 2>/dev/null)"; case "$_cb" in {n}=?*) _cb="${{_cb#*=}}";; *) _cb="";; esac; }}; '
+        f'tmux set-environment -u {n} 2>/dev/null; [ -n "$_cb" ] || _cb={shlex.quote(gateway_url)}; '
+    )
+
+
+def copilot_preamble(gateway_url: str, ca_path: str, proxy: str = "") -> str:
+    ca = f"export NODE_EXTRA_CA_CERTS={shlex.quote(ca_path)}; " if ca_path else ""
+    return (
+        _read_key() + _read_tool_base(COPILOT_BASE_NAME, gateway_url) +
+        f'if [ -n "$_ak" ] && [ "$_ak" != "-" ]; then export COPILOT_PROVIDER_BASE_URL="$_cb" COPILOT_PROVIDER_TYPE=anthropic; {ca}{proxy}'
+        f'export COPILOT_PROVIDER_API_KEY="$_ak" COPILOT_MODEL="${{COPILOT_MODEL:-{COPILOT_DEFAULT_MODEL}}}"; '
+        f'else unset COPILOT_PROVIDER_BASE_URL COPILOT_PROVIDER_TYPE COPILOT_PROVIDER_API_KEY COPILOT_PROVIDER_HEADERS; fi; unset _ak _i _cb'
     )
 
 
@@ -94,7 +120,7 @@ class ArgentOverlay:
         self._clock, self._transport = clock, transport
 
     def plan(self, harness: str, purpose: str, host_key: str = LOCAL_HOST_KEY) -> Optional[OverlayPlan]:
-        if purpose != "pane" or harness not in ("claude", "codex"):
+        if purpose != "pane" or harness not in ("claude", "codex", COPILOT, overlay_agy.TOOL):
             return None
         cfg = settings_module.read()
         if not cfg.enabled or not cfg.gateway_url:
@@ -102,10 +128,15 @@ class ArgentOverlay:
         tethering = not _untethered_reason(health.latest(), self._clock())
         reach = gateway_reach.get()
         proxy = reach.exports_for(host_key) if reach is not None and host_key != LOCAL_HOST_KEY else ""
+        if harness == COPILOT:
+            return OverlayPlan(preamble=copilot_preamble(cfg.gateway_url, cfg.ca_path, proxy) if tethering else "", env_names=COPILOT_ENV_NAMES, secret_name=SECRET_NAME, tool=COPILOT)
+        if harness == overlay_agy.TOOL:
+            return OverlayPlan(preamble=overlay_agy.preamble(_read_key() + _read_tool_base(AGY_BASE_NAME, cfg.gateway_url.rstrip("/")), cfg.gateway_url, proxy, overlay_agy.ca_bundle(cfg.ca_path, Path(app_settings.get_state_dir()))) if tethering else "", env_names=overlay_agy.ENV_NAMES,
+                               secret_name=SECRET_NAME, tool=overlay_agy.TOOL)
         if harness == "codex":
             if tethering and overlay_codex.headers_supported():
-                return OverlayPlan(preamble=codex_preamble(cfg.ca_path, proxy), env_names=(overlay_codex.HEADER_ENV, "CODEX_CA_CERTIFICATE"),
-                                   secret_name=SECRET_NAME, flags=overlay_codex.flags(cfg.gateway_url))
+                return OverlayPlan(preamble=codex_preamble(cfg.ca_path, proxy, cfg.gateway_url), env_names=(overlay_codex.HEADER_ENV, overlay_codex.BASE_ENV, overlay_codex.AUTH_ENV, "CODEX_CA_CERTIFICATE"),
+                                   secret_name=SECRET_NAME, flags=overlay_codex.flags())
             return OverlayPlan(preamble="", secret_name=SECRET_NAME)
         return OverlayPlan(preamble=preamble(cfg.gateway_url, cfg.ca_path, proxy) if tethering else "", env_names=("ANTHROPIC_BASE_URL", "ANTHROPIC_CUSTOM_HEADERS", "NODE_EXTRA_CA_CERTS"),
                            secret_name=SECRET_NAME)
@@ -142,13 +173,14 @@ class ArgentOverlay:
         reason = plan.reason or _untethered_reason(health.latest(), self._clock())
         if not reason and ctx.host_key != LOCAL_HOST_KEY:
             reason = self._reach_reason(ctx.host_key, plan)
-        if ctx.harness == "codex":
+        tool = plan.tool or ctx.harness
+        if tool == "codex":
             if not reason and not plan.flags:
                 reason = overlay_codex.UNSUPPORTED_REASON
-        elif not reason and (ctx.settings_override if ctx.settings_override is not None else await asyncio.to_thread(settings_override, ctx.working_dir)):
+        elif tool == "claude" and not reason and (ctx.settings_override if ctx.settings_override is not None else await asyncio.to_thread(settings_override, ctx.working_dir)):
             reason = "settings override"
         listed = False
-        if not reason and ctx.resume_uuid:
+        if not reason and ctx.resume_uuid and tool in ("claude", "codex"):
             reason = await asyncio.to_thread(self._too_large, ctx)
             listed = bool(reason)
         if plan.chained and plan.upstream_url and not reason:
@@ -158,11 +190,11 @@ class ArgentOverlay:
         ref = await asyncio.to_thread(self._ref, ctx.session_ref)
         if not reason:
             try:
-                key = await asyncio.wait_for(mint.mint_session_key(ref, ctx.display_name, ctx.harness, transport=self._transport), mint.MINT_TIMEOUT_SECONDS)
+                key = await asyncio.wait_for(mint.mint_session_key(ref, ctx.display_name, tool, transport=self._transport), mint.MINT_TIMEOUT_SECONDS)
             except (mint.MintFailed, asyncio.TimeoutError) as exc:
                 reason = upstream.reason_for_denial(getattr(exc, "code", "")) or "argent down at launch"
                 listed = reason != "argent down at launch"
-                logger.warning("argent_mint_failed", error_type=type(exc).__name__)
+                logger.warning("argent_mint_failed", error_type=type(exc).__name__, reason=str(exc)[:200], code=getattr(exc, "code", ""))
         key_id = str(getattr(key, "key_id", "") or "")
         try:
             await asyncio.to_thread(self._record, ctx, ref, tethered=bool(key), reason=reason, key_id=key_id,
@@ -171,7 +203,12 @@ class ArgentOverlay:
             logger.warning("argent_row_state_not_recorded", error_type=type(exc).__name__)
         if key:
             note = {"tethered": True, "reason": "", "mint_epoch": int(self._clock()), **({"chained": True} if plan.chained else {})}
-            return OverlayDelivery(secrets={SECRET_NAME: key}, note=note)
+            routed = {name: str(getattr(key, attr, "") or "") for name, attr in ((CLAUDE_BASE_NAME, "claude_base"), (COPILOT_BASE_NAME, "copilot_base"), (AGY_BASE_NAME, "agy_base"))}
+            if tool == "codex" and not plan.chained:
+                chatgpt = cfg.codex_auth_mode == "passthrough" and bool(getattr(key, "codex_chatgpt_base", ""))
+                routed[overlay_codex.BASE_DELIVERY] = str(getattr(key, "codex_chatgpt_base" if chatgpt else "codex_base", "") or "")
+                routed[overlay_codex.AUTH_DELIVERY] = "true" if chatgpt else "false"
+            return OverlayDelivery(secrets={SECRET_NAME: key, **{name: base for name, base in routed.items() if base}}, note=note)
         logger.warning("argent_untethered_launch", reason=reason, session=ctx.session_ref)
         try:
             if await asyncio.to_thread(self._claim_notice, ref):

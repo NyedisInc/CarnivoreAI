@@ -316,7 +316,8 @@
     {/if}
     <ZoneKeys zones={strip_zones} axis={spec.axis} {cuts} {ghostAfter} ghostAimed={aim.onBox} {carriedKey} {labelAt} iconPx={BAR_SIZES[size][edge].icon} compact={size === 'compact'} {editing} {openKeys} {face} mark={keyMark} hiddenKey={railIconHidden} ontoggle={(key, hide) => void setRailIconHidden(key, hide)}
       empty={editing && drawnCount === 0 ? t(horizontal ? 'session_rail.empty_bottom' : 'session_rail.empty') : null}
-      onpress={(_zone, key) => press(key)} {onedit} {motion} />
+      onpress={(_zone, key) => press(key)} {onedit} {motion}
+      oncut={(index, next) => store.previewCut(index, next)} oncutsave={() => store.saveCuts()} />
     </div>
     
     {#each keyMenu ? [keyMenu] : [] as open (open)}

@@ -1,7 +1,6 @@
-import { authFetch, resourcePush } from '../sdk';
+/* the Task Manager */
+import { cplugRow, followCplugRow, refreshEnablement } from '../sdk';
 
-const CPLUGS_TOPIC = 'cplugs';
-const POLL_MS = 60_000;
 export const SHOW_TAB = 'showTab';
 
 export const flowPrefs = $state<{ showTab: boolean }>({ showTab: false });
@@ -12,10 +11,8 @@ export function adopt(row: { settings?: Record<string, unknown> } | null | undef
 }
 
 export async function refreshFlowPrefs(): Promise<void> {
-  try {
-    adopt(await authFetch<{ settings?: Record<string, unknown> }>('/cplugs/flow'));
-  } catch {
-  }
+  await refreshEnablement();
+  adopt(cplugRow('flow'));
 }
 
 let following = false;
@@ -23,10 +20,10 @@ let following = false;
 export function followFlowPrefs(): void {
   if (following) return;
   following = true;
-  const push = resourcePush();
-  push.onChange((topics) => {
-    if (topics.includes(CPLUGS_TOPIC)) void refreshFlowPrefs();
+  followCplugRow('flow', (row) => adopt(row), {
+    onReset: () => {
+      following = false;
+      flowPrefs.showTab = false;
+    },
   });
-  push.pushOrPoll(() => void refreshFlowPrefs(), POLL_MS, [CPLUGS_TOPIC]);
-  void refreshFlowPrefs();
 }

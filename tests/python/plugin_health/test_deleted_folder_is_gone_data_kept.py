@@ -2,13 +2,11 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 import shutil
 import sqlite3
 import stat
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 
@@ -79,9 +77,9 @@ def test_moving_either_folder_to_the_trash_removes_the_plugin_and_keeps_its_data
     rows = {r.item_id for r in w.rt.installed_rows()}
     assert CATALOG not in rows and LOCAL not in rows
     assert "gonedev" not in sideload.items(w.state) and not (w.state / "plugins" / "gonedev").exists()
-    stored = json.loads(owner_state.state_path(w.state).read_text())["cplugs"]
-    assert "gonedev" not in stored
-    assert stored["gonecat"]["enabled"] is False and stored["gonecat"]["grants"] == ["notify"] and stored["gonecat"]["digest"]
+    assert owner_state.stored_entry(w.state, "gonedev") is None
+    gonecat = owner_state.stored_entry(w.state, "gonecat")
+    assert gonecat is not None and gonecat["enabled"] is False and gonecat["grants"] == ["notify"] and gonecat["digest"]
 
     held = {r.name: r for r in identity.installs(w.state)}
     assert set(held) == {"gonecat", "gonedev"}

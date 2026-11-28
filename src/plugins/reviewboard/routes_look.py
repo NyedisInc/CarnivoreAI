@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from src.plugins.reviewboard import board_look, layout, wire
 from src.plugins.reviewboard.errors import BoardError
-from src.plugins.reviewboard.routes import Ctx, router
+from src.plugins.reviewboard.routes_common import Ctx, router
 from src.plugins.sdk import CplugContext
 
 

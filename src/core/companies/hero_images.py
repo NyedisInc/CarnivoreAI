@@ -146,8 +146,10 @@ def _unlink_row(directory: Path, row_id: int, suffixes: Tuple[str, ...]) -> None
 
 def remove_upload(kind: str, row_id: int) -> None:
     _unlink_row(images_dir(kind), row_id, tuple(CONTENT_TYPES))
-    for thumb in (images_dir(kind) / "thumbs").glob(f"{int(row_id)}-*.webp"):
-        thumb.unlink(missing_ok=True)
+    thumbs_dir = images_dir(kind) / "thumbs"
+    for ext in ("avif", "webp"):
+        for thumb in thumbs_dir.glob(f"{int(row_id)}-*.{ext}"):
+            thumb.unlink(missing_ok=True)
 
 
 def remove(kind: str, row_id: int) -> None:

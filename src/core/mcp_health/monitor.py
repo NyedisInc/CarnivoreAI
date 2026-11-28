@@ -13,12 +13,13 @@ import structlog
 from src.core.mcp_health import process_match
 from src.core.mcp_health.client_log import READER, ClientLogReader, LinkState
 from src.core.mcp_health.config_claude import claude_servers, not_started
+from src.core.mcp_health.config_agy import agy_servers
 from src.core.mcp_health.config_codex import codex_servers
 from src.core.mcp_health.probe import ProbeTable
 from src.core.account_switch.pane_account import read_pane_profile
 from src.core.claude_resume_argv import SHARED_TABLE_MAX_AGE_SECONDS
 from src.core.conversation_writers import MeasureError, ProcessTable, read_process_table
-from src.core.mcp_health.agent_process import FAMILY_CLAUDE, find_agent, lstart_to_datetime
+from src.core.mcp_health.agent_process import FAMILY_AGY, FAMILY_CLAUDE, find_agent, lstart_to_datetime
 from src.core.mcp_health.servers import REMOTE_TRANSPORTS, TRANSPORT_STDIO, ServerSpec
 from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
 
@@ -76,6 +77,8 @@ def measure_target(
             links = reader.session_links(cwd, target.agent_started_at, now)
             never = not_started(specs, reader.session_servers(cwd, target.agent_started_at))
             specs, excluded = tuple(s for s in specs if s.key not in never), excluded | never
+    elif target.family == FAMILY_AGY:
+        specs, excluded = agy_servers(), frozenset()
     else:
         specs, excluded = codex_servers(proc.command, cwd, profile), frozenset()
     commands = commands if commands is not None else {p: r.command for p, r in table.rows.items()}

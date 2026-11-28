@@ -6,6 +6,10 @@ import time
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Iterable, Iterator, List, Optional, Protocol, Sequence, Tuple
 
+import structlog
+
+logger = structlog.get_logger()
+
 BOOT_GRACE_SECONDS: float = 300.0
 
 
@@ -174,9 +178,42 @@ def unregister(source_id: str) -> None:
         _sources.pop(source_id, None)
 
 
+def registered(source_id: str) -> bool:
+    with _lock:
+        return source_id in _sources
+
+
 def sources() -> Tuple[FallbackSource, ...]:
     with _lock:
         return tuple(_sources.values())
+
+
+_gone_listeners: List[Callable[[str], None]] = []
+
+
+def on_conversation_gone(listener: Callable[[str], None]) -> None:
+    with _lock:
+        if listener not in _gone_listeners:
+            _gone_listeners.append(listener)
+
+
+def remove_gone_listener(listener: Callable[[str], None]) -> None:
+    with _lock:
+        if listener in _gone_listeners:
+            _gone_listeners.remove(listener)
+
+
+def notify_conversation_gone(conversation_id: str) -> int:
+    with _lock:
+        listeners = tuple(_gone_listeners)
+    if not listeners:
+        logger.debug("fallback_gone_nobody_listening", conversation_id=conversation_id)
+    for listener in listeners:
+        try:
+            listener(conversation_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("fallback_gone_listener_failed", conversation_id=conversation_id, error_type=type(exc).__name__, error=str(exc)[:200])
+    return len(listeners)
 
 
 _boot_deadline: float = float("-inf")
@@ -200,4 +237,4 @@ def booting() -> bool:
 
 
 __all__ = ["path_tail", "BOOT_GRACE_SECONDS", "FallbackConversation", "FallbackFile", "FallbackReader", "FallbackSource", "FallbackUnavailable",
-           "begin_boot", "booting", "end_boot", "register", "sources", "unregister"]
+           "begin_boot", "booting", "end_boot", "notify_conversation_gone", "on_conversation_gone", "register", "remove_gone_listener", "sources", "unregister"]

@@ -15,6 +15,9 @@ import { memoryFetcher } from '../item-settings/memory-fetcher';
 import { createItemSettingsController } from '../item-settings/item-settings-controller.svelte';
 import type { Fetcher } from '../item-settings/api';
 import { PSEUDO_LOCALE } from '../../../../client/js/i18n/pseudo.js';
+import { stubResizeObserver } from '../widgets-page/settings/mock-test-support';
+
+stubResizeObserver();
 import type { Translate } from '../sessions/types';
 
 const en = createI18n({ locale: 'en' }) as { t: Translate };
@@ -142,16 +145,23 @@ describe('the plugins page', () => {
         expect(root.querySelector('[role="switch"]')?.getAttribute('aria-checked')).toBe('false');
     });
 
-    test('the off chip narrows to the plugins that are off', async () => {
+    test('the filter chips narrow to matching plugins and preserve toolbar order', async () => {
         const { adapter } = pluginsFixture();
         const root = await show(PluginsScreen, { adapter, t });
         const bar = root.querySelector('.oc-toolbar')!;
-        const selects = Array.from(bar.querySelectorAll<HTMLSelectElement>('select'));
-        const state = selects.find((el) => Array.from(el.options).some((o) => o.textContent?.trim() === 'off'))!;
-        state.value = 'off';
-        state.dispatchEvent(new Event('change', { bubbles: true }));
+        const chips = Array.from(bar.querySelectorAll<HTMLButtonElement>('.oc-chip'));
+        expect(chips.map((c) => c.textContent?.trim())).toEqual([
+            'all',
+            'enabled',
+            'built-in',
+            'app plugin',
+            'agent plugin',
+            'local dev',
+        ]);
+        const enabledChip = chips.find((c) => c.textContent?.trim() === 'enabled')!;
+        enabledChip.click();
         await settle();
-        expect(names(root)).toEqual(['share read only']);
+        expect(names(root)).toEqual(['mark unread']);
         const order = Array.from(bar.querySelectorAll('.oc-toolbar__search, .oc-toolbar__facets, .oc-toolbar__end')).map((el) => el.className);
         expect(order).toEqual(['oc-toolbar__search', 'oc-toolbar__facets', 'oc-toolbar__end']);
         expect(bar.querySelectorAll('.oc-toolbar__end select').length).toBe(1);

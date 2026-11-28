@@ -1,6 +1,6 @@
 
 <script lang="ts">
-    import { t as reactiveT, truncatedTip, type Translate } from '../sdk';
+    import { liveRowAfterNotAsleep, t as reactiveT, truncatedTip, type Translate } from '../sdk';
     import { errorSentence, type Fetcher } from './crate-api';
     import { keptSubject, skipSentence, warningSentence } from './import-api';
     import { wakeRestoredSession, type ImportReceiptView, type RestoredSession } from './import-receipt';
@@ -31,7 +31,7 @@
             const answer = await wakeRestoredSession(session.sessionUuid, fetcher);
             status[session.sessionUuid] = answer.status === 'started' ? 'awake' : answer.detail || answer.status;
         } catch (error) {
-            status[session.sessionUuid] = errorSentence(error, t);
+            status[session.sessionUuid] = (await liveRowAfterNotAsleep(error, session.sessionUuid)) ? 'awake' : errorSentence(error, t);
         }
     }
 

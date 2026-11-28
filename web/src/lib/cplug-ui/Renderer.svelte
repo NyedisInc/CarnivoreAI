@@ -14,17 +14,19 @@
         document: unknown;
         declared: Declared;
         stale?: boolean;
+        bar?: boolean;
+        fill?: boolean;
         t: Translate;
         run?: (action: Action) => Promise<void>;
     }
 
     // svelte-ignore state_referenced_locally
-    const { cplugId, name, unverified = false, document: raw, declared, stale = false, t, run = (action) => runAction(cplugId, action) }: Props = $props();
+    const { cplugId, name, unverified = false, document: raw, declared, stale = false, bar = true, fill = false, t, run = (action) => runAction(cplugId, action) }: Props = $props();
 
     const verdict = $derived(validateDocument(raw, declared));
     provide({ get data() { return verdict.ok ? verdict.doc.data : undefined; }, t, run: (action) => run(action) });
 </script>
 
-<HostFrame {name} {unverified} {t} note={!verdict.ok ? t('cplug_ui.could_not_draw') : stale ? t('cplug_ui.stale') : null}>
+<HostFrame {name} {unverified} {bar} {fill} {t} note={!verdict.ok ? t('cplug_ui.could_not_draw') : stale ? t('cplug_ui.stale') : null}>
     {#if verdict.ok}<div class="cu-root" data-cu-root><Node node={verdict.doc.root} /></div>{/if}
 </HostFrame>

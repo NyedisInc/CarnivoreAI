@@ -116,14 +116,14 @@ describe('plans', () => {
   const config = { id: 'x', revision: 1, title: 't', enabled: true, viz: 'runway', options: {}, series: [{ metric: 'quota_utilization', group_by: 'account_id' }], filters: {}, range: { mode: 'global' }, display: { type: 'line' } } as ChartConfig;
   const ctx: PlanContext = { now: Date.parse('2026-09-29T12:00:00Z'), timezone: 'UTC', filters: {}, quotaWindow: 'five_hour' };
 
-  test('runway asks for quota percent per account on the quota window', () => {
+  test('runway asks for quota percent per account on the quota window with pack scope', () => {
     const [body] = runwayPlan(config, ctx);
-    expect(body).toMatchObject({ metric: 'quota_utilization', operation: 'timeline', group_by: 'account_id', filters: { window: 'five_hour' }, top_n: 10 });
+    expect(body).toMatchObject({ metric: 'quota_utilization', operation: 'timeline', group_by: 'account_id', filters: { window: 'five_hour' }, top_n: 10, scope: 'pack' });
   });
 
-  test('swimlanes ask for three conversation timelines', () => {
+  test('swimlanes ask for three conversation timelines with pack scope', () => {
     const bodies = swimlanePlan(config, ctx);
     expect(bodies.map((b) => b.metric)).toEqual(['working_seconds', 'waiting_seconds', 'subagent_seconds']);
-    for (const body of bodies) expect(body).toMatchObject({ operation: 'timeline', group_by: 'conversation_id', top_n: 8 });
+    for (const body of bodies) expect(body).toMatchObject({ operation: 'timeline', group_by: 'conversation_id', top_n: 8, scope: 'pack' });
   });
 });

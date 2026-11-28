@@ -292,13 +292,15 @@ def test_observed_span_and_every_alpha_consumer_goes_through_content_alpha():
     link_and_status = {
         "src/api/pack_machines_routes.py": "owner edits and the Pack view", "src/core/computers/commit.py": "the join mints its own master",
         "src/core/computers/forget.py": "a leave mints its own master", "src/core/computers/runtime.py": "link rows, the pack view and the HELLO",
-        "src/core/computers/takeover_driver.py": "the takeover loop itself", "src/core/pack/machines/config_state.py": "stores the document",
+        "src/core/computers/takeover_driver.py": "the takeover loop itself", "src/core/computers/mesh.py": "the takeover hold of mesh links (link state, no content)", "src/core/pack/machines/config_state.py": "stores the document",
         "src/core/pack/machines/exchange.py": "the document exchange", "src/core/pack/machines/roster.py": "the machines view",
         "src/core/pack/machines/reconnect_view.py": "names the link and status answer in the machines view",
         "src/core/pack/machines/settings_custody.py": "custody", "src/core/pack/machines/settings_doc.py": "the document",
         "src/core/pack/machines/settings_sign.py": "the judge", "src/core/pack/skills/alerts.py": "text about a refused document",
         "src/core/pack/globalsync/sender.py": "takes is_main and main_id injected; globalsync/wiring.py passes content_alpha",
         "src/api/pack_global_sync_routes.py": "asks the injected sync.is_main, which is content_alpha",
+        "src/api/pack_link_peers_routes.py": "an owner edit of a link switch: it needs the document's own master and refuses an interim claimant itself",
+        "src/core/pack/relay/member_reach.py": "keys the member id cache on the held document master, so a leave or a join of another Pack never serves it (identity, not content)",
     }
     pattern = re.compile(r"master_install_id|held_alpha\(|\bis_main\b")
     for path in sorted(Path("src").rglob("*.py")):

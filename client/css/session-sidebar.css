@@ -3,7 +3,7 @@
 :root {
     --sidebar-dock-w: min(320px, 85vw);
     --drawer-field-h: 24px;
-    --drawer-bar-h: calc(var(--drawer-field-h) + 2 * var(--oc-space-1) + var(--oc-border));
+    --drawer-bar-h: calc(var(--drawer-field-h) + 2 * var(--oc-space-2) + var(--oc-border));
 }
 
 @media (max-width: 700px) {

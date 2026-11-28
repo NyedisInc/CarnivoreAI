@@ -13,6 +13,7 @@ export const INNER_STATES = Object.freeze([
     'asleep',
     'asleep-unread',
     'limit',
+    'background',
     'unknown',
 ] as const);
 
@@ -44,6 +45,9 @@ export const INNER_LABELS: Readonly<Record<InnerState, string>> = Object.freeze(
     asleep: 'asleep - stopped to free memory, wake it from the session menu',
     'asleep-unread': 'asleep, flagged unread - wake it to follow up',
     limit: 'over limit',
+    get background(): string {
+        return t('session.status.background');
+    },
     unknown: 'status not measured',
 });
 
@@ -125,6 +129,7 @@ export interface LedSignals {
     host_offline?: string | null | undefined;
     usage_limit?: string | null | undefined;
     login_expired?: string | null | undefined;
+    activity_hint?: string | null | undefined;
 }
 
 export function hostOffline(row: object | null | undefined): string | null {
@@ -193,6 +198,9 @@ export function ledStateFor(signals?: LedSignals | null): LedState {
     }
 
     // A WORKING SESSION IS SOLID GREEN, unread flag or not
+    if (status === 'working_subagent' && s.activity_hint === 'background') {
+        return { inner: 'background', outer: 'steady' };
+    }
     if (status === 'working' || status === 'working_subagent' || status === 'running') {
         return { inner: 'working', outer: 'active' };
     }

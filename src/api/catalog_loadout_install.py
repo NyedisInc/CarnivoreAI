@@ -24,7 +24,7 @@ from src.core.skills.install_types import (
     InstallRefusal,
 )
 from src.core.skills.installer import discard_staging
-from src.core.skills.kinds import manifest_name
+from src.core.skills.kinds import resolve_manifest_path
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL
 from src.core.skills.loadout_members import (
     MEMBER_ALREADY_PRESENT,
@@ -127,7 +127,7 @@ async def _install_one(
             staged_plugin_declares_code, item.kind, staged.path
         ):
             body_sha, _size = await asyncio.to_thread(
-                hash_file, staged.path / manifest_name(item.kind)
+                lambda: hash_file(resolve_manifest_path(item.kind, staged.path))
             )
             if not install_consent_satisfied(
                 consent, digest=staged.digest, body_sha=body_sha

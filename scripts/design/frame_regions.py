@@ -9,7 +9,8 @@ from tests.python.design_system._sources import REPO, css_of, split_selectors
 
 ROOTS = ("web/src", "client/css", "client/style-guide", "cplugs")
 ALLOWED_FILES = frozenset({
-    "web/src/opscenter/page.css", "web/src/opscenter/page-frames.css", "web/src/opscenter/page-pair.css", "web/src/opscenter/ui/Page.svelte",
+    "web/src/opscenter/page.css", "web/src/opscenter/page-frames.css", "web/src/opscenter/page-pair.css", "web/src/opscenter/page-tools.css",
+    "web/src/opscenter/ui/Page.svelte",
 })
 ALLOWED_PREFIXES = ("web/src/style-guide/", "client/style-guide/")
 

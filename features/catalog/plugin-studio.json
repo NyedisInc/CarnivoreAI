@@ -1,0 +1,74 @@
+{
+  "id": "plugin-studio",
+  "name": "Plugin Studio",
+  "area": "dev-tooling",
+  "status": "beta",
+  "since": "2026-11-26",
+  "updated": "2026-11-26",
+  "summary": "in-app AI Build a Plugin workbench that scaffolds a plugin workspace from a plain-English prompt, runs an agent alongside live hot-reload dev mode, previews across themes, inspects RPC and capabilities, checks Warez readiness, and runs 1-click sandbox test, install, and publish.",
+  "description": "Plugin Studio turns a plain-English prompt and runtime choice (no-code, Python, TypeScript, Bash, widget, channel, or agent harness) into a scaffolded plugin workspace with STUDIO_BRIEF.md and LICENSE.md, launches Claude, Codex, or agy beside a live hot-reload dev session, renders Declarative UI v2 and sandboxed iframe views across multiple themes side by side, streams live RPC frames, slot renders, capability checks, and UI errors in the Dev Inspector, runs the unified Warez readiness checklist (manifest check, kind preparation, static/secret/license gates, and sandbox smoke tests), and provides 1-click Test in Sandbox, Install, and Publish to Warez actions.",
+  "surfaces": [
+    "src/core/plugin_studio/__init__.py",
+    "src/core/plugin_studio/scaffolder.py",
+    "src/core/plugin_studio/session_launcher.py",
+    "src/core/plugin_studio/dev_session.py",
+    "src/core/plugin_studio/inspector_preview.py",
+    "src/core/plugin_studio/readiness.py",
+    "src/core/plugin_studio/actions.py",
+    "src/api/plugin_studio_routes.py",
+    "web/src/lib/plugin-studio/StudioScreen.svelte",
+    "web/src/lib/plugin-studio/StudioModal.svelte",
+    "web/src/lib/plugin-studio/studio-store.svelte.ts",
+    "web/src/lib/plugin-studio/MultiThemePreview.svelte",
+    "web/src/lib/plugin-studio/StudioInspectorPane.svelte",
+    "web/src/lib/plugin-studio/ReadinessChecklist.svelte",
+    "web/src/lib/plugin-studio/StudioActionsBar.svelte"
+  ],
+  "api_routes": [
+    "GET /api/v1/cplug-owner/studio/workspaces",
+    "POST /api/v1/cplug-owner/studio/workspaces",
+    "GET /api/v1/cplug-owner/studio/workspaces/{studio_id}",
+    "DELETE /api/v1/cplug-owner/studio/workspaces/{studio_id}",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/agent",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/dev/start",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/dev/stop",
+    "GET /api/v1/cplug-owner/studio/workspaces/{studio_id}/readiness",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/readiness",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/test-sandbox",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/install",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/publish",
+    "POST /api/v1/cplug-owner/studio/workspaces/{studio_id}/preview-render"
+  ],
+  "docs": [
+    "docs/cplugs.md",
+    "docs/cplug-runtime.md"
+  ],
+  "issues": [
+    3378
+  ],
+  "keywords": [
+    "plugin studio",
+    "build a plugin",
+    "hot reload",
+    "multi-theme preview",
+    "inspector",
+    "warez readiness",
+    "sandbox",
+    "publish"
+  ],
+  "where": [
+    "The + Build a Plugin button on the Plugins page header or Widgets page header.",
+    "The Command Palette action Build a Plugin.",
+    "The Build a Plugin Studio tab inside the Widget Lab developer plugin."
+  ],
+  "how_to": [
+    "Press + Build a Plugin from the Plugins page, Widgets page, Command Palette, or Widget Lab to open Plugin Studio.",
+    "Enter a plain-English prompt, choose a runtime/template and agent (Claude, Codex, or agy), and launch a scaffolded workspace with live hot-reload dev mode.",
+    "Inspect multi-theme previews (Carnivore, Matrix, or any theme), watch live RPC and capability events in the Inspector tab, and run Warez Readiness to resolve any red items before clicking Test in Sandbox, Install, or Publish to Warez."
+  ],
+  "examples": [
+    "Describe a session greeting plugin, choose Python and Claude, watch live edits hot-reload in the Carnivore and Matrix preview cards, then click Test in Sandbox and Install.",
+    "Open the Readiness tab to catch a missing LICENSE.md or forbidden shell=True call before submitting to Warez."
+  ],
+  "media_exempt": "interactive Plugin Studio workbench launching a local agent session and live dev server; verified by automated Vitest, pytest E2E, and live Playwright smoke test"
+}

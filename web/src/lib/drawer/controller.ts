@@ -5,6 +5,7 @@ import * as LeaderVisibility from './leader-visibility';
 import * as EmptySections from './empty-sections.svelte';
 import * as StatsVisibility from './stats-visibility.svelte';
 import * as SectionVisibility from './section-visibility.svelte';
+import * as SleepFold from './sleep-fold.svelte';
 import * as ClosedVisibility from './closed-visibility.svelte';
 import * as ArchivedVisibility from './archived-visibility';
 import * as RowIconPrefs from './row-icon-prefs';
@@ -153,6 +154,7 @@ export class SessionSidebarController {
         EmptySections.init();
         StatsVisibility.init();
         SectionVisibility.init();
+        SleepFold.init();
         ClosedVisibility.init();
         ArchivedVisibility.init();
         RowIconPrefs.init();

@@ -1,0 +1,1 @@
+import{G as e,h as t,i as n,q as r,r as i}from"./chunk-index-client.js";import"./chunk-disclose-version.js";var a=new Set([`$$slots`,`$$events`,`$$legacy`,`axis`]),o=r(`<span></span>`);function s(r,s){let c=i(s,`axis`,3,`x`),l=n(s,a);var u=o();t(u,()=>({class:`oc-grip`,"data-axis":c(),...l}),void 0,void 0,void 0,`svelte-1ctpn6x`),e(r,u)}export{s as t};

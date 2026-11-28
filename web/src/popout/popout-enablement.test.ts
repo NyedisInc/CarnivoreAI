@@ -8,12 +8,12 @@ vi.mock('./TabPopout.svelte', () => ({ default: {} }));
 vi.mock('../opscenter/engine/home-sync.svelte', () => ({ startHomeSync: () => {} }));
 vi.mock('../opscenter/api/auth.svelte', async (original) => ({
   ...(await original<typeof import('../opscenter/api/auth.svelte')>()),
-  authFetch: vi.fn(async (path: string) => (path === '/cplugs' ? { cplugs: [{ id: 'huddle', enabled: false }] } : {})),
+  authFetch: vi.fn(async (path: string) => (path === '/cplugs' ? { cplugs: [{ id: 'taskmanager', enabled: false }] } : {})),
 }));
 
 test('a plugin switched off on the server is off in the pop-out', async () => {
   window.history.replaceState(null, '', '/static/popout.html?tab=reviewboard&board=20261013-bottom-bar');
-  const { taskManagerPopout } = await import('../plugins/huddle/popout');
+  const { taskManagerPopout } = await import('../plugins/taskmanager/popout');
   const { cplugEnabled, cplugEnablement } = await import('../plugins/host/enablement.svelte');
   expect(cplugEnabled(taskManagerPopout.manifest)).toBe(true);
 

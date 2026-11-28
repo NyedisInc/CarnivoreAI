@@ -4,7 +4,9 @@ import { listedCatalogPlugins, warezOrder } from './plugin-listing';
 import { displayKind } from '../catalog/kind-display';
 import { refusalCodeOf } from '../catalog/install-actions';
 import { quickAdd } from '../catalog/quick-add';
+import { revocationOfItem } from '../catalog/revocation';
 import { consentBlock, needsScriptConsent, scriptFiles } from '../catalog/scripts';
+import { runUpdate } from '../catalog/update-flow';
 import { mcpServers } from '../catalog/mcp';
 import type {
     CatalogItem,
@@ -17,17 +19,23 @@ import type {
 import type { ManagerItem } from '../manager-frame/types';
 import type { ProjectRow, Translate } from '../sessions/types';
 import { icons } from '../../opscenter/ui/icons';
-import { refusalMessage } from '../../../../client/js/labels/skill.js';
+import { SKILL_KEYS, refusalMessage } from '../../../../client/js/labels/skill.js';
 
 export const CATALOG_ITEM_PREFIX = 'catalog:';
 
-const SHEET_CODES: ReadonlySet<string> = new Set(['consent_required', 'sheet_required', 'name_taken']);
+const SHEET_CODES: ReadonlySet<string> = new Set(['consent_required', 'sheet_required', 'name_taken', 'cplug_flagged_ack_required']);
 
 export interface CatalogPluginItem extends ManagerItem {
     readonly kind: 'catalog';
     readonly itemId: string;
     readonly mediaSha: string | null;
     readonly credit: CatalogCredit | null;
+    readonly pluginKind?: 'agent' | 'app';
+    readonly revoked?: boolean;
+    readonly revocationReason?: string | null;
+    readonly revokedSince?: string | null;
+    readonly flagged?: boolean;
+    readonly reviewVerdict?: string | null;
 }
 
 export interface CatalogCredit {
@@ -178,7 +186,13 @@ export function createCatalogPlugins(deps: CatalogPluginsDeps): CatalogPlugins {
             tags: glob ? [t('plugins.page.catalog.global')] : [],
             byline: author ? t('plugins.page.byline', { name: author }) : card.publisher ? t('plugins.page.byline', { name: card.publisher }) : null,
             credit: author ? { sourceUrl: firstWebUrl([fm.homepage, fm.repository, fm.author_url]), publisher: card.publisher } : null,
+            pluginKind: card.isPlugin ? 'agent' : 'app',
             enabled: glob || actOf(item).kind !== 'switch' ? null : isCarnivorePlugin(item) ? false : projectPath ? projectRow(id) !== undefined : false,
+            revoked: card.revoked,
+            revocationReason: card.revocationReason,
+            revokedSince: card.revokedSince,
+            flagged: card.flagged,
+            reviewVerdict: card.verdict,
         };
     }
 
@@ -245,6 +259,7 @@ export function createCatalogPlugins(deps: CatalogPluginsDeps): CatalogPlugins {
         async add(itemId, target, path) {
             const item = catalog.find((c) => c.id === itemId);
             if (!item) throw new Error(t('plugins.page.catalog.gone'));
+            if (revocationOfItem(item).revoked) throw new Error(t(SKILL_KEYS.revokedNotice));
             const answer = await quickAdd(host, itemId, target, path);
             if (answer.outcome === 'refused') throw new Error(answer.code ? refusalMessage(answer.code, t) : t('plugins.page.catalog.failed'));
             if (answer.outcome === 'sheet') {
@@ -256,13 +271,31 @@ export function createCatalogPlugins(deps: CatalogPluginsDeps): CatalogPlugins {
         async update(itemId) {
             const item = catalog.find((c) => c.id === itemId);
             if (!item) throw new Error(t('plugins.page.catalog.gone'));
+            const card = cardView(item, false);
+            if (card.revoked) throw new Error(t(SKILL_KEYS.revokedNotice));
+            const row = installed.find((r) => r.item_id === itemId && r.update_available === true) ?? installed.find((r) => r.item_id === itemId);
+            if (row) {
+                const res = await runUpdate({ host, t, name: card.headline ?? itemId, card, installed: row });
+                if (res.kind === 'failed') {
+                    throw new Error(
+                        res.outcome.kind === 'refused'
+                            ? refusalMessage(res.outcome.code, t)
+                            : res.outcome.kind === 'unsupported'
+                              ? t(SKILL_KEYS.refusedUnsupported)
+                              : t('plugins.page.catalog.failed'),
+                    );
+                }
+                await reloadInstalled();
+                return;
+            }
             if (!deps.openSheet) throw new Error(t('plugins.page.catalog.sheet_unavailable'));
-            await deps.openSheet(cardView(item, false), null as never);
+            await deps.openSheet(card, null as never);
             await reloadInstalled();
         },
         async setEnabled(itemId, on) {
             const item = catalog.find((c) => c.id === itemId);
             if (!item) throw new Error(t('plugins.page.catalog.gone'));
+            if (on && revocationOfItem(item).revoked) throw new Error(t(SKILL_KEYS.revokedNotice));
             if (isCarnivorePlugin(item)) return on ? viaSheet(item) : toItem(item);
             if (!projectPath) throw new Error(t('plugins.page.catalog.need_project'));
             if (!on) {

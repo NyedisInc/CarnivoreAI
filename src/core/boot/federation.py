@@ -21,6 +21,16 @@ if TYPE_CHECKING:
 logger = structlog.get_logger()
 
 _FEDERATION_SWALLOW = "startup must never fail on federation; a missing dns_sd, socket or peer is a named state, not a dead server"
+_CACHED_LABEL: Optional[str] = None
+
+
+def _cached_this_label() -> str:
+    global _CACHED_LABEL
+    if _CACHED_LABEL is None:
+        from src.core.computers.this_label import this_label
+
+        _CACHED_LABEL = this_label()
+    return _CACHED_LABEL
 
 
 @dataclass
@@ -51,17 +61,19 @@ def _discovery_steps() -> list[BootStep]:
 
         from src.core.computers import runtime as _computers_runtime
         from src.core.federation.fed_key import local_fid
-        from src.core.computers.this_label import this_label
 
-        _platform_uuid = await asyncio.to_thread(ioreg_platform_uuid)
-        _federation_fid = await asyncio.to_thread(local_fid, settings.get_state_dir())
+        _platform_uuid, _federation_fid, _ = await asyncio.gather(
+            asyncio.to_thread(ioreg_platform_uuid),
+            asyncio.to_thread(local_fid, settings.get_state_dir()),
+            asyncio.to_thread(_cached_this_label),
+        )
         _slot_name = testslot_instance_name(os.environ)
         held.discovery = Discovery(
             config_path=Path(settings.auth_config_file).expanduser(),
             fid_provider=lambda: _computers_runtime.advertised_fid() or _federation_fid,
             platform_uuid_provider=lambda: _platform_uuid,
             link_port_provider=_computers_runtime.advertised_link_port,
-            label_provider=this_label,
+            label_provider=_cached_this_label,
             members_provider=_computers_runtime.advertised_members,
             advertise_allowed=not os.environ.get("CARNIVORE_SETTINGS_ENV_FILE") or _slot_name is not None,
             **({"name_provider": lambda: _slot_name} if _slot_name else {}),
@@ -114,6 +126,17 @@ async def _start_link(ctx: "BootContext", held: _LinkHandles) -> None:
     _fed_dir = Path.home() / ".carnivore" / "fed"
     held.listener = PeerListener(app, socket_path_for(_fed_dir, default_instance_tag()))
     await held.listener.start()
+    from src.core.pack.machines import capabilities as _mesh_switch
+
+    if _mesh_switch.mesh_on():
+        from src.core.federation import mesh_listener as _mesh_listener
+
+        try:
+            await _mesh_listener.start(app)
+        except (RuntimeError, OSError) as exc:
+            from src.core.computers.link_listener import failure_fields
+
+            logger.error("mesh_listener_start_failed", **failure_fields(exc))
     from src.core.federation.pair_socket import PairSocket
 
     held.pair_socket = PairSocket(str(_fed_dir / f"pair-{default_instance_tag()}.sock"), settings.get_state_dir())
@@ -121,16 +144,16 @@ async def _start_link(ctx: "BootContext", held: _LinkHandles) -> None:
     _peer_links.LINKS = _peer_links.PeerLinks(open_db=_peer_auth.open_db, listener_path=held.listener.path)
     from src.api.door_auth import door_login_tokens, door_totp_ok
     from src.core.computers.runtime import ComputersRuntime, LazyPack
-    from src.core.computers.this_label import this_label as _fed_label
     from src.core import version as _version
     from src.core.pack.machines import runtime as _pack_machines
 
     door_file_name = f"door-{default_instance_tag()}.sock"
     app.state.door_file_name = door_file_name
+    _label = await asyncio.to_thread(_cached_this_label)
     held.computers_rt = ComputersRuntime(
         open_db=_peer_auth.open_db, pack=LazyPack(_pack_machines.wiring), fed_dir=_fed_dir,
         listener_path=held.listener.path, config_path=Path(settings.auth_config_file).expanduser(),
-        host=settings.host, label=_fed_label(), app_version=_version.resolve_version(),
+        host=settings.host, label=_label, app_version=_version.resolve_version(),
         door_path=str(_fed_dir / door_file_name), door_totp_ok=door_totp_ok,
         door_login=door_login_tokens, refresh_store=lambda: app.state.refresh_store,
         setup_status=lambda: current_setup_state().status,
@@ -146,10 +169,10 @@ async def _start_pack_layer(ctx: "BootContext", held: _LinkHandles) -> None:
     services = ctx.services
     from src.api import peer_auth as _peer_auth
     from src.core import version as _version
-    from src.core.computers.this_label import this_label as _fed_label
     from src.core.federation import peer_events as _peer_events
     from src.core.federation import peer_links as _peer_links
     from src.core.pack.machines import runtime as _pack_machines
+    from src.core.pack.rollup_import import relay_export as _relay_export
     from src.core.stats import rollup as _stats_rollup
 
 
@@ -158,12 +181,13 @@ async def _start_pack_layer(ctx: "BootContext", held: _LinkHandles) -> None:
 
     held.notification_sync_task = _notify_sync.start(app.state, _peer_auth.open_db)
     held.pack_machines_task = _pack_machines.start(
-        _peer_auth.open_db, lambda: _peer_links.LINKS, label=_fed_label(), app_version=_version.resolve_version(),
+        _peer_auth.open_db, lambda: _peer_links.LINKS, label=_cached_this_label(), app_version=_version.resolve_version(),
         state_dir=lambda: str(settings.get_state_dir()),
-        pipeline_rev=lambda: _stats_rollup.advertised_revisions(getattr(app.state, "stats_store", None)))
+        pipeline_rev=lambda: {**_stats_rollup.advertised_revisions(getattr(app.state, "stats_store", None)),
+                              **_relay_export.advertised(_peer_auth.open_db)})
     from src.core.pack.relay import runtime as _pack_relay
 
-    _pack_relay.start(_peer_auth.open_db, lambda: _peer_links.LINKS)
+    _pack_relay.start(_peer_auth.open_db, lambda: _peer_links.LINKS, lambda: getattr(app.state, "session_manager", None))
     from src.core.argent import pair_sync as _argent_pair
 
     _argent_pair.start(lambda: _peer_links.LINKS)
@@ -175,7 +199,7 @@ async def _start_pack_layer(ctx: "BootContext", held: _LinkHandles) -> None:
     _pack_skills.start(lambda: _peer_links.LINKS, services)
     from src.core.pack.globalsync import wiring as _pack_global_sync
 
-    _pack_global_sync.start(_peer_auth.open_db, lambda: _peer_links.LINKS)
+    _pack_global_sync.start(_peer_auth.open_db, lambda: _peer_links.LINKS, app_state=app.state)
     from src.core.pack.placement import enhanced as _pack_placement_ai, maintain as _pack_maintain
 
     _pack_placement_ai.register_feature()
@@ -210,7 +234,18 @@ async def _stop_link(ctx: "BootContext", held: _LinkHandles) -> None:
         if _peer_links.LINKS is not None:
             await ctx.stop_part("peer_links", _peer_links.LINKS.shutdown)
             _peer_links.LINKS = None
-        await ctx.stop_part("federation_listener", held.listener.stop)
+
+        async def _stop_listeners() -> None:
+            from src.core.computers.link_listener import failure_fields
+            from src.core.federation import mesh_listener as _mesh_listener_stop
+
+            try:
+                await _mesh_listener_stop.stop()
+            except (RuntimeError, OSError) as exc:
+                logger.error("mesh_listener_stop_failed", **failure_fields(exc))
+            await held.listener.stop()
+
+        await ctx.stop_part("federation_listener", _stop_listeners)
         if held.pair_socket is not None:
             await ctx.stop_part("federation_pair_socket", held.pair_socket.stop)
 

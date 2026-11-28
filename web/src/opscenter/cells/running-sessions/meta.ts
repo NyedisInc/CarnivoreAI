@@ -57,7 +57,7 @@ export function phoneSummary(): PhoneSummary | null {
   const rows = sessions.data ?? [];
   const counts = new Map<string, number>();
   for (const row of rows) {
-    const hue = statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row));
+    const hue = statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row), row.activity_hint);
     const key = normalizeStatus(row.activity_status);
     const unread = row.unread === true && (key === 'idle' || key === 'unknown');
     const hollow = row.startup_gate === 'awaiting_startup_prompt' ? false : unread || key === 'unknown';

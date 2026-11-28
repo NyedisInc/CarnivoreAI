@@ -48,6 +48,8 @@ REQUIRED_KEYS: Sequence[str] = (
     "ios.reason.tls_error.detail",
     "ios.reason.link_offline.name",
     "ios.reason.link_offline.detail",
+    "ios.reason.signed_out.name",
+    "ios.reason.signed_out.detail",
     "ios.reason.version_mismatch.name",
     "ios.reason.version_mismatch.detail",
     "ios.action.retry",
@@ -169,7 +171,9 @@ def render_palettes(themes: Sequence[dict]) -> str:
         "    /// The palette for a theme id, or the default theme's when the id is nil or unknown.\n"
         "    static func palette(id: String?) -> Palette {\n"
         "        all.first { $0.id == id } ?? all.first { $0.id == fallbackId }!\n"
-        "    }\n}\n"
+        "    }\n\n"
+        "    /// The transparent fill (a themed surface that must show what is behind it).\n"
+        "    static let clear = Color.clear\n}\n"
     )
 
 
@@ -192,6 +196,19 @@ def render_card_tones() -> str:
         "enum CardTones {\n"
         f"    static let dark: CardTone = {tone(0)}\n"
         f"    static let light: CardTone = {tone(1)}\n}}\n"
+    )
+
+
+def render_thumb_tones() -> str:
+    lets = "\n".join(f"    static let {name} = rgb(0x{values[0]:06X})" for name, values in CARD_TONES.items())
+    return (
+        f"{HEADER}import UIKit\n\n"
+        "/// The dark card tone as UIColor (the notification service extension renders thumbnails without SwiftUI).\n"
+        f"enum CardThumbTones {{\n{lets}\n\n"
+        "    /// A color from 0xRRGGBB.\n"
+        "    private static func rgb(_ hex: UInt32) -> UIColor {\n"
+        "        UIColor(red: CGFloat((hex >> 16) & 255) / 255, green: CGFloat((hex >> 8) & 255) / 255, blue: CGFloat(hex & 255) / 255, alpha: 1)\n"
+        "    }\n}\n"
     )
 
 
@@ -223,6 +240,7 @@ def build(themes_dir: Path = THEMES_DIR, catalog: Path = CATALOG, catalog_clone:
         "Palettes.swift": render_palettes(load_themes(themes_dir, catalog_clone)),
         "Strings.swift": render_strings(read_prefixed(("ios.", "notify.card.", "native.notify."), catalog)),
         "CardTones.swift": render_card_tones(),
+        "CardThumbTones.swift": render_thumb_tones(),
     }
 
 

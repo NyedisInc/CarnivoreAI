@@ -39,19 +39,19 @@ export function violations(file: string, source: string): string[] {
     if (!spec.startsWith('.')) return true;
     const target = resolveFrom(file, spec);
     if (target === `./${id}` || target.startsWith(`./${id}/`) || target === './sdk' || target.startsWith('./sdk/')) return false;
-    return target !== `src/plugins/${id}/cplug.json`;
+    return target !== `src/plugins/${id}/carnivore.toml`;
   });
 }
 
 const BOUNDARY_KNOWN: readonly string[] = [
-  './huddle/TaskManagerProjectHead.svelte -> ../../lib/motion/motion',
-  './huddle/index.ts -> ../../lib/swarm-switch/control.svelte',
-  './huddle/swarm/characters/clock.ts -> ../../../../lib/motion/animation-types',
-  './huddle/swarm/characters/clock.ts -> ../../../../lib/motion/motion',
-  './huddle/swarm/characters/reduced-motion.svelte.ts -> ../../../../lib/motion/motion',
-  './huddle/swarm/tier-drag.ts -> ../../../lib/motion/motion',
-  './huddle/task-manager-snapshot.ts -> ../../lib/data-cache/cache',
-  './huddle/task-manager-tab.ts -> ../../lib/swarm-switch/control.svelte',
+  './taskmanager/TaskManagerProjectHead.svelte -> ../../lib/motion/motion',
+  './taskmanager/index.ts -> ../../lib/swarm-switch/control.svelte',
+  './taskmanager/swarm/characters/clock.ts -> ../../../../lib/motion/animation-types',
+  './taskmanager/swarm/characters/clock.ts -> ../../../../lib/motion/motion',
+  './taskmanager/swarm/characters/reduced-motion.svelte.ts -> ../../../../lib/motion/motion',
+  './taskmanager/swarm/tier-drag.ts -> ../../../lib/motion/motion',
+  './taskmanager/task-manager-snapshot.ts -> ../../lib/data-cache/cache',
+  './taskmanager/task-manager-tab.ts -> ../../lib/swarm-switch/control.svelte',
 ];
 
 const BOUNDARY_KNOWN_CEILING = 8;
@@ -93,7 +93,7 @@ describe('platform section', () => {
 
   test('the platform imports no feature', () => {
     expect(platform.some(([file]) => file.startsWith('lib/cplug-ui/')) && platform.some(([file]) => file.startsWith('plugins/sdk/'))).toBe(true);
-    expect(features.has('huddle')).toBe(true);
+    expect(features.has('taskmanager')).toBe(true);
     expect(found.filter((one) => !PLATFORM_KNOWN.includes(one)), 'the platform never imports a feature; never add to PLATFORM_KNOWN').toEqual([]);
   });
 
@@ -118,7 +118,7 @@ describe('plugin boundaries', () => {
   const known = [...BOUNDARY_KNOWN, ...BOUNDARY_STYLE_KNOWN];
 
   test('every plugin module and sheet imports only the sdk, itself, its manifest and svelte', () => {
-    expect(files.some((f) => f.startsWith('./huddle/'))).toBe(true);
+    expect(files.some((f) => f.startsWith('./taskmanager/'))).toBe(true);
     const sheets = files.filter((f) => f.endsWith('.css'));
     expect(sheets.length, 'the scan read no plugin stylesheet').toBeGreaterThan(5);
     expect(sheets.every((f) => (SOURCES[f] ?? '').length > 0), 'a plugin stylesheet read as empty').toBe(true);
@@ -132,16 +132,21 @@ describe('plugin boundaries', () => {
   });
 
   test('the check can fail', () => {
-    expect(violations('./huddle/x.ts', "import { t } from '../../lib/i18n/index.svelte';\nimport x from '../other/y';\n"))
+    expect(violations('./taskmanager/x.ts', "import { t } from '../../lib/i18n/index.svelte';\nimport x from '../other/y';\n"))
       .toEqual(['../../lib/i18n/index.svelte', '../other/y']);
-    expect(violations('./huddle/chat/x.ts', "import a from '../../sdk';\nimport b from '../huddle-model';\nimport c from '../../../lib/x';\n")).toEqual(['../../../lib/x']);
-    expect(violations('./huddle/x.ts', "import { t } from '../sdk';\nimport A from './A.svelte';\nimport { mount } from 'svelte';\n")).toEqual([]);
+    expect(violations('./taskmanager/chat/x.ts', "import a from '../../sdk';\nimport b from '../huddle-model';\nimport c from '../../../lib/x';\n")).toEqual(['../../../lib/x']);
+    expect(violations('./taskmanager/x.ts', "import { t } from '../sdk';\nimport A from './A.svelte';\nimport { mount } from 'svelte';\n")).toEqual([]);
+    expect(violations('./taskmanager/x.ts', "import m from '../../../../src/plugins/taskmanager/carnivore.toml';\n")).toEqual([]);
+    expect(violations('./taskmanager/x.ts', "import m from '../../../../src/plugins/taskmanager/cplug.json';\n"))
+      .toEqual(['../../../../src/plugins/taskmanager/cplug.json']);
+    expect(violations('./taskmanager/x.ts', "import m from '../../../../src/plugins/other/carnivore.toml';\n"))
+      .toEqual(['../../../../src/plugins/other/carnivore.toml']);
   });
 
   test('the check sees a dynamic import and a stylesheet import (M10)', () => {
-    expect(violations('./huddle/x.ts', "const m = await import('../../lib/motion/motion');\nconst own = await import(`./own`);\n"))
+    expect(violations('./taskmanager/x.ts', "const m = await import('../../lib/motion/motion');\nconst own = await import(`./own`);\n"))
       .toEqual(['../../lib/motion/motion']);
-    expect(violations('./huddle/a/x.css', "@import '../../../lib/base/pick.css';\n@import url(\"./own.css\");\n@import '../b.css';\n"))
+    expect(violations('./taskmanager/a/x.css', "@import '../../../lib/base/pick.css';\n@import url(\"./own.css\");\n@import '../b.css';\n"))
       .toEqual(['../../../lib/base/pick.css']);
     expect(specifiers('const important = 1; // @importance\n')).toEqual([]);
   });
@@ -150,11 +155,15 @@ describe('plugin boundaries', () => {
     for (const cplug of BUILTIN_CPLUGS) {
       expect(cplug.id).toBe(cplug.manifest.id);
       expect(cplug.manifest.id).toMatch(/^[a-z][a-z0-9]{1,23}$/);
-      expect((cplug.tabs ?? []).map((d) => d.id).sort()).toEqual([...(cplug.manifest.surfaces.tabs ?? [])].sort());
-      expect((cplug.menuLinks ?? []).map((l) => l.id).sort()).toEqual([...(cplug.manifest.surfaces.menu_links ?? [])].sort());
+      const surfaces = cplug.manifest.surfaces ?? cplug.manifest.ui ?? {};
+      expect((cplug.tabs ?? []).map((d) => d.id).sort()).toEqual([...(surfaces.tabs ?? [])].sort());
+      expect((cplug.menuLinks ?? []).map((l) => l.id).sort()).toEqual([...(surfaces.menu_links ?? [])].sort());
+      const old = cplug.manifest.renamed_from;
+      const owners = [cplug.id, ...(old ? [old] : [])];
+      const stringOwners = [cplug.id, ...(old && (cplug.manifest.renamed_from_keeps ?? []).includes('strings') ? [old] : [])];
       for (const tab of cplug.tabs ?? []) {
-        expect(tab.labelKey.startsWith(`cplug.${cplug.id}.`)).toBe(true);
-        expect(tab.id === cplug.id || tab.id.startsWith(`${cplug.id}-`)).toBe(true);
+        expect(stringOwners.some((id) => tab.labelKey.startsWith(`cplug.${id}.`))).toBe(true);
+        expect(owners.some((id) => tab.id === id || tab.id.startsWith(`${id}-`))).toBe(true);
       }
       const popout = POPOUT_CPLUGS.find((p) => p.id === cplug.id);
       const declared = (cplug.tabs ?? []).filter((d) => d.popout === true).map((d) => d.id);

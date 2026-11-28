@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.plugins.huddle import board_port
+from src.plugins.taskmanager import board_port
 from types import SimpleNamespace
 
 from src.plugins.reviewboard import document, scan, viewer

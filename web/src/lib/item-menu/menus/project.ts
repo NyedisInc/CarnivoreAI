@@ -3,6 +3,7 @@ import { companyList } from '../../companies';
 import { companySource } from '../../sidebar-shell/company-source.svelte';
 import { agentOffered } from '../../projects-shared/agent-offer';
 import { projectPanels } from '../../../plugins/sdk/project-panels';
+import { resolveProjectPanelEntries } from '../../plugins/slot-actions';
 import { projectNameFor, setProjectColor } from '../../sidebar-shell/heading-project-actions';
 import { drawerProjectOf, runDrawerProjectVerb } from '../../sidebar-shell/project-menu-run.svelte';
 import { projectColorOf } from '../../project-colors/store.svelte';
@@ -24,10 +25,12 @@ defineItemMenu('project', {
             companies: companyList(),
             agentOffered: agentOffered(project),
             panels: projectPanels(),
+            slotPanels: resolveProjectPanelEntries().map((p) => ({ pluginId: p.pluginId, entryId: p.entryId, label: p.label })),
             color: { value: projectColorOf(id) ?? '', onPick: (color) => { void setProjectColor(project.name, color, id); }, onPreview: (hex) => setProjectColorPreview(id, hex) },
             close: env.close,
             glyph: env.glyph,
             run: (verb) => runDrawerProjectVerb(key, verb),
+            allowNewGroup: true,
         });
         return { nodes: entryNodes(entries, env.glyph, env.close), ariaLabel: label };
     },

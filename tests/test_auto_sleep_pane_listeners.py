@@ -73,3 +73,10 @@ def test_a_listener_outside_the_tree_is_not_the_panes():
 def test_a_pane_pid_missing_from_the_table_cannot_measure():
     with pytest.raises(MeasureError):
         _snapshot({12}).pane_listeners(99)
+
+
+def test_the_agents_own_listener_is_not_a_dev_server_but_its_child_listener_is():
+    assert _snapshot({10}).pane_listeners(10, exclude_pid=10) == []
+    assert _snapshot({10, 12}).pane_listeners(10, exclude_pid=10) == [12]
+    assert _snapshot({10}).pane_listeners(10) == [10]
+    assert _snapshot({10}).holder_label(10) == "claude 10"

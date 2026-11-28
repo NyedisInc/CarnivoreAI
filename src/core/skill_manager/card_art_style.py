@@ -14,7 +14,7 @@ DEFAULT_KIND = "skill"
 WIDE_FRAME = ("Composed for a wide 16:9 banner: the whole card and everything important sits inside the central 16:9 band, "
               "with nothing important near the top or bottom edge.")
 NO_TEXT_TAIL = "No people, no faces, no hands. No text, letters, numbers or lettering anywhere."
-AVOID = "Not a safe, vault, padlock, shield, server rack or globe."
+AVOID = "Depict the literal iconic object or scene directly named by the item; never substitute generic building blocks, crystal spheres, glowing orbs, safes, vaults, padlocks, shields, server racks or globes."
 
 
 def style_for(kind: str) -> str:
@@ -24,5 +24,5 @@ def style_for(kind: str) -> str:
 def build_prompt(kind: str, name: str, about: str) -> str:
     label = kind if kind in STYLES else DEFAULT_KIND
     detail = f": {about.rstrip('.')}" if about else ""
-    subject = f'An image of a concrete object or scene that expresses the {label} "{name}"{detail}. {AVOID}'
+    subject = f'An image of a concrete, instantly recognizable physical object or scene that literally depicts the {label} "{name}"{detail}. {AVOID}'
     return f"{style_for(kind)} {subject} {WIDE_FRAME} {NO_TEXT_TAIL}"

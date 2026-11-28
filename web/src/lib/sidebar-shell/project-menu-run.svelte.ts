@@ -7,7 +7,8 @@ import { projects } from '../../opscenter/api/projects.svelte';
 import { archivedProjects } from '../drawer/archived-visibility';
 import { t } from '../i18n/index.svelte';
 import { fileProject, newCompanyPrompt, removeFromCompany } from './company-actions';
-import { announce, hg, refetchDrawer } from './interaction-globals';
+import { createGroupThenAssign } from './group-assign';
+import { announce, announceFailure, hg, refetchDrawer } from './interaction-globals';
 import {
     archiveProject, newAgentInProject, projectNameFor, renameProject, showProjectPath, sleepProject,
 } from './heading-project-actions';
@@ -31,10 +32,21 @@ let controller: ProjectsController | null = null;
 
 function pageController(): ProjectsController {
     if (controller) return controller;
-    const made = new ProjectsController({ api: historyApi, t, embedded: true, close: () => undefined, onChanged: () => void refetchDrawer() });
+    const made = new ProjectsController({
+        api: historyApi,
+        t,
+        embedded: true,
+        close: () => undefined,
+        onChanged: () => {
+            void refetchDrawer();
+            if (projects.status === 'ok') void projects.refresh?.();
+        },
+    });
     $effect.root(() => {
         $effect(() => {
-            if (made.notice) announce(made.notice);
+            if (!made.notice) return;
+            if (made.noticeKind === 'error') announceFailure(made.notice);
+            else announce(made.notice);
         });
     });
     controller = made;
@@ -48,6 +60,7 @@ export function runDrawerProjectVerb(key: string, id: string): void {
     else if (id === 'show-path') void showProjectPath(key);
     else if (id === 'sleep') void sleepProject(key);
     else if (id === 'archive-project') void archiveProject(key);
+    else if (id === 'group') void createGroupThenAssign(null, undefined, key);
     else if (id === 'load-blueprint') hg().CloudeWeb?.openBlueprintsScreen?.();
     else if (id === 'remove-from-company') { if (name) void removeFromCompany(name); }
     else if (id === 'new-company-for-project') void newCompanyPrompt(name);
@@ -58,7 +71,11 @@ export function runDrawerProjectVerb(key: string, id: string): void {
 }
 
 function runOnController(key: string, id: string): void {
-    const project = drawerProjectOf(key);
+    const fallbackName = projectNameFor(key);
+    const project = drawerProjectOf(key) ?? (fallbackName ? {
+        id: Number(key.slice(2)), name: fallbackName, root: null, description: null, archived_at: null,
+        last_opened_at: null, created_at: null, default_theme: null, company_id: null,
+    } : null);
     if (!project) return;
     const tool = toolOf(id);
     if (tool) {

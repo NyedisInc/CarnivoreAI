@@ -23,11 +23,12 @@ from src.api import swarm_routes
 from src.api.auth import require_auth
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
+from src.core.swarm.types import CreateRefused
 from src.core.swarm import body, body_create, delivery, project_agent, store, thread_port
 from src.plugins.host import runtime
-from src.plugins.huddle import routes as huddle_routes
-from src.plugins.huddle.public import TaskManagerSwarmPort
-from tests.python.cplugs.owner import turn_on
+from src.plugins.taskmanager import routes as huddle_routes
+from src.plugins.taskmanager.public import TaskManagerSwarmPort
+from tests.python.cplugs.owner import include_task_manager_routes, turn_on
 
 BASE = "/api/v1/cplugs/huddle"
 PROFILE = {"id": "swarm-ok", "harness": "claude", "label": "ok", "permissions": "ask", "model": {"mode": "fixed", "value": "opus"}}
@@ -51,12 +52,12 @@ def world(tmp_path, monkeypatch):
                                   repo_dir=str(tmp_path), effort="high")
         project = body_create.register_project(conn, str(repo), "repo")
     app = FastAPI()
-    app.include_router(huddle_routes.router, prefix="/api/v1")
+    include_task_manager_routes(app, huddle_routes.router)
     app.include_router(swarm_routes.router, prefix="/api/v1")
     host = runtime.install(app, tmp_path)
     host.publish = lambda topic: None
     turn_on(host)
-    ctx = host.context("huddle")
+    ctx = host.context("taskmanager")
     port = TaskManagerSwarmPort(ctx)
     ctx.swarm.register_thread_port(port)
     app.dependency_overrides[require_auth] = lambda: {"sub": "test"}
@@ -210,7 +211,7 @@ def test_one_turn_on_inits_a_plain_folder_and_closes_the_old_card_and_refuses_un
     assert card["swarm_ref"] == ref and card["state"] == "open"
 
     def refuse(root):
-        raise body_create.CreateRefused("git init failed in the agent's folder")
+        raise CreateRefused("git init failed in the agent's folder")
 
     real_init = body_create.ensure_repo
     monkeypatch.setattr(body_create, "ensure_repo", refuse)

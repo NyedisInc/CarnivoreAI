@@ -1,5 +1,7 @@
 export type AuthState = 'unknown' | 'signed-in' | 'signed-out' | 'unreachable';
 
+export { errorCodeOf, paramsOf, codedSentence } from '../lib/errors/coded-error';
+
 export const API_REFUSAL_EVENT = 'cloude:api-refusal';
 
 export const auth: { state: AuthState; notice: string } = { state: 'signed-out', notice: '' };

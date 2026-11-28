@@ -1,4 +1,6 @@
 
+import { retireTab } from './retired-stores';
+
 export interface TabGroup {
   tabs: string[];
 }
@@ -25,7 +27,8 @@ export function tabsOf(groups: TabGroups, slot: string): string[] {
 
 export function activeOf(groups: TabGroups, active: ActiveTabs, slot: string): string {
   const tabs = tabsOf(groups, slot);
-  const chosen = active[slot];
+  const remembered = active[slot];
+  const chosen = remembered === undefined ? undefined : retireTab(remembered);
   return chosen && tabs.includes(chosen) ? chosen : (tabs[0] ?? slot);
 }
 

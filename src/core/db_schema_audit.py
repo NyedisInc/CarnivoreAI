@@ -37,7 +37,7 @@ from src.core.db_ddl.search_index import DDL_V52, DDL_V55, V55_COLUMNS
 from src.core.transcript_manifest.ddl import DDL_V54
 from src.core.launch_profiles.ddl import V56_COLUMNS
 from src.core.companies.ddl import DDL_V58, V58_COLUMNS, V72_COLUMNS, V105_COLUMNS
-from src.core.pack.rollup_import.ddl import V103_COLUMNS
+from src.core.pack.rollup_import.ddl import V103_COLUMNS, V107_COLUMNS, V108_COLUMNS, V113_COLUMNS, DDL_V107, DDL_V108, DDL_V113
 from src.core.swarm.ddl import DDL_V59, DDL_V62, DDL_V63, DDL_V64, DDL_V65, V60_COLUMNS, V65_COLUMNS, V66_COLUMNS, V67_COLUMNS, V68_COLUMNS, V69_COLUMNS, V70_COLUMNS, V71_COLUMNS, V99_COLUMNS, V100_COLUMNS
 from src.core.project_colors.ddl import V61_COLUMNS
 from src.core.crosstalk.ddl import DDL_V57, DDL_V102
@@ -45,6 +45,7 @@ from src.core.messaging.ddl import DDL_V73, V92_COLUMNS
 from src.core.exports.ddl import DDL_V93
 from src.core.session_groups.session_group_rule import DDL_V101
 from src.core.plugin_registry.marker import DDL_V104
+from src.core.mcp.session_creators import DDL_V106
 from src.core.descriptions.ddl import V74_COLUMNS
 from src.core.project_pack.ddl import DDL_V75
 from src.core.pack.machines.ddl import DDL_PACK_MACHINES
@@ -61,9 +62,11 @@ from src.core.pack.rollup_import.ddl import DDL_V89
 from src.core.pack.trust_carry.ddl import DDL_V87, V88_COLUMNS
 from src.core.flow_data.ddl import DDL_V90, V90_COLUMNS, V95_COLUMNS
 from src.core.crosstalk.ddl import V94_COLUMNS
-from src.core.hosts.ddl import DDL_V40, TRIPLE_INSTANCE_INDEX, V40_COLUMNS, V96_COLUMNS
+from src.core.hosts.ddl import DDL_V40, DDL_V109, TRIPLE_INSTANCE_INDEX, V40_COLUMNS, V96_COLUMNS
 from src.core.skills.consent_via_ddl import V41_COLUMNS
 from src.core.skills.fork_mark_ddl import V42_COLUMNS
+from src.core.skills.provenance_ddl import V112_COLUMNS
+from src.core.project_ids.ddl import PROJECTS_TABLE, apply_v110
 
 logger = structlog.get_logger()
 
@@ -126,6 +129,11 @@ UNGATED_VERSION_DDL: Dict[int, Tuple[str, ...]] = {
     101: DDL_V101,
     102: DDL_V102,
     104: DDL_V104,
+    106: DDL_V106,
+    107: DDL_V107,
+    108: DDL_V108,
+    109: DDL_V109,
+    113: DDL_V113,
 }
 
 UNGATED_VERSION_COLUMNS: Dict[int, Tuple[Tuple[str, str, str], ...]] = {
@@ -162,6 +170,10 @@ UNGATED_VERSION_COLUMNS: Dict[int, Tuple[Tuple[str, str, str], ...]] = {
     100: V100_COLUMNS,
     103: V103_COLUMNS,
     105: V105_COLUMNS,
+    107: V107_COLUMNS,
+    108: V108_COLUMNS,
+    112: V112_COLUMNS,
+    113: V113_COLUMNS,
 }
 
 SUPERSEDED_OBJECTS: frozenset = frozenset({"ix_sessions_claude_uuid", TRIPLE_INSTANCE_INDEX, *V49_RETIRED})
@@ -287,6 +299,8 @@ def repair_missing(
                 continue
         conn.execute(obj.sql)
         created.append(obj.name)
+    if PROJECTS_TABLE in created:
+        apply_v110(conn)
     return created
 
 

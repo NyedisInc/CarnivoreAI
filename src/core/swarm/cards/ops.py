@@ -178,14 +178,7 @@ async def _close_done(app_state: Any, card_id: int, reason: str, by: str) -> Opt
             raise
         logger.info("swarm_card_agent_close_skipped", card_id=card_id, code=exc.code)
         return None
-    await _argent_closed(card, reason)
     return card
-
-
-async def _argent_closed(card: Mapping[str, Any], reason: str) -> None:
-    from src.core.argent import close as argent_close  # noqa: PLC0415
-
-    await argent_close.on_card_closed(card, reason)
 
 
 async def close(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: str) -> Dict[str, Any]:
@@ -199,7 +192,6 @@ async def close(app_state: Any, card_id: int, args: Mapping[str, Any], *, by: st
         raise CardRefused("bad_card", f"reason is required, at most {MAX_ASK_CHARS} characters")
     _no_secrets("reason", reason)
     closed = (await _act(app_state, "done", card_id, {"reason": reason, "agent_close": True}, by))["card"]
-    await _argent_closed(closed, reason)
     return closed
 
 
@@ -404,10 +396,11 @@ async def set_column(app_state: Any, card_id: int, args: Mapping[str, Any], *, b
         raise CardRefused("bad_card", f"column must be one of {', '.join(COLUMNS)}")
     note = (args.get("note") or "").strip()
     _no_secrets("note", note)
+    tracker = {"from_tracker": True} if args.get("from_tracker") else {}
     if before["state"] == "open" and target in ("todo", "in_progress"):
-        result = await _act(app_state, "set_lane", card_id, {"queued": target == "in_progress"}, by, skip=("tell", "interrupt"))
+        result = await _act(app_state, "set_lane", card_id, {"queued": target == "in_progress", **tracker}, by, skip=("tell", "interrupt"))
     else:
-        result = await _act(app_state, "set_column", card_id, {"column": target}, by, skip=("tell", "interrupt"))
+        result = await _act(app_state, "set_column", card_id, {"column": target, **tracker}, by, skip=("tell", "interrupt"))
     card = result["card"]
     if note:
         card = (await _act(app_state, "owner_note", card_id, {"note": note}, by))["card"]

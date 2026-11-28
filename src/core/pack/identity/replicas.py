@@ -87,10 +87,12 @@ def _ensure_company(conn: sqlite3.Connection, uid: Optional[str], name: Optional
 
 def accept_replica(conn: sqlite3.Connection, *, home_install_id: str, project_uid: str, name: str, root: Optional[str],
                    company_uid: Optional[str] = None, company_name: Optional[str] = None, source_trusted: bool = False,
-                   source_imports_ok: bool = False) -> Dict[str, Any]:
+                   source_imports_ok: bool = False, member_caller: bool = False) -> Dict[str, Any]:
     from src.core.project_store import normalize_root
-    from src.core.project_writes import ProjectNameConflict, ProjectRootRefused, create_project
+    from src.core.project_writes import ProjectNameConflict, ProjectRootConflict, ProjectRootRefused, create_project
 
+    if member_caller and not _callers_copy(conn, project_uid, home_install_id):
+        _require_member_root(root or _default_root(name, project_uid), conn)
     existing = conn.execute("SELECT * FROM projects WHERE uid = ?", (project_uid,)).fetchone()
     if existing is not None and existing["host_key"] != LOCAL_HOST_KEY:
         with transaction(conn):
@@ -114,6 +116,8 @@ def accept_replica(conn: sqlite3.Connection, *, home_install_id: str, project_ui
             row, target, revived = old, default, True
     if row is not None and row["pack_state"] != home.HOME:
         raise ReplicaRefused(ROOT_IN_USE, f"the folder {target} already belongs to a project that is not a plain one here")
+    if member_caller and row is not None and not _member_may_take(row, revived, home_install_id):
+        raise ReplicaRefused(ROOT_IN_USE, f"the folder {target} already belongs to a project here")
     adopted = row is not None and not revived
     if revived:
         existed = os.path.lexists(target)
@@ -129,6 +133,10 @@ def accept_replica(conn: sqlite3.Connection, *, home_install_id: str, project_ui
             raise ReplicaRefused(NAME_TAKEN, str(exc)) from exc
         except ProjectRootRefused as exc:
             raise ReplicaRefused(ProjectRootRefused.CODE, str(exc)) from exc
+        except ProjectRootConflict as exc:
+            if not member_caller:
+                raise
+            raise ReplicaRefused(ROOT_IN_USE, "that folder already belongs to a project here") from exc
         created = True
         folder_made = not existed
         if source_trusted and not existed:
@@ -146,6 +154,63 @@ def accept_replica(conn: sqlite3.Connection, *, home_install_id: str, project_ui
     answer = _answer(conn.execute("SELECT * FROM projects WHERE uid = ?", (project_uid,)).fetchone(), created=created, folder_made=folder_made)
     answer.update(adopted=adopted, revived=revived)
     return answer
+
+
+def _callers_copy(conn: sqlite3.Connection, project_uid: str, home_install_id: str) -> bool:
+    return conn.execute("SELECT 1 FROM projects WHERE uid = ? AND host_key = ? AND pack_state = ? AND home_install_id = ?",
+                        (project_uid, LOCAL_HOST_KEY, home.REPLICA, home_install_id)).fetchone() is not None
+
+
+def _require_member_root(root: str, conn: sqlite3.Connection) -> None:
+    from src.core.pack.transport import bundles
+    from src.core.project_store import normalize_root
+    from src.core.project_writes import _base_folders, find_root_clash
+    from src.core.session_project_binding import fold_path, swallows_live_root
+    from src.core.transcript_import_paths import canonical
+
+    target = normalize_root(root)
+    real = canonical(target) or target
+    inside_base = False
+    for base in _base_folders():
+        base_real = os.path.realpath(base)
+        if real != base_real and os.path.commonpath([real, base_real]) == base_real:
+            inside_base = True
+            break
+    if not inside_base:
+        raise ReplicaRefused("member_root_refused", "that folder is outside this computer's projects folders", 403)
+    if conn.execute("SELECT 1 FROM projects WHERE root = ? AND host_key = ?", (target, LOCAL_HOST_KEY)).fetchone() is not None:
+        return
+    if find_root_clash(conn, target) is not None:
+        raise ReplicaRefused(ROOT_IN_USE, "that folder already belongs to a project here")
+    if any(part in (".", "..") for part in target.split(os.sep)):
+        raise ReplicaRefused("member_root_refused", "that folder path has . or .. parts", 403)
+    stored = [canonical(r[0]) or r[0] for r in conn.execute("SELECT root FROM projects WHERE root IS NOT NULL AND root != '' AND host_key = ?", (LOCAL_HOST_KEY,))]
+    folded = fold_path(real)
+    if any(folded.startswith(fold_path(s) + "/") for s in stored):
+        raise ReplicaRefused("member_root_refused", "that folder is inside a project that already lives here", 403)
+    if swallows_live_root(real, {s: 0 for s in stored}):
+        raise ReplicaRefused("member_root_refused", "that folder holds another project's folder", 403)
+    if os.path.lexists(target) or os.path.lexists(real):
+        try:
+            empty = os.path.isdir(real) and not os.listdir(real)
+        except OSError:
+            empty = False
+        if not empty:
+            raise ReplicaRefused("member_root_refused", "that folder is not an empty folder", 403)
+    if bundles.inside_other_repo(real):
+        raise ReplicaRefused("member_root_refused", "that folder is inside another git repository", 403)
+
+
+def _member_may_take(row: sqlite3.Row, revived: bool, home_install_id: str) -> bool:
+    if not revived:
+        return False
+    from pathlib import Path
+
+    from src.config import settings
+    from src.core.pack.jobs.store import JobStore
+
+    record = JobStore(Path(settings.get_state_dir())).made_copy_get(os.path.realpath(row["root"]))
+    return bool(record) and record.get("home_install_id") == home_install_id
 
 
 def _answer(row: sqlite3.Row, *, created: bool, folder_made: bool) -> Dict[str, Any]:

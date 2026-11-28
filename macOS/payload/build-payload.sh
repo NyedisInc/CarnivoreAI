@@ -47,9 +47,43 @@ site="$dest/python/lib/python3.12/site-packages"
 uv pip install --target "$site" --python-platform "$uvplat" --python-version 3.12 \
   --only-binary :all: --require-hashes --no-deps --link-mode copy -r "$here/runtime.lock"
 
-run=(); [[ "$runas" != "-" ]] && run=(arch "-$runas")
+rm -rf \
+  "$dest/python/lib/libpython3.12.dylib" \
+  "$dest/python/lib/tcl9.0" \
+  "$dest/python/lib/tcl9" \
+  "$dest/python/lib/tk9.0" \
+  "$dest/python/lib/libtcl9.0.dylib" \
+  "$dest/python/lib/libtcl9tk9.0.dylib" \
+  "$dest/python/lib/itcl"* \
+  "$dest/python/lib/thread"* \
+  "$dest/python/lib/pkgconfig" \
+  "$dest/python/include" \
+  "$dest/python/share" \
+  "$dest/python/lib/python3.12/idlelib" \
+  "$dest/python/lib/python3.12/ensurepip" \
+  "$dest/python/lib/python3.12/pydoc_data" \
+  "$dest/python/lib/python3.12/lib2to3" \
+  "$dest/python/lib/python3.12/tkinter" \
+  "$dest/python/lib/python3.12/unittest" \
+  "$dest/python/lib/python3.12/turtledemo" \
+  "$dest/python/lib/python3.12/test" \
+  "$dest/python/lib/python3.12/config-3.12-darwin" \
+  "$dest/python/lib/python3.12/lib-dynload/_tkinter"*.so \
+  "$site/pip" \
+  "$site/pip-"*.dist-info \
+  "$dest/python/bin/pip" \
+  "$dest/python/bin/pip3" \
+  "$dest/python/bin/pip3.12" \
+  "$dest/python/bin/idle3" \
+  "$dest/python/bin/idle3.12" \
+  "$dest/python/bin/2to3" \
+  "$dest/python/bin/2to3-3.12" \
+  "$dest/python/bin/pydoc3" \
+  "$dest/python/bin/pydoc3.12" \
+  "$dest/python/bin/python3-config" \
+  "$dest/python/bin/python3.12-config"
 find "$dest/python" -name __pycache__ -type d -prune -exec rm -rf {} +
-${run[@]+"${run[@]}"} "$dest/python/bin/python3.12" -I -B -m compileall -q -j 0 --invalidation-mode unchecked-hash "$dest/python/lib/python3.12"
+find "$dest/python" -name '*.pyc' -delete
 
 printf '{"arch":"%s","python":"%s","pbs":"%s","tmux":"%s"}\n' "$arch" "$PY_VER" "$PBS_TAG" "${TMUX_TAG#v}" > "$dest/PAYLOAD.json"
 echo "built $dest ($(du -sh "$dest" | cut -f1))"

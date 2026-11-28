@@ -42,6 +42,19 @@ def enable_blockers(manifest: Manifest) -> Dict[str, Any]:
     return blockers
 
 
+def format_blockers(blockers: Dict[str, Any]) -> str:
+    parts: List[str] = []
+    ver = blockers.get("min_app_version")
+    if isinstance(ver, dict) and ver.get("need"):
+        have = ver.get("have") or "unknown"
+        parts.append(f"requires Carnivore {ver['need']} or newer (you have {have})")
+    core = blockers.get("core")
+    if isinstance(core, list) and core:
+        joined = ", ".join(str(c) for c in core)
+        parts.append(f"requires core features not in this build ({joined})")
+    return "; ".join(parts) if parts else "its requirements are not met"
+
+
 def enabled_dependents(cplug_id: str, state_dir: Path) -> List[str]:
     defs = runtime.definitions()
     needs = {d.id: set(d.manifest.requires) for d in defs}

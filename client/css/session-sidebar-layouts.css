@@ -1,7 +1,7 @@
 
 @layer components {
 .session-sidebar-layout__toggle {
-    display: inline-flex;
+    display: none;
     align-items: center;
     justify-content: center;
     width: 14px;
@@ -26,6 +26,24 @@
 
 .session-sidebar-layout__toggle[aria-expanded="true"] .session-sidebar-group__chevron {
     transform: rotate(90deg);
+}
+
+.session-sidebar-row[data-kind="layout"][data-band="layouts"] .session-sidebar-row-main {
+    font-size: var(--oc-fs-body);
+    letter-spacing: normal;
+}
+
+.session-sidebar-row[data-kind="layout"][data-band="layouts"] .session-sidebar-row-provider,
+.session-sidebar-row[data-kind="layout"][data-band="layouts"] .session-sidebar-row-subtitle {
+    cursor: pointer;
+}
+
+.session-sidebar-row[data-kind="layout"][data-band="layouts"] .session-sidebar-row-subtitle {
+    font-size: var(--oc-fs-micro);
+    font-weight: normal;
+    letter-spacing: normal;
+    color: var(--oc-text-dim);
+    font-variant-numeric: tabular-nums;
 }
 
 

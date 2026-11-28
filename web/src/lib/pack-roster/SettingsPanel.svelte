@@ -12,19 +12,24 @@
   import ShowCodeModal from '../hosts-page/ShowCodeModal.svelte';
   import RosterJoin from './RosterJoin.svelte';
   import PackReconnect from './PackReconnect.svelte';
-  import type { RosterComputer } from './roster-model';
+  import RemovedLogins from './RemovedLogins.svelte';
+  import LeftoverStats from './LeftoverStats.svelte';
+  import { meshOn, orderEditable, selfOffWhy, type RosterComputer } from './roster-model';
+  import { packMachines } from '../pack-machines/pack-machines-store.svelte';
   import { createFederationApi, errorCode, readPackName, writePackName } from '../hosts-page/federation-api';
   import { ageWords, stateWords } from '../computers/computers-format';
   import { activity, computers, leave } from '../computers/computers-store.svelte';
     import { reasonOf } from './roster-store.svelte';
 
   const { onClose, nowMs, list }: { onClose: () => void; nowMs: number; list: readonly RosterComputer[] } = $props();
+  const nameOf = (id: string): string => list.find((c) => c.id === id)?.name ?? id;
   const fed = createFederationApi();
   const view = $derived(computers.data);
   const role = $derived(view?.self.role ?? 'standalone');
   const main = $derived(view?.self.main ?? null);
   const mainName = $derived(main?.label ?? t('computers.join.main_fallback'));
   const linkState = $derived(view?.self.link.state ?? null);
+  const mesh = $derived(meshOn(packMachines.data) ? (view?.mesh ?? null) : null);
   let advertise = $state<boolean | null>(null);
   let problem = $state<string | null>(null);
   let nameValue = $state('');
@@ -74,7 +79,7 @@
   <header class="m1-pane__head"><div class="m1-pane__top">
     <span class="m1-sets__ico" aria-hidden="true"><Icon name="gear" size={14} /></span>
     <h2 class="m1-pane__title" tabindex="-1" bind:this={titleEl}>{t('roster.sets.title')}</h2>
-    <IconButton label={t('roster.sets.close')} variant="close" icon="close" iconSize={14} data-roster-key="sets-close" onclick={onClose} />
+    <IconButton label={t('roster.sets.close')} tooltip="" variant="quiet" icon="close" iconSize={14} data-roster-key="sets-close" onclick={onClose} />
   </div></header>
   <div class="rs-detail-body m1-pane__body">
     <section class="m1-sec" data-sec="name">
@@ -93,9 +98,14 @@
       {#if linkState === 'port_busy'}<p class="pp-warn">{t('roster.sets.link_port_busy')}</p>
       {:else if linkState === 'off_loopback'}<p class="pp-warn">{t('computers.link.off_loopback')}</p>
       {:else if linkState === 'local_network_blocked'}<p class="pp-warn">{t('computers.link.local_network_blocked')}</p>{/if}
+      {#if meshOn(packMachines.data) && packMachines.data?.roster_refusal}{@const full = packMachines.data.roster_refusal}<div data-sets-full=""><p class="pp-warn" data-line="pack-full">{t(full.count - full.limit === 1 ? 'roster.full.over_one' : 'roster.full.over', { count: full.count, limit: full.limit, left: full.count - full.limit })}</p></div>{/if}
+      {#if mesh}<p class="pp-hint" data-line="mesh-self">{t(`roster.mesh.self.${mesh.switch === 'off' ? selfOffWhy(packMachines.data) : mesh.switch}`)}</p>{/if}
+      {#if meshOn(packMachines.data) && packMachines.data?.link_switches_unknown === true && orderEditable(packMachines.data)}<p class="pp-warn" data-line="mesh-unknown">{t('roster.mesh.self.unknown')}</p>{/if}
+      {#if meshOn(packMachines.data) && packMachines.data?.link_switch_refused}{@const ref = packMachines.data.link_switch_refused}<p class="pp-warn" data-line="mesh-switch-refused">{t('roster.mesh.self.switch_refused', { signer: nameOf(ref.signer), computers: ref.computers.map(nameOf).join(', ') })}</p>{/if}
       <p class="pp-hint">{t('computers.footer.awake')}</p>
     </section>
     <PackReconnect {list} {nowMs} />
+    {#if meshOn(packMachines.data)}<RemovedLogins {nowMs} /><LeftoverStats {nowMs} />{/if}
     {#if role === 'member'}
       <section class="m1-sec" data-sec="membership"><h3 class="pp-k">{t('roster.sets.membership')}</h3>
         <div class="pp-member" data-cmp="member-line">

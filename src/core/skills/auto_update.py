@@ -4,19 +4,21 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Awaitable, Callable, List, Optional, Tuple
 
 import structlog
 
 from src.core.catalog import install_reporter
 from src.core.catalog.first_party import is_first_party_item
+from src.core.catalog.permission_diff import compute_permission_diff
 from src.core.catalog.verify import check_digest
 from src.core.skill_watch import sentinel
 from src.core.skill_watch.store import default_watch_store
 from src.core.skills import update_holds
 from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.digest import hash_file
-from src.core.skills.kinds import manifest_name
+from src.core.skills.kinds import resolve_manifest_path
 from src.core.skills.ledger_types import SCOPE_GLOBAL, InstalledItem
 from src.core.skills.manifest_rules import declares_script
 from src.core.skills.updates import (
@@ -192,7 +194,7 @@ async def _one_row(
             )
 
         body_sha, _size = await asyncio.to_thread(
-            hash_file, staged.path / manifest_name(row.kind)
+            lambda: hash_file(resolve_manifest_path(row.kind, staged.path))
         )
         scripts_present = (
             await asyncio.to_thread(declares_script, row.kind, staged.path)
@@ -213,6 +215,35 @@ async def _one_row(
                 item_id=row.item_id,
                 outcome=OUTCOME_SKIPPED,
                 reason=verdict.reason,
+            )
+
+        def _check_perm_diff() -> Optional[str]:
+            installed_dir: Optional[Path] = None
+            catalog = getattr(services, "catalog", None)
+            if catalog is not None and hasattr(catalog, "ledger"):
+                try:
+                    with catalog.ledger() as ledger:
+                        for target in ledger.targets(row.install_id):
+                            cand = Path(target.path)
+                            if cand.is_dir():
+                                installed_dir = cand
+                                break
+                except Exception:
+                    installed_dir = None
+            perm_diff = compute_permission_diff(installed_dir, staged.path, row=row, version=version)
+            if perm_diff.provenance.commit_sha_mismatch:
+                return "commit_sha_mismatch"
+            if perm_diff.requires_reconsent:
+                return "permission_escalation"
+            return None
+
+        perm_skip = await asyncio.to_thread(_check_perm_diff)
+        if perm_skip is not None:
+            return AutoUpdateRow(
+                install_id=row.install_id,
+                item_id=row.item_id,
+                outcome=OUTCOME_SKIPPED,
+                reason=perm_skip,
             )
 
         try:

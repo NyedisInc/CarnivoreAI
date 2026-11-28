@@ -9,6 +9,7 @@ from typing import Optional, Tuple
 
 from scripts.backup.errors import BadPhaseId, SourceMissing
 from src.core.db_rename.legacy import readable_db_path
+from src.core.work import folders as work_folders
 
 DEFAULT_STATE_DIR = Path("~/Library/Application Support/Carnivore").expanduser()
 DEFAULT_CONFIG_FILE = Path("~/Library/Application Support/Carnivore Menubar/server/config.json").expanduser()
@@ -22,7 +23,7 @@ PRIVATE_DIR_MODE = 0o700
 _PHASE_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$")
 
 STATE_FILES: Tuple[str, ...] = ("cplugs/state.json",)
-STATE_TREES: Tuple[str, ...] = ("cplugs/huddle/files", "cplugs/task_manager/files")
+STATE_TREES: Tuple[str, ...] = work_folders.FILES_RELS
 
 
 @dataclass(frozen=True)

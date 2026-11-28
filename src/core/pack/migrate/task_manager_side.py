@@ -30,7 +30,7 @@ def _notify(list_key: str) -> None:
     from src.core import resource_push
 
     try:
-        resource_push.notify(f"cplug.huddle.list:{list_key}")
+        resource_push.notify(f"cplug.taskmanager.list:{list_key}")
     except (RuntimeError, ValueError) as exc:
         logger.warning("pack_migrate_task_manager_notify_failed", error=str(exc))
 

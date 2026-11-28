@@ -141,7 +141,7 @@ def check_can_paste(
             PANE_NOT_AN_AGENT,
             "the pane's current command is "
             f"{pane_current_command!r}, which is a shell or could not be "
-            "read, and no registered claude is the pane's foreground job; a "
+            "read, and neither a registered claude nor the row's own agent CLI is the pane's foreground job; a "
             "paste into a shell prompt would be executed line by line",
         )
     if not ((agent_type or "").strip() or foreground_agent_proven):

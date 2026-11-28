@@ -11,6 +11,8 @@
   import InviteCard from '../computers/InviteCard.svelte';
   import { activity, addComputer } from '../computers/computers-store.svelte';
   import { createFederationApi, type DiscoveredMac, type PeerRow } from '../hosts-page/federation-api';
+  import { packMachines } from '../pack-machines/pack-machines-store.svelte';
+  import { meshOn } from './roster-model';
   import { refreshRoster } from './roster-store.svelte';
   import { rosterUi } from './roster-ui.svelte';
 
@@ -18,6 +20,14 @@
   const { onClose, found = null }: { onClose: () => void; found?: DiscoveredMac | null } = $props();
   const fed = createFederationApi();
   const routeOptions = $derived(ROUTES.map((route) => ({ value: route, label: t(`roster.add.route.${route}`), attrs: { 'data-route': route } })));
+
+  let refused = $state<string | null>(null);
+
+  async function add(): Promise<void> {
+    refused = null;
+    await addComputer();
+    refused = activity.error;
+  }
 
   async function addHost(): Promise<void> {
     if (await openModal(AddHostModal, {})) await refreshRoster();
@@ -39,7 +49,8 @@
     <Segmented label={t('roster.add.routes')} options={routeOptions} value={rosterUi.route} onchange={(v) => (rosterUi.route = v as (typeof ROUTES)[number])} />
   </div>
   {#if rosterUi.route === 'code'}
-    <div class="pp-acts"><Button variant="confirm" data-cmp="add" disabled={activity.busy !== null} onclick={() => void addComputer()}>{t('computers.add')}</Button></div>
+    <div class="pp-acts"><Button variant="confirm" data-cmp="add" disabled={activity.busy !== null} onclick={() => void add()}>{t('computers.add')}</Button></div>
+    {#if refused && meshOn(packMachines.data)}<p class="pp-err" role="alert" data-line="add-refused">{refused}</p>{/if}
     <InviteCard />
   {:else if rosterUi.route === 'ssh'}
     <AddOverSsh prefill={rosterUi.prefillLogin} />

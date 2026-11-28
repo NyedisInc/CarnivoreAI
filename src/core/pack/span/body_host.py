@@ -16,6 +16,7 @@ from src.core import db
 from src.core.crosstalk import peer_create
 from src.core.pack.span import memory_mirror
 from src.core.pack.trust_carry import store as trust_store
+from src.core.swarm.types import CreateRefused
 from src.core.swarm import body, body_create, definition, launch, memory
 
 logger = structlog.get_logger()
@@ -169,7 +170,7 @@ async def host(request: Any, home_install_id: str, packet: BodyPacket) -> Dict[s
             logger.warning("pack_trust_inherit_failed", error_type=type(exc).__name__)
     try:
         argv = await asyncio.to_thread(_write_files, state_dir, home_install_id, packet, repo)
-    except (body_create.CreateRefused, OSError) as exc:
+    except (CreateRefused, OSError) as exc:
         raise BodyRefused("files_not_written", 503, f"{type(exc).__name__}") from exc
     except memory.SwarmFileError as exc:
         raise BodyRefused("secret_in_packet", 422, str(exc)[:200]) from exc
@@ -218,7 +219,7 @@ async def _adopt(request: Any, state_dir: Path, home_install_id: str, packet: Bo
     session = await asyncio.to_thread(_adoptable, state_dir, str(packet.adopt_session_uuid))
     try:
         argv = await asyncio.to_thread(_write_files, state_dir, home_install_id, packet, session["working_dir"])
-    except (body_create.CreateRefused, OSError) as exc:
+    except (CreateRefused, OSError) as exc:
         raise BodyRefused("files_not_written", 503, f"{type(exc).__name__}") from exc
     except memory.SwarmFileError as exc:
         raise BodyRefused("secret_in_packet", 422, str(exc)[:200]) from exc

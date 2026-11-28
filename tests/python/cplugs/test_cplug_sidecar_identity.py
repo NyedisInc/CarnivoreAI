@@ -12,19 +12,36 @@ from src.plugins.host.activity_log import ActivityLog
 from src.plugins.host.egress_log import EgressLog
 from src.plugins.host import identity, net_routes, runtime, sidecar_registry
 from src.plugins.host import state as owner_state
+from src.plugins.host.plugin_manifest import SidecarManifestError, from_manifest_v2
 from src.plugins.host.secret_store import SecretStore, network_key
-from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
 from src.plugins.host.sidecar_registry import SidecarRegistry
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, parse_manifest_v2
 
-SHIPPED = {"huddle"}
+SHIPPED = {"taskmanager"}
 ITEM = "acme/clock"
 MANIFEST = {
-    "schema": 1, "id": "clock", "name": "Clo‮ck\n", "description": "Tells the time.", "version": "1.0.0", "entry": "main.py",
-    "default_enabled": True, "permissions": {"app": ["notify", "network_hosts:api.example.com"]},
-    "tools": [{"name": "clock_now", "description": "The time.", "gate": "read"}],
-    "network_hosts": [{"host": "api.example.com", "reason": "time source", "methods": ["GET"],
-                       "auth": {"secret": "token", "header": "Authorization", "scheme": "Bearer"}}],
-    "secrets": [{"name": "token", "label": "API token", "help": "From the provider dashboard."}],
+    "schema": 2,
+    "id": "clock",
+    "name": "Clo‮ck\n",
+    "description": "Tells the time.",
+    "version": "1.0.0",
+    "kind": "plugin",
+    "author": "acme",
+    "default_enabled": False,
+    "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    "permissions": {
+        "write": ["notify"],
+        "network": [
+            {
+                "host": "api.example.com",
+                "reason": "time source",
+                "methods": ["GET"],
+                "auth": {"secret": "token", "header": "Authorization", "scheme": "Bearer"},
+            }
+        ],
+        "secrets": [{"key": "token", "label": "API token", "help": "From the provider dashboard."}],
+    },
+    "mcp": {"tools": [{"name": "clock_now", "description": "The time.", "gate": "read"}]},
 }
 
 
@@ -46,7 +63,7 @@ class FakeKeychain:
 def _install_code(state: Path, name: str = "clock", raw=None) -> Path:
     root = state / "plugins" / name
     root.mkdir(parents=True)
-    (root / "cplug.json").write_text(json.dumps(raw or MANIFEST), encoding="utf-8")
+    (root / "carnivore.json").write_text(json.dumps(raw or MANIFEST), encoding="utf-8")
     (root / "main.py").write_text("print('hi')\n", encoding="utf-8")
     return root
 
@@ -62,7 +79,7 @@ def state(tmp_path):
 
 
 def _manifest(digest: str = "d" * 64):
-    return parse_sidecar_manifest(MANIFEST, "clock", digest)
+    return from_manifest_v2(parse_manifest_v2(MANIFEST), digest)
 
 
 def test_reinstall_after_purge_is_a_new_identity_and_cannot_read_the_old_secret(state):
@@ -103,7 +120,7 @@ def test_the_registry_loads_only_held_non_builtin_cplug_rows_and_runtime_falls_t
     record = identity.register_install(state, "clock", ITEM, SHIPPED)
     _install_code(state)
     _install_code(state, "orphan", {**MANIFEST, "id": "orphan"})
-    rows = [_row(ITEM), _row("nyedis/huddle", source="builtin"), _row("acme/orphan"), _row("acme/theme", kind="theme")]
+    rows = [_row(ITEM), _row("nyedis/taskmanager", source="builtin"), _row("acme/orphan"), _row("acme/theme", kind="theme")]
     registry = SidecarRegistry(state, lambda: rows)
     assert registry.reload() == 1
     sidecar_registry.install(registry)
@@ -113,34 +130,37 @@ def test_the_registry_loads_only_held_non_builtin_cplug_rows_and_runtime_falls_t
     assert found is registry.find("clock") and found.install_key == record.uuid
     assert found.folder == identity.data_dir(state, record.uuid) == registry.folder("clock")
     assert registry.code_root("clock") == state / "plugins" / "clock" and found.manifest.code_digest
-    assert runtime.find("huddle") is not found and runtime.find("huddle").id == "huddle"
+    assert runtime.find("taskmanager") is not found and runtime.find("taskmanager").id == "taskmanager"
     assert runtime.find("orphan") is None and runtime.definitions() is before and "clock" not in {d.id for d in before}
     assert found in runtime.listed() and [d.id for d in runtime.listed()][-1] == "clock"
 
     host = runtime.Host(state)
     assert host.folder("clock") == found.folder and host.enabled("clock") is False and host.state("clock").grants == ()
-    assert host.install_key("clock") == record.uuid and host.install_key("huddle") == "huddle"
+    assert host.install_key("clock") == record.uuid and host.install_key("taskmanager") == "taskmanager"
     assert registry.unload("clock") and runtime.find("clock") is None
 
 
 def test_a_catalog_manifest_is_data(state):
-    parsed = parse_sidecar_manifest(MANIFEST, "clock", "d" * 64)
+    parsed = from_manifest_v2(parse_manifest_v2(MANIFEST), "d" * 64)
     assert parsed.name == "Clock" and parsed.default_enabled is False and parsed.tier == "catalog"
     assert parsed.tools[0]["gate"] == "read"
     bad = [
-        ({**MANIFEST, "id": "other"}, "id"),
-        ({**MANIFEST, "tools": [{"name": "clock_now", "description": "x", "gate": "open"}]}, "gate"),
-        ({**MANIFEST, "entry": "../main.py"}, "entry"),
-        ({**MANIFEST, "permissions": {"app": ["swarm"]}}, "permission"),
-        ({**MANIFEST, "name_key": "cplug.clock.name"}, "keys"),
+        ({**MANIFEST, "id": "other"}, "expected"),
+        ({**MANIFEST, "mcp": {"tools": [{"name": "clock_now", "description": "x", "gate": "open"}]}}, "gate"),
+        ({**MANIFEST, "run": {"cmd": ["python3", "../main.py"], "mode": "rpc"}}, "path"),
+        ({**MANIFEST, "permissions": {"write": ["swarm"]}}, "permission"),
+        ({**MANIFEST, "name_key": "cplug.clock.name"}, "first-party"),
+        ({**MANIFEST, "default_enabled": True}, "default_enabled"),
     ]
     for raw, _why in bad:
-        with pytest.raises(SidecarManifestError):
-            parse_sidecar_manifest(raw, "clock", "d" * 64)
+        with pytest.raises(ManifestV2Error):
+            parse_manifest_v2(raw, expected_id="clock")
+    with pytest.raises(SidecarManifestError):
+        from_manifest_v2(dataclasses.replace(parse_manifest_v2(MANIFEST), default_enabled=True), "d" * 64)
 
 
 def test_the_owner_may_take_a_reserved_first_party_name_and_nobody_else_may(state):
-    assert identity.register_install(state, "huddle", "carnivore/huddle", SHIPPED).catalog_id == "carnivore/huddle"
+    assert identity.register_install(state, "taskmanager", "carnivore/taskmanager", SHIPPED).catalog_id == "carnivore/taskmanager"
     with pytest.raises(identity.InstallRefused) as other:
         identity.register_install(state, "unread", "acme/unread", SHIPPED)
     assert other.value.code == "name_reserved"
@@ -161,17 +181,17 @@ def _rows(state: Path, key: str) -> int:
 
 def test_purge_forgets_the_egress_and_activity_rows_and_the_state_entry_of_the_right_key(state):
     record = identity.register_install(state, "clock", ITEM, SHIPPED)
-    identity.register_install(state, "huddle", "carnivore/huddle", SHIPPED)
+    identity.register_install(state, "taskmanager", "carnivore/taskmanager", SHIPPED)
     _install_code(state)
     registry = SidecarRegistry(state, lambda: [_row(ITEM)])
     assert registry.reload() == 1
     sidecar_registry.install(registry)
-    for key in (record.uuid, "clock", "huddle", "other"):
+    for key in (record.uuid, "clock", "taskmanager", "other"):
         _log_rows(state, key)
         assert _rows(state, key) == 2
 
-    net_routes.purge_network_data(state, "huddle")
-    assert _rows(state, "huddle") == 0 and _rows(state, record.uuid) == 2
+    net_routes.purge_network_data(state, "taskmanager")
+    assert _rows(state, "taskmanager") == 0 and _rows(state, record.uuid) == 2
     net_routes.purge_network_data(state, "clock")
     assert _rows(state, record.uuid) == 0 and _rows(state, "clock") == 2 and _rows(state, "other") == 2
 
@@ -183,10 +203,11 @@ def test_purge_forgets_the_egress_and_activity_rows_and_the_state_entry_of_the_r
 
 
 def test_a_tool_may_not_carry_control_or_invisible_characters(state):
-    base = MANIFEST["tools"][0]
+    base = MANIFEST["mcp"]["tools"][0]
     for tool in ({**base, "description": "ok‮ evil"}, {**base, "description": "a​b"}, {**base, "description": "a\x07b"},
                  {**base, "inputSchema": {"type": "object", "description": "x⁦y"}}):
-        with pytest.raises(SidecarManifestError):
-            parse_sidecar_manifest({**MANIFEST, "tools": [tool]}, "clock", "d" * 64)
+        with pytest.raises(ManifestV2Error):
+            parse_manifest_v2({**MANIFEST, "mcp": {"tools": [tool]}})
     fine = {**base, "description": "two lines\nand a tab\there"}
-    assert parse_sidecar_manifest({**MANIFEST, "tools": [fine]}, "clock", "d" * 64).tools[0] == fine
+    got = from_manifest_v2(parse_manifest_v2({**MANIFEST, "mcp": {"tools": [fine]}}), "d" * 64).tools[0]
+    assert got["description"] == fine["description"] and got["name"] == fine["name"]

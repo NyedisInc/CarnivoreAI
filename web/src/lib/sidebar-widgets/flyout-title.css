@@ -35,9 +35,17 @@
     color: var(--oc-text-primary);
   }
 
-  .sbr-flyout__title > [data-flyout-close] {
-    --oc-ibtn-size: 28px;
+  .sbr-flyout__title > [data-flyout-popout] {
     margin-left: auto;
     flex: 0 0 auto;
+  }
+
+  .sbr-flyout__title > [data-flyout-close] {
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+
+  .sbr-flyout__title > [data-flyout-popout] + [data-flyout-close] {
+    margin-left: 0;
   }
 }

@@ -2,19 +2,20 @@
 from __future__ import annotations
 
 import sqlite3
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Union
 
 import structlog
 
 from src.core.computers import store
 from src.core.computers.tls_identity import pinned_certs
 from src.core.pack.machines.roster_doc import Roster, RosterComputer
+from src.core.pack.machines.roster_v2 import RosterV2
 from src.core.trail_entry import utc_now
 
 log = structlog.get_logger(__name__)
 
 
-def rewrite_rows(conn: sqlite3.Connection, *, own_iid: str, own_link_fid: str, own_link_port: int, roster: Roster, new_alpha: str) -> int:
+def rewrite_rows(conn: sqlite3.Connection, *, own_iid: str, own_link_fid: str, own_link_port: int, roster: Union[Roster, RosterV2], new_alpha: str) -> int:
     wanted: Dict[str, Tuple[str, RosterComputer]] = {}
     if new_alpha == own_iid:
         wanted = {e.install_id: ("member", e) for e in roster.computers if e.install_id != own_iid}

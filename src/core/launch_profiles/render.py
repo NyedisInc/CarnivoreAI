@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import List, Optional, Sequence, Tuple
 
 from src.config.launch_profiles import LaunchProfile
+from src.core.argent import codex_words
 from src.core.agent_families import INTERACTIVE_SHELL
 from src.core.agent_wrappers import _DISABLE_ALTERNATE_SCREEN, render_script_invocation
 from src.core.launch_profiles.permissions import permission_flags
@@ -37,11 +38,11 @@ def env_preamble(env_set: Sequence[Tuple[str, str]], env_unset: Sequence[str], s
 
 def render_custom(entry: Optional[str], script_path: Path, model: Optional[str], app_args: Sequence[str],
                   disable_alternate_screen: bool, source_rc: bool, secret_names: Sequence[str] = (),
-                  env_set: Sequence[Tuple[str, str]] = (), env_unset: Sequence[str] = ()) -> str:
+                  env_set: Sequence[Tuple[str, str]] = (), env_unset: Sequence[str] = (), overlay_preamble: str = "") -> str:
     return render_script_invocation(
         script_path, entry, model=model, extra_args=list(app_args),
         disable_alternate_screen=disable_alternate_screen, source_rc=source_rc,
-        preamble=env_preamble(env_set, env_unset, secret_names),
+        preamble="; ".join(p for p in (env_preamble(env_set, env_unset, secret_names), overlay_preamble) if p),
     )
 
 
@@ -88,7 +89,7 @@ def render_structured(profile: LaunchProfile, model: Optional[str], app_args: Se
     else:
         if model:
             flags += [_MODEL_FLAG[harness], model]
-        words = " ".join(shlex.quote(t) for t in flags)
+        words = " ".join(codex_words.quote_word(t) for t in flags)
         if harness == "claude":
             body = " ".join(["command claude", words, '"$@"']) if words else 'command claude "$@"'
         elif codex_server_args:

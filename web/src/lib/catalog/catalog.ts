@@ -73,7 +73,15 @@ export interface CatalogHost {
     listCatalogSessions?(): Promise<CatalogDeviceSessions>;
     revokeCatalogSession?(sid: string): Promise<CatalogRevoked>;
     publishAccount?(): Promise<PublishAccount>;
-    sendHero?(body: { kind: string; name: string; image_base64: string }): Promise<{ submission_id?: string }>;
+    sendHero?(body: {
+        kind: string;
+        name: string;
+        image_base64?: string;
+        role?: 'hero' | 'screenshot';
+        action?: 'set' | 'remove';
+        slot?: number;
+        caption?: string;
+    }): Promise<{ submission_id?: string }>;
     revokeOtherCatalogSessions?(): Promise<CatalogRevoked>;
     deleteCatalogAccount?(confirm: string): Promise<CatalogDeleteResult>;
     exportCatalogAccount?(): Promise<CatalogAccountExport>;
@@ -81,7 +89,15 @@ export interface CatalogHost {
 
 interface LegacyApi {
     getPublishAccount(): Promise<PublishAccount>;
-    sendHeroImage(body: { kind: string; name: string; image_base64: string }): Promise<{ submission_id?: string }>;
+    sendHeroImage(body: {
+        kind: string;
+        name: string;
+        image_base64?: string;
+        role?: 'hero' | 'screenshot';
+        action?: 'set' | 'remove';
+        slot?: number;
+        caption?: string;
+    }): Promise<{ submission_id?: string }>;
     getCatalogItems(): Promise<CatalogListResponse>;
     getCatalogItem(itemId: string): Promise<CatalogItemResponse>;
     getCatalogContents(itemId: string): Promise<CatalogContents>;

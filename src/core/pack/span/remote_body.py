@@ -13,6 +13,7 @@ from src.core import db
 from src.core.federation import peer_hosts, peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.pack.span import memory_mirror
+from src.core.swarm.types import BodyIdentity, CreateRefused
 from src.core.swarm import body_create, memory, store
 
 logger = structlog.get_logger()
@@ -30,7 +31,7 @@ def peer_for(wanted: str) -> Any:
     for peer in peers:
         if wanted in (peer.key, peer.peer_install_id) or wanted.lower() == str(peer.label).lower():
             return peer
-    raise body_create.CreateRefused(f"no paired computer matches {wanted[:64]!r}")
+    raise CreateRefused(f"no paired computer matches {wanted[:64]!r}")
 
 
 def adopts(peer: Any) -> bool:
@@ -51,7 +52,7 @@ def _client(peer: Any) -> Any:
     links = peer_links.LINKS
     client = links.client(peer.peer_install_id) if links is not None else None
     if client is None:
-        raise body_create.CreateRefused(f"{peer.label} is not connected; retry when it is")
+        raise CreateRefused(f"{peer.label} is not connected; retry when it is")
     return client
 
 
@@ -59,14 +60,14 @@ async def _post(peer: Any, path: str, payload: Dict[str, Any], timeout: float = 
     try:
         answer = await _client(peer).request("POST", path, json=payload, timeout=timeout)
     except (PeerUnreachable, PeerRefused) as exc:
-        raise body_create.CreateRefused(f"{peer.label} did not answer ({type(exc).__name__})") from exc
+        raise CreateRefused(f"{peer.label} did not answer ({type(exc).__name__})") from exc
     if answer.status_code != 200:
         try:
             detail = answer.json().get("detail")
             code = detail.get("code") if isinstance(detail, dict) else str(detail)
         except ValueError:
             code = str(answer.status_code)
-        raise body_create.CreateRefused(f"{peer.label} refused ({code})")
+        raise CreateRefused(f"{peer.label} refused ({code})")
     data = answer.json()
     return data if isinstance(data, dict) else {}
 
@@ -80,14 +81,14 @@ def _relayed_account(conn: sqlite3.Connection, peer_install_id: str) -> Optional
 
 def _packet(agent: Dict[str, Any], state_dir: Path, peer_install_id: str, adopt: bool = False) -> Dict[str, Any]:
     if agent["rank"] not in ("feature", "task"):
-        raise body_create.CreateRefused("only a feature or task agent runs on another computer")
+        raise CreateRefused("only a feature or task agent runs on another computer")
     with closing(db.connect(db.db_path_for(state_dir), create=False)) as conn:
         parent = store.get_agent(conn, agent["parent_id"]) if agent.get("parent_id") is not None else None
         uid = conn.execute("SELECT uid FROM projects WHERE id = ?", (agent.get("project_id"),)).fetchone()
         account = _relayed_account(conn, peer_install_id)
         adopt_uuid = _adopt_uuid(conn, agent) if adopt else None
     if not uid or not uid[0]:
-        raise body_create.CreateRefused("the agent's project has no uid yet")
+        raise CreateRefused("the agent's project has no uid yet")
     files: List[Dict[str, str]] = []
     if agent["memory_scope"] == memory.SCOPE_PROJECT:
         files = memory_mirror.collect(memory.memory_dir(Path(agent["repo_dir"]), agent["slug"], agent["memory_scope"]))
@@ -101,16 +102,12 @@ def _packet(agent: Dict[str, Any], state_dir: Path, peer_install_id: str, adopt:
 
 
 async def _confirm(peer: Any, created: Dict[str, Any]) -> Any:
-    from src.api import peer_auth
     from src.core.crosstalk import spawn_remote
-    from src.core.federation import peer_listing
-    from src.core.mcp import federated
 
-    await peer_listing.refresh(peer, peer_links.LINKS, peer_auth.open_db, force=True)
-    child = next((i for i in await federated.peer_infos(force=True) if i.host_key == peer.key
-                  and i.tmux_session == created.get("tmux_name")), None)
-    if not spawn_remote.same_created_child(child, created, peer.peer_install_id):
-        raise body_create.CreateRefused(f"{peer.label} made the body but its pane identity was not confirmed")
+    child = await spawn_remote.confirm_created_child(
+        peer, created, lambda i: i.host_key == peer.key and i.tmux_session == created.get("tmux_name"))
+    if child is None:
+        raise CreateRefused(f"{peer.label} made the body {created.get('tmux_name')} but its pane identity was not confirmed")
     return child
 
 
@@ -131,7 +128,7 @@ async def _carry_code(agent: Dict[str, Any], peer: Any) -> None:
         logger.info("remote_body_code_carried", machine=peer.key, sent=outcome.get("sent"), error=outcome.get("error"))
 
 
-async def start(app_state: Any, agent: Dict[str, Any], mode: str) -> body_create.BodyIdentity:
+async def start(app_state: Any, agent: Dict[str, Any], mode: str) -> BodyIdentity:
     from src.config import settings as app_settings
 
     state_dir = app_settings.get_state_dir()
@@ -149,10 +146,10 @@ async def start(app_state: Any, agent: Dict[str, Any], mode: str) -> body_create
             if agent["session_row_id"] is None:
                 store.set_session_row(conn, agent["id"], row_id)
             elif agent["session_row_id"] != row_id:
-                raise body_create.CreateRefused("the host answered with a different session than the agent's own")
+                raise CreateRefused("the host answered with a different session than the agent's own")
 
     await asyncio.to_thread(bind)
-    return body_create.BodyIdentity(child.session.id, row_id, child.session_uuid or "", str(child.tmux_session), child.session.tmux_created_epoch)
+    return BodyIdentity(child.session.id, row_id, child.session_uuid or "", str(child.tmux_session), child.session.tmux_created_epoch)
 
 
 async def _row(agent_id: int) -> Optional[Dict[str, Any]]:
@@ -171,7 +168,7 @@ async def sleep(app_state: Any, agent: Dict[str, Any]) -> None:
     peer = await asyncio.to_thread(peer_for, agent["host_key"])
     try:
         await _post(peer, SLEEP_PATH.format(agent=agent["id"]), {"teardown": False})
-    except body_create.CreateRefused as exc:
+    except CreateRefused as exc:
         raise RuntimeError(str(exc)) from exc
     answer = await federated.forward(info, "POST", "/sessions/{session_uuid}/sleep")
     if answer.get("status") not in (None, "asleep"):

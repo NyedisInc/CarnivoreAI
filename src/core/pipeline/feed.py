@@ -25,9 +25,11 @@ class LiveFeed:
 
     def __init__(self, *, paths_for: Callable[[], Optional[PathsFor]],
                  rollout_for: Callable[[], Optional[Callable[[str], Optional[str]]]] = lambda: None,
+                 agy_for: Callable[[], Optional[Callable[[str], Optional[str]]]] = lambda: None,
                  engine: Callable[[], Any] = runtime.current, clock: Callable[[], float] = time.monotonic) -> None:
         self._paths_for = paths_for
         self._rollout_for = rollout_for
+        self._agy_for = agy_for
         self._engine = engine
         self._clock = clock
         self._last: Dict[str, str] = {}
@@ -85,6 +87,9 @@ class LiveFeed:
             if transcript is None:
                 rollout_for = self._rollout_for()
                 transcript = rollout_for(session_id) if rollout_for is not None else None
+            if transcript is None:
+                agy_for = self._agy_for()
+                transcript = agy_for(session_id) if agy_for is not None else None
             if transcript is None:
                 return 0
             marked = engine.observer.session_changed(os.path.realpath(transcript),

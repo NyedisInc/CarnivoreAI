@@ -31,7 +31,7 @@ def _environment(extra: Optional[Mapping[str, str]]) -> dict:
 
 def run(args: Sequence[str], *, git_dir: Optional[str] = None, work_tree: Optional[str] = None, cwd: Optional[str] = None,
         env: Optional[Mapping[str, str]] = None, input: Optional[bytes] = None, check: bool = True,
-        timeout: float = 300.0) -> "subprocess.CompletedProcess[bytes]":
+        timeout: float = 300.0, quiet_fail: bool = False) -> "subprocess.CompletedProcess[bytes]":
     if not git_guard.git_available():
         raise JobError("git_missing", "git is not installed on this computer", 503)
     argv = ["git"]
@@ -50,7 +50,8 @@ def run(args: Sequence[str], *, git_dir: Optional[str] = None, work_tree: Option
     except FileNotFoundError as exc:
         raise JobError("git_missing", "git is not installed on this computer", 503) from exc
     if cp.returncode != 0:
-        log.warning("jobs_git_failed", verb=verb, returncode=cp.returncode, stderr_bytes=len(cp.stderr))
+        if check or not quiet_fail:
+            log.warning("jobs_git_failed", verb=verb, returncode=cp.returncode, stderr_bytes=len(cp.stderr))
         if check:
             raise JobError("git_failed", f"git {verb} exited {cp.returncode}")
     return cp

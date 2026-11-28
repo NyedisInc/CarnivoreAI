@@ -22,7 +22,7 @@ test('the note names itself and opens to the catalog copy', () => {
         target: document.body,
         props: { loop: null, failure: null, loading: false, isEmpty: false, now: 0, t },
     });
-    const btn = document.querySelector('.ledger-keepalive .info-tip__btn') as HTMLButtonElement;
+    const btn = document.querySelector('.ledger-keepalive [data-info-tip-btn]') as HTMLButtonElement;
     expect(btn.getAttribute('aria-label')).toBe('how account keep-alive works');
     expect(document.querySelector('.ledger-keepalive__label')?.textContent).toBe(
         'how account keep-alive works',

@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from src.api.peer_auth import require_peer_sessions
 from src.api.remote_route_guard import refuse_remote
 from src.core.agent_families import DEFAULT_FAMILY
+from src.core.agy.identity import info_is_agy, row_is_agy
 from src.core.background_work import batch as bw_batch
 from src.core.background_work import guard as bw_guard
 from src.core.background_work import tree as bw_tree
@@ -41,6 +42,15 @@ def _iso(value: Optional[datetime]) -> Optional[str]:
 async def _resolve(request: Request, session_id: str, action: str) -> tuple[Any, Any, str]:
     session_manager = request.app.state.session_manager
     refuse_remote(session_manager, session_id, action)
+    fast = getattr(session_manager, "resolve_session_ref", None)
+    if callable(fast):
+        ref = await fast(session_id)
+        if ref is None:
+            raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
+        tmux_name = ref.get("tmux_session")
+        if not tmux_name:
+            raise HTTPException(status_code=404, detail=f"Session {session_id!r} has no tmux session")
+        return session_manager, ref, str(tmux_name)
     info = await session_manager.get_session_info(session_id)
     if info is None:
         raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
@@ -66,24 +76,40 @@ async def get_session_background_work(request: Request, session_id: str) -> Sess
     Raises: HTTPException 404 - unknown session.
     Example: GET /api/v1/sessions/ses_abc/background-work
     """
+    from src.core.conversation_writers import read_process_table
+
     session_manager, info, tmux_name = await _resolve(request, session_id, "the background work read")
-    family = info.agent_family
+    family = info.get("agent_family") if isinstance(info, dict) else info.agent_family
+    is_agy = row_is_agy(info) if isinstance(info, dict) else info_is_agy(info)
     now = _iso(datetime.now(timezone.utc))
-    if family is not None and family != DEFAULT_FAMILY:
+    if family is not None and family not in (DEFAULT_FAMILY, "custom") and not is_agy:
         return SessionBackgroundWork(state="not_applicable", family=family, as_of=now,
-                                     detail="only claude sessions list their tool shells")
+                                     detail="only claude and agy sessions list their tool shells")
     socket = session_manager.tmux_socket_name()
     try:
-        tree = await asyncio.to_thread(bw_tree.measure, tmux_name, socket)
+        tree = await asyncio.to_thread(
+            bw_tree.measure, tmux_name, socket,
+            table_reader=lambda: read_process_table(max_age=1.0),
+        )
     except bw_tree.TreeError as exc:
         detail = soft_failure("background_work_unmeasured", exc, status=503, session_id=session_id, tmux=tmux_name)
         return SessionBackgroundWork(state="unchecked", family=family, as_of=now, detail=detail)
+    agent_row = tree.table.rows.get(tree.agent_pid) if tree.agent_pid is not None else None
+    running_agy = bool(agent_row is not None and bw_tree.is_agy_command(agent_row.command))
+    if family == "custom" and not is_agy and not running_agy:
+        return SessionBackgroundWork(state="not_applicable", family=family, as_of=now,
+                                     detail="only claude and agy sessions list their tool shells")
+    is_agy = is_agy or running_agy
     if tree.agent_pid is None:
         return SessionBackgroundWork(state="absent", family=family, as_of=now,
-                                     detail="no claude process runs in this pane")
+                                     detail="no agy process runs in this pane" if is_agy else "no claude process runs in this pane")
     listed = await asyncio.to_thread(list_processes, tree)
-    owners = await _owners(session_manager, info, tmux_name) if listed else LaunchOwners("ok")
-    marks = await _owner_marks(session_manager, info, tmux_name, listed, owners)
+    if is_agy:
+        owners = LaunchOwners("absent")
+        marks = {}
+    else:
+        owners = await _owners(session_manager, info, tmux_name) if listed else LaunchOwners("ok")
+        marks = await _owner_marks(session_manager, info, tmux_name, listed, owners)
     return SessionBackgroundWork(
         state="ok", family=family, as_of=now, owners=owners.state,
         leftovers=bw_leftovers.leftover_count(marks),
@@ -100,6 +126,11 @@ async def get_session_background_work(request: Request, session_id: str) -> Sess
 
 
 def _conversation_ref(session_manager: Any, info: Any, tmux_name: str) -> tuple[Optional[str], Optional[str]]:
+    if isinstance(info, dict):
+        return (
+            info.get("claude_session_uuid") or session_manager.claude_uuid_for_tmux_name(tmux_name),
+            info.get("working_dir"),
+        )
     working_dir = info.session.working_dir if info.session is not None else None
     return session_manager.claude_uuid_for_tmux_name(tmux_name), working_dir
 

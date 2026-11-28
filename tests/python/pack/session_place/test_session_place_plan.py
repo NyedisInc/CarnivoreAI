@@ -155,7 +155,7 @@ def test_plan_takes_no_hold_and_reads_the_session_kind_as_light(store):
     plan_mod.plan(REQ, pol(store), view(1.0, [peer(B, "tower")]), [], COPIES)
     assert HOLDS.total()[2] == 0
     work = resolve({"kind": "session"})
-    assert (work.est_cpu_cores, work.est_ram_gb, work.heavy) == (0.5, 0.6, False)
+    assert (work.est_cpu_cores, work.est_ram_gb, work.heavy) == (0.5, 0.8, False)
 
 
 def test_needs_policy_accepts_the_session_key(store):

@@ -58,6 +58,7 @@
                 else if (!dir) placeholder = t(PROJECT_CREATE_KEYS.folderParentUnavailable);
             })
             .catch(() => {
+                // cannot be read
                 if (live) placeholder = t(PROJECT_CREATE_KEYS.folderParentUnavailable);
             });
         const timer = setTimeout(() => parentEl?.focus(), 100);

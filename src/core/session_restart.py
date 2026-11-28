@@ -37,6 +37,7 @@ class RestartSource:
     project_id: Optional[int] = None
     detail: Optional[str] = None
     launch_record: Optional[str] = None
+    offloaded: bool = False
 
 
 def resolve_restart_source(
@@ -100,6 +101,9 @@ def resolve_restart_source(
         codex_home=codex_home_for_row(family, data.get("tmux_socket"), data.get("tmux_name"), identity=gone_identity(data)),
     ) if check_transcript else None
     if presence is not None and presence.missing:
+        from src.core.backup_health import offload_guard
+
+        off = offload_guard.lookup(uuid)
         logger.warning(
             "restart_conversation_transcript_missing",
             session_id=int(data["id"]),
@@ -120,7 +124,8 @@ def resolve_restart_source(
             agent_type=data.get("agent_type"),
             model=data.get("model"),
             project_id=data.get("project_id"),
-            detail=presence.detail,
+            detail=off.detail if off is not None else presence.detail,
+            offloaded=off is not None,
         )
 
     return RestartSource(

@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the Task Manager */
   import { t } from '../i18n/index.svelte';
   import { resolvePlacement } from '../../opscenter/widgets/placement-resolve';
   import { HEADER_OPTION, placementHeaderShown } from '../../opscenter/shell/widget-head';
@@ -38,7 +39,7 @@
     },
   ]);
 
-  const headerShown = $derived(item && manifest ? placementHeaderShown('rail', item.options, manifest.id) : false);
+  const headerShown = $derived(item && manifest ? placementHeaderShown('rail', item.options) : false);
 
   function openPanel(): void {
     const wasOut = railSlideout.shown(edge).length > 0;

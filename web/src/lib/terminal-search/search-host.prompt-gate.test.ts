@@ -42,3 +42,16 @@ test('a bare Session takes its family from the pushed listing wrapper', () => {
     expect(hostFor({ id: 'a' }).promptScan()).toBe(api);
     expect(hostFor({ id: 'b' }).promptScan()).toBeNull();
 });
+
+test('an antigravity pane (custom family, agent_type antigravity) is scanned with family agy (issue #3178)', () => {
+    const seen: unknown[] = [];
+    win.TerminalPromptScan = { ...api, scan: (_b: unknown, o: unknown) => (seen.push(o), []) };
+    const session = { id: 'a', agent_family: 'custom', agent_type: 'antigravity' };
+    browserSearchHost({ _currentSession: session } as never).promptScan()?.scan({} as never, { cols: 80 });
+    expect(seen).toEqual([{ cols: 80, family: 'agy' }]);
+    expect(hostFor({ id: 'a', agent_family: 'custom', agent_type: 'other' }).promptScan()).toBeNull();
+    seen.length = 0;
+    win.TerminalPromptScan = { ...api, scan: (_b: unknown, o: unknown) => (seen.push(o), []) };
+    browserSearchHost({ _currentSession: { id: 'c', agent_family: 'custom', agent_type: 'copilot' } } as never).promptScan()?.scan({} as never, { cols: 80 });
+    expect(seen).toEqual([{ cols: 80, family: 'copilot' }]);
+});

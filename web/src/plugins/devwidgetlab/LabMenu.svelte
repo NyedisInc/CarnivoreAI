@@ -1,7 +1,8 @@
 <script lang="ts">
   /* the CHECKS block the viewer page the widget tree */
   import { onDestroy, onMount } from 'svelte';
-  import { t } from '../sdk';
+  import { openPluginStudio, t } from '../sdk';
+  import { Button } from '../sdk/ui';
   import { activeThemeId, themeChoices } from '../sdk/themes';
   import { LAB_CATEGORIES, labWidgets } from '../sdk/widget-lab';
   import { draftsTreeGroup, draftWidget, revisionContext, type DraftRequest } from './drafts-model';
@@ -191,5 +192,8 @@
     </MenuSection>
   </div>
 
-  <p class="dwl-links"><a class="dwl-link" href="/static/style-guide.html" target="_blank" rel="noopener">{t('cplug.devwidgetlab.links.style_guide')}</a></p>
+  <div class="dwl-links">
+    <a class="dwl-link" href="/static/style-guide.html" target="_blank" rel="noopener">{t('cplug.devwidgetlab.links.style_guide')}</a>
+    <Button size="sm" variant="secondary" data-dwl-studio onclick={() => void openPluginStudio({ template: 'widget' })}>{t('cplug.devwidgetlab.studio.open')}</Button>
+  </div>
 </div>

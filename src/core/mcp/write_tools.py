@@ -12,10 +12,11 @@ from typing import Any, Awaitable, Callable, Optional
 
 import structlog
 from fastapi import HTTPException
+from starlette.datastructures import QueryParams
 
 from src.core.budget_hold.gate import hold_check
 from src.core.db import DatastoreUnreadableError
-from src.core.mcp import beast_mode, federated, in_use as in_use_mod, pending, place_args, restart_account_args, session_target
+from src.core.mcp import beast_mode, federated, in_use as in_use_mod, pending, place_args, restart_account_args, session_creators, session_target
 from src.core.mcp.approvals import call_context, runtime as approval_runtime, wording
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import delivery as swarm_delivery
@@ -58,7 +59,7 @@ def _request(manager: Any) -> Any:
     app = getattr(manager, "app", None)
     if app is None:
         raise ToolError("write tools are unavailable on this transport")
-    return SimpleNamespace(app=app)
+    return SimpleNamespace(app=app, scope={}, headers={}, state=SimpleNamespace(), query_params=QueryParams())
 
 
 def _detail(exc: HTTPException, scrub: Optional[Callable[[str], str]] = None) -> str:
@@ -184,6 +185,7 @@ async def session_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
 
     async def run(_approved: bool) -> dict:
         session = await counted_create(manager.live_ids_now, caller, lambda: _via_route(create_session(_request(manager), request)))
+        await session_creators.record(manager, session.id, caller)
         logger.info("mcp_session_created", session_id=session.id, creator=caller.tmux_name, launch_profile=picked)
         return _ok({"id": session.id, "working_dir": session.working_dir, "launch": _launch_shown(request.agent_type)})
 
@@ -236,6 +238,7 @@ async def _create_placed(manager: Any, caller: AgentCaller, request: Any, needs:
                 if placed is not None:
                     _created[_session_id(placed.session)] = (caller.tmux_name, time.monotonic())
         sid = _session_id(placed.session)
+        await session_creators.record(manager, sid, caller)
         logger.info("mcp_session_created", session_id=sid, creator=caller.tmux_name, decision=placed.placement.get("decision"))
         shown_dir = placed.session.get("working_dir") if isinstance(placed.session, dict) else placed.session.working_dir
         result = {"id": sid, "working_dir": shown_dir, "placement": placed.placement}

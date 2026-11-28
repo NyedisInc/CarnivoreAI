@@ -8,12 +8,14 @@ from src.core.approvals.extract import (
     BODY_MAX_BYTES, FAMILY_CLAUDE, KIND_OTHER, KIND_TRUST, ROLE_OPTION, Dialog, Row, fingerprint_for,
     normalize_body, squash, startup_footer_index,
 )
-from src.core.session_startup_gate import SCREEN_TRUST, named_startup_marker_spans
+from src.core.session_startup_gate import SCREEN_EXTERNAL_IMPORTS, SCREEN_TRUST, named_startup_marker_spans
 from src.core.timers.redact import redact
 
 MIN_ROWS: int = 2
 MAX_ROWS: int = 9
 MAX_LABEL_CHARS: int = 120
+IMPORTS_LABELS = frozenset({"No, disable external imports", "Yes, allow external imports"})
+IMPORTS_HEADLESS_QUESTION: str = "Allow external CLAUDE.md file imports?"
 SUBSTANCE_LINES_ABOVE: int = 15
 
 _ROW: Pattern[str] = re.compile(r"^(\s*)([❯›>]\s*)?(?:(\d+)\.\s+)?(\S.*?)\s*$")
@@ -56,6 +58,13 @@ def _rows_block(lines: List[str], foot: int) -> Optional[tuple]:
     return start, rows, cursor
 
 
+def _rule_above(lines: List[str], start: int) -> bool:
+    at = start - 1
+    while at >= 0 and not lines[at].strip():
+        at -= 1
+    return at >= 0 and _RULE.match(lines[at]) is not None
+
+
 def _paragraph(lines: List[str], at: int, below: int) -> tuple:
     top = at
     while top > 0 and lines[top - 1].strip() and not _RULE.match(lines[top - 1]):
@@ -76,12 +85,15 @@ def decode_startup_choice(lines: List[str]) -> Optional[Dialog]:
     start, rows, cursor = block
     above = "\n".join(lines[:start])
     spans = named_startup_marker_spans(above)
-    if not spans:
+    if spans:
+        screen_kind, offset, _ = spans[0]
+        q_line = above.count("\n", 0, offset)
+        top, bottom = _paragraph(lines, q_line, start)
+        question = " ".join(ln.strip() for ln in lines[top:bottom + 1])
+    elif {r.label for r in rows} == IMPORTS_LABELS and _rule_above(lines, start):
+        screen_kind, top, question = SCREEN_EXTERNAL_IMPORTS, start, IMPORTS_HEADLESS_QUESTION
+    else:
         return None
-    screen_kind, offset, _ = spans[0]
-    q_line = above.count("\n", 0, offset)
-    top, bottom = _paragraph(lines, q_line, start)
-    question = " ".join(ln.strip() for ln in lines[top:bottom + 1])
     first = max(0, top - SUBSTANCE_LINES_ABOVE)
     substance = normalize_body([ln for ln in lines[first:start] if not _RULE.match(ln)])
     body_lines = [ln.rstrip() for ln in lines[first:foot] if ln.strip() and not _RULE.match(ln)]

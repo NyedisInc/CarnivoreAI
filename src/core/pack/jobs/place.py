@@ -5,19 +5,25 @@ import sqlite3
 import uuid
 from contextlib import closing
 from dataclasses import dataclass, field, replace
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, FrozenSet, List, Optional, Sequence
 
-from src.core.pack.jobs import install as install_mod
+from src.core.pack.jobs import install as install_mod, locality
 from src.core.pack.jobs.policy import Policy
 from src.core.pack.jobs.types import CAP_JOBS, JobError, PlaceAnswer
 from src.core.pack.machines import capabilities
 from src.core.pack.machines import restrictions as restrictions_mod
-from src.core.pack.placement import explain, needs as needs_mod, rule
+from src.core.pack.placement import explain, needs as needs_mod, rule, workload as workload_mod
 from src.core.pack.placement.needs import Need
 from src.core.pack.placement.workload import Workload
 from src.core.pack.reserve.holds import HOLDS, Holds
 
 HERE_HOLD_S = 90.0
+MIN_OFFLOAD_RUNTIME_S = 8.0
+DEFAULT_PEER_OVERHEAD_S = 20.0
+BREAKEVEN_UNDER_RESERVE_MIN_S = 15.0
+BREAKEVEN_UNDER_RESERVE_MULT = 0.75
+BREAKEVEN_PEGGED_MIN_S = 10.0
+BREAKEVEN_PEGGED_MULT = 0.35
 
 
 @dataclass
@@ -29,6 +35,10 @@ class PlaceView:
     master_id: Optional[str] = None
     company_uid: Optional[str] = None
     ssh_hold: Optional[Callable[[str, float, float], None]] = None
+    mesh_members: FrozenSet[str] = frozenset()
+    member_notes: Dict[str, str] = field(default_factory=dict)
+    copy_skips: Dict[str, str] = field(default_factory=dict)
+    peer_overheads: Dict[str, float] = field(default_factory=dict)
 
 
 def _company_uid(conn: sqlite3.Connection, project_uid: str) -> Optional[str]:
@@ -66,8 +76,11 @@ def drop_reason(peer: rule.MachineInput, policy: Policy, view: PlaceView) -> Opt
 
 
 def unfit_reason(peer: rule.MachineInput, view: PlaceView, project_uid: str) -> Optional[str]:
+    member = peer.install_id in view.mesh_members
+    if member and view.member_notes.get(peer.install_id):
+        return view.member_notes[peer.install_id]
     if (view.master_id is not None and view.self_input.install_id != view.master_id and peer.install_id != view.master_id
-            and not peer.install_id.startswith("ssh:")):
+            and not peer.install_id.startswith("ssh:") and not member):
         return "is not the master and this computer is not either"
     if peer.snapshot is not None:
         broken = restrictions_mod.check(restrictions_mod.from_dict(peer.snapshot.get("restrictions")), restrictions_mod.ACTION_HOST_AGENTS,
@@ -140,7 +153,8 @@ def install_candidates(work: Workload, project_uid: str, policy: Policy, view: P
         return None
     union = {n for lacking in missing.values() for n in lacking}
     eligible = [p for p in view.peers if p.install_id in missing]
-    hard = [n for n in dict.fromkeys([*needs, *filters]) if n not in union]
+    brought = set(install_mod.covered([n.name for n in union]))
+    hard = [n for n in dict.fromkeys([*needs, *filters]) if n not in union and not (n.kind == "tool" and n.name in brought)]
     decision = rule.decide(eligible, work, needs=hard, prefer=prefer, project_uid=project_uid, company_uid=view.company_uid)
     if not decision.chosen:
         return None
@@ -151,37 +165,87 @@ def install_candidates(work: Workload, project_uid: str, policy: Policy, view: P
                        decision.candidates, install=tools)
 
 
+def _breakeven_ok(runtime_s: float, overhead_s: float, *, self_can_fit: bool) -> bool:
+    if runtime_s < MIN_OFFLOAD_RUNTIME_S:
+        return False
+    if self_can_fit:
+        return runtime_s >= max(BREAKEVEN_UNDER_RESERVE_MIN_S, BREAKEVEN_UNDER_RESERVE_MULT * overhead_s)
+    return runtime_s >= max(BREAKEVEN_PEGGED_MIN_S, BREAKEVEN_PEGGED_MULT * overhead_s)
+
+
 def place(work: Workload, project_uid: str, policy: Policy, view: PlaceView, *, needs: Sequence[Need] = (), prefer: Sequence[Need] = (),
-          filters: Sequence[Need] = (), holds: Holds = HOLDS) -> PlaceAnswer:
+          filters: Sequence[Need] = (), holds: Holds = HOLDS, est_runtime_s: Optional[float] = None,
+          active_balance: bool = True) -> PlaceAnswer:
     if not policy.auto_delegate:
         return PlaceAnswer("here", None, None, "project is set to this computer only")
     me = view.self_input
     own_snap = _own_snapshot(me, holds)
-    own_meets = not _unmet(own_snap, needs)
-    own = rule.decide([replace(me, snapshot=own_snap)], work, needs=needs) if own_meets else None
-    if own is not None and own.chosen == me.install_id and own_snap is not None and (work.heavy or not rule.over_reserve(own_snap)):
-        if work.heavy:
-            holds.try_hold(f"here-{uuid.uuid4().hex[:12]}", me.install_id, work.est_cpu_cores, work.est_ram_gb, HERE_HOLD_S, lambda _c, _r: True)
-        return PlaceAnswer("here", None, None, f"this computer has room: {rule.describe(me.label, rule.headroom(own_snap))}", own.candidates)
+    pinned_here, effective_needs = locality.split_self_local_needs(needs)
+    own_meets = not _unmet(own_snap, effective_needs)
+    if pinned_here:
+        if own_meets:
+            if work.heavy:
+                holds.try_hold(f"here-{uuid.uuid4().hex[:12]}", me.install_id, work.est_cpu_cores, work.est_ram_gb, HERE_HOLD_S, lambda _c, _r: True)
+            return PlaceAnswer("here", None, None, f"pinned to this computer: {me.label}")
+        return _refuse(me, own_snap, effective_needs, view, policy, None)
+    self_input = replace(me, snapshot=own_snap)
+    own = rule.decide([self_input], work, needs=effective_needs, project_uid=project_uid) if own_meets else None
+    own_fits = bool(own is not None and own.chosen == me.install_id and own_snap is not None and (work.heavy or not rule.over_reserve(own_snap)))
+    runtime_s = float(est_runtime_s) if est_runtime_s is not None else workload_mod.est_runtime_s(work.kind)
+    if own_meets and own_fits and runtime_s < MIN_OFFLOAD_RUNTIME_S:
+        return PlaceAnswer("here", None, None, f"command is too short ({runtime_s:.0f} s) to justify remote transfer", own.candidates if own else [])
     reasons: List[str] = []
     kept: List[rule.MachineInput] = []
+    ov_map: Dict[str, float] = {}
     for peer in view.peers:
         why = drop_reason(peer, policy, view)
         if why:
             reasons.append(f"{peer.label} {why}")
-        else:
-            kept.append(peer)
-    hard = list(dict.fromkeys([*needs, *filters]))
-    decision = rule.decide(kept, work, needs=hard, prefer=prefer, project_uid=project_uid, company_uid=view.company_uid) if kept else None
+            continue
+        has_measured_ov = peer.install_id in view.peer_overheads
+        ov_s = float(view.peer_overheads.get(peer.install_id, DEFAULT_PEER_OVERHEAD_S))
+        check_be = (
+            own_meets
+            and peer.usable
+            and peer.snapshot is not None
+            and peer.has_project
+            and (own_fits or work.heavy or est_runtime_s is not None or has_measured_ov)
+        )
+        if check_be and not _breakeven_ok(runtime_s, ov_s, self_can_fit=own_fits):
+            reasons.append(f"{peer.label} skipped (transfer overhead {ov_s:.0f} s exceeds job runtime {runtime_s:.0f} s)")
+            continue
+        ov_map[peer.install_id] = ov_s
+        kept.append(peer)
+    hard = list(dict.fromkeys([*effective_needs, *filters]))
+    if active_balance and work.heavy and own_fits and kept:
+        peer_dec = rule.decide(kept, work, needs=hard, prefer=prefer, project_uid=project_uid, company_uid=view.company_uid,
+                               overheads=ov_map, est_runtime_s=runtime_s)
+        if peer_dec.chosen:
+            best_peer = next(p for p in kept if p.install_id == peer_dec.chosen)
+            combined = rule.decide([self_input, best_peer], work, auto_distribute=True, needs=effective_needs, prefer=(),
+                                   project_uid=project_uid, company_uid=view.company_uid, overheads=ov_map, est_runtime_s=runtime_s)
+            if combined.chosen and combined.chosen != me.install_id:
+                if view.ssh_hold is not None and best_peer.install_id.startswith("ssh:"):
+                    view.ssh_hold(best_peer.install_id, work.est_cpu_cores, work.est_ram_gb)
+                return PlaceAnswer("remote", best_peer.install_id, best_peer.label, combined.reason, combined.candidates)
+            if work.heavy:
+                holds.try_hold(f"here-{uuid.uuid4().hex[:12]}", me.install_id, work.est_cpu_cores, work.est_ram_gb, HERE_HOLD_S, lambda _c, _r: True)
+            return PlaceAnswer("here", None, None, f"this computer has room: {rule.describe(me.label, rule.headroom(own_snap))}", combined.candidates)
+    if own_fits:
+        if work.heavy:
+            holds.try_hold(f"here-{uuid.uuid4().hex[:12]}", me.install_id, work.est_cpu_cores, work.est_ram_gb, HERE_HOLD_S, lambda _c, _r: True)
+        return PlaceAnswer("here", None, None, f"this computer has room: {rule.describe(me.label, rule.headroom(own_snap))}", own.candidates if own else [])
+    decision = rule.decide(kept, work, needs=hard, prefer=prefer, project_uid=project_uid, company_uid=view.company_uid,
+                           overheads=ov_map, est_runtime_s=runtime_s) if kept else None
     if decision is not None and decision.chosen:
         peer = next(p for p in kept if p.install_id == decision.chosen)
         if view.ssh_hold is not None and peer.install_id.startswith("ssh:"):
             view.ssh_hold(peer.install_id, work.est_cpu_cores, work.est_ram_gb)
         return PlaceAnswer("remote", peer.install_id, peer.label, decision.reason, decision.candidates)
     if not own_meets:
-        refused = _refuse(me, own_snap, needs, view, policy, decision)
+        refused = _refuse(me, own_snap, effective_needs, view, policy, decision)
         if refused.code == "requirement_unmet":
-            return install_candidates(work, project_uid, policy, view, needs=needs, filters=filters, prefer=prefer) or refused
+            return install_candidates(work, project_uid, policy, view, needs=effective_needs, filters=filters, prefer=prefer) or refused
         return refused
     if decision is not None:
         reasons += [f"{r['label']}: {r['filter']}" for r in decision.candidates if r["filter"]]

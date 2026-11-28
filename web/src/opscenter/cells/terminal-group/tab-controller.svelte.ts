@@ -129,12 +129,19 @@ export function createTabController(instance: () => string, focusPane: (tab: str
           row?.label ?? sleeping?.title ?? stored?.title ?? null,
           row?.tmux_session ?? sleeping?.tmux_name ?? stored?.tmux_name ?? (id === PRIMARY_SLOT ? primaryTmuxName() || null : null),
         ) || sessionId,
-        family: row?.agent_family ?? sleeping?.agent_family ?? null,
+        family: row?.agent_family ?? sleeping?.agent_family ?? stored?.agent_family ?? null,
         tint: accentFor(row?.pinned_theme ?? sleeping?.pinned_theme ?? null),
         bar: sessionBarTint(row?.project_id ?? sleeping?.project_id ?? stored?.project_id ?? null, accentFor(row?.pinned_theme ?? sleeping?.pinned_theme ?? null)),
         face: row
           ? faceFacts(row, { transport: transportFor(sessionId) })
-          : faceFacts({ agent_family: sleeping?.agent_family ?? null, unread: sleeping?.unread }, { lifecycle: sleeping ? 'asleep' : undefined, transport: transportFor(sessionId) }),
+          : faceFacts(
+              {
+                agent_family: sleeping?.agent_family ?? stored?.agent_family ?? null,
+                agent_wrapper_icon: sleeping?.agent_wrapper_icon ?? stored?.agent_wrapper_icon ?? null,
+                unread: sleeping?.unread,
+              },
+              { lifecycle: sleeping ? 'asleep' : undefined, transport: transportFor(sessionId) },
+            ),
         workflow: row?.workflow_active === true,
         agent: row ? (row as unknown as Record<string, unknown>) : null,
       };
@@ -279,8 +286,69 @@ export function createTabController(instance: () => string, focusPane: (tab: str
     });
   }
 
+  function activeTabAdjacentContext():
+    | {
+        project: {
+          id: number;
+          name: string;
+          path: string;
+          root: string;
+          defaultLaunchProfile: string | null;
+          companyId: number | null;
+          color?: string | null;
+        };
+        tabLabel: string;
+      }
+    | null {
+    if (!active || isNonSessionTab(active)) return null;
+    const sessionId = sessionOf(active);
+    const row = rowFor(sessions.data, sessionId);
+    const list = projects.data ?? [];
+    if (!row || list.length === 0) return null;
+    const wd = (row.session?.working_dir ?? '').replace(/\/+$/, '');
+    const match =
+      (row.project_id != null ? list.find((p) => p.id === row.project_id) : undefined) ??
+      (wd
+        ? list.find((p) => {
+            const pRec = p as unknown as { path?: string; root?: string };
+            const pRoot = (pRec.root || pRec.path || '').replace(/\/+$/, '');
+            return Boolean(pRoot) && (wd === pRoot || wd.startsWith(`${pRoot}/`));
+          })
+        : undefined);
+    if (!match) return null;
+    const pRec = match as unknown as {
+      id: number;
+      name: string;
+      path?: string;
+      root?: string;
+      default_launch_profile?: string | null;
+      company_id?: number | null;
+      color?: string | null;
+    };
+    const tabLabel =
+      displayName(row.label ?? null, row.tmux_session ?? null) || match.name;
+    return {
+      project: {
+        id: pRec.id,
+        name: pRec.name,
+        path: pRec.path || pRec.root || '',
+        root: pRec.root || pRec.path || '',
+        defaultLaunchProfile: pRec.default_launch_profile ?? null,
+        companyId: pRec.company_id ?? null,
+        color: pRec.color ?? null,
+      },
+      tabLabel,
+    };
+  }
+
   function create(kind: 'agent' | 'terminal'): void {
     newAnchor = null;
+    if (kind === 'agent') {
+      const adjacent = activeTabAdjacentContext();
+      const opts = adjacent ? { entryContext: 'tab_plus' as const, adjacent } : { entryContext: 'top_plus' as const };
+      void createAsTab(() => startNewSession('agent', opts), landCreated);
+      return;
+    }
     void createAsTab(() => startNewSession(kind), landCreated);
   }
 

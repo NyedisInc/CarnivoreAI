@@ -15,6 +15,7 @@ vi.mock('./auth.svelte', () => ({
 }));
 
 vi.mock('./poll.svelte', () => ({ resource: () => ({ data: [], refresh: async () => {} }) }));
+vi.mock('./sessions.svelte', () => ({ reachWokenSession: async () => null }));
 
 const NEEDED = {
   status: 'refused',

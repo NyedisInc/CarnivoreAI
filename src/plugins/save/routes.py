@@ -10,6 +10,7 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, Field
 
 from src.plugins.save import folder_routes, import_routes, settings_routes, start
+from src.plugins.save.offload import batch_routes as offload_batch_routes, restore_batch_routes as offload_restore_batch_routes, list_routes as offload_list_routes, offload_routes as offload_run_routes, restore_routes as offload_restore_routes, routes as offload_routes
 from src.plugins.save.service import RUNTIME
 from src.plugins.save.vault import points as vault_points
 from src.plugins.save.vault import restore
@@ -23,6 +24,12 @@ router = cplug_router("save")
 settings_routes.add_to(router)
 folder_routes.add_to(router)
 import_routes.add_to(router)
+offload_routes.add_to(router)
+offload_restore_routes.add_to(router)
+offload_run_routes.add_to(router)
+offload_list_routes.add_to(router)
+offload_batch_routes.add_to(router)
+offload_restore_batch_routes.add_to(router)
 
 
 class PointList(BaseModel):
@@ -118,6 +125,8 @@ def _guard(call: Callable[[], Any]) -> Any:
         raise HTTPException(status_code=400, detail=str(exc))
     except vault_points.PinnedError as exc:
         raise HTTPException(status_code=409, detail={"code": "pinned", "detail": str(exc)})
+    except vault_points.OffloadedError as exc:
+        raise HTTPException(status_code=409, detail={"code": "offloaded", "detail": str(exc)})
     except SoleCopyError as exc:
         raise HTTPException(status_code=409, detail={"code": "sole_copy", "detail": str(exc)})
     except vault_points.UnknownPoint as exc:

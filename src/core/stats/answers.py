@@ -42,7 +42,10 @@ _SCHEMA = (
 Compute = Callable[[Any, float], dict]
 
 _WRITER = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stats-ledger-writer")
-_RECOMPUTE = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stats-ledger-recompute")
+_RECOMPUTE = ThreadPoolExecutor(max_workers=3, thread_name_prefix="stats-ledger-recompute")
+_RECOMPUTE_COND = threading.Condition()
+_RECOMPUTE_ACTIVE = 0
+_MEM_CACHE_MAX = 256
 
 
 def _now() -> float:
@@ -100,9 +103,29 @@ class _Ledger:
         self._failed_at: Dict[str, float] = {}
         self._touched: Dict[str, float] = {}
         self._inode: Optional[int] = None
+        self._schema_ready_inode: Optional[int] = None
+        self._mem: "dict[str, Row]" = {}
         self._writer_conns = ThreadConnections(lambda _path: self._connect())
 
+    def _check_inode(self) -> Optional[int]:
+        try:
+            inode = os.stat(self.store.db_path).st_ino
+        except OSError:
+            return None
+        with self._lock:
+            if self._inode is not None and inode != self._inode:
+                self._mem.clear()
+                self._schema_ready_inode = None
+            self._inode = inode
+        return inode
+
     def read(self, view: Any, key: str) -> Optional[Row]:
+        self._check_inode()
+        with self._lock:
+            mem_row = self._mem.get(key)
+            if mem_row is not None:
+                self._touched[key] = _now()
+                return mem_row
         try:
             got = view.connect(readonly=True).execute(
                 "SELECT fingerprint,window_end,computed_at,payload,fail_reason,fail_at FROM stats_answers WHERE key=?",
@@ -118,10 +141,14 @@ class _Ledger:
         except (zlib.error, ValueError) as exc:
             logger.warning("stats_answers_row_unreadable", error=type(exc).__name__)
             return None
+        marked = payload.pop(_USAGE_KEY, None)
+        row = Row(got[0], int(got[1]), float(got[2]), payload, got[4], got[5], marked)
         with self._lock:
             self._touched[key] = _now()
-        marked = payload.pop(_USAGE_KEY, None)
-        return Row(got[0], int(got[1]), float(got[2]), payload, got[4], got[5], marked)
+            if len(self._mem) >= _MEM_CACHE_MAX:
+                self._mem.pop(next(iter(self._mem)))
+            self._mem[key] = row
+        return row
 
     def state(self) -> str:
         from src.core.stats.plugin import progress
@@ -142,6 +169,10 @@ class _Ledger:
 
     def store_later(self, key: str, fingerprint: str, window_end: int, payload: dict, computed_at: float,
                     usage_revision: Optional[int] = None) -> None:
+        with self._lock:
+            if len(self._mem) >= _MEM_CACHE_MAX and key not in self._mem:
+                self._mem.pop(next(iter(self._mem)))
+            self._mem[key] = Row(fingerprint, window_end, computed_at, payload, None, None, usage_revision)
         held = {**payload, _USAGE_KEY: usage_revision} if usage_revision is not None else payload
         blob = zlib.compress(json.dumps(held, separators=(",", ":")).encode(), 1)
         _WRITER.submit(self._write, key, fingerprint, window_end, blob, computed_at)
@@ -158,10 +189,13 @@ class _Ledger:
             touched, self._touched = dict(pending[:TOUCH_FLUSH]), dict(pending[TOUCH_FLUSH:])
         try:
             conn = self._writer_conns.get(self.store.db_path)
+            inode = self._check_inode()
+            need_ddl = self._schema_ready_inode != inode
             conn.execute("BEGIN IMMEDIATE")
             try:
-                for ddl in _SCHEMA:
-                    conn.execute(ddl)
+                if need_ddl:
+                    for ddl in _SCHEMA:
+                        conn.execute(ddl)
                 conn.execute(
                     "INSERT OR REPLACE INTO stats_answers VALUES (?,?,?,?,?,?,?,NULL,NULL)",
                     (key, fingerprint, window_end, computed_at, computed_at, len(blob), blob))
@@ -169,6 +203,7 @@ class _Ledger:
                                  [(at, k) for k, at in touched.items()])
                 self._evict(conn, key)
                 conn.execute("COMMIT")
+                self._schema_ready_inode = inode
             except BaseException:
                 conn.execute("ROLLBACK")
                 raise
@@ -201,6 +236,8 @@ class _Ledger:
             logger.debug("stats_answers_mark_skipped", error=str(exc)[:120])
 
     def purge(self) -> None:
+        with self._lock:
+            self._mem.clear()
         try:
             with self._connect() as conn:
                 conn.execute("DELETE FROM stats_answers")
@@ -210,24 +247,35 @@ class _Ledger:
 
     def refresh_later(self, key: str, fingerprint: str, window_end: int, compute: Compute, budget: float,
                       families: Tuple[str, ...] = (FAMILY_USAGE, FAMILY_ACTIVITY)) -> None:
+        global _RECOMPUTE_ACTIVE
         with self._lock:
             if key in self._inflight or _now() - self._failed_at.get(key, 0.0) < RETRY_SECONDS:
                 return
             self._inflight.add(key)
+        with _RECOMPUTE_COND:
+            _RECOMPUTE_ACTIVE += 1
         _RECOMPUTE.submit(self._recompute, key, fingerprint, window_end, compute, budget, families)
 
     def _recompute(self, key: str, fingerprint: str, window_end: int, compute: Compute, budget: float,
                    families: Tuple[str, ...]) -> None:
+        global _RECOMPUTE_ACTIVE
         view = BatchStore(self.store)
         try:
             usage_rev = view.usage_revision() if FAMILY_USAGE in families else None
             payload = compute(view, time.monotonic() + budget)
         except Exception as exc:  # noqa: BLE001
             now = _now()
+            reason = type(exc).__name__
             with self._lock:
                 self._failed_at[key] = now
-            logger.warning("stats_answers_recompute_failed", error=type(exc).__name__, detail=str(exc)[:120])
-            _WRITER.submit(self._mark_failed, key, type(exc).__name__, now)
+                cached = self._mem.get(key)
+                if cached is not None:
+                    self._mem[key] = Row(
+                        cached.fingerprint, cached.window_end, cached.computed_at,
+                        cached.payload, reason, now, cached.usage_revision,
+                    )
+            logger.warning("stats_answers_recompute_failed", error=reason, detail=str(exc)[:120])
+            _WRITER.submit(self._mark_failed, key, reason, now)
         else:
             if self.state() == STATE_OK:
                 self.store_later(key, fingerprint, window_end, payload, _now(), usage_rev)
@@ -235,6 +283,10 @@ class _Ledger:
             view.release()
             with self._lock:
                 self._inflight.discard(key)
+            with _RECOMPUTE_COND:
+                _RECOMPUTE_ACTIVE = max(0, _RECOMPUTE_ACTIVE - 1)
+                if _RECOMPUTE_ACTIVE == 0:
+                    _RECOMPUTE_COND.notify_all()
 
 
 _registry_lock = threading.Lock()
@@ -288,5 +340,11 @@ def purge(store: Any) -> None:
 
 def wait_idle(timeout: float = 10.0) -> None:
     deadline = time.monotonic() + timeout
-    for pool in (_RECOMPUTE, _WRITER, _RECOMPUTE, _WRITER):
-        pool.submit(lambda: None).result(max(0.0, deadline - time.monotonic()))
+    for _ in range(2):
+        with _RECOMPUTE_COND:
+            while _RECOMPUTE_ACTIVE > 0:
+                rem = deadline - time.monotonic()
+                if rem <= 0:
+                    raise TimeoutError("wait_idle timed out waiting for recompute workers")
+                _RECOMPUTE_COND.wait(rem)
+        _WRITER.submit(lambda: None).result(max(0.0, deadline - time.monotonic()))

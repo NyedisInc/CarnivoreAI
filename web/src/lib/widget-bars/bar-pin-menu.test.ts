@@ -51,7 +51,7 @@ beforeEach(() => {
   barLead.edge = null;
   follow('widget_bars', null);
   follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }] });
-  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }] });
+  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager-mk2' }] });
   vi.spyOn(widgetBars, 'set').mockImplementation(async (edge, patch) => {
     follow('widget_bars', { ...AUTOHIDE_BARS, [edge]: { mode: 'autohide', ...patch } });
     return 'committed';

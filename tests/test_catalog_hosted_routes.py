@@ -126,7 +126,7 @@ class TestTheRouteIsActuallyMounted:
             tmp_path, responder=json_responder(SUMMARY), include_aggregator=True
         ) as app:
             assert app.client.get("/catalog/auth/session").status_code == 200
-            assert app.client.post("/catalog/auth/signout").status_code == 200
+            assert app.client.post("/catalog/auth/signout").status_code == 409
             assert app.client.post("/catalog/auth/device/start").status_code != 404
             assert app.client.post(
                 "/catalog/auth/device/poll", json={"flow_id": "nope"}

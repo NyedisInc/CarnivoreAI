@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Tuple
 
 from src.core import config_writer
 from src.core.claude_transcript_correlate import slugify_project_dir
@@ -27,6 +27,12 @@ def projects_dir() -> Path:
     from src.core.claude_transcript_correlate import default_projects_dir  # noqa: PLC0415
 
     return Path(default_projects_dir())
+
+
+def projects_roots_with_profiles(default: Path) -> Tuple[Path, ...]:
+    from src.core.claude_config import profile_roots  # noqa: PLC0415
+
+    return profile_roots.profile_subdir_roots(Path(default), profile_roots.PROJECTS_DIRNAME)
 
 
 def default_codex_home() -> Path:
@@ -58,6 +64,6 @@ def announce_timeline() -> None:
 __all__ = [
     "CAP_ENV_VAR", "CONVERSATION_PRESENT", "DEFAULT_CAP_BYTES", "FAMILY_CODEX", "LIMITS_FILE_NAME", "SCOPE_ALL",
     "SCOPE_HUMAN", "SCOPE_SUBSESSIONS", "SourceSet", "TREE_DIR_NAME", "announce_timeline", "assert_test_write_allowed",
-    "claude_user_text", "codex_user_text", "commit_config", "config_file", "dataless", "default_codex_home", "family_conversation_presence",
+    "claude_user_text", "codex_user_text", "commit_config", "config_file", "dataless", "default_codex_home", "projects_roots_with_profiles", "family_conversation_presence",
     "limits", "locate", "projects_dir", "read_config", "slugify_project_dir", "source_scope", "state_dir",
 ]

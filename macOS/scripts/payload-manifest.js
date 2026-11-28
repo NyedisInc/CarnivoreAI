@@ -48,9 +48,15 @@ function pinnedComponents(arch) {
   return JSON.parse(out).components;
 }
 
-function buildManifest(payloadDir) {
+function buildManifest(payloadDir, arches) {
+  const selected = Array.isArray(arches) && arches.length > 0
+    ? arches
+    : TREE_ARCHES.filter((arch) => {
+        try { return fs.statSync(path.join(payloadDir, `payload-${arch}`)).isDirectory(); } catch { return false; }
+      });
+  if (selected.length === 0) throw new Error(`payload tree missing in ${payloadDir}`);
   const trees = {};
-  for (const arch of TREE_ARCHES) {
+  for (const arch of selected) {
     const dir = path.join(payloadDir, `payload-${arch}`);
     if (!fs.statSync(dir).isDirectory()) throw new Error(`payload tree missing: ${dir}`);
     const binaries = machoHashes(dir);
@@ -61,9 +67,9 @@ function buildManifest(payloadDir) {
   return { schema: 1, signing_team: SIGNING_TEAM_ID, trees, wheels: lockWheels(lock) };
 }
 
-function writeManifest(payloadDir) {
+function writeManifest(payloadDir, arches) {
   const file = path.join(payloadDir, MANIFEST_NAME);
-  fs.writeFileSync(file, `${JSON.stringify(buildManifest(payloadDir), null, 2)}\n`);
+  fs.writeFileSync(file, `${JSON.stringify(buildManifest(payloadDir, arches), null, 2)}\n`);
   return file;
 }
 

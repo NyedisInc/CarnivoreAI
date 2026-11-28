@@ -17,6 +17,8 @@
   import { companyList } from '../companies';
   import { sessions } from '../../opscenter/api/sessions.svelte';
   import { moveGroups } from './move-options';
+  import { countOnline, stateWord } from '../sidebar-shell/pack-stats';
+  import { meshLinkOf } from '../sidebar-shell/pack-source.svelte';
   import { packActivity, packMachines, setTracksMaster, tracksMaster, type PackMachine } from './pack-machines-store.svelte';
 
   const view = $derived(packMachines.data);
@@ -24,7 +26,8 @@
   const movable = $derived((projects.data ?? []).filter((p) => !p.archived_at && (p.pack_state ?? 'home') === 'home'));
   let moveKey = $state('');
   const groups = $derived(moveGroups(companyList(), movable, sessions.data ?? []));
-  const online = $derived((view?.machines ?? []).filter((m) => m.state === 'connected' || m.state === 'self').length);
+  const online = $derived(countOnline(view?.machines ?? [], meshLinkOf));
+  const unseen = $derived((view?.machines ?? []).filter((m) => !m.snapshot));
   const peers = $derived((view?.machines ?? []).filter((m) => !m.is_self && m.paired));
   let targetId = $state('');
   const moveChoices = $derived<SelectChoice[]>([
@@ -63,7 +66,7 @@
       <div class="pw-strip" data-pw="strip">
         <span data-pm="master-line"><span class="pl-label">{t('pack.machines.master')}</span>
           <span class="pm-name">{alpha ? alpha.label || alpha.install_id.slice(0, 8) : t('pack.machines.no_master')}</span></span>
-        <span data-pw="count">{t('pack.work.strip.computers', { n: view.machines.filter((m) => m.paired || m.is_self).length, online })}</span>
+        <span data-pw="count">{t('pack.work.strip.computers', { n: view.machines.length, online })}</span>
         {#if tracksMaster.data}
           <span data-pw="follows">{t(tracksMaster.data.tracks_master ? 'pack.work.strip.follows' : 'pack.work.strip.not_follows')}</span>
         {/if}
@@ -82,6 +85,13 @@
           <ul class="pm-list">
             {#each view.machines.filter((m) => m.paired && m.snapshot) as machine (machine.install_id)}
               <PackReserveRow {machine} />
+            {/each}
+            {#each unseen as machine (machine.install_id)}
+              <li class="pw-machine" data-machine={machine.install_id} data-unseen>
+                <div class="pm-head"><span class="pm-name">{machine.label || machine.install_id.slice(0, 8)}</span>
+                  <PackMarks alpha={machine.is_master} self={machine.is_self} />
+                  <span class="pm-state" data-state={machine.state}>{stateWord(machine.state, meshLinkOf(machine))}</span></div>
+              </li>
             {/each}
           </ul>
         </div>

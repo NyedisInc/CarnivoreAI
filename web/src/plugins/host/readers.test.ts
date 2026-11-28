@@ -6,7 +6,7 @@ import { runCplugCardAction, startCplugs, startEnabled } from './readers';
 import type { CplugWeb } from '../sdk';
 import { registerSwarmFace, swarmFace } from '../sdk/swarm-face.svelte';
 import { swarmRosterAgents } from '../sdk/swarm-roster.svelte';
-import { swarmRoster } from '../huddle/agents/agent-roster.svelte';
+import { swarmRoster } from '../taskmanager/agents/agent-roster.svelte';
 import type { Component } from 'svelte';
 
 const context = { flags: {}, refresh: vi.fn() };
@@ -43,20 +43,20 @@ describe('startCplugs stops a plugin that is off', () => {
   test('the Task Manager takes its Swarm member face back when it is switched off, and puts it back when it is on', () => {
     const face = (() => {}) as unknown as Component<never>;
     registerSwarmFace(face as never);
-    cplugEnablement.enabled = { huddle: false };
+    cplugEnablement.enabled = { taskmanager: false };
     startCplugs();
     expect(swarmFace.component).toBeNull();
-    cplugEnablement.enabled = { huddle: true };
+    cplugEnablement.enabled = { taskmanager: true };
     startCplugs();
     expect(swarmFace.component).not.toBeNull();
   });
 
   test('the Task Manager registers its Swarm roster reader when it is on, and takes it back when it is switched off (#2662)', () => {
     swarmRoster.agents = [{ id: 7, rank: 'feature', session_uuid: 'u-7' } as never];
-    cplugEnablement.enabled = { huddle: true };
+    cplugEnablement.enabled = { taskmanager: true };
     startCplugs();
     expect(swarmRosterAgents().map((agent) => agent.id)).toEqual([7]);
-    cplugEnablement.enabled = { huddle: false };
+    cplugEnablement.enabled = { taskmanager: false };
     startCplugs();
     expect(swarmRosterAgents()).toEqual([]);
     swarmRoster.agents = [];

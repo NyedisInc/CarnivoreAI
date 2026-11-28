@@ -32,7 +32,7 @@ import { questionCount } from './state.svelte';
 import { titleCount } from './meta';
 import { META } from '../../engine/meta';
 import { approvals, refreshApprovals } from '../../../lib/approvals/approvals.svelte';
-import { huddle, refreshTaskManager } from '../../../plugins/huddle/huddle.svelte';
+import { huddle, refreshTaskManager } from '../../../plugins/taskmanager/huddle.svelte';
 import { alertCenter, refreshAlerts } from '../../../lib/app-alerts/alerts.svelte';
 import { setLocale, t } from '../../../lib/i18n/index.svelte';
 import { sidebarTabs } from '../../../lib/dynamic-tabs/tab-store.svelte';
@@ -113,6 +113,7 @@ describe('the questions cell', () => {
     expect(calls).not.toContain('POST /cplugs/huddle/focus');
     expect(host.querySelector('[data-questions-failed] .oc-state__title')?.textContent).toBe(t('opscenter.cell.task_list.no_tm'));
     expect(sidebarTabs.active()).not.toBe('huddle');
+    // the Task Manager
     const taskManager = document.body.appendChild(document.createElement('div'));
     taskManager.setAttribute('data-task-manager-all-cell', '');
     host.querySelector<HTMLElement>('[data-question-row="huddle:7:9"]')!.click();

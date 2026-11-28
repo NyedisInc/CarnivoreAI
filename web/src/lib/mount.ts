@@ -77,3 +77,22 @@ export function mountInto<Props extends Record<string, unknown>>(
         unmount(live, { outro: false });
     };
 }
+
+export function mountAtAnchor<Props extends Record<string, unknown>>(
+    target: Element,
+    anchor: Node,
+    component: Component<Props, Record<string, unknown>>,
+    props: Props,
+): () => void {
+    let instance: Record<string, unknown> | null = mount(component, {
+        target,
+        anchor,
+        props,
+    }) as Record<string, unknown>;
+    return () => {
+        if (!instance) return;
+        const live = instance;
+        instance = null;
+        unmount(live, { outro: false });
+    };
+}

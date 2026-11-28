@@ -9,7 +9,7 @@ from typing import List, Optional
 import structlog
 
 from src.core.plugin_registry import plugin_layout
-from src.plugins.host import registry_files
+from src.plugins.host import registry_store
 from src.plugins.runtime.sandbox import PROFILES_DIR_NAME, profile_path_for
 
 logger = structlog.get_logger()
@@ -20,7 +20,7 @@ MAX_NAME_TRIES = 100
 
 
 def old_profiles_dir(state_dir: Path) -> Path:
-    return registry_files.cplugs_dir(state_dir) / PROFILES_DIR_NAME
+    return registry_store.cplugs_dir(state_dir) / PROFILES_DIR_NAME
 
 
 def dead_profiles(state_dir: Path) -> List[Path]:
@@ -38,10 +38,10 @@ def dead_profiles(state_dir: Path) -> List[Path]:
 
 
 def destination(state_dir: Path, today: date) -> Path:
-    backups = registry_files.backups_newest_first(state_dir)
+    backups = registry_store.backups_newest_first(state_dir)
     if backups:
         return backups[0] / RETIRED_DIR_NAME
-    return registry_files.cplugs_dir(state_dir) / RETIRED_DIR_NAME / today.isoformat()
+    return registry_store.cplugs_dir(state_dir) / RETIRED_DIR_NAME / today.isoformat()
 
 
 def _free_name(folder: Path, name: str) -> Optional[Path]:
@@ -75,7 +75,7 @@ def retire_old_profiles(state_dir: Path, today: Optional[date] = None) -> List[P
         if not files:
             return []
         target = destination(state_dir, today or date.today())
-        backup = target.parent if target.name == RETIRED_DIR_NAME and target.parent.name.startswith(registry_files.BACKUP_PREFIX) else None
+        backup = target.parent if target.name == RETIRED_DIR_NAME and target.parent.name.startswith(registry_store.BACKUP_PREFIX) else None
         times = os.stat(backup) if backup is not None else None
         moved = _move_all(files, target)
         if backup is not None and times is not None:

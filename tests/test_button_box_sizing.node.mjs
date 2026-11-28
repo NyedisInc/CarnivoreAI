@@ -36,6 +36,7 @@ function clientFile(...parts) {
     return fs.readFileSync(path.join(__dirname, '..', 'client', ...parts), 'utf8');
 }
 
+/* cannot be read */
 function rules(source) {
     const clean = source.replace(/\/\*[\s\S]*?\*\//g, '');
     const out = [];

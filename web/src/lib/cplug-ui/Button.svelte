@@ -10,7 +10,7 @@
     let asking = $state(false);
     let busy = $state(false);
     let line = $state<string | null>(null);
-    const unavailable = $derived(node.action.call !== 'route');
+    const unavailable = $derived(node.action.call !== 'route' && node.action.call !== 'tool');
 
     async function go(): Promise<void> {
         if (busy || unavailable) return;

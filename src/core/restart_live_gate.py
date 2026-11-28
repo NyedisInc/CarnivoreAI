@@ -1,11 +1,12 @@
 
 from __future__ import annotations
 
+import re
 import sqlite3
 import subprocess
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Tuple
 
 import structlog
 
@@ -13,12 +14,30 @@ logger = structlog.get_logger()
 
 ALREADY_RUNNING_CODE = "session_already_running"
 
-PROBE_FORMAT = "#{pane_dead}|#{session_created}|#{session_name}"
+PROBE_FORMAT = "#{pane_dead}|#{session_created}|#{session_name}|#{session_id}"
+
+
+_SESSION_ID = re.compile(r"\$\d+")
+
+
+def parse_probe(raw: Optional[str]) -> Optional[Tuple[str, str, str, Optional[str]]]:
+    body = (raw or "").strip()
+    head, sep, tail = body.rpartition("|")
+    session_id = tail if sep and _SESSION_ID.fullmatch(tail) else None
+    parts = (head if session_id else body).split("|", 2)
+    if len(parts) != 3 or parts[0] not in ("0", "1"):
+        return None
+    return parts[0], parts[1], parts[2], session_id
+
+
+def probe_session_id(raw: Optional[str], name: str) -> Optional[str]:
+    parsed = parse_probe(raw)
+    return parsed[3] if parsed and parsed[2] == name else None
 
 
 def classify_probe(raw: str, name: str, epoch: Optional[int]) -> Optional[bool]:
-    parts = (raw or "").strip().split("|", 2)
-    if len(parts) != 3 or parts[2] != name or parts[0] not in ("0", "1"):
+    parts = parse_probe(raw)
+    if parts is None or parts[2] != name:
         return None
     if parts[0] == "1":
         return False
@@ -32,8 +51,8 @@ def classify_probe(raw: str, name: str, epoch: Optional[int]) -> Optional[bool]:
 
 
 def probe_epoch(raw: Optional[str], name: str) -> Optional[int]:
-    parts = (raw or "").strip().split("|", 2)
-    if len(parts) != 3 or parts[2] != name or parts[0] not in ("0", "1"):
+    parts = parse_probe(raw)
+    if parts is None or parts[2] != name:
         return None
     try:
         return int(parts[1])

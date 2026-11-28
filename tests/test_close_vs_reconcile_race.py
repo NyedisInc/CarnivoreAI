@@ -20,6 +20,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 
 # ruff: noqa: E402
 from src.api import session_crud_routes
+from src.core.session_ops import close_record
 from src.core.db import connect, db_path_for, transaction
 from src.core.db_migration import ensure_db_migrated
 from src.core.session_close_lifecycle import LIFECYCLE_SOURCE_CLOSED, mark_closed
@@ -139,7 +140,7 @@ def test_close_route_with_reconcile_inside_the_kill(state: Path, monkeypatch) ->
     )
     request = SimpleNamespace(app=SimpleNamespace(state=app_state))
     monkeypatch.setattr(
-        session_crud_routes, "settings", SimpleNamespace(get_state_dir=lambda: state)
+        close_record, "settings", SimpleNamespace(get_state_dir=lambda: state)
     )
 
     asyncio.run(session_crud_routes.destroy_session(request, session_id="ses_x"))

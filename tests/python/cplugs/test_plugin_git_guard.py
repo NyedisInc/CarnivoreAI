@@ -11,7 +11,7 @@ import pytest
 from src.plugins.crate import project_git
 from src.plugins.devwidgetlab.drafts import checkout, ship, store
 from src.plugins.devwidgetlab.errors import DraftInvalid
-from src.plugins.huddle import wait_checks
+from src.plugins.taskmanager import wait_checks
 from src.plugins.runtime import git_ops, guards
 from src.plugins.runtime.dispatch import HostDispatcher
 

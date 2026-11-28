@@ -1,6 +1,8 @@
 <script lang="ts">
   import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
+  import { liveRowAfterNotAsleep } from '../../opscenter/api/wake-answer';
+  import { reachWokenSession } from '../../opscenter/api/sessions.svelte';
 
   let { kind, name = '', sessionUuid = '', agentType = '' }: {
     kind: 'looking' | 'asleep' | 'gone' | 'ended';
@@ -17,6 +19,10 @@
     return (globalThis as { API?: ReturnType<typeof api> }).API;
   }
 
+  function adoptLive(info: unknown): void {
+    (globalThis as { SoloWindow?: { adoptLive?(row: unknown): unknown } }).SoloWindow?.adoptLive?.(info);
+  }
+
   async function act(): Promise<void> {
     const client = api();
     if (!client || !sessionUuid || busy) return;
@@ -27,8 +33,11 @@
         ? await client.wakeSession(sessionUuid)
         : await client.recreateSession(sessionUuid, agentType);
       if (answer && answer.status === 'refused') note = answer.detail ?? t('solo.failed');
+      else if (kind === 'asleep') adoptLive(await reachWokenSession(sessionUuid));
     } catch (error) {
-      note = error instanceof Error ? error.message : t('solo.failed');
+      const live = kind === 'asleep' ? await liveRowAfterNotAsleep(error, sessionUuid) : null;
+      if (live) adoptLive(live);
+      else note = error instanceof Error ? error.message : t('solo.failed');
     } finally {
       busy = false;
     }

@@ -15,6 +15,8 @@ from pathlib import Path
 
 import websockets
 
+from src.core.argent import codex_words
+
 
 async def _bootstrap_thread(path: Path, model: str | None, name: str,
                             policy: dict | None = None) -> str:
@@ -117,14 +119,14 @@ def run(spec: dict) -> int:
     for sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
         signal.signal(sig, interrupt)
     try:
-        server = subprocess.Popen(["codex", *spec["server"], "app-server", "--listen", url], process_group=0)
+        server = subprocess.Popen(["codex", *codex_words.expand_words(spec["server"], os.environ), "app-server", "--listen", url], process_group=0)
         deadline = time.monotonic() + 8
         while not path.exists() and server.poll() is None and time.monotonic() < deadline and not stopped:
             time.sleep(0.05)
         if not path.exists() or stopped:
             return server.poll() or 1
         socket_inode = path.stat().st_ino
-        tui_args = list(spec["tui"])
+        tui_args = codex_words.expand_words(spec["tui"], os.environ)
         if spec.get("bootstrap") is not None:
             try:
                 thread_id = asyncio.run(_bootstrap_thread(

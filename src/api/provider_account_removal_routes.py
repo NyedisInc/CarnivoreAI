@@ -17,7 +17,9 @@ from src.core.provider_ledger import (
     profile_logout,
 )
 from src.config.provider_account_switch import pointer_field
+from src.config.provider_accounts import managed_dir_for
 from src.core.account_switch import pane_account
+from src.core.agy import accounts as agy_accounts
 from src.core.account_switch import store as switch_store
 from src.core.provider_ledger.login_guard import live_login_session
 
@@ -75,7 +77,13 @@ async def delete_provider_account(account_id: str, request: Request) -> dict:
 
     logout = profile_logout.LOGOUT_SKIPPED
     directory = managed_profiles.DIRECTORY_KEPT
-    if account.managed:
+    if account.provider == "antigravity":
+        await _clear_pointer(account)
+        try:
+            await asyncio.to_thread(agy_accounts.forget, account_id)
+        except agy_accounts.AgyAccountError as exc:
+            logger.warning("agy_account_copy_not_removed", account_id=account_id, code=exc.code)
+    elif account.managed:
         existing = live_login_session(request.app.state.session_manager, account_id)
         if existing is not None:
             raise HTTPException(
@@ -104,6 +112,8 @@ async def delete_provider_account(account_id: str, request: Request) -> dict:
                 },
             )
         await _clear_pointer(account)
+        if account.provider == "codex":
+            _note_codex_home_removal(account_id)
         logout = await profile_logout.log_out_profile(account)
         outcome = await asyncio.to_thread(
             managed_profiles.remove_managed_dir, account_id
@@ -131,6 +141,7 @@ async def delete_provider_account(account_id: str, request: Request) -> dict:
         await _clear_pointer(account)
     settings._auth_config_cache = None
     poller.forget_account(account_id)
+    await _retire_relayed_copies()
     logger.info(
         "provider_account_removed",
         account_id=account_id,
@@ -139,6 +150,21 @@ async def delete_provider_account(account_id: str, request: Request) -> dict:
         directory=directory,
     )
     return {"removed": account_id, "logout": logout, "directory": directory}
+
+
+def _note_codex_home_removal(account_id: str) -> None:
+    from src.core.backup_health import vault_moves
+
+    vault_moves.note_moved(settings.get_state_dir(), [managed_dir_for(account_id)])
+
+
+async def _retire_relayed_copies() -> None:
+    from src.core.pack.relay import runtime as relay_runtime
+
+    try:
+        await relay_runtime.sweep_orphans()
+    except (OSError, ValueError, RuntimeError) as exc:
+        logger.warning("pack_relay_sweep_failed", error=type(exc).__name__)
 
 
 async def _sessions_on(request: Request, accounts, account_id: str) -> list:
@@ -162,7 +188,7 @@ async def _sessions_on(request: Request, accounts, account_id: str) -> list:
 
 
 async def _clear_pointer(account) -> None:
-    field = pointer_field(account.provider) if account.provider in ("claude", "codex") else None
+    field = pointer_field(account.provider) if account.provider in ("claude", "codex", "antigravity") else None
     if field is None:
         return
     try:

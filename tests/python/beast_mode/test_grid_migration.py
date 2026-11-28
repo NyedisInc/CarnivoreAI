@@ -7,13 +7,15 @@ from typing import Any, Dict
 
 from src.core.approvals import beast_grid_migration as migration
 from src.core.approvals.beast_grid import cell_defaults
-from src.plugins.host import state as owner_state
+from src.plugins.host import registry_store, state as owner_state
 
 
 def _state(state_dir: Path, entries: Dict[str, Any]) -> None:
-    path = owner_state.state_path(state_dir)
+    path = registry_store.registry_path(state_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"version": owner_state.STATE_VERSION, "cplugs": entries}))
+    doc = registry_store.new_document()
+    doc["items"] = {k: {"kind": "feature", **v} for k, v in entries.items()}
+    path.write_text(json.dumps(doc))
 
 
 def _config(tmp_path: Path, doc: Dict[str, Any]) -> Path:

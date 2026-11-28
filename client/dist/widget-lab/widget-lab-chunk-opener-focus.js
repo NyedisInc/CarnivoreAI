@@ -1,0 +1,1 @@
+function e(){let e=typeof document<`u`?document.activeElement:null;return e instanceof HTMLElement?e:null}function t(e){e&&typeof document<`u`&&document.contains(e)&&e.focus()}export{t as n,e as t};

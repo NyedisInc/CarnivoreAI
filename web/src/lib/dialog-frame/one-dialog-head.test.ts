@@ -14,7 +14,7 @@ const KNOWN_HAND_HEADS: Record<string, number> = {
 };
 
 const KNOWN_OWN_HEADS: Record<string, number> = {
-    'web/src/plugins/huddle/ask/TaskManagerAskPanel.svelte': 1,
+    'web/src/plugins/taskmanager/ask/TaskManagerAskPanel.svelte': 1,
     'web/src/lib/send-to/SendToModal.svelte': 1,
     'web/src/lib/session-move/MoveFolderModal.svelte': 1,
     'web/src/lib/worktree-cleanup/CleanupModal.svelte': 1,

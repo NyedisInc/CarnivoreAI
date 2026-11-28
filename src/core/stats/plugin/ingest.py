@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import inspect
 import json
 import sqlite3
 import threading
@@ -16,8 +17,11 @@ from src.core.stats.pricing import PRICE_SOURCE, PRICE_SOURCE_DATE, PRICE_VERSIO
 
 logger = structlog.get_logger()
 
-AccountResolver = Callable[[str, str], Optional[str]]
+AccountResolver = Callable[..., Optional[str]]
+ProjectResolver = Callable[[str, str], Optional[str]]
 _resolver: Optional[AccountResolver] = None
+_resolver_takes_path: bool = False
+_project_resolver: Optional[ProjectResolver] = None
 OPEN_RESPONSES = 4
 LIVE_WINDOW_SECONDS = 3600
 TRIM_PER_WRITE = 64
@@ -25,9 +29,29 @@ _moved_lock = threading.Lock()
 _moved = 0
 
 
+def provider_for_family(family: str) -> str:
+    return "antigravity" if family == C.FAMILY_AGY else family
+
+
+def _accepts_path(resolver: Optional[AccountResolver]) -> bool:
+    if resolver is None:
+        return False
+    try:
+        params = list(inspect.signature(resolver).parameters.values())
+    except (TypeError, ValueError):
+        return False
+    return any(p.kind == inspect.Parameter.VAR_POSITIONAL for p in params) or len(params) >= 3
+
+
 def set_account_resolver(resolver: Optional[AccountResolver]) -> None:
-    global _resolver
+    global _resolver, _resolver_takes_path
     _resolver = resolver
+    _resolver_takes_path = _accepts_path(resolver)
+
+
+def set_project_resolver(resolver: Optional[ProjectResolver]) -> None:
+    global _project_resolver
+    _project_resolver = resolver
 
 
 def take_moved() -> int:
@@ -43,23 +67,36 @@ def _note_moved() -> None:
         _moved += 1
 
 
-def _account(provider: str, conversation_id: str) -> Optional[str]:
+def _account(provider: str, conversation_id: str, path: Optional[str] = None) -> Optional[str]:
     if _resolver is None:
         return None
+    root_cid = conversation_id.split(":", 1)[0]
     try:
-        return _resolver(provider, conversation_id.split(":", 1)[0])
+        return _resolver(provider, root_cid, path) if _resolver_takes_path else _resolver(provider, root_cid)
     except (OSError, ValueError, RuntimeError) as exc:
         logger.warning("stats_plugin_account_resolve_failed", error_type=type(exc).__name__)
         return None
 
 
+def _project(provider: str, conversation_id: str) -> str:
+    if _project_resolver is None:
+        return ""
+    try:
+        cwd = _project_resolver(provider, conversation_id.split(":", 1)[0])
+    except (OSError, ValueError, RuntimeError) as exc:
+        logger.warning("stats_plugin_project_resolve_failed", error_type=type(exc).__name__)
+        return ""
+    return extract.project_key(cwd) if isinstance(cwd, str) and cwd else ""
+
+
 def _source(conn: sqlite3.Connection, event: C.Appended) -> Tuple[int, Optional[str]]:
     key = extract.path_key(event.path)
+    provider = provider_for_family(event.family)
     row = conn.execute("SELECT id, account_id FROM dim_source WHERE path_key = ?", (key,)).fetchone()
     if row is not None:
         src, account = row
         if account is None:
-            account = _account(event.family, event.conversation_id)
+            account = _account(provider, event.conversation_id, event.path)
             if account:
                 conn.execute("UPDATE dim_source SET account_id = ? WHERE id = ?", (account, src))
                 usage_revision.bump(conn)
@@ -69,10 +106,10 @@ def _source(conn: sqlite3.Connection, event: C.Appended) -> Tuple[int, Optional[
         subagent_type = extract.sidecar_subagent_type(event.path) if event.family == "claude" else None
     else:
         conversation, kind, parent, subagent_type = event.conversation_id, "session", None, None
-    account = _account(event.family, event.conversation_id)
+    account = _account(provider, event.conversation_id, event.path)
     cur = conn.execute("INSERT INTO dim_source (path_key, conversation_id, provider, agent_kind, parent_conversation_id, "
                        "account_id, subagent_type) VALUES (?,?,?,?,?,?,?)",
-                       (key, conversation, event.family, kind, parent, account, subagent_type))
+                       (key, conversation, provider, kind, parent, account, subagent_type))
     return cur.lastrowid, account
 
 
@@ -118,8 +155,8 @@ def _note_models(conn: sqlite3.Connection, models: Set[str]) -> None:
 
 
 def _source_meta(conn: sqlite3.Connection, src: int) -> Optional[tuple]:
-    row = conn.execute("SELECT first_minute, last_minute, cli_version, branch_hash, subagent_type, parent_conversation_id "
-                       "FROM dim_source WHERE id = ?", (src,)).fetchone()
+    row = conn.execute("SELECT first_minute, last_minute, cli_version, branch_hash, subagent_type, "
+                       "parent_conversation_id, agent_kind FROM dim_source WHERE id = ?", (src,)).fetchone()
     return tuple(row) if row is not None else None
 
 
@@ -130,10 +167,29 @@ def _apply_meta(conn: sqlite3.Connection, src: int, first: Optional[int], last: 
                  "ELSE first_minute END, last_minute = CASE WHEN last_minute IS NULL OR ? > last_minute THEN ? "
                  "ELSE last_minute END, cli_version = COALESCE(?, cli_version), "
                  "branch_hash = COALESCE(?, branch_hash), subagent_type = COALESCE(subagent_type, ?), "
-                 "parent_conversation_id = COALESCE(parent_conversation_id, ?) WHERE id = ?",
+                 "parent_conversation_id = COALESCE(parent_conversation_id, ?), "
+                 "agent_kind = CASE WHEN ? = 'subagent' THEN 'subagent' ELSE agent_kind END WHERE id = ?",
                  (first, first, last, last, meta.get("cli_version"), meta.get("branch_hash"),
-                  meta.get("subagent_type"), meta.get("parent_conversation_id"), src))
+                  meta.get("subagent_type"), meta.get("parent_conversation_id"), meta.get("agent_kind"), src))
     return _source_meta(conn, src) != before
+
+
+def _root_conversation_in_db(conn: sqlite3.Connection, cid: str) -> str:
+    cur = cid.split(":", 1)[0]
+    seen = {cur}
+    while True:
+        row = conn.execute(
+            "SELECT parent_conversation_id FROM dim_source WHERE conversation_id = ? "
+            "AND parent_conversation_id IS NOT NULL AND parent_conversation_id != '' LIMIT 1",
+            (cur,),
+        ).fetchone()
+        if not row or not row[0]:
+            return cur
+        nxt = str(row[0]).split(":", 1)[0]
+        if not nxt or nxt in seen:
+            return cur
+        seen.add(nxt)
+        cur = nxt
 
 
 def appended(conn: sqlite3.Connection, event: C.Appended, now: Optional[float] = None) -> int:
@@ -143,6 +199,10 @@ def appended(conn: sqlite3.Connection, event: C.Appended, now: Optional[float] =
     src, _ = _source(conn, event)
     row = conn.execute("SELECT state FROM file_state WHERE src = ?", (src,)).fetchone()
     state: Dict[str, Any] = json.loads(row[0]) if row else {}
+    if event.family == C.FAMILY_AGY and not state.get("project"):
+        resolved_project = _project(provider_for_family(event.family), event.conversation_id)
+        if resolved_project:
+            state["project"] = resolved_project
     recent = [extract.Response.load(r) for r in state.get("open") or []]
     spans = _spans(conn)
     batch = rollup.Batch(src)
@@ -156,6 +216,14 @@ def appended(conn: sqlite3.Connection, event: C.Appended, now: Optional[float] =
             continue
         if event.family == "codex":
             facts = extract.codex_line(raw, state)
+        elif event.family == C.FAMILY_AGY:
+            facts = extract.agy_line(raw, line.offset, state, conversation_id=event.conversation_id)
+            if facts is not None and facts.meta.get("parent_conversation_id") and not state.get("project"):
+                root_cid = _root_conversation_in_db(conn, facts.meta["parent_conversation_id"])
+                resolved_project = _project(provider_for_family(event.family), root_cid)
+                if resolved_project:
+                    state["project"] = resolved_project
+                    facts.project = resolved_project
         else:
             facts = extract.claude_line(raw, line.offset, state)
         if facts is None:

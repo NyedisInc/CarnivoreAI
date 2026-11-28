@@ -2,10 +2,10 @@
 <script lang="ts">
   import { t } from '../../../i18n/index.svelte';
   import type { RosterAgent } from '../../board-data.svelte';
-  import ChatWidget from '../../../../plugins/huddle/chat/ChatWidget.svelte';
-  import { chatSlotId } from '../../../../plugins/huddle/chat/chat-model';
-  import { createChatStore } from '../../../../plugins/huddle/chat/chat-store.svelte';
-  import { openAgentPage } from '../../../../plugins/huddle/agents/agent-page.svelte';
+  import ChatWidget from '../../../../plugins/taskmanager/chat/ChatWidget.svelte';
+  import { chatSlotId } from '../../../../plugins/taskmanager/chat/chat-model';
+  import { createChatStore } from '../../../../plugins/taskmanager/chat/chat-store.svelte';
+  import { openAgentPage } from '../../../../plugins/taskmanager/agents/agent-page.svelte';
 
   let { agent }: { agent: RosterAgent | null } = $props();
 

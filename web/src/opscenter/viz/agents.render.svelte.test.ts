@@ -23,7 +23,7 @@ import AgentsRenderer from './AgentsRenderer.svelte';
 import { agentsUpgrade } from '../cells/analytics/agents-upgrade';
 import { analytics } from '../cells/analytics/state.svelte';
 import ChartLegend from '../cells/analytics/ChartLegend.svelte';
-import { agentChart, agentColor, agentP95, agentWindow, agentsPlan, liveAgents } from './agents';
+import { AGENT_SERIES_TOKENS, agentChart, agentColor, agentP95, agentWindow, agentsPlan, liveAgents } from './agents';
 
 setLocale('en');
 
@@ -73,7 +73,9 @@ describe('the chart', () => {
     expect(series.map((item) => item.label)).toEqual([...Array.from({ length: 8 }, (_, at) => `agent ${at}`), 'other agents']);
     expect(JSON.stringify(series.map((item) => item.label))).not.toMatch(/[0-9a-f]{8}-[0-9a-f]{4}/);
     expect(drawn.lookFor('other')).toEqual({ color: '--oc-text-dim', dashed: true });
-    expect(drawn.lookFor('conversation:h3')).toEqual({ color: agentColor('00000000-0000-4000-8000-000000000003'), dashed: false });
+    const assignedColors = Array.from({ length: 8 }, (_, at) => drawn.lookFor(`conversation:h${at}`));
+    expect(assignedColors.every((look) => look?.dashed === false && AGENT_SERIES_TOKENS.includes(look.color))).toBe(true);
+    expect(new Set(assignedColors.map((look) => look!.color)).size).toBe(8);
   });
 
   test('eight or fewer agents add no "other agents" line', () => {
@@ -135,6 +137,18 @@ describe('the live list', () => {
     expect(rows.map((row) => row.querySelector('.viz-agents__value')!.textContent)).toEqual(['9k/min', '1.5k/min', '120/min']);
     expect(rows[0]!.querySelector<HTMLElement>('.viz-agents__swatch')!.getAttribute('style')).toContain(agentColor('c2'));
     expect(target.textContent).not.toContain('gone one');
+  });
+
+  test('a live agent that also appears on the chart uses its exact resolved chart color', async () => {
+    const id0 = '00000000-0000-4000-8000-000000000000';
+    const id3 = '00000000-0000-4000-8000-000000000003';
+    feed.data = live([[id0, 'agent 0', 400], [id3, 'agent 3', 900]]);
+    listing.data = [session(id0), session(id3)];
+    const target = await show(CONFIG, answer(9));
+    const drawn = canvases.at(-1)!;
+    const rows = [...target.querySelectorAll<HTMLElement>('[data-agents-live] [data-agent]')];
+    expect(rows[0]!.querySelector<HTMLElement>('.viz-agents__swatch')!.getAttribute('style')).toContain(drawn.lookFor('conversation:h3')!.color);
+    expect(rows[1]!.querySelector<HTMLElement>('.viz-agents__swatch')!.getAttribute('style')).toContain(drawn.lookFor('conversation:h0')!.color);
   });
 
   test('says one plain line when nothing is using tokens', async () => {

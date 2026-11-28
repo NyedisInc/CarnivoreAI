@@ -1,5 +1,6 @@
 import * as G from './group-store';
 import * as S from './store';
+import { searchLists } from './search';
 import { isBandOrderKey } from './store-keys';
 
 export interface ArrangedRow {
@@ -78,6 +79,10 @@ export function mergeOrder(visibleNames: readonly string[]): string[] {
     return mergeInto(S.current().order, visibleNames);
 }
 
+function orderToSave(visibleNames: readonly string[]): string[] {
+    return searchLists() ? S.current().order.slice() : mergeOrder(visibleNames);
+}
+
 export function sameOrder(a: readonly string[], b: readonly string[]): boolean {
     return a.length === b.length && a.every((n, i) => n === b[i]);
 }
@@ -85,7 +90,7 @@ export function sameOrder(a: readonly string[], b: readonly string[]): boolean {
 export function togglePin(name: string, visibleNames: readonly string[]): boolean {
     const next = !S.isPinned(name);
     const pinned = next ? S.current().pinned.concat([name]) : S.current().pinned.filter((n) => n !== name);
-    S.save(pinned, mergeOrder(visibleNames));
+    S.save(pinned, orderToSave(visibleNames));
     return next;
 }
 
@@ -110,7 +115,7 @@ export function move(name: string, delta: number, visibleNames: readonly string[
     const pinnedSet = crossed
         ? (nowPinned ? S.current().pinned.concat([name]) : S.current().pinned.filter((n) => n !== name))
         : S.current().pinned;
-    S.save(pinnedSet, mergeOrder(next));
+    S.save(pinnedSet, orderToSave(next));
     return { order: next, crossed, pinned: nowPinned };
 }
 
@@ -129,7 +134,7 @@ export function placeAt(
     const crossed = S.isPinned(name) !== want;
     if (!crossed && sameOrder(next, names)) return null;
     const pinnedSet = want ? S.current().pinned.concat([name]) : S.current().pinned.filter((n) => n !== name);
-    S.save(pinnedSet, mergeOrder(next));
+    S.save(pinnedSet, orderToSave(next));
     return { order: next, crossed, pinned: want };
 }
 

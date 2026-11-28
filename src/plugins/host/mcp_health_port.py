@@ -26,7 +26,6 @@ from src.plugins.sdk.mcp_health import PORT_NAME, attention_watcher, tmux_socket
 
 logger = structlog.get_logger()
 
-PLUGIN_ID = "mcphealth"
 EVENT_FAMILY = "mcp.health"
 _SERVER_STATES = frozenset({STATE_CONNECTED, STATE_DOWN, STATE_NEEDS_AUTH, STATE_UNKNOWN})
 _DROP_STATES = frozenset({STATE_DROPPED, STATE_FAILED, DROP_NEEDS_AUTH})

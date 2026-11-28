@@ -1,4 +1,4 @@
-import { createI18n } from '../../../../client/js/i18n/runtime.js';
+import { createFallbackI18n } from '../i18n/fallback';
 
 export type AnnounceKey = 'motion.picked' | 'motion.moved' | 'motion.resized' | 'motion.cancelled' | 'motion.placed';
 
@@ -13,7 +13,7 @@ let fallback: { t: Translate } | null = null;
 
 function defaultTranslate(key: string, params?: Record<string, unknown>): string {
   const page = (globalThis as { CloudeI18n?: { t: Translate } }).CloudeI18n;
-  fallback ??= page ?? (createI18n() as { t: Translate });
+  fallback ??= page ?? (createFallbackI18n() as { t: Translate });
   return (page ?? fallback).t(key, params);
 }
 

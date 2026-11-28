@@ -28,13 +28,13 @@ class FakeManager:
 
     def __init__(self, rows: dict) -> None:
         self.rows = rows
-        self._registry = SimpleNamespace(backends={REMOTE_BACKEND_ID: SimpleNamespace(host_key="peer-far", tmux_session="far")})
+        self._registry = SimpleNamespace(backends={REMOTE_BACKEND_ID: SimpleNamespace(host_key="peer-far", label=None, claude_title=None, tmux_session="far")})
 
     async def get_session_info(self, session_id: str):
         name = self.rows.get(session_id, "__missing__")
         if name == "__missing__":
             return None
-        return SimpleNamespace(session=SimpleNamespace(id=session_id), tmux_session=name, host_key="local")
+        return SimpleNamespace(session=SimpleNamespace(id=session_id), label=None, claude_title=None, tmux_session=name, host_key="local")
 
     def tmux_socket_name(self) -> str:
         return TEST_SOCKET_NAME
@@ -109,9 +109,9 @@ async def test_an_unknown_id_is_404(manager):
 
 @pytest.mark.asyncio
 async def test_the_mcp_adapter_returns_the_same_argv_and_refuses_a_remote_id(manager, monkeypatch):
-    infos = [SimpleNamespace(session=SimpleNamespace(id="ses_nasty"), tmux_session=NASTY, host_key="local"),
+    infos = [SimpleNamespace(session=SimpleNamespace(id="ses_nasty"), label=None, claude_title=None, tmux_session=NASTY, host_key="local"),
              SimpleNamespace(session=SimpleNamespace(id="remote:peer-abc:carnivore_far"),
-                             tmux_session="carnivore_far", host_key="peer-abc")]
+                             label=None, claude_title=None, tmux_session="carnivore_far", host_key="peer-abc")]
 
     async def listing(_manager):
         return infos

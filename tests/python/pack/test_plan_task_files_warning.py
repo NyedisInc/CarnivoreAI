@@ -17,7 +17,7 @@ from src.core.work import file_refs  # noqa: E402
 from src.core.pack.migrate.ops import MAX_LISTED_FILES  # noqa: E402
 from src.plugins.sdk import ports, task_folders  # noqa: E402
 from tests.python.pack.test_migrate_two_machines import seed, world  # noqa: E402,F401
-from tests.python.pack.test_task_file_paths import FILE_ID, FakeRoot, entry_for, task_folder  # noqa: E402
+from tests.python.pack.test_task_file_paths import FILE_ID, FakeRoot, entry_for, task_folder, written_roots  # noqa: E402
 from tests.python.pack.test_task_manager_side_compat import sql  # noqa: E402
 
 CAPS = (task_manager_side.CAP_TASK_FILES_PLAN,)
@@ -97,7 +97,7 @@ def test_a_file_the_target_can_reach_is_not_warned_about_and_nothing_is_written(
     paste, cleanup = reachable(tmp_path)
     try:
         assert warning(plan_with([entry_for(str(paste))])) == {}
-        assert not (b.state / "cplugs" / "huddle" / "files").exists()
+        assert written_roots(str(b.state)) == []
     finally:
         cleanup()
 

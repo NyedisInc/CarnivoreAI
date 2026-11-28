@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import structlog
 
 from src.core import db
+from src.core.swarm.types import TurnOnError
 from src.core.swarm import body, body_create, company_agent, learning, profiles, project_agent, slugs, store, switch, thread_port
 
 logger = structlog.get_logger()
@@ -69,7 +70,7 @@ def _ensure(conn: sqlite3.Connection) -> Dict[str, Any]:
     path = alpha_path()
     try:
         company_agent.make_repo_folder(path)
-    except company_agent.TurnOnError as exc:
+    except TurnOnError as exc:
         return {"agent": None, "created": False, "refused": str(exc)}
     try:
         agent = _create(conn, path)

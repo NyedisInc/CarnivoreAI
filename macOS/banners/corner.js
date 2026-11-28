@@ -9,17 +9,37 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 560;
 const MARGIN_RIGHT = 12;
 const MARGIN_TOP = 96;
+const IDLE_DESTROY_MS = 30000;
 const MEASURE = "new Promise((r) => setTimeout(() => r((document.getElementById('notify-corner') || document.body).getBoundingClientRect().height), 120))";
 
 function createCorner(deps) {
   const setTimer = deps.setTimer || setTimeout;
   const clearTimer = deps.clearTimer || clearTimeout;
+  const idleDestroyMs = typeof deps.idleDestroyMs === 'number' ? deps.idleDestroyMs : IDLE_DESTROY_MS;
   let win = null;
   let winOrigin = '';
   let loaded = null;
   let current = null;
   let timer = null;
+  let idleTimer = null;
   let wired = false;
+
+  function clearIdleTimer() {
+    if (idleTimer !== null) {
+      clearTimer(idleTimer);
+      idleTimer = null;
+    }
+  }
+
+  function destroyIdle() {
+    idleTimer = null;
+    if (current || !win) return;
+    const doomed = win;
+    win = null;
+    loaded = null;
+    winOrigin = '';
+    if (!doomed.isDestroyed()) doomed.destroy();
+  }
 
   const fromWindow = (event) => !!win && !win.isDestroyed() && event.sender === win.webContents
     && !!event.senderFrame && event.senderFrame === event.sender.mainFrame;
@@ -73,8 +93,15 @@ function createCorner(deps) {
 
   function hide() {
     if (timer !== null) { clearTimer(timer); timer = null; }
+    clearIdleTimer();
     current = null;
-    if (win && !win.isDestroyed()) win.hide();
+    if (win && !win.isDestroyed()) {
+      win.hide();
+      if (idleDestroyMs >= 0) {
+        idleTimer = setTimer(destroyIdle, idleDestroyMs);
+        if (idleTimer && typeof idleTimer.unref === 'function') idleTimer.unref();
+      }
+    }
   }
 
   async function show(card) {
@@ -82,6 +109,7 @@ function createCorner(deps) {
     let origin = '';
     try { origin = url ? new URL(url).origin : ''; } catch (error) { origin = ''; }
     if (!origin) return false;
+    clearIdleTimer();
     ensure(origin);
     const mine = win;
     if (!(await load(origin)) || mine !== win || !win || win.isDestroyed()) return false;
@@ -110,4 +138,4 @@ function createCorner(deps) {
   return { show, hide, hideKey, currentKey: () => (current ? current.key : null), window: () => win };
 }
 
-module.exports = { PAGE, WIDTH, createCorner };
+module.exports = { PAGE, WIDTH, IDLE_DESTROY_MS, createCorner };

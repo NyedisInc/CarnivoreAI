@@ -9,7 +9,7 @@ from typing import Optional
 
 import pytest
 
-from src.plugins.host import identity, sideload, sideload_routes
+from src.plugins.host import identity, registry_store, sideload, sideload_routes
 from src.plugins.runtime import sandbox
 
 SHIPPED = frozenset({"huddle", "unread"})
@@ -75,9 +75,11 @@ def test_reinstall_with_a_different_publisher_key_gets_a_fresh_uuid(tmp_path: Pa
 
 def test_a_row_from_before_the_rule_inherits_once_and_is_stamped(tmp_path: Path) -> None:
     uuid_hex = "b" * 32
-    ledger = tmp_path / "cplugs" / identity.LEDGER_FILE
-    ledger.parent.mkdir(parents=True)
-    ledger.write_text(json.dumps({"version": 1, "installs": {"clock": {"uuid": uuid_hex, "catalog_id": "acme/clock"}}}))
+    reg = registry_store.registry_path(tmp_path)
+    reg.parent.mkdir(parents=True)
+    doc = registry_store.new_document()
+    doc["items"]["clock"] = {"kind": "plugin", "source": "catalog", "catalog_id": "acme/clock", "install_uuid": uuid_hex, "unstored": True}
+    reg.write_text(json.dumps(doc))
     assert _register(tmp_path, "clock", "acme/clock", publisher_key_id=KEY_A).uuid == uuid_hex
     assert identity.lookup(tmp_path, "clock").publisher_key_id == KEY_A
     assert _register(tmp_path, "clock", "acme/clock", publisher_key_id=KEY_B).uuid != uuid_hex
@@ -91,8 +93,11 @@ def test_a_sideload_inherits_only_from_the_same_source_realpath(tmp_path: Path) 
 
 def _plugin(folder: Path, plugin_id: str = "devclock") -> None:
     folder.mkdir(parents=True, exist_ok=True)
-    (folder / "cplug.json").write_text(json.dumps({"schema": 1, "id": plugin_id, "name": "Dev Clock", "description": "Tells the time.", "version": "1.0.0",
-                                                   "entry": "main.py", "tools": [], "permissions": {"app": ["notify"]}}))
+    (folder / "carnivore.json").write_text(json.dumps({
+        "schema": 2, "kind": "plugin", "id": plugin_id, "name": "Dev Clock", "description": "Tells the time.",
+        "version": "1.0.0", "author": "owner", "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+        "permissions": {"write": ["notify"]},
+    }))
     (folder / "main.py").write_text("print('tick')\n")
 
 
@@ -174,12 +179,40 @@ def test_a_sandboxed_sidecar_cannot_write_its_profile_state_or_install_record(tm
     if not sandbox.probe().ok:
         pytest.skip("sandbox-exec is not usable here")
     profile = sandbox.write_profile(layout)
-    state_json, ledger = root / "cplugs" / "state.json", root / "cplugs" / identity.LEDGER_FILE
-    state_json.write_text("{}")
-    ledger.write_text("{}")
+    reg_json = registry_store.registry_path(root)
+    reg_json.parent.mkdir(parents=True, exist_ok=True)
+    reg_json.write_text("{}")
     argv = ["/usr/bin/sandbox-exec", "-f", str(profile), str(layout.interpreter), "-I", "-B", "-c", WRITE_SCRIPT,
-            str(profile), str(state_json), str(ledger), str(layout.files_dir)]
+            str(profile), str(reg_json), str(reg_json), str(layout.files_dir)]
     done = subprocess.run(argv, capture_output=True, text=True, timeout=30, env=sandbox.allow_env(layout), check=False)
     seen = json.loads(done.stdout.strip().splitlines()[-1])
     assert seen == {"profile": False, "state": False, "ledger": False, "files": True}, (seen, done.stderr[-300:])
-    assert state_json.read_text() == "{}" and ledger.read_text() == "{}" and profile.read_text() == sandbox.render_profile(layout)
+    assert reg_json.read_text() == "{}" and profile.read_text() == sandbox.render_profile(layout)
+
+
+def test_reinstall_from_tombstone_preserves_state_extra(tmp_path: Path) -> None:
+    from src.plugins.host import state as owner_state
+
+    first = _register(tmp_path, "clock", "acme/clock", publisher_key_id=KEY_A)
+    owner_state.restore_entry(
+        tmp_path,
+        "clock",
+        {
+            "enabled": True,
+            "grants": ["net.fetch"],
+            "settings": {"tz": "UTC"},
+            "revision": 4,
+            "digest": "sha256:aa",
+            "custom_flag": {"nested": "kept"},
+        },
+    )
+    assert identity.mark_removed(tmp_path, "clock", version="1.0.0", publisher_key_id=KEY_A, removed_at="2026-11-25T00:00:00Z") is True
+    reinstalled = _register(tmp_path, "clock", "acme/clock", publisher_key_id=KEY_A)
+    assert reinstalled.uuid == first.uuid
+
+    doc = json.loads(registry_store.registry_path(tmp_path).read_text(encoding="utf-8"))
+    item = doc["items"]["clock"]
+    assert "custom_flag" not in item
+    assert item["state_extra"] == {"custom_flag": {"nested": "kept"}}
+    stored = owner_state.stored_entry(tmp_path, "clock")
+    assert stored is not None and stored["custom_flag"] == {"nested": "kept"}

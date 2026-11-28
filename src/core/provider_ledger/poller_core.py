@@ -196,6 +196,9 @@ class LedgerPoller:
         self, state: AccountState, now: datetime, *, refresh_only: bool = False
     ) -> None:
         account = state.account
+        if account.provider == "antigravity":
+            await self._poll_antigravity(state, now)
+            return
         pre_read_signal = await asyncio.to_thread(
             credential_signal.signal_stamp, credential_signal.signal_paths(account)
         )
@@ -255,6 +258,32 @@ class LedgerPoller:
             state=outcome.state,
             windows=len(state.windows),
         )
+
+    async def _poll_antigravity(self, state: AccountState, now: datetime) -> None:
+        from src.config import settings
+        from src.core.agy import accounts as agy_accounts, ledger as agy_ledger
+
+        account = state.account
+        state.last_signal = await asyncio.to_thread(
+            credential_signal.signal_stamp, credential_signal.signal_paths(account)
+        )
+        copy_exists = await asyncio.to_thread(agy_accounts.has_copy, account.id)
+        reading = await asyncio.to_thread(
+            agy_ledger.reading_for, Path(settings.get_state_dir()), account.id, copy_exists
+        )
+        measured = reading["credential_state"]
+        state.credential_state = measured
+        state.identity = reading["identity"] or state.identity
+        state.plan = reading["plan"] or state.plan
+        if measured != "ok":
+            state.error = measured
+            self._schedule(state, now, measured, None, request_skipped=True)
+            return
+        state.error = None
+        if reading["windows"]:
+            state.windows = list(reading["windows"])
+            state.fetched_at = reading["fetched_at"] or now
+        self._schedule(state, now, "ok", None, request_skipped=True)
 
     async def _probe_usage(self, access_token: str) -> str:
         return (await self._claude_fetch(self._client, access_token)).state

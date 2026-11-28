@@ -180,8 +180,17 @@ class AppController {
                 console.warn('App: restore offer check failed to start', err);
             }
         }
-        await this._hydratePreferences();
-        await this._initThemes();
+        const prefsReady = this._hydratePreferences();
+        const themesReady = this._initThemes(prefsReady);
+        const hasCachedPalette = Boolean(
+            window.Themes && typeof window.Themes.hasCachedPaletteSync === 'function'
+            && window.Themes.hasCachedPaletteSync()
+        );
+        if (hasCachedPalette) {
+            await prefsReady;
+        } else {
+            await Promise.all([prefsReady, themesReady]);
+        }
     }
 
     async _hydratePreferences() {
@@ -193,10 +202,10 @@ class AppController {
         if (window.MotionSetting) window.MotionSetting.apply();
     }
 
-    async _initThemes() {
+    async _initThemes(prefsReady) {
         if (!window.Themes) return;
         try {
-            await window.Themes.init();
+            await window.Themes.init(prefsReady);
         } catch (e) {
             console.warn('App: Themes.init failed - registry will use fallback', e);
         }
@@ -241,13 +250,15 @@ class AppController {
         });
 
         const appTitle = document.getElementById('appTitle');
-        window.DismissGuard.onContainerActivate(appTitle, () => {
-            if (this.currentScreen === 'terminal') {
-                console.log('App: Title clicked, returning to launcher');
-                this.goHome();
-                return;
-            }
-        });
+        if (appTitle && window.DismissGuard && typeof window.DismissGuard.onContainerActivate === 'function') {
+            window.DismissGuard.onContainerActivate(appTitle, () => {
+                if (this.currentScreen === 'terminal') {
+                    console.log('App: Title clicked, returning to launcher');
+                    this.goHome();
+                    return;
+                }
+            });
+        }
 
         if (this.logoutBtn) {
             this.logoutBtn.addEventListener('click', () => this.logout());
@@ -435,9 +446,18 @@ class AppController {
 const App = new AppController();
 window.App = App;
 
-window.addEventListener('load', () => {
+function startAppOnReady() {
     App.init();
     if (window.Router && typeof window.Router.init === 'function') {
         window.Router.init();
     }
-});
+}
+if (typeof document !== 'undefined' && document.readyState !== 'loading') {
+    if (window.Auth && typeof window.Auth.init === 'function') {
+        startAppOnReady();
+    }
+} else if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    document.addEventListener('DOMContentLoaded', startAppOnReady, { once: true });
+} else if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+    window.addEventListener('load', startAppOnReady, { once: true });
+}

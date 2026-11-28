@@ -4,6 +4,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tomlPlugin } from './vite.toml-plugin';
 
 const SCRATCH_MAX_AGE_MS = 60 * 60 * 1000;
 
@@ -25,14 +26,14 @@ function confineVitestTmp(): void {
 confineVitestTmp();
 
 export default defineConfig({
-    plugins: [svelte({ hot: false })],
+    plugins: [tomlPlugin(), svelte({ hot: false })],
     resolve: { conditions: ['browser'] },
     server: { fs: { allow: ['..'] } },
     test: {
         fsModuleCache: true,
         environment: 'node',
         include: ['src/**/*.test.ts'],
-        setupFiles: ['src/plugins/huddle/task-manager-test-setup.ts'],
+        setupFiles: ['src/plugins/taskmanager/task-manager-test-setup.ts'],
         reporters: ['default'],
     },
 });

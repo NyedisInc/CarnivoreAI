@@ -4,6 +4,9 @@ import { flushSync, mount } from 'svelte';
 
 import StoragePanel from './StoragePanel.svelte';
 import ScopePanel from './ScopePanel.svelte';
+import { saveCplug } from './index';
+import { cplugPlugins } from '../host/readers';
+import { cplugEnablement } from '../host/enablement.svelte';
 import { setLocale } from '../../lib/i18n/index.svelte';
 import { dropsPoints, gbText, sliderMax, sliderValue, type Fetcher, type SaveSettings, type Usage } from './settings-api';
 
@@ -82,6 +85,7 @@ const click = async (target: HTMLElement, selector: string): Promise<void> => {
 
 afterEach(() => {
     document.body.innerHTML = '';
+    cplugEnablement.enabled = {};
 });
 
 describe('storage panel', () => {
@@ -182,5 +186,30 @@ describe('capture scope panel', () => {
         await click(target, '[data-tm-scope="all"]');
         expect(calls.filter((c) => c.method === 'PUT')).toEqual([{ path: '/cplugs/save/capture-scope', method: 'PUT', body: { capture_scope: 'all' } }]);
         expect(target.querySelector('[data-tm-scope="all"]')!.getAttribute('aria-checked')).toBe('true');
+    });
+});
+
+describe('the contributions', () => {
+    test('the settings panel is enabled only while save is on', () => {
+        const contributions = cplugPlugins([saveCplug])[0]!.contributions;
+        expect(contributions.map((c) => c.surface)).toEqual(['settings-panel']);
+        const ctx = { flags: {}, refresh: () => undefined };
+        cplugEnablement.enabled = { save: false };
+        expect(contributions.some((c) => c.enabled(ctx))).toBe(false);
+        cplugEnablement.enabled = { save: true };
+        expect(contributions.every((c) => c.enabled(ctx))).toBe(true);
+    });
+
+    test('it ships off by default, so a fresh install shows no panel', () => {
+        cplugEnablement.enabled = {};
+        const ctx = { flags: {}, refresh: () => undefined };
+        expect(cplugPlugins([saveCplug])[0]!.contributions.some((c) => c.enabled(ctx))).toBe(false);
+    });
+
+    test('save manifest marks custom-panel fields hidden in settings_schema', () => {
+        const fields = saveCplug.manifest.settings_schema?.fields;
+        expect(fields?.vaultLocation?.hidden).toBe(true);
+        expect(fields?.vaultFolderOptOut?.hidden).toBe(true);
+        expect(fields?.offloadEnabled?.hidden).toBe(true);
     });
 });

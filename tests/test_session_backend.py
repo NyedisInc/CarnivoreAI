@@ -1185,7 +1185,6 @@ def datetime_for_tests():
 
 @pytest.mark.asyncio
 async def test_concurrent_sessions_output_isolation():
-    import base64
 
     from src.core.session_manager import SessionManager
     from src.models import Session, SessionStatus
@@ -1218,14 +1217,14 @@ async def test_concurrent_sessions_output_isolation():
     handler_a(b"hello-A")
 
     assert qa.queued_items == 1, "session A's subscriber must receive A's bytes"
-    got = base64.b64decode((await qa.get()).payload)
+    got = (await qa.get()).payload
     assert got == b"hello-A"
     assert qb.queued_items == 0, "session B's subscriber must NOT receive A's bytes"
 
     handler_b = sm._make_output_handler("ses_b")
     handler_b(b"hello-B")
     assert qb.queued_items == 1
-    assert base64.b64decode((await qb.get()).payload) == b"hello-B"
+    assert (await qb.get()).payload == b"hello-B"
     assert qa.queued_items == 0
 
     metadata_path = sm.__class__.__module__  # noqa: F841
@@ -1243,7 +1242,7 @@ async def test_concurrent_sessions_output_isolation():
     )
     handler_b2 = sm._make_output_handler("ses_b")
     handler_b2(b"still-alive-B")
-    assert base64.b64decode((await qb.get()).payload) == b"still-alive-B"
+    assert (await qb.get()).payload == b"still-alive-B"
 
 
 

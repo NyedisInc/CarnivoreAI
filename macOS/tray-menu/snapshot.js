@@ -9,7 +9,7 @@ function gatherSnapshot(d) {
   const update = d.autoUpdate.getState();
   const joined = d.member.isJoined() === true;
   const health = d.health || null;
-  return {
+  const snap = {
     now: Date.now(),
     optionKey: Boolean(d.optionKey),
     appVersion: d.appVersion,
@@ -39,11 +39,28 @@ function gatherSnapshot(d) {
       effectiveHost: sm.getEffectiveBindHost(),
       measuredUrl: sm.getMeasuredUrl(),
       publishedUrl: sm.getPublishedUrl(),
-      otpAvailable: !joined && sm.getSetupVerdict().status !== 'incomplete',
+      otpAvailable: false,
     },
     launchAtLogin: d.launchAgentInstaller.isEnabled(),
     offlineTuiAvailable: sm.getState() === 'stopped' && trayTerminal.offlineTuiAvailable(sm.baseDir, sm.payload),
     sysop: trayTerminal.currentSysop(),
+  };
+  snap.phone.otpAvailable = !joined && snap.setup !== 'incomplete';
+  return snap;
+}
+
+function gatherTrayTooltipInput(d) {
+  const sm = d.serverManager;
+  const parts = d.data.parts();
+  const update = d.autoUpdate.getState();
+  return {
+    serverState: sm.getState(),
+    serverNote: sm.startWait ? sm.startNoteText || null : null,
+    lastExitUnexpected: Boolean(sm.lastExitUnexpected),
+    sessions: parts.listing.rows,
+    sessionsReachable: parts.listing.reachable,
+    updateState: update.state,
+    setupStatus: sm.getSetupVerdict().status,
   };
 }
 
@@ -59,4 +76,4 @@ function trayStatusInput(snap) {
   };
 }
 
-module.exports = { gatherSnapshot, trayStatusInput };
+module.exports = { gatherSnapshot, gatherTrayTooltipInput, trayStatusInput };

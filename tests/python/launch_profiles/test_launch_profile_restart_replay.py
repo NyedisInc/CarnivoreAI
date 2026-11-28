@@ -67,7 +67,7 @@ def env(tmp_path, monkeypatch, tmux_test_socket):
         return SimpleNamespace(
             agents=AgentsConfig(wrappers=[AgentWrapper(id=p.id, label=p.id, script="claude") for p in profiles]),
             session=SessionConfig(tmux_socket_name=tmux_test_socket), mcp=SimpleNamespace(channels=False, enabled=False),
-            launch_profiles=SimpleNamespace(profiles=list(profiles)), byoai=SimpleNamespace(connections=[connection]))
+            launch_profiles=SimpleNamespace(profiles=list(profiles), approved_resume_prefixes=[]), byoai=SimpleNamespace(connections=[connection]))
 
     monkeypatch.setattr(type(settings), "load_auth_config", _auth)
     monkeypatch.setattr("src.core.launch_profiles.secrets.KeyStore", lambda: KeyStore(backend=FakeBackend({"or": KEY})))

@@ -37,6 +37,7 @@ export interface HistorySession {
     readonly agent_family: string | null;
     readonly claude_session_uuid: string | null;
     readonly has_transcript: boolean;
+    readonly offloaded?: boolean;
     readonly created_at: string | null;
     readonly last_seen_running_at: string | null;
     readonly last_work_at: string | null;

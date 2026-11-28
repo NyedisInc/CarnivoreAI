@@ -18,16 +18,32 @@ from src.core.crate_import.env import ImportEnv
 from src.core.crate_import.idmap import IdMap
 from src.core.crate_import.model import W_TASK_FILE_FAILED, W_TASK_FILE_KEPT, Collector
 from src.core.inventory.model import MAIN_STORE
-from src.core.work import file_refs
+from src.core.work import file_refs, folders
 
 logger = structlog.get_logger()
 
 ROLE = "task_file"
 REVIEW_PLUGIN, BOARDS_DATA = "reviewboard", "boards"
 ITEMS = f"{MAIN_STORE}.work_items"
-_REL = re.compile(r"^cplugs/huddle/files/(\d+)/([^/].*)$")
+_REL = re.compile(r"^(?:" + "|".join(re.escape(rel) for rel in folders.FILES_RELS) + r")/(\d+)/([^/].*)$")
 FILES_DIR: Tuple[str, ...] = file_refs.FILES_DIR
 SCOPE_TASK_FILES = "task_files"
+TWIN_OF = undo.TWIN_OF
+
+
+def with_renamed_twins(entries: Sequence[Dict[str, Any]], state: Path) -> List[Dict[str, Any]]:
+    old_root, new_root = (Path(state).joinpath(*folders.files_rel(i).split("/")) for i in (folders.OLD_ID, folders.NEW_ID))
+    out: List[Dict[str, Any]] = []
+    for entry in entries:
+        if entry.get(SCOPE_TASK_FILES) is True and entry.get("op") in (undo.OP_FILE, undo.OP_DIR):
+            try:
+                rel = Path(str(entry.get("path", ""))).relative_to(old_root)
+            except ValueError:
+                rel = None
+            if rel is not None and rel.parts:
+                out.append({**entry, "path": str(new_root / rel), TWIN_OF: str(entry["path"])})
+        out.append(entry)
+    return out
 
 
 @dataclass

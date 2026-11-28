@@ -7,7 +7,7 @@ import { rowsSig } from './format/rows-sig';
 
 export const SETTLE_MS = 800;
 
-const MAX_LAYOUT_BYTES = 16384;
+export const MAX_LAYOUT_BYTES = 131072;
 
 export const GRID_CACHE_KEY = 'cloudecode.opscenter.dashgrid.v1';
 

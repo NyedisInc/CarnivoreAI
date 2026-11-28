@@ -2,6 +2,7 @@
 import { authFetch } from './auth.svelte';
 import { resource, type Resource } from './poll.svelte';
 import { demoLedgerSnapshot } from '../data/ledger';
+import { publishShared, shareFetch, writeColdCache } from '../viz/stats-bus';
 import type { LedgerSnapshot } from './types';
 import { parseServerTime } from '../lib/format';
 import { t } from '../../lib/i18n/index.svelte';
@@ -35,6 +36,25 @@ function demoLedger(): LedgerSnapshot {
 }
 
 export const ledger: Resource<LedgerSnapshot> = resource<LedgerSnapshot>(
-  () => authFetch<LedgerSnapshot>('/provider-ledger'),
-  { intervalMs: LEDGER_POLL_MS, name: 'ledger', demo: demoLedger, topics: ['provider_ledger'] },
+  async () => {
+    const snap = await shareFetch('provider-ledger', 5_000, () => authFetch<LedgerSnapshot>('/provider-ledger'));
+    writeColdCache('provider-ledger', snap);
+    return snap;
+  },
+  {
+    intervalMs: LEDGER_POLL_MS,
+    name: 'ledger',
+    demo: demoLedger,
+    topics: ['provider_ledger'],
+    body: {
+      key: 'provider_ledger',
+      read: (raw) => {
+        if (!raw || typeof raw !== 'object' || !Array.isArray((raw as LedgerSnapshot).accounts)) return null;
+        const snap = raw as LedgerSnapshot;
+        publishShared('provider-ledger', snap);
+        writeColdCache('provider-ledger', snap);
+        return snap;
+      },
+    },
+  },
 );

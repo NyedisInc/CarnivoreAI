@@ -50,5 +50,34 @@ describe('the account editor', () => {
         expect(values).toContain('claude');
         expect(values).toContain('/Users/x/.carnivore/accounts/work-1');
         expect(document.querySelector('dd[title]')).toBeNull();
+        expect(document.querySelector('[data-ledger="color-chip"]')).toBeNull();
+    });
+
+    test('antigravity editor keeps provider=antigravity and hides directory facts (#3365)', () => {
+        const saved: unknown[] = [];
+        app = mount(LedgerRowEditor, {
+            target: document.body,
+            props: {
+                stored: {
+                    id: 'agy-adoomnyc-gmail-com',
+                    name: 'adoomnyc',
+                    provider: 'antigravity',
+                    managed: false,
+                } as never,
+                label: 'adoomnyc',
+                onSave: (edit: unknown) => saved.push(edit),
+                onCancel: () => {},
+                busy: false,
+                refusal: null,
+                t,
+            },
+        });
+        flushSync();
+        const values = [...document.querySelectorAll('dd')].map((d) => d.textContent?.trim());
+        expect(values).toContain('agy-adoomnyc-gmail-com');
+        expect(values).toContain('antigravity');
+        expect(values).toHaveLength(2);
+        (document.querySelector('[data-ledger="edit-save"]') as HTMLButtonElement).click();
+        expect(saved).toEqual([{ name: 'adoomnyc', color: null, short_name: '' }]);
     });
 });

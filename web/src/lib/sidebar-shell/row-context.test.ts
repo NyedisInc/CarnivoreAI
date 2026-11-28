@@ -56,7 +56,8 @@ describe('row context gauge preference and render', () => {
         for (const d of ['compact', 'cozy', 'detailed']) expect(defaultFor(d, 'context')).toBe(true);
         setDrawerEnv({});
         for (const d of ['compact', 'cozy', 'detailed']) {
-            expect(render(d, row(44)).querySelector('.session-sidebar-row-context'), d).not.toBeNull();
+            const sel = d === 'detailed' ? '.session-row-body__ctx-bar' : '.session-sidebar-row-context';
+            expect(render(d, row(44)).querySelector(sel), d).not.toBeNull();
             unmount(component as never); component = null; container.remove();
         }
         setDrawerEnv({ PreferenceBridge: { read: () => ({ cozy: { context: false } }) } });
@@ -68,11 +69,16 @@ describe('row context gauge preference and render', () => {
         expect(iconVisible('cozy', 'context')).toBe(true);
         for (const d of ['compact', 'cozy', 'detailed']) {
             const el = render(d, row(44));
-            const gauge = el.querySelector('.session-sidebar-row-context');
+            const sel = d === 'detailed' ? '.session-row-body__ctx-bar' : '.session-sidebar-row-context';
+            const gauge = el.querySelector(sel);
             expect(gauge, d).not.toBeNull();
             expect(gauge?.getAttribute('data-scale')).toBe('2');
             expect((el.querySelector('.oc-gauge__fill') as HTMLElement).style.width).toBe('44%');
-            expect(el.querySelector('.session-sidebar-row')?.getAttribute('data-context-gauge')).toBe('1');
+            if (d === 'detailed') {
+                expect(el.querySelector('.session-row-body__ctx-pct')?.textContent).toBe('44%');
+            } else {
+                expect(el.querySelector('.session-sidebar-row')?.getAttribute('data-context-gauge')).toBe('1');
+            }
             unmount(component as never); component = null; container.remove();
         }
     });

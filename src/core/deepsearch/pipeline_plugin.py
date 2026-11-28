@@ -14,6 +14,7 @@ from src.core.pipeline import plugin_db, reader
 from src.core.deepsearch import constants as K
 from src.core.deepsearch import fallback_hook as fb
 from src.core.deepsearch import index_scope
+from src.core.deepsearch import vault_lookup
 from src.core.deepsearch import indexer as point_indexer
 from src.core.deepsearch import scope_reconcile
 from src.core.deepsearch import rules as rules_mod
@@ -226,13 +227,24 @@ def _backup_may_serve() -> bool:
     return bool(fb.sources()) or fb.booting()
 
 
+def before_removal(conversation_id: str, path: str) -> None:
+    if _backup_may_serve():
+        vault_lookup.prepare(conversation_id, path)
+
+
 def _file_removed(conn: sqlite3.Connection, event: C.FileRemoved) -> None:
     live = store.get(conn, event.path)
     if live is None:
         return
     if live.in_scope and live.base_point_id != K.VAULT_MARK and _backup_may_serve():
+        held = vault_lookup.take(live.conversation_id, live.path)
+        if held is False:
+            logger.error("deepsearch_row_gone_without_vault_copy", conversation_id=live.conversation_id, file_kind=live.file_kind)
+            store.delete_file(conn, int(live.id))
+            return
         store.set_mark(conn, int(live.id), K.VAULT_MARK)
-        logger.info("deepsearch_row_repointed_at_vault", conversation_id=live.conversation_id, file_kind=live.file_kind)
+        logger.info("deepsearch_row_repointed_at_vault", conversation_id=live.conversation_id, file_kind=live.file_kind,
+                    manifest_checked=held is True)
         return
     if live.base_point_id == K.VAULT_MARK and _backup_may_serve():
         return
@@ -254,4 +266,4 @@ FILE_KINDS = frozenset({C.FILE_CONVERSATION, C.FILE_SUBAGENT})
 DEEPSEARCH = C.Plugin(id=PLUGIN_ID, db_name=DB_NAME, schema_version=SCHEMA_VERSION, migrate=migrate,
                       on_events=on_events, on_caught_up=on_caught_up, in_state_dir=True, file_kinds=FILE_KINDS,
                       catch_up=catch_up, file_kinds_fn=index_scope.file_kinds, before_scan=scope_reconcile.settle,
-                      per_file_removal=True)
+                      per_file_removal=True, before_removal=before_removal)

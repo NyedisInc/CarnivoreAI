@@ -18,10 +18,23 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>ai.carnivore.ios</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>carnivore</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CarnivoreKeychainGroup</key>
 	<string>$(AppIdentifierPrefix)ai.carnivore.shared</string>
+	<key>CarnivoreMacKeychainGroup</key>
+	<string>$(AppIdentifierPrefix)ai.carnivore.notify-mac</string>
 	<key>CarnivorePushEnvironment</key>
 	<string>$(PUSH_ENVIRONMENT)</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
@@ -33,14 +46,22 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>carnivore uses the camera to scan the pairing code shown on your computer.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>carnivore uses Face ID to lock your sessions and agent approvals.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>carnivore connects to your computer on your local network.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>carnivore listens through the microphone when you tap the mic key to dictate into a terminal.</string>
+	<string>carnivore listens through the microphone when you dictate into a terminal.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>carnivore saves an image an agent sent you to your photos when you tap save.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
-	<string>carnivore turns your speech into text when you dictate into a terminal.</string>
+	<string>carnivore turns your speech into text on-device when you dictate to an agent.</string>
+	<key>UIAppFonts</key>
+	<array>
+		<string>JetBrainsMono-Regular.ttf</string>
+		<string>JetBrainsMono-Medium.ttf</string>
+		<string>JetBrainsMono-Bold.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

@@ -159,6 +159,6 @@ def steps() -> list[BootStep]:
                  failure=FailureMode.DEGRADED, degrades_on=(OSError, RuntimeError), failure_event="lineage_live_start_failed",
                  stop_order=teardown_slot(8), stop_after_failed_start=True),
         BootStep(name="stats", order=600, start=_start_stats, stop=_stop_stats, stop_order=teardown_slot(16)),
-        BootStep(name="ready_announcement", order=610, start=_announce_ready),
+        BootStep(name="ready_announcement", order=695, start=_announce_ready),
         BootStep(name="engine_clients", order=700, stop_parts=("control_input", "tmux_control_readers", "catalog_client"), stop=_close_engine_clients, stop_order=teardown_slot(48)),
     ]

@@ -20,6 +20,7 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.mcp.caller import AgentCaller
+from src.core.swarm.types import TurnOnError
 from src.core.swarm import body, body_create, create, delivery, desk, project_agent, reports, store, thread_port, wake_prompt
 
 
@@ -176,7 +177,7 @@ def test_turn_on_inits_the_repo_then_binds_the_project_thread_and_the_naming_car
     assert not [c for c in env.port.cards if c[2].startswith("gitinit:")]
     made = _db(env, lambda c: store.get_project_agent(c, loose["id"]))
     assert made["rank"] == "project" and made["thread_key"] == str(loose["id"]) and made["naming_state"] == "none"
-    with pytest.raises(project_agent.TurnOnError, match="already on"):
+    with pytest.raises(TurnOnError, match="already on"):
         asyncio.run(project_agent.turn_on(SimpleNamespace(), loose["id"], None))
 
     from src.core.swarm import settings as swarm_settings

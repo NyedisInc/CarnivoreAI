@@ -18,8 +18,8 @@ INSERT = (
     "VALUES (?, ?, ?, 'user', 'x', 'x', ?)"
 )
 EXPECTED = {
-    "orange": "#a7593d", "green": "#817040", "cyan": "#7b75e2", "yellow": "#c07e45",
-    "coral": "#c07e45", "violet": "#a167cf", "green-bright": "#817040", "yellow-bright": "#c07e45",
+    "orange": "#e6495c", "green": "#1ea662", "cyan": "#1c9ed6", "yellow": "#c99214",
+    "coral": "#e6495c", "violet": "#ae62eb", "green-bright": "#1ea662", "yellow-bright": "#c99214",
 }
 
 
@@ -55,6 +55,6 @@ def test_a_key_write_is_refused_and_the_stored_color_is_untouched(tmp_path):
 def test_the_conversion_table_is_complete_and_import_doors_convert_or_drop():
     assert LEGACY_KEY_HEX == EXPECTED and set(LEGACY_KEY_HEX) == set(LEGACY_KEYS)
     assert stored_hex("Cyan") is None and stored_hex("#ABCDEF") == "#abcdef"
-    assert stored_hex("violet") == "#a167cf" and stored_hex(None) is None
+    assert stored_hex("violet") == "#ae62eb" and stored_hex(None) is None
     assert LEGACY_KEY_REFERENCE_HEX["cyan"] == "#6cb0e0" and LEGACY_KEY_REFERENCE_HEX["orange"] == "#ff4652"
     assert all(v in SOFT_PALETTE and v == nearest_calm_color(k) for k, v in LEGACY_KEY_HEX.items())

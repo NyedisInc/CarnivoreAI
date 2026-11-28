@@ -173,7 +173,7 @@ async def test_a_swapped_main_cert_is_refused_by_the_member(world):
     try:
         await asyncio.sleep(0.6)
         assert up.rendezvous.take() is None and up.linked == [] and up.hub.connected() == [] and up.first == []
-        with pytest.raises(LinkDown, match="waiting for main"):
+        with pytest.raises(LinkDown, match="waiting for alpha"):
             await up.transport.establish()
     finally:
         await _down(up)

@@ -22,6 +22,12 @@ from src.core.relay_identity.device_key import DeviceKey
 log = structlog.get_logger(__name__)
 
 
+def refusal_code(exc: BaseException) -> str:
+    from src.core.pack.machines import capabilities
+
+    return "pack_full" if capabilities.mesh_on() and isinstance(exc, JoinRefused) and exc.code == "pack_full" else "refused"
+
+
 class JoinServer:
 
     def __init__(self, *, invites: Invites, identity: LinkIdentity, fed_key: DeviceKey, public_key: str, own_iid: str, own_label: str,
@@ -181,7 +187,7 @@ class JoinServer:
             log.info("computer_join_refused", reason=getattr(exc, "code", "protocol"))
             self._inv.refund_attempt(inv)
             state["resolved"] = True
-            await self._refuse(writer, "refused")
+            await self._refuse(writer, refusal_code(exc))
         except BaseException:
             self._inv.refund_attempt(inv)
             state["resolved"] = True

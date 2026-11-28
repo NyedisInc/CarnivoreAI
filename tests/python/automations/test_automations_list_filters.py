@@ -38,7 +38,7 @@ async def _runner(ctx, automation, run):
 
 
 def _info(name: str, session_id: str) -> SimpleNamespace:
-    return SimpleNamespace(tmux_session=name, host_key="local", session_row_id=7,
+    return SimpleNamespace(label=None, claude_title=None, tmux_session=name, host_key="local", session_row_id=7,
                            session=SimpleNamespace(id=session_id, working_dir="/w", agent_type="claude"))
 
 

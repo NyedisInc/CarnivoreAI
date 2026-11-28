@@ -15,7 +15,7 @@ from src.config import settings
 from src.config.provider_accounts import profile_dir_for
 from src.core.claude_rename import detect_claude_version
 from src.core.live_install_roots import CLAUDE_DIR_NAME, HARNESS_MOD, TRASH_DIR_NAME
-from src.core.mods import inventory, registry
+from src.core.mods import inventory, owner_state, registry
 from src.core.provider_ledger import accounts_store
 from src.core.resource_push import notifier
 from src.core.resource_push.topics import MODS
@@ -62,9 +62,16 @@ def _ledger_rows(request: Request) -> List[Dict[str, str]]:
     return rows
 
 
-def _scan(request: Request) -> Dict[str, Any]:
+def _scan(request: Request, *, reconcile: bool = False) -> Dict[str, Any]:
     files, status = account_settings_files()
-    data = inventory.build_inventory(Path.home(), files, _ledger_rows(request))
+    rows = _ledger_rows(request)
+    data = inventory.build_inventory(Path.home(), files, rows)
+    if reconcile and status == ACCOUNTS_OK:
+        if owner_state.restore_dropped(data["mods"], home=Path.home(), account_files=files):
+            data = inventory.build_inventory(Path.home(), files, rows)
+        noted = owner_state.load()["restored"]
+        for mod in data["mods"]:
+            mod["restored"] = os.path.realpath(mod["path"]) in noted
     data["accounts"] = {"status": status}
     version = detect_claude_version()
     data["claude"] = {"version": ".".join(map(str, version)) if version else None,
@@ -88,7 +95,7 @@ def _refuse_if_all_failed(results: List[Dict[str, Any]]) -> None:
 @router.get("/mods", response_model=ModsResponse, dependencies=[Depends(require_auth)])
 async def list_mods(request: Request) -> Dict[str, Any]:
     """Every installed or registered mod, the settings groups and the claude version gate."""
-    return await asyncio.to_thread(_scan, request)
+    return await asyncio.to_thread(lambda: _scan(request, reconcile=True))
 
 
 @router.put("/mods/{mod_id}/enabled", response_model=SetEnabledResponse, dependencies=[Depends(require_auth)])

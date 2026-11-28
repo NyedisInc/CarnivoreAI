@@ -114,6 +114,11 @@
   --oc-spark-mid: #1f7f55;
   --oc-spark-dim: #174a37;
 
+  --oc-model-neon: color-mix(in oklab, var(--oc-violet) 50%, var(--oc-orange-bright));
+  --oc-model-carbon: var(--oc-tag-system);
+  --oc-model-argon: var(--oc-violet);
+  --oc-model-hydrogen: var(--oc-tag-agent);
+
   --oc-font: var(--font-mono, ui-monospace, monospace);
   --oc-fs-wordmark: 20px;
   --oc-fs-figure: 20px;
@@ -255,7 +260,7 @@
   --oc-rail-key: var(--oc-tap);
   --oc-grip-hit: 8px;
   --oc-grip-line: 2px;
-  --oc-section-line: 3px;
+  --oc-section-line: var(--oc-grip-line);
   --oc-section-hit: 9px;
   --oc-radius-frame: 0px;
   --oc-pane-inset: 2px;
@@ -274,10 +279,35 @@
   --oc-motion-fast: 120ms;
   --oc-motion: 160ms;
   --oc-motion-slow: 240ms;
+  --oc-amb-join-dur: 1ms;
+  --amb-uc-op: 1;
+  --amb-uc-sc-a: 0.4;
+  --amb-uc-sc-b: 0.4;
+  --amb-band-pos: 100%;
+  --amb-band-op: 1;
+  --amb-steam-y-1: 1.5;
+  --amb-steam-y-2: 1.5;
+  --amb-steam-y-3: 1.5;
+  --kaw-u: 1;
+  --amb-spark-sc-a: 0.6;
+  --amb-spark-sc-b: 0.6;
+  --amb-pulse-op: 1;
+  --amb-led-op: 1;
+  --amb-focus-op: 0.85;
 
   --oc-focus-edge: color-mix(in oklab, var(--oc-orange) 65%, transparent);
   --oc-focus-glow: color-mix(in oklab, var(--oc-orange) 45%, transparent);
   --oc-focus-breathe: 6000ms;
+  --oc-comet-head: #ffffff;
+  --oc-comet-mask: #000;
+  --oc-comet-width: 2px;
+  --oc-comet-lap: 3s;
+  --oc-comet-delay: 0s;
+  --oc-comet-unread-mid: #38e8ff;
+  --oc-comet-unread-tail: #8b5cff;
+  --oc-comet-unread-green: var(--oc-green-bright);
+  --oc-comet-question: var(--oc-yellow-bright);
+  --oc-comet-notice: var(--oc-cyan);
   --oc-cell-dim: 0.8;
 
   --oc-strip-edge: color-mix(in oklab, var(--oc-orange) 55%, var(--oc-line-rule));
@@ -316,6 +346,7 @@
   --oc-ground-raised: var(--color-bg-elevated, #061214);
   --oc-ground-card: var(--color-bg-card, #151a1c);
   --oc-ground-hover: var(--color-bg-hover, #0b1a1c);
+  /* cannot be read */
   --oc-surface-1: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 6%);
   --oc-surface-1-on: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 9%);
   --oc-surface-2: color-mix(in srgb, var(--oc-ground-content), var(--oc-text-primary) 12%);

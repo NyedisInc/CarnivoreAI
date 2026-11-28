@@ -14,7 +14,11 @@ from src.core.attention.registry_record import REG_OK, RegistryRecord
 from src.core.attention.registry_index import read_registry_index, registry_for_session
 from src.core.claude_config.profile_roots import claude_registry_roots, registry_file_path
 from src.core.auto_sleep.idle_seed import (
+    SOURCE_AGY_STORE,
+    SOURCE_AGY_TRANSCRIPT,
+    SOURCE_CLAUDE_ACTIVITY,
     SOURCE_CLAUDE_REGISTRY,
+    SOURCE_CLAUDE_REGISTRY_STATUS,
     SOURCE_CLAUDE_TRANSCRIPT,
     SOURCE_CODEX_ROLLOUT,
     SOURCE_CODEX_STATUS,
@@ -43,6 +47,14 @@ def _epoch_seconds_to_datetime(epoch: Optional[int]) -> Optional[datetime]:
         return None
 
 
+def _registry_candidate(
+    record: RegistryRecord, registry_path: str, activity_at: Optional[datetime]
+) -> Tuple[Optional[datetime], str]:
+    if activity_at is not None:
+        return record.status_updated_at, SOURCE_CLAUDE_REGISTRY_STATUS
+    return stat_mtime(registry_path), SOURCE_CLAUDE_REGISTRY
+
+
 def resolve_claude_seed(
     *,
     registry: RegistryRecord,
@@ -51,6 +63,7 @@ def resolve_claude_seed(
     tmux_name: Optional[str],
     session_started_epoch: Optional[int],
     config_path: Path,
+    activity_at: Optional[datetime] = None,
 ) -> Tuple[List[Tuple[Optional[datetime], str]], Optional[datetime]]:
     candidates: List[Tuple[Optional[datetime], str]] = []
     floor: Optional[datetime] = None
@@ -68,18 +81,20 @@ def resolve_claude_seed(
             if candidate.verdict == REG_OK:
                 resolved = candidate
                 registry_path = os.path.join(str(directory), "%s.json" % candidate.pid)
-                candidates.append((stat_mtime(registry_path), SOURCE_CLAUDE_REGISTRY))
+                candidates.append(_registry_candidate(candidate, registry_path, activity_at))
                 break
     else:
         registry_path = registry_file_path(resolved.pid)
-        candidates.append((stat_mtime(registry_path), SOURCE_CLAUDE_REGISTRY))
+        candidates.append(_registry_candidate(resolved, registry_path, activity_at))
 
     if resolved.verdict == REG_OK:
         floor = resolved.started_at
     if floor is None:
         floor = _epoch_seconds_to_datetime(session_started_epoch)
 
-    if claude_session_uuid:
+    if activity_at is not None:
+        candidates.append((activity_at, SOURCE_CLAUDE_ACTIVITY))
+    elif claude_session_uuid:
         try:
             from src.core.session_transcript_presence import conversation_presence
 
@@ -107,5 +122,23 @@ def resolve_codex_seed(
         rollout_path_for(codex_home, codex_session_uuid) if codex_session_uuid else None
     )
     candidates.append((stat_mtime(rollout_path), SOURCE_CODEX_ROLLOUT))
+    floor = _epoch_seconds_to_datetime(session_started_epoch)
+    return candidates, floor
+
+
+def resolve_agy_seed(
+    *,
+    conversation_uuid: Optional[str],
+    session_started_epoch: Optional[int],
+    agy_home: Optional[Path] = None,
+) -> Tuple[List[Tuple[Optional[datetime], str]], Optional[datetime]]:
+    from src.core.agy import transcripts as agy_transcripts
+
+    candidates: List[Tuple[Optional[datetime], str]] = []
+    if conversation_uuid:
+        tpath = agy_transcripts.transcript_path(conversation_uuid, agy_home)
+        spath = agy_transcripts.store_path(conversation_uuid, agy_home)
+        candidates.append((stat_mtime(str(tpath)) if tpath is not None else None, SOURCE_AGY_TRANSCRIPT))
+        candidates.append((stat_mtime(str(spath)) if spath is not None else None, SOURCE_AGY_STORE))
     floor = _epoch_seconds_to_datetime(session_started_epoch)
     return candidates, floor

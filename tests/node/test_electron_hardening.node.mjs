@@ -215,7 +215,8 @@ const stub = (name, body) => fs.writeFileSync(path.join(bin, name), `#!/bin/bash
 stub('aws', 'exit 1');
 stub('security', 'exit 1');
 stub('lipo', 'exit 1');
-stub('npm', `if [ "$1" = view ]; then cat "${okRegistry}"; exit 0; fi
+stub('npm', `case "$1" in ci|install) exit 0;; esac
+if [ "$1" = view ]; then cat "${okRegistry}"; exit 0; fi
 echo "npm $*" >> "${npmLog}"
 out=dist; for a in "$@"; do case "$a" in -c.directories.output=*) out="\${a#*=}";; esac; done
 if [ -n "$BUILT_BINARY" ]; then d="$out/mac-universal/Carnivore.app/Contents/Frameworks/Electron Framework.framework/Versions/A"; mkdir -p "$d"; cp "$BUILT_BINARY" "$d/Electron Framework"; fi`);

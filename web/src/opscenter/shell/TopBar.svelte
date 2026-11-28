@@ -10,6 +10,7 @@
   import { dashboardFromSearch } from '../../popout/popout';
   import { homeBoards } from '../engine/home-sync.svelte';
   import PopoutBarActions from './PopoutBarActions.svelte';
+  import ArgentTopBarMark from '../../lib/argent-topbar/ArgentTopBarMark.svelte';
   import { accountChip, toggleAccountMenu } from '../../lib/drawer-hud/account-menu.svelte';
   import { avatarHtml } from '../../lib/drawer/avatar';
   import { openSignInDoor } from '../../lib/carnivore-account/sign-in-door';
@@ -132,6 +133,8 @@
       </button>
     {/if}
     <AlertBell place="drawer" />
+    
+    <ArgentTopBarMark />
     
     <button
       type="button"

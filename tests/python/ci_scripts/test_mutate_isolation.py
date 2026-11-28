@@ -26,7 +26,7 @@ def scratch_repo(tmp_path: Path) -> Path:
     if not VENV.exists():
         pytest.skip("no venv to link into the copy")
     root = tmp_path / "repo"
-    for rel in ("scripts/ci/lib/mutate-trap.sh", "scripts/ci/lib/isolate_tree.py", "scripts/gate/tree_copy.py"):
+    for rel in ("scripts/ci/lib/mutate-trap.sh", "scripts/ci/lib/isolate_tree.py", "scripts/gate/tree_copy.py", "src/core/work/folders.py"):
         (root / rel).parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(REPO / rel, root / rel)
     (root / "scripts/ci/mutate-demo.sh").write_text(SCRIPT)

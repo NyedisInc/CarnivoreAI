@@ -59,7 +59,7 @@ beforeEach(() => {
   server.gate = null;
   server.answers = [{ ...base, items: [...items].reverse() }];
   localStorage.setItem('carnivore.flow.seed', JSON.stringify({ kind: 'huddle_item', id: '395' }));
-  resourcePush().store.hello({ resource_topics: ['crosstalk', 'cplug.flow.feed', 'cplug.huddle.list', 'cplug.huddle.cards'] });
+  resourcePush().store.hello({ resource_topics: ['crosstalk', 'cplug.flow.feed', 'cplug.taskmanager.list', 'cplug.taskmanager.cards'] });
   server.paths = [];
 });
 
@@ -120,7 +120,7 @@ describe('flow chat view', () => {
     const push = resourcePush().store;
     push.frame({ topics: ['cplug.flow.feed'] });
     push.frame({ topics: ['crosstalk'] });
-    push.frame({ topics: ['cplug.huddle.cards:8'] });
+    push.frame({ topics: ['cplug.taskmanager.cards:8'] });
     push.frame({ topics: ['layouts'] });
     await settle();
     expect(server.paths).toHaveLength(1);

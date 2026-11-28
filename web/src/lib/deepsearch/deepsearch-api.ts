@@ -44,6 +44,7 @@ export interface DeepGroup {
   hostLabel: string | null;
   alsoOn: string[];
   exported: ExportedInfo | null;
+  offloaded: boolean;
   hits: DeepHit[];
 }
 
@@ -125,6 +126,7 @@ function readGroup(raw: unknown): DeepGroup | null {
     hostLabel: str(raw.host_label),
     alsoOn: (Array.isArray(raw.also_on) ? raw.also_on : []).filter((x): x is string => typeof x === 'string' && x !== ''),
     exported: readExported(raw.exported),
+    offloaded: raw.offloaded === true,
     hits: (Array.isArray(raw.hits) ? raw.hits : []).map(readHit).filter((h): h is DeepHit => h !== null),
   };
 }

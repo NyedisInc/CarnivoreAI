@@ -20,6 +20,8 @@ SYSTEM_PANES: Dict[str, str] = {
 
 _P = K.KEY_PREFIX
 
+CLEAR_FREEZE_ID = "clear_freeze"
+
 
 def _a(name: str) -> str:
     return f"{_P}action.{name}"
@@ -31,6 +33,11 @@ def _link(action_id: str, href: str) -> Dict[str, Any]:
 
 def _recheck() -> Dict[str, Any]:
     return {"id": "recheck", "label_key": _a("recheck"), "method": "POST", "route": "/alerts/{id}/recheck"}
+
+
+def clear_freeze_action() -> Dict[str, Any]:
+    return {"id": CLEAR_FREEZE_ID, "label_key": _a("clear_freeze"), "done_key": _a("clear_freeze.done"), "method": "POST",
+            "route": "/cplugs/save/mass-gone/clear"}
 
 
 def _privacy() -> Dict[str, Any]:
@@ -97,6 +104,10 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}backup_health.vault_over_cap.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}backup_health.vault_damaged.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
     f"{_P}backup_health.vault_mass_gone.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
+    f"{_P}backup_health.vault_frozen.title": Declared(NEEDS_YOU, (clear_freeze_action(), _recheck(), _link("open_backups", _BACKUPS))),
+    f"{_P}backup_health.transcripts_gone_unprotected.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS))),
+    **{f"{_P}backup_health.{name}.title": Declared(NEEDS_YOU, (_recheck(), _link("open_backups", _BACKUPS)))
+       for name in ("vault_purge_unverified", "vault_scrub_damaged", "vault_restore_failed", "vault_ledger_unreadable")},
     f"{_P}notifications.destination_disabled.title": Declared(NEEDS_YOU, (_link("open_notification_settings", "#settings/notifications"),)),
     f"{_P}notifications.migration_skipped.title": Declared(NEEDS_YOU, (_link("open_notification_settings", "#settings/notifications"),)),
     f"{_P}account.signed_out.title": Declared(NEEDS_YOU, (_link("sign_in", "#account"),)),
@@ -120,6 +131,9 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}plugin_registry.older_copy.title": Declared(NEEDS_YOU, default_detail_key=f"{_P}plugin_registry.older_copy.detail"),
     f"{_P}plugin_registry.restored_backup.title": Declared(FYI, default_detail_key=f"{_P}plugin_registry.restored_backup.detail"),
     f"{_P}plugin_registry.read_only.title": Declared(NEEDS_YOU, default_detail_key=f"{_P}plugin_registry.read_only.detail"),
+    f"{_P}plugin_registry.files_no_space.title": Declared(NEEDS_YOU, default_detail_key=f"{_P}plugin_registry.files_no_space.detail"),
+    f"{_P}cplug_rename.held.title": Declared(NEEDS_YOU, default_detail_key=f"{_P}cplug_rename.held.detail"),
+    f"{_P}cplug_rename.stuck.title": Declared(NEEDS_YOU, (_link("open_plugins", "#plugins"),)),
     f"{_P}argent.untethered_launch.title": Declared(FYI, (), f"{_P}argent.untethered_launch.detail"),
     f"{_P}argent.queue_overflow.title": Declared(FYI, (), f"{_P}argent.queue_overflow.detail"),
     f"{_P}argent.budget_warn.title": Declared(FYI, (), f"{_P}argent.budget_warn.detail"),
@@ -131,8 +145,12 @@ BY_TITLE: Dict[str, Declared] = {
     f"{_P}argent.outage.title": Declared(NEEDS_YOU, (), f"{_P}argent.outage.detail"),
     f"{_P}argent.writeback_review.title": Declared(FYI, (), f"{_P}argent.writeback_review.detail"),
     f"{_P}argent.writeback_refused.title": Declared(FYI, (), f"{_P}argent.writeback_refused.detail"),
+    f"{_P}argent.writeback_tracker_newer.title": Declared(FYI, (), f"{_P}argent.writeback_tracker_newer.detail"),
     f"{_P}argent.writeback_blocked_secret.title": Declared(FYI, (), f"{_P}argent.writeback_blocked_secret.detail"),
     f"{_P}argent.tracker_wins.title": Declared(FYI, (), f"{_P}argent.tracker_wins.detail"),
+    f"{_P}argent.budget_approved.title": Declared(FYI, (), f"{_P}argent.budget_approved.detail"),
+    f"{_P}argent.budget_denied.title": Declared(FYI, (), f"{_P}argent.budget_denied.detail"),
+    f"{_P}argent.budget_expired.title": Declared(FYI, (), f"{_P}argent.budget_expired.detail"),
     f"{_P}sessions.mass_death.title": Declared(NEEDS_YOU),
     **{f"{_P}cplug_runtime.{name}.title": Declared(NEEDS_YOU, (_link("open_plugins", "#plugins"),))
        for name in ("crash_loop", "revoked", "integrity", "index_expired", "safe_mode", "plugin_alert", "sandbox")},

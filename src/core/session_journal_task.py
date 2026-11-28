@@ -6,7 +6,7 @@ import copy
 import os
 import threading
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Set, Tuple
 
 import structlog
 
@@ -21,12 +21,15 @@ from src.core.boot_time import (
     read_boot_time,
 )
 from src.core.session_journal_measure import Measurement, measure
-from src.core.session_journal_observe import live_entries, observe
+from src.core.session_journal_observe import STATE_LIVE, live_entries, observe
 from src.core.swarm import switch as swarm_switch
+from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.notifications.sources import restore as restore_source
+from src.core.session_ops import close_intent
 from src.core.product_identity import test_mode_enabled
 from src.core.session_restore_offer import (
     OFFER_OPEN,
+    REASON_SESSIONS_GONE,
     REASON_TMUX_SERVER_GONE,
     build_offer,
     choose_reason,
@@ -178,7 +181,41 @@ def boot_pass(state_dir: Path, settings: Any, socket_name: str, db_path: Path) -
     return summary
 
 
+def _without_app_stops(state_dir: Path, journal: Dict[str, Any], touched: close_intent.Touched, socket_name: str,
+                       live_instances: Set[Tuple[str, Optional[int]]], stamped: float) -> Dict[str, Any]:
+    kept: Dict[str, Any] = {}
+    for key, entry in (journal.get("sessions") or {}).items():
+        name, epoch = entry.get("tmux_name"), entry.get("tmux_epoch")
+        if not touched.covers(LOCAL_HOST_KEY, socket_name, name, epoch, entry.get("session_uuid")):
+            kept[key] = entry
+            continue
+        store.append_human_log(state_dir, "offer_excluded_app_stop", f"{name} was stopped by the app, so it is not offered")
+        logger.info("offer_excluded_app_stop", tmux_name=name, tmux_epoch=epoch, session_uuid=entry.get("session_uuid"))
+        if name and (name, epoch) in live_instances:
+            close_intent.release_stale(LOCAL_HOST_KEY, socket_name, str(name), epoch, stamped)
+        elif name:
+            close_intent.release_recorded(LOCAL_HOST_KEY, socket_name, str(name), epoch)
+    return dict(journal, sessions=kept)
+
+
+def _offer_new_losses(state_dir: Path, journal: Dict[str, Any], new: Dict[str, Any], m: Measurement, now: str,
+                      reason: str, touched: close_intent.Touched, socket_name: str, stamped: float) -> bool:
+    was_live = {k: e for k, e in (journal.get("sessions") or {}).items() if e.get("state") == STATE_LIVE}
+    readable = _without_app_stops(state_dir, dict(journal, sessions=was_live), touched, socket_name,
+                                  m.live_instances(), stamped)
+    fresh = offer_candidates(readable, _offerable_rows(m.rows), live_instances=m.live_instances(),
+                             dead_instances=m.dead_instances())
+    previous = new.get("offer")
+    offer, minted = fold_offer(previous, fresh, reason=reason, now_iso=now,
+                               boot_epoch=(journal.get("boot") or {}).get("epoch"))
+    if minted:
+        _log_offer(state_dir, offer, previous)
+        new["offer"] = offer
+    return minted
+
+
 def observe_pass(state_dir: Path, settings: Any, socket_name: str, db_path: Path) -> Dict[str, Any]:
+    stamped = close_intent.stamp()
     m = measure(settings, socket_name, db_path)
     now = store.now_iso()
 
@@ -188,16 +225,12 @@ def observe_pass(state_dir: Path, settings: Any, socket_name: str, db_path: Path
                          panes=m.panes, rows_by_instance=m.rows_by_instance(), groups=m.groups, now_iso=now)
         changed = result.changed
         new = result.journal
-        if had_live and m.listing_complete and m.rows_ok and not m.server_running:
-            store.append_human_log(state_dir, "tmux_server_gone", "the socket has no server")
-            fresh = offer_candidates(journal, _offerable_rows(m.rows), live_instances=m.live_instances(),
-                                     dead_instances=m.dead_instances())
-            previous = new.get("offer")
-            offer, minted = fold_offer(previous, fresh, reason=REASON_TMUX_SERVER_GONE, now_iso=now,
-                                       boot_epoch=(journal.get("boot") or {}).get("epoch"))
-            if minted:
-                _log_offer(state_dir, offer, previous)
-                new["offer"] = offer
+        if had_live and m.listing_complete and m.rows_ok:
+            touched = close_intent.touched_since(stamped)
+            if not m.server_running:
+                store.append_human_log(state_dir, "tmux_server_gone", "the socket has no server")
+            reason = REASON_SESSIONS_GONE if m.server_running else REASON_TMUX_SERVER_GONE
+            if _offer_new_losses(state_dir, journal, new, m, now, reason, touched, socket_name, stamped):
                 changed = True
         journal.clear()
         journal.update(new)

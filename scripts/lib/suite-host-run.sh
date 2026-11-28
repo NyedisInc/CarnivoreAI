@@ -4,7 +4,8 @@ set -u
 SHA="${1:?sha}"; shift
 BASE="$HOME/carnivore-suite"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
-WT="$BASE/wt"; RUNS="$BASE/runs"; TOOLS="$BASE/tools"
+SHARD="${CLOUDE_SUITE_SHARD:-}"
+WT="$BASE/wt"; RUNS="$BASE/runs${SHARD:+-s${SHARD%/*}of${SHARD#*/}}"; TOOLS="$BASE/tools"
 if ! command -v minisign >/dev/null && command -v brew >/dev/null; then brew install minisign >/dev/null 2>&1; fi
 if ! command -v timeout >/dev/null && command -v brew >/dev/null; then brew install coreutils >/dev/null 2>&1; fi
 for c in git tmux node npm python3.12 minisign timeout rsync; do
@@ -53,12 +54,22 @@ TAILPID=$!
     for v in $(compgen -e | grep -E '^(CARNIVORE|CLOUDE|CLOUDECODE)_' | grep -v '^CLOUDE_\(HEAVY_RUN_\|SUITE_\)'); do unset "$v"; done
     unset TMUX TMUX_PANE HOST PORT
     export CARNIVORE_SKEW_TMUX="$BASE/skew/tmux"
+    if [ -n "$SHARD" ]; then export CLOUDE_TEST_SHARD="$SHARD" CLOUDE_SHARD_DURATIONS="$BASE/shard-durations.json"; fi
+    [ -n "${CLOUDE_SUITE_CAPACITY:-}" ] && export CLOUDE_SHARD_CAPACITY="$CLOUDE_SUITE_CAPACITY"
     export PYTHONPATH="$TOOLS${PYTHONPATH:+:$PYTHONPATH}" CLOUDE_SUITE_STATE_DIR="$RUNS/state" CLOUDE_SUITE_FAILURES_FILE="$RUNS/suite.log.failures"
     export PYTEST_ADDOPTS="-p suite_progress -rfE --durations=30 -o faulthandler_timeout=600 -m \"not mac_gui_session\""
-    cd "$WT" && CLOUDE_TEST_JUNIT_DIR="$RUNS/junit" "$WT/venv/bin/python3" "$TOOLS/suite_runner.py" \
+    cd "$WT" || exit 2
+    if [ "${CLOUDE_SUITE_ALONE:-}" = 1 ] && [ "$#" -gt 0 ]; then
+        RC=0
+        for id in "$@"; do
+            if "$WT/venv/bin/python3" -m pytest -q -n 0 -p no:cacheprovider "$id" >> "$RUNS/suite.log" 2>&1; then echo "ALONE passed $id"; else echo "ALONE FAILED $id"; RC=1; fi
+        done
+        exit "$RC"
+    fi
+    CLOUDE_TEST_JUNIT_DIR="$RUNS/junit" "$WT/venv/bin/python3" "$TOOLS/suite_runner.py" \
         --log "$RUNS/suite.log" --state-dir "$RUNS/state" -- bash "$WT/scripts/run-tests.sh" "$@"
     RC=$?
-    if [ "$RC" -ne 0 ] && [ "$#" -eq 0 ]; then
+    if [ "$RC" -ne 0 ] && [ "$#" -eq 0 ] && [ -z "$SHARD" ]; then
         "$WT/venv/bin/python3" "$TOOLS/suite_rerun.py" --rc "$RC" --log "$RUNS/suite.log" \
             --failures "$RUNS/suite.log.failures" --flakes "$RUNS/suite.log.flakes" >> "$RUNS/suite.log" 2>&1
         RC=$?

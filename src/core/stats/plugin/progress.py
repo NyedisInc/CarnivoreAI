@@ -49,6 +49,9 @@ def forget(state_dir: Path) -> None:
         _cache.pop(str(state_dir), None)
 
 
+_cold_locks: Dict[str, threading.Lock] = {}
+
+
 def cached_progress(state_dir: Path, *, block: bool = True) -> Optional[Dict[str, int]]:
     key = str(state_dir)
     with _cache_lock:
@@ -56,6 +59,7 @@ def cached_progress(state_dir: Path, *, block: bool = True) -> Optional[Dict[str
         refresh = held is not None and time.monotonic() - held[0] > CACHE_MAX_AGE_S and key not in _refreshing
         if refresh:
             _refreshing.add(key)
+        cold_lock = _cold_locks.setdefault(key, threading.Lock()) if held is None and block else None
     if held is None and not block:
         with _cache_lock:
             start = key not in _refreshing
@@ -64,10 +68,16 @@ def cached_progress(state_dir: Path, *, block: bool = True) -> Optional[Dict[str
             threading.Thread(target=_refresh, args=(key, Path(state_dir)), name="stats-progress", daemon=True).start()
         return None
     if held is None:
-        value = progress(state_dir)
-        with _cache_lock:
-            _cache[key] = (time.monotonic(), value)
-        return value
+        assert cold_lock is not None
+        with cold_lock:
+            with _cache_lock:
+                again = _cache.get(key)
+            if again is not None:
+                return again[1]
+            value = progress(state_dir)
+            with _cache_lock:
+                _cache[key] = (time.monotonic(), value)
+            return value
     if refresh:
         threading.Thread(target=_refresh, args=(key, Path(state_dir)), name="stats-progress", daemon=True).start()
     return held[1]

@@ -108,6 +108,16 @@ class SpectatorLinksStore:
 
     async def init(self) -> None:
         self._conn = await aiosqlite.connect(self._db_path)
+        for pragma in (
+            "PRAGMA journal_mode=WAL",
+            "PRAGMA synchronous=NORMAL",
+            "PRAGMA busy_timeout=30000",
+            "PRAGMA cache_size=-16000",
+            "PRAGMA temp_store=MEMORY",
+            "PRAGMA mmap_size=67108864",
+            "PRAGMA journal_size_limit=67108864",
+        ):
+            await self._conn.execute(pragma)
         await self._conn.execute(
             """
             CREATE TABLE IF NOT EXISTS spectator_links (

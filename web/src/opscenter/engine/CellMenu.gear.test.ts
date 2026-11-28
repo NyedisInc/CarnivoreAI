@@ -96,8 +96,8 @@ test('settings... on a chart is in the normal menu and opens its settings outsid
 test('a plugin widget slot offers pop out and opens its own widget window (S2d, docs/cplugs.md 2.7)', async () => {
   layoutEditor.active = false;
   const { registerCplugWidgets } = await import('../../plugins/host/widgets');
-  const { huddleCplug } = await import('../../plugins/huddle');
-  registerCplugWidgets(huddleCplug);
+  const { taskmanagerCplug } = await import('../../plugins/taskmanager');
+  registerCplugWidgets(taskmanagerCplug);
   const slot = 'huddle.chat:agent:7';
   homeLayout.state.layout = row([slot, 'notes']) as never;
   const opened = vi.spyOn(window, 'open').mockReturnValue(null);

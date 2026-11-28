@@ -1,10 +1,12 @@
 
 from __future__ import annotations
 
+import asyncio
+import functools
 import sqlite3
 from contextlib import closing
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from src.config import settings
 from src.core import resource_push
@@ -12,7 +14,7 @@ from src.core.computers import direction
 from src.core.federation import peer_links
 from src.core.pack.machines import runtime as machines_runtime
 from src.core.pack.machines.exchange import post_via
-from src.core.pack.relay import approval, ledger_sync_store
+from src.core.pack.relay import approval, ledger_sync_store, login_gate, member_reach, retire
 from src.core.pack.relay.ledger_sync_push import LedgerSync
 from src.core.pack.relay.owner_side import PeerFn, Relay
 from src.core.account_switch import store as account_store
@@ -22,6 +24,11 @@ from src.core.resource_push import topics
 
 RELAY: Optional[Relay] = None
 SYNC: Optional[LedgerSync] = None
+_RETIRE: Optional[Callable[[str], Any]] = None
+
+
+async def retire_removed(sender: str) -> Optional[Dict[str, str]]:
+    return None if _RETIRE is None else await _RETIRE(sender)
 
 
 def candidate_ids() -> List[str]:
@@ -47,8 +54,31 @@ def poll_owned_soon(_install_id: str) -> None:
             poller.poll_soon(account.id)
 
 
-def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], Optional[peer_links.PeerLinks]]) -> Relay:
-    global RELAY, SYNC
+async def sweep_orphans() -> int:
+    if RELAY is None:
+        return 0
+
+    def existing() -> Optional[List[str]]:
+        try:
+            path = Path(settings.auth_config_file).expanduser()
+            return [a.id for a in poller_scan.with_auto_default(accounts_store.list_accounts(path), include_relay=False)]
+        except (OSError, ValueError):
+            return None
+
+    keys = await asyncio.to_thread(existing)
+    return 0 if keys is None else await RELAY.sweep_orphans(keys)
+
+
+def sweep_soon(_install_id: str) -> None:
+    try:
+        asyncio.get_running_loop().create_task(sweep_orphans(), name="pack-relay-sweep")
+    except RuntimeError:
+        return
+
+
+def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], Optional[peer_links.PeerLinks]],
+          manager_getter: Callable[[], Any] = lambda: None) -> Relay:
+    global RELAY, SYNC, _RETIRE
 
     def peer(install_id: str):
         links = links_getter()
@@ -72,8 +102,23 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
     if links is not None:
         links.add_connect_listener(SYNC.on_connect)
         links.add_connect_listener(poll_owned_soon)
-    RELAY = Relay(open_db=open_db, peer=lookup, notify=lambda: resource_push.notify(topics.PACK_RELAY),
-                  self_id=wired.runtime.install_id, allows=allows, candidates=candidate_ids, on_pushed=SYNC.on_credential_pushed, active=active_account,
-                  approved=approval.reader(open_db), accepts=lambda iid, account: machines_runtime.peer_relay_accepts(iid, account, wired.runtime.install_id))
+        links.add_connect_listener(sweep_soon)
+    caps_of = member_reach.caps_of(links_getter)
+
+    def relay_candidates() -> List[str]:
+        return list(dict.fromkeys(candidate_ids() + member_reach.member_ids()))
+
+    relay_accepts = lambda iid, account: machines_runtime.peer_relay_accepts(iid, account, wired.runtime.install_id)  # noqa: E731
+    RELAY = Relay(open_db=open_db, peer=member_reach.lookup(links_getter), notify=lambda: resource_push.notify(topics.PACK_RELAY),
+                  self_id=wired.runtime.install_id, allows=member_reach.allows, candidates=relay_candidates, on_pushed=SYNC.on_credential_pushed,
+                  active=active_account, reach=functools.partial(member_reach.dial_due, open_db, links_getter, accepts=relay_accepts),
+                  via_member=member_reach.via_member(links_getter),
+                  approved=login_gate.gate(open_db, caps_of=caps_of), accepts=relay_accepts)
     refresh_poke.add_credential_listener(RELAY.on_credential)
+
+    async def reconcile(sender: str, offered: List[str]) -> None:
+        await retire.reconcile(manager_getter(), sender, offered)
+
+    wired.runtime.offers_reconcile = reconcile
+    _RETIRE = lambda sender: retire.reconcile(manager_getter(), sender, [])  # noqa: E731
     return RELAY

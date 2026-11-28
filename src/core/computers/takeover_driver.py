@@ -11,11 +11,38 @@ import structlog
 
 from src.core.computers import alpha_rows
 from src.core.computers.takeover_walk import LinkHistory, RelayConnect, Walker
-from src.core.pack.machines import interim_policy
+from src.core.pack.machines import capabilities, interim_policy
 from src.core.pack.reconnect import config as reconnect_config
 from src.core.resource_push import topics
 
+
+class TakeoverDriverError(ValueError):
+    pass
+
+
 log = structlog.get_logger(__name__)
+
+
+class _NoRoster:
+
+    @staticmethod
+    def order() -> list:
+        return []
+
+
+_NO_ROSTER = _NoRoster()
+
+
+def v1_only(relay_connect: Optional[RelayConnect], v1_ids: Callable[[], set]) -> Optional[RelayConnect]:
+    if relay_connect is None or not capabilities.mesh_on():
+        return relay_connect
+
+    async def guarded(entry: Any, ctx: Any) -> Any:
+        if entry.install_id not in await asyncio.to_thread(v1_ids):
+            raise TakeoverDriverError("no relay to a computer outside the version 1 list")
+        return await relay_connect(entry, ctx)
+
+    return guarded
 
 
 class TakeoverDriver:
@@ -35,6 +62,13 @@ class TakeoverDriver:
     def _custody(self) -> Any:
         return self._rt._roster._wired().runtime.custody
 
+    @staticmethod
+    def _lists(custody: Any) -> Any:
+        if not capabilities.mesh_on():
+            return custody.roster()
+        held = custody.held_lists()
+        return held[0] if held is not None else None
+
     def _linked(self) -> list:
         rt = self._rt
         live = list(rt.listener.connected()) if rt.listener is not None else []
@@ -48,9 +82,16 @@ class TakeoverDriver:
         custody.takeover_on = lambda: reconnect_config.takeover_on(rt._config_path)
         custody.standing = lambda: self._walker.standing(self._master, self.history) if self._walker is not None else None
         custody.on_alpha_change = self._alpha_changed
-        self._walker = Walker(identity=rt.identity, self_id=rt.iid, clock=self._clock, roster=custody.roster,
-                              relay_connect=self._relay_connect, linked=self._linked)
+        self._walker = Walker(identity=rt.identity, self_id=rt.iid, clock=self._clock, roster=lambda: self._lists(custody),
+                              relay_connect=v1_only(self._relay_connect, lambda: set((custody.roster() or _NO_ROSTER).order())),
+                              linked=self._linked)
         self._bound = True
+
+    def reachable(self) -> Optional[frozenset]:
+        walk = self._walker.walk if self._walker is not None else None
+        if walk is None or not 0 <= self._clock() - walk.at <= interim_policy.WALK_FRESH_SECONDS:
+            return None
+        return frozenset(i for i, p in walk.peers.items() if p.reachable)
 
     async def rotation_paused(self) -> bool:
         try:
@@ -82,7 +123,7 @@ class TakeoverDriver:
     async def after_alpha_change(self, master: str, case: str) -> None:
         rt = self._rt
         try:
-            roster = await asyncio.to_thread(rt._roster.roster)
+            roster = await asyncio.to_thread(self._lists, self._custody())
             if roster is None or rt.identity is None:
                 return
 
@@ -123,8 +164,8 @@ class TakeoverDriver:
         self.history.observe(self._linked(), now)
         if not custody.takeover_on() or now - self._last_round < interim_policy.ROUND_SECONDS:
             return ""
-        roster = await asyncio.to_thread(custody.roster)
-        if roster is None or len(roster.computers) < 2 or roster.entry(rt.iid) is None:
+        walked = await asyncio.to_thread(self._lists, custody)
+        if walked is None or len(walked.computers) < 2 or walked.entry(rt.iid) is None:
             return ""
         self._master = (await asyncio.to_thread(custody.settings)).master_install_id
         self._last_round = now

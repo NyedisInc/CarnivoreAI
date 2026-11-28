@@ -22,6 +22,9 @@ export const recentOpenStatus = {
     set(key: string, status: OpenStatus): void {
         if (key) statuses[key] = status;
     },
+    clear(key: string): void {
+        if (key) delete statuses[key];
+    },
     reset(): void {
         for (const key of Object.keys(statuses)) delete statuses[key];
     },

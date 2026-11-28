@@ -1,11 +1,12 @@
 import SwiftUI
 import UIKit
-import UserNotifications
-import UserNotificationsUI
+@preconcurrency import UserNotifications
+@preconcurrency import UserNotificationsUI
 
-final class NotificationViewController: UIViewController, UNNotificationContentExtension {
+final class NotificationViewController: UIViewController, @preconcurrency UNNotificationContentExtension {
     private let state = CardState()
     private var host: UIHostingController<CardHost>?
+    private var lastFittedSize: CGSize = .zero
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -15,7 +16,8 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
         controller.view.backgroundColor = .clear
         view.addSubview(controller.view)
         NSLayoutConstraint.activate([
-            controller.view.topAnchor.constraint(equalTo: view.topAnchor), controller.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            controller.view.topAnchor.constraint(equalTo: view.topAnchor),
+            controller.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             controller.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             controller.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
@@ -24,9 +26,11 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
     }
 
     func didReceive(_ notification: UNNotification) {
-        state.load(content: notification.request.content)
+        state.load(content: notification.request.content, requireValidMAC: true)
         if let info = state.info {
             extensionContext?.notificationActions = NotifyCategories.actions(kind: info.kind, acts: info.acts)
+        } else {
+            extensionContext?.notificationActions = []
         }
         fit()
         DispatchQueue.main.async { [weak self] in self?.fit() }
@@ -34,9 +38,15 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
 
     private func fit() {
         guard let host else { return }
+        let width = view.bounds.width
+        guard width > 0 else { return }
         host.view.layoutIfNeeded()
-        let size = host.sizeThatFits(in: CGSize(width: view.bounds.width, height: .greatestFiniteMagnitude))
-        preferredContentSize = CGSize(width: view.bounds.width, height: size.height)
+        let measured = host.sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude))
+        let target = CGSize(width: width, height: max(44, ceil(measured.height)))
+        if abs(target.width - lastFittedSize.width) > 0.5 || abs(target.height - lastFittedSize.height) > 0.5 {
+            lastFittedSize = target
+            preferredContentSize = target
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -46,8 +56,13 @@ final class NotificationViewController: UIViewController, UNNotificationContentE
 
     func didReceive(_ response: UNNotificationResponse, completionHandler completion: @escaping (UNNotificationContentExtensionResponseOption) -> Void) {
         let id = response.actionIdentifier
-        if id == UNNotificationDefaultActionIdentifier || id == UNNotificationDismissActionIdentifier { return completion(.dismissAndForwardAction) }
-        if let kind = state.info?.kind, NotifyCategories.contractAction(kind: kind, id: id)?.foreground == true { return completion(.dismissAndForwardAction) }
+        if id == UNNotificationDefaultActionIdentifier || id == UNNotificationDismissActionIdentifier {
+            return completion(.dismissAndForwardAction)
+        }
+        guard let info = state.info else { return completion(.dismiss) }
+        if NotifyCategories.contractAction(kind: info.kind, id: id)?.foreground == true {
+            return completion(.dismissAndForwardAction)
+        }
         let typed = (response as? UNTextInputNotificationResponse)?.userText
         Task { @MainActor in
             let finished = await state.press(action: id, text: typed)

@@ -717,6 +717,47 @@ export const GLYPHS = {
             'stroke-linejoin': 'round',
         },
     ],
+    'agent-group': [
+        {
+            tag: 'rect',
+            x: '1.8',
+            y: '5.6',
+            width: '8.8',
+            height: '7.4',
+            rx: '1.8',
+            stroke: 'currentColor',
+            'stroke-width': '1.45',
+        },
+        {
+            tag: 'circle',
+            cx: '4.6',
+            cy: '9.3',
+            r: '0.85',
+            fill: 'currentColor',
+        },
+        {
+            tag: 'circle',
+            cx: '7.8',
+            cy: '9.3',
+            r: '0.85',
+            fill: 'currentColor',
+        },
+        {
+            tag: 'path',
+            d: 'M4.2 5.6V4.1',
+            stroke: 'currentColor',
+            'stroke-width': '1.4',
+            'stroke-linecap': 'round',
+        },
+        {
+            tag: 'path',
+            d: 'M6.4 3H12.4A1.6 1.6 0 0 1 14 4.6V8.8A1.6 1.6 0 0 1 12.4 10.4H10.6',
+            stroke: 'currentColor',
+            'stroke-width': '1.4',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round',
+        },
+    ],
 };
 
 export function isWisp(element) {

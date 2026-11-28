@@ -16,7 +16,7 @@ from src.config.auto_sleep import MAX_IDLE_MINUTES, MIN_IDLE_MINUTES, AutoSleepC
 from src.core import resource_push, session_change_notice
 from src.core.resource_push import topics as resource_topics
 from src.core.auto_sleep import store
-from src.models.auto_sleep import AutoSleepState, AutoSleepWrite, KeepAwakeWrite, SleepHoldEntry
+from src.models.auto_sleep import AutoSleepState, AutoSleepWrite, KeepAwakeWrite, SleepHoldEntry, SleepVerdictEntry
 from src.models.websocket import WSMessageType
 from src.api.error_response import api_error
 
@@ -71,11 +71,19 @@ def _holding(request: Request) -> List[SleepHoldEntry]:
             for name, hold in held]
 
 
+def _verdicts(request: Request) -> List[SleepVerdictEntry]:
+    sleeper = getattr(request.app.state, "auto_sleeper", None)
+    found = list(sleeper.verdicts.values()) if sleeper is not None else []
+    return [SleepVerdictEntry(session=name, **verdict.model_dump()) for name, verdict in found]
+
+
 def _state(
     config: AutoSleepConfig, *, mac_awake: bool, holding: List[SleepHoldEntry] | None = None,
+    verdicts: List[SleepVerdictEntry] | None = None,
 ) -> AutoSleepState:
     return AutoSleepState(
         holding=holding or [],
+        verdicts=verdicts or [],
         enabled=config.enabled,
         idle_minutes=config.idle_minutes,
         unread_blocks_sleep=config.unread_blocks_sleep,
@@ -131,7 +139,8 @@ async def get_auto_sleep(request: Request) -> AutoSleepState:
         config = await asyncio.to_thread(store.read, _config_path())
     except (FileNotFoundError, ValueError) as exc:
         raise _unreadable(exc) from exc
-    return await asyncio.to_thread(_state, config, mac_awake=_mac_awake(request), holding=_holding(request))
+    return await asyncio.to_thread(_state, config, mac_awake=_mac_awake(request), holding=_holding(request),
+                                   verdicts=_verdicts(request))
 
 
 @router.put("/auto-sleep", response_model=AutoSleepState, dependencies=[Depends(require_auth)])
@@ -167,7 +176,8 @@ async def put_auto_sleep(body: AutoSleepWrite, request: Request) -> AutoSleepSta
         logger.error("auto_sleep_unwritable", error=type(exc).__name__)
         raise _unreadable(exc) from exc
     _changed(request)
-    return await asyncio.to_thread(_state, config, mac_awake=_mac_awake(request), holding=_holding(request))
+    return await asyncio.to_thread(_state, config, mac_awake=_mac_awake(request), holding=_holding(request),
+                                   verdicts=_verdicts(request))
 
 
 @router.put(
@@ -204,7 +214,8 @@ async def put_keep_awake(body: KeepAwakeWrite, request: Request) -> AutoSleepSta
         raise api_error(422, "invalid_keep_awake", exc) from exc
     _changed(request)
     await asyncio.to_thread(reconcile_mac_awake, request, config)
-    return await asyncio.to_thread(_state, config, mac_awake=_mac_awake(request), holding=_holding(request))
+    return await asyncio.to_thread(_state, config, mac_awake=_mac_awake(request), holding=_holding(request),
+                                   verdicts=_verdicts(request))
 
 
 class MacAwakeAlways(BaseModel):

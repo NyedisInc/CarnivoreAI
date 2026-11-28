@@ -11,53 +11,107 @@ import UserNotifications
     private(set) var info: NotifyUserInfo?
     private(set) var card = NotifyCard(raw: [:])
     private var agent = ""
+    private var copiedVideoURL: URL?
 
-    func load(content: UNNotificationContent) {
-        let userInfo = NotifyUserInfo(userInfo: content.userInfo)
+    deinit {
+        if let url = copiedVideoURL { try? FileManager.default.removeItem(at: url) }
+    }
+
+    func load(content: UNNotificationContent, requireValidMAC: Bool = false) {
+        cleanupTempVideo()
+        phase = .normal
+        media = CardMedia()
+        card = NotifyCard(raw: [:])
+        agent = ""
+
+        let userInfo = NotifyUserInfo(userInfo: content.userInfo, requireValidMAC: requireValidMAC)
         info = userInfo
-        guard let userInfo else { model = .empty; return }
+        guard let userInfo else {
+            model = .empty
+            return
+        }
         card = NotifyCard(json: userInfo.cardJSON)
         agent = card.string("agent") ?? ""
         var over: String? = nil
         if let m = userInfo.media, userInfo.kind == .video {
-            if m.bytes > 50 * 1_048_576 { over = Strings.fill(Strings.cardStateOverBudget, ["size": CardModel.sizeText(m.bytes), "limit": "50 MB"]) }
-            else if m.bytes > NotifyUserInfoLimits.videoPlayBytes { over = Strings.cardStatePlayOnComputer }
+            if m.bytes > 50 * 1_048_576 {
+                over = Strings.fill(Strings.cardStateOverBudget, ["size": CardModel.sizeText(m.bytes), "limit": "50 MB"])
+            } else if m.bytes > NotifyUserInfoLimits.videoPlayBytes {
+                over = Strings.cardStatePlayOnComputer
+            }
         }
         model = CardModel.make(kind: userInfo.kind, card: card, body: content.body, videoOverBudget: over)
-        media = Self.media(from: content.attachments, kind: userInfo.kind)
-        if let settle = userInfo.settle { phase = .settled(settle.line); agent = settle.agent }
-        else if userInfo.isExpired() { phase = .failed(Strings.cardStateExpired) }
+        let loaded = Self.mediaWithTemp(from: content.attachments, kind: userInfo.kind)
+        media = loaded.media
+        copiedVideoURL = loaded.tempVideoURL
+        if let settle = userInfo.settle {
+            phase = .settled(settle.line)
+            agent = settle.agent
+        } else if userInfo.isExpired() {
+            phase = .failed(Strings.cardStateExpired)
+        }
+    }
+
+    private func cleanupTempVideo() {
+        media.player?.pause()
+        if let url = copiedVideoURL {
+            try? FileManager.default.removeItem(at: url)
+            copiedVideoURL = nil
+        }
     }
 
     static func media(from attachments: [UNNotificationAttachment], kind: NotifyKind) -> CardMedia {
+        mediaWithTemp(from: attachments, kind: kind).media
+    }
+
+    private static func mediaWithTemp(from attachments: [UNNotificationAttachment], kind: NotifyKind) -> (media: CardMedia, tempVideoURL: URL?) {
         var out = CardMedia()
+        var videoCopy: URL? = nil
         for a in attachments {
             let scoped = a.url.startAccessingSecurityScopedResource()
             defer { if scoped { a.url.stopAccessingSecurityScopedResource() } }
-            if UTType(a.type)?.conforms(to: .movie) == true { out.player = copyToTemp(a.url).map { AVPlayer(url: $0) }; continue }
+            if UTType(a.type)?.conforms(to: .movie) == true {
+                if let temp = copyToTemp(a.url) {
+                    out.player = AVPlayer(url: temp)
+                    videoCopy = temp
+                }
+                continue
+            }
             guard let data = try? Data(contentsOf: a.url), let image = UIImage(data: data) else { continue }
             if kind == .image { out.image = image } else if out.poster == nil { out.poster = image }
         }
-        return out
+        return (out, videoCopy)
     }
 
     private static func copyToTemp(_ url: URL) -> URL? {
         let dest = FileManager.default.temporaryDirectory.appendingPathComponent("card-\(UUID().uuidString).mp4")
-        return (try? FileManager.default.copyItem(at: url, to: dest)) == nil ? nil : dest
+        do {
+            try FileManager.default.copyItem(at: url, to: dest)
+            try? FileManager.default.setAttributes([.protectionKey: FileProtectionType.complete], ofItemAtPath: dest.path)
+            return dest
+        } catch {
+            return nil
+        }
     }
 
-    func press(action: String, text: String?, session: URLSession = .shared) async -> Bool {
+    func press(action: String, text: String?, session: URLSession = SecureSession.shared) async -> Bool {
         guard let info else { return true }
         switch action {
         case "play":
-            media.player?.play()
+            if let player = media.player {
+                await player.seek(to: .zero)
+                player.play()
+            }
             return false
         case "later":
             phase = .answered(line: Strings.cardAnswerLater, detail: closes())
             return true
         case "copy_link":
             let url = card.string("url") ?? ""
-            UIPasteboard.general.string = url
+            UIPasteboard.general.setItems(
+                [[UTType.plainText.identifier: url]],
+                options: [.localOnly: true, .expirationDate: Date().addingTimeInterval(60)]
+            )
             phase = .answered(line: Strings.fill(Strings.cardAnswerCopied, ["url": url]), detail: closes())
             return true
         default: break

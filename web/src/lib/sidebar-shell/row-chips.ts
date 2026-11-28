@@ -1,3 +1,4 @@
+import { modelColorKey } from '../model-color';
 import { glyphSvg } from '../../../../client/js/icons/glyphs.js';
 import { whenLabel as fireLabel } from '../automations/format';
 import { timerStateKey, timerStateOf } from '../automations/timer-state';
@@ -20,15 +21,15 @@ const SHEEN_EFFORTS = ['high', 'xhigh'];
 
 export const PIN_SVG = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14l-2-4V4H7v9l-2 4z"></path></svg>';
 
-export function pinAttrs(name: string, pinned: boolean): Attrs {
+export function pinAttrs(name: string, pinned: boolean, display: string = name): Attrs {
     return {
         type: 'button',
         class: 'session-sidebar-row-pin',
         'data-pin-session': name,
         'aria-pressed': pinned ? 'true' : 'false',
         tabindex: '-1',
-        'aria-label': pinned ? `Unpin ${name}` : `Pin ${name} to the top`,
-        title: pinned ? 'unpin' : 'pin to top',
+        'aria-label': t(pinned ? 'sidebar.row.pin.label_unpin' : 'sidebar.row.pin.label_pin', { name: display }),
+        title: t(pinned ? 'sidebar.row.pin.title_unpin' : 'sidebar.row.pin.title_pin'),
     };
 }
 
@@ -170,13 +171,20 @@ export function shellsIconPlan(r: SidebarRow): GlyphChip | null {
     const open = typeof openRaw === 'number' && Number.isFinite(openRaw) && openRaw > 0
         ? Math.floor(openRaw) : null;
     const parked = (r.parked_summary as string | undefined) || null;
-    if (open === null && !parked) return null;
+    const stalledRaw = r.stalled_agents;
+    const stalled = typeof stalledRaw === 'number' && Number.isFinite(stalledRaw) && stalledRaw > 0
+        ? Math.floor(stalledRaw) : null;
+    if (open === null && !parked && stalled === null) return null;
     let title: string;
     if (open !== null) {
         title = t('sidebar.row.shells_icon.title', { count: open });
         if (parked) title += `: ${parked}`;
     } else {
-        title = parked as string;
+        title = parked ?? '';
+    }
+    if (stalled !== null) {
+        const hint = t('sidebar.row.stalled_agents.title', { count: stalled });
+        title = title ? `${title}; ${hint}` : hint;
     }
     return {
         attrs: {
@@ -254,6 +262,7 @@ export function modelPlan(r: SidebarRow): ModelPlan | null {
         attrs: {
             class: `session-sidebar-row-model${shimmer}`,
             'data-model-tier': tierOk ? String(tier) : '',
+            'data-model-color': modelColorKey(model),
             'data-model-top': topped ? '1' : undefined,
             role: 'img',
             'aria-label': label,

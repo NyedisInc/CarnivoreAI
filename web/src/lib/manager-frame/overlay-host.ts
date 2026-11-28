@@ -20,32 +20,86 @@ export interface OverlayHost {
 }
 
 /* the fragment that opens it */
+export interface LazyOverlayComponent {
+    load: () => Promise<{ default: Component<Record<string, never>, Record<string, unknown>> | Component<Record<string, never>> }>;
+}
+
+function isLazyComponent(
+    value: Component<Record<string, never>, Record<string, unknown>> | Component<Record<string, never>> | LazyOverlayComponent,
+): value is LazyOverlayComponent {
+    return typeof value === 'object' && value !== null && typeof (value as LazyOverlayComponent).load === 'function';
+}
+
 export function createOverlayHost(
     containerId: string,
-    component: Component<Record<string, never>, Record<string, unknown>> | Component<Record<string, never>>,
+    component: Component<Record<string, never>, Record<string, unknown>> | Component<Record<string, never>> | LazyOverlayComponent,
     hash: string,
     options: { aliases?: readonly string[]; props?: Record<string, unknown> } = {},
 ): OverlayHost {
-    const panel = component as unknown as Component<Record<string, never>, Record<string, unknown>>;
+    let loadedPanel: Component<Record<string, never>, Record<string, unknown>> | null = isLazyComponent(component)
+        ? null
+        : (component as unknown as Component<Record<string, never>, Record<string, unknown>>);
+    let loadPromise: Promise<Component<Record<string, never>, Record<string, unknown>> | null> | null = null;
+    let pendingOpen: { options?: Record<string, unknown> } | null = null;
+
     const name = hash.replace(/^#/, '');
     const names = [name, ...(options.aliases ?? []).map((alias) => alias.replace(/^#/, ''))];
 
+    function hasContainer(): boolean {
+        return typeof document !== 'undefined' && typeof document.getElementById === 'function' && document.getElementById(containerId) !== null;
+    }
+
+    function ensureLoaded(): Promise<Component<Record<string, never>, Record<string, unknown>> | null> {
+        if (loadedPanel) return Promise.resolve(loadedPanel);
+        if (!isLazyComponent(component)) return Promise.resolve(null);
+        loadPromise ??= component.load().then((mod) => {
+            loadedPanel = mod.default as unknown as Component<Record<string, never>, Record<string, unknown>>;
+            return loadedPanel;
+        }).catch((err) => {
+            loadPromise = null;
+            console.error(`overlay-host: failed to load ${containerId}`, err);
+            return null;
+        });
+        return loadPromise;
+    }
+
     function mount(): Record<string, unknown> | null {
-        return ensurePanel(containerId, panel, (options.props ?? {}) as Record<string, never>);
+        if (!loadedPanel) {
+            void ensureLoaded();
+            return panelInstance(containerId);
+        }
+        return ensurePanel(containerId, loadedPanel, (options.props ?? {}) as Record<string, never>);
     }
 
     const pageId = MENU_PAGES.find((p) => p.containerId === containerId)?.id ?? null;
 
-    function open(options?: Record<string, unknown>): boolean {
-        if (pageId) closeMenuPagesExcept(pageId);
+    function openLoaded(openOptions?: Record<string, unknown>): boolean {
         const handle = (mount() ?? panelInstance(containerId)) as ScreenHandle | null;
         if (!handle || typeof handle.show !== 'function') return false;
-        flushSync(() => handle.show?.(options));
+        flushSync(() => handle.show?.(openOptions));
         syncMenuPages();
         return true;
     }
 
+    function open(openOptions?: Record<string, unknown>): boolean {
+        if (pageId) closeMenuPagesExcept(pageId);
+        if (loadedPanel) return openLoaded(openOptions);
+        if (!hasContainer()) return false;
+        const ticket = { options: openOptions };
+        pendingOpen = ticket;
+        void ensureLoaded().then((panel) => {
+            if (!panel || pendingOpen !== ticket) return;
+            pendingOpen = null;
+            openLoaded(ticket.options);
+        });
+        return true;
+    }
+
     function close(): boolean {
+        if (pendingOpen) {
+            pendingOpen = null;
+            return true;
+        }
         const handle = panelInstance(containerId) as ScreenHandle | null;
         if (!handle || typeof handle.close !== 'function') return false;
         flushSync(() => handle.close?.());

@@ -11,14 +11,16 @@ from typing import Any, Collection, Dict, List, Mapping, Optional, Set, Tuple, U
 
 from src.core.json_artifact import atomic_write_json
 from src.core.hosts.ddl import LOCAL_HOST_KEY
-from src.core.pack.globalsync import panel, panel_groups
+from src.core.pack.globalsync import panel, panel_groups, panel_layouts
 
 LOCK = threading.RLock()
 MAX_SKEW_MS = 5 * 60 * 1000
 MAX_KEY, MAX_BANDS = 300, 2600
-_GROUP_FIELDS = ("name", "members", "band", "gone")
-_COMPANY_FIELDS = ("name", "parent_uid", "hue")
-_PROJECT_FIELDS = ("name", "company_uid", "color", "short_description")
+_GROUP_FIELDS = ("name", "members", "band", "parent_key", "style", "icon", "rule", "gone")
+_GROUP_OPTIONAL_FIELDS = frozenset({"parent_key", "style", "icon", "rule"})
+_LAYOUT_FIELDS = ("name", "shape", "style", "members", "gone")
+_COMPANY_FIELDS = ("name", "parent_uid", "hue", "gone")
+_PROJECT_FIELDS = ("name", "company_uid", "color", "short_description", "archived", "parent_uid", "home_iid")
 Stamp = Tuple[int, str]
 
 
@@ -74,16 +76,45 @@ class Ledger:
                     out[uid] = row[0] if row[2] == gone_true else 1 << 62
         return out
 
+    def known_companies(self) -> Dict[str, int]:
+        out: Dict[str, int] = {}
+        gone_true = _hash(True)
+        for key, row in self.fields.items():
+            if key.startswith("c:"):
+                uid = key.split(":")[1]
+                out.setdefault(uid, 0)
+                if key.endswith(":gone"):
+                    out[uid] = row[0] if row[2] == gone_true else 1 << 62
+        return out
+
+    def known_layouts(self) -> Dict[str, int]:
+        out: Dict[str, int] = {}
+        gone_true = _hash(True)
+        for key, row in self.fields.items():
+            if key.startswith("ly:"):
+                uid = key.split(":")[1]
+                out.setdefault(uid, 0)
+                if key.endswith(":gone"):
+                    out[uid] = row[0] if row[2] == gone_true else 1 << 62
+        return out
+
     def stamps_for(self, keys: Any) -> Dict[str, List[Any]]:
         return {k: [self.fields[k][0], self.fields[k][1]] for k in keys if k in self.fields and self.fields[k][0] > 0}
 
 
 def flatten(doc: Mapping[str, Any]) -> Dict[str, Any]:
     flat: Dict[str, Any] = {}
-    for item in (doc.get("companies") if isinstance(doc.get("companies"), list) else [])[:panel.MAX_COMPANIES]:
+    live_c = gone_c = 0
+    for item in (doc.get("companies") if isinstance(doc.get("companies"), list) else [])[:panel.MAX_COMPANIES + panel.MAX_COMPANY_TOMBS]:
         if isinstance(item, Mapping) and isinstance(item.get("uid"), str) and panel._UID.fullmatch(item["uid"]):
+            if item.get("gone") is True:
+                gone_c += 1
+            else:
+                live_c += 1
+            if live_c > panel.MAX_COMPANIES or gone_c > panel.MAX_COMPANY_TOMBS:
+                continue
             for name in _COMPANY_FIELDS:
-                flat[f"c:{item['uid']}:{name}"] = item.get(name)
+                flat[f"c:{item['uid']}:{name}"] = item.get(name) is True if name == "gone" else item.get(name)
     for item in (doc.get("projects") if isinstance(doc.get("projects"), list) else [])[:panel.MAX_PROJECTS]:
         if isinstance(item, Mapping) and isinstance(item.get("uid"), str) and panel._UID.fullmatch(item["uid"]):
             for name in _PROJECT_FIELDS:
@@ -98,9 +129,24 @@ def flatten(doc: Mapping[str, Any]) -> Dict[str, Any]:
             if live > panel_groups.MAX_GROUPS or gone > panel_groups.MAX_TOMBS:
                 continue
             for name in _GROUP_FIELDS:
+                if name in _GROUP_OPTIONAL_FIELDS and name not in item:
+                    continue
                 flat[f"g:{item['uid']}:{name}"] = item.get(name) is True if name == "gone" else item.get(name)
+    live_ly = gone_ly = 0
+    for item in (doc.get("layouts") if isinstance(doc.get("layouts"), list) else [])[:panel_layouts.MAX_LAYOUTS + panel_layouts.MAX_TOMBS]:
+        if isinstance(item, Mapping) and isinstance(item.get("uid"), str) and panel_layouts.UID.fullmatch(item["uid"]):
+            if item.get("gone") is True:
+                gone_ly += 1
+            else:
+                live_ly += 1
+            if live_ly > panel_layouts.MAX_LAYOUTS or gone_ly > panel_layouts.MAX_TOMBS:
+                continue
+            for name in _LAYOUT_FIELDS:
+                flat[f"ly:{item['uid']}:{name}"] = item.get(name) is True if name == "gone" else item.get(name)
     arr = doc.get("arrangement") if isinstance(doc.get("arrangement"), Mapping) else {}
-    for name in ("pinned", "order", "sections", "group_order"):
+    for name in ("pinned", "order", "sections", "group_order", "layout_order"):
+        if name == "layout_order" and name not in arr:
+            continue
         flat[f"a:{name}"] = arr.get(name)
     bands = arr.get("bands") if isinstance(arr.get("bands"), Mapping) else {}
     for key in list(bands)[:MAX_BANDS]:
@@ -113,19 +159,20 @@ def unflatten(flat: Mapping[str, Any]) -> Dict[str, Any]:
     companies: Dict[str, Dict[str, Any]] = {}
     projects: Dict[str, Dict[str, Any]] = {}
     groups: Dict[str, Dict[str, Any]] = {}
+    layouts: Dict[str, Dict[str, Any]] = {}
     arr: Dict[str, Any] = {}
     bands: Dict[str, Any] = {}
     for key, value in flat.items():
         kind, _, rest = key.partition(":")
-        if kind in ("c", "p", "g"):
+        if kind in ("c", "p", "g", "ly"):
             uid, _, name = rest.partition(":")
-            {"c": companies, "p": projects, "g": groups}[kind].setdefault(uid, {"uid": uid})[name] = value
+            {"c": companies, "p": projects, "g": groups, "ly": layouts}[kind].setdefault(uid, {"uid": uid})[name] = value
         elif rest.startswith("band:"):
             bands[rest[5:]] = value
         else:
             arr[rest] = value
-    return {"v": panel.VERSION, "companies": list(companies.values()), "projects": list(projects.values()), "groups": list(groups.values()),
-            "arrangement": {**arr, "bands": bands}}
+    return {"v": panel.VERSION, "companies": list(companies.values()), "projects": list(projects.values()),
+            "groups": list(groups.values()), "layouts": list(layouts.values()), "arrangement": {**arr, "bands": bands}}
 
 
 def clean_stamps(raw: Any, now: int) -> Dict[str, Stamp]:
@@ -139,15 +186,22 @@ def clean_stamps(raw: Any, now: int) -> Dict[str, Stamp]:
     return out
 
 
-MAX_PROJECTS_FIELDS = (panel.MAX_PROJECTS * len(_PROJECT_FIELDS)) + (panel.MAX_COMPANIES * len(_COMPANY_FIELDS)) + MAX_BANDS + ((panel_groups.MAX_GROUPS + panel_groups.MAX_TOMBS) * len(_GROUP_FIELDS)) + 16
+MAX_PROJECTS_FIELDS = (
+    (panel.MAX_PROJECTS * len(_PROJECT_FIELDS))
+    + ((panel.MAX_COMPANIES + panel.MAX_COMPANY_TOMBS) * len(_COMPANY_FIELDS))
+    + MAX_BANDS
+    + ((panel_groups.MAX_GROUPS + panel_groups.MAX_TOMBS) * len(_GROUP_FIELDS))
+    + ((panel_layouts.MAX_LAYOUTS + panel_layouts.MAX_TOMBS) * len(_LAYOUT_FIELDS))
+    + 16
+)
 
 
 def local_doc(conn: sqlite3.Connection, arrangement: Optional[Mapping[str, Any]], own_iid: str, ledger: Ledger, member: bool = False) -> Dict[str, Any]:
     return panel.collect(conn, arrangement, own_iid, stamped_uids=ledger.stamped_project_uids(), all_projects=member, extra_keys=ledger.known,
-                         known_groups=ledger.known_groups())
+                         known_groups=ledger.known_groups(), known_companies=ledger.known_companies(), known_layouts=ledger.known_layouts())
 
 
-def _shadow_uids(conn: sqlite3.Connection) -> Set[str]:
+def shadow_uids(conn: sqlite3.Connection) -> Set[str]:
     return {r[0] for r in conn.execute("SELECT uid FROM projects WHERE uid IS NOT NULL AND host_key != ?", (LOCAL_HOST_KEY,))}
 
 
@@ -172,13 +226,17 @@ def observe(ledger: Ledger, flat: Mapping[str, Any], own_iid: str, now: int, qui
 
 def merge(local_flat: Mapping[str, Any], incoming: Mapping[str, Any], ledger: Ledger, *, from_main: bool, now: int) -> Tuple[Dict[str, Any], Dict[str, Stamp]]:
     theirs_all = clean_stamps(incoming.get("stamps"), now)
+    incoming_flat = flatten(incoming)
     merged, won = dict(local_flat), {}
     edited = {k.split(":")[1] for k in theirs_all if k.startswith("p:")}
-    for key, value in flatten(incoming).items():
+    incoming_home = {k.split(":")[1] for k, v in incoming_flat.items() if k.startswith("p:") and k.endswith(":home_iid") and isinstance(v, str) and v}
+    for key, value in incoming_flat.items():
         mine, theirs = ledger.stamp(key), theirs_all.get(key, (0, ""))
         newer = theirs > mine or (theirs == mine and from_main)
-        if key.startswith("p:") and key not in local_flat and key.split(":")[1] not in edited:
-            continue
+        if key.startswith("p:") and key not in local_flat:
+            puid = key.split(":")[1]
+            if puid not in edited and not (from_main and puid in incoming_home):
+                continue
         if key not in local_flat or (newer and _hash(value) != _hash(local_flat[key])):
             merged[key], won[key] = value, theirs
         elif theirs > mine:
@@ -190,7 +248,7 @@ def adopt(conn: sqlite3.Connection, ledger: Ledger, arrangement: Optional[Mappin
           member: bool = False, arrangement_only: bool = False) -> None:
     stamped = ledger.stamped_project_uids() | {k.split(":")[1] for k, s in won.items() if k.startswith("p:") and s[0] > 0}
     after = flatten(panel.collect(conn, arrangement, own_iid, stamped_uids=stamped, all_projects=member, extra_keys=ledger.known,
-                                     known_groups=ledger.known_groups()))
+                                     known_groups=ledger.known_groups(), known_companies=ledger.known_companies(), known_layouts=ledger.known_layouts()))
     fresh = {}
     for key, value in after.items():
         old = ledger.fields.get(key)
@@ -205,7 +263,7 @@ def adopt(conn: sqlite3.Connection, ledger: Ledger, arrangement: Optional[Mappin
     listed = set(arr.get("pinned") or []) | set(arr.get("order") or [])
     for members in (arr.get("bands") if isinstance(arr.get("bands"), Mapping) else {}).values():
         listed |= set(members) if isinstance(members, list) else set()
-    listed |= panel_groups.member_keys(conn)
+    listed |= panel_groups.member_keys(conn) | panel_layouts.member_keys(conn)
     ledger.known = {k: v for k, v in ledger.known.items() if k in listed}
 
 
@@ -218,10 +276,11 @@ def receive(conn: sqlite3.Connection, doc: Any, own_iid: str, current: Optional[
         ledger = Ledger(ledger_path)
         member = from_main
         mine = flatten(local_doc(conn, current, own_iid, ledger, member))
-        observe(ledger, mine, own_iid, now, _shadow_uids(conn))
+        observe(ledger, mine, own_iid, now, shadow_uids(conn))
         merged, won = merge(mine, doc, ledger, from_main=from_main, now=now)
         group_stamps = {k.split(":")[1]: won.get(k) or ledger.stamp(k) for k in merged if k.startswith("g:") and k.endswith(":members")}
-        report, new = panel.apply(conn, unflatten(merged), own_iid, current, group_stamps)
+        layout_stamps = {k.split(":")[1]: won.get(k) or ledger.stamp(k) for k in merged if k.startswith("ly:") and k.endswith(":members")}
+        report, new = panel.apply(conn, unflatten(merged), own_install_id=own_iid, current=current, group_stamps=group_stamps, layout_stamps=layout_stamps)
         ledger.known.update(panel.doc_pairs(unflatten(merged), own_iid))
         adopt(conn, ledger, new, own_iid, won, member)
         ledger.save()
@@ -234,7 +293,7 @@ def doc_for_send(conn: sqlite3.Connection, arrangement: Union[Optional[Mapping[s
         ledger = Ledger(ledger_path)
         doc = local_doc(conn, arrangement() if callable(arrangement) else arrangement, own_iid, ledger, member)
         flat = flatten(doc)
-        observe(ledger, flat, own_iid, now_ms(), _shadow_uids(conn))
+        observe(ledger, flat, own_iid, now_ms(), shadow_uids(conn))
         ledger.save()
         return {**doc, "stamps": ledger.stamps_for(flat)}
 

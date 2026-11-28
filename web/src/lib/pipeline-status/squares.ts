@@ -5,10 +5,13 @@ import type { Tone } from './model';
 
 export const FALLBACK_ICON = 'chart';
 
-const MANIFESTS = import.meta.glob<{ id: string; icon?: string }>('../../../../src/plugins/*/cplug.json', {
-    eager: true,
-    import: 'default',
-});
+const MANIFESTS = import.meta.glob<{ id: string; icon?: string }>(
+    '../../../../src/plugins/*/carnivore.toml',
+    {
+        eager: true,
+        import: 'default',
+    },
+);
 
 const CORE_ICONS: Readonly<Record<string, string>> = { deepsearch: 'deep-search' };
 

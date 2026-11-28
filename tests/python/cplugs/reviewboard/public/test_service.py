@@ -2,8 +2,8 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import socket
+import tomllib
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Dict
@@ -39,12 +39,12 @@ def answers(port: int) -> bool:
 def test_the_plugin_is_off_by_default_and_needs_the_review_board() -> None:
     manifest = CPLUG.manifest
     assert manifest.default_enabled is False and manifest.tier == "builtin"
-    raw = json.loads((Path(__file__).resolve().parents[5] / "src" / "plugins" / "reviewboard" / "cplug.json").read_text())
-    assert raw["requires"] == ["huddle"] and raw["settings_schema"]["fields"]["publicLinksEnabled"]["default"] is False
+    raw = tomllib.loads((Path(__file__).resolve().parents[5] / "src" / "plugins" / "reviewboard" / "carnivore.toml").read_text(encoding="utf-8"))
+    assert raw["requires"] == ["taskmanager"] and raw["settings_schema"]["fields"]["publicLinksEnabled"]["default"] is False
 
 
 def test_the_manifest_settings_schema_matches_what_the_parser_reads() -> None:
-    raw = json.loads((Path(__file__).resolve().parents[5] / "src" / "plugins" / "reviewboard" / "cplug.json").read_text())
+    raw = tomllib.loads((Path(__file__).resolve().parents[5] / "src" / "plugins" / "reviewboard" / "carnivore.toml").read_text(encoding="utf-8"))
     fields = raw["settings_schema"]["fields"]
     assert {KEY_PORT, KEY_BIND, KEY_HOSTS, KEY_PROXIES} <= set(fields)
     defaults = {key: fields[key]["default"] for key in (KEY_PORT, KEY_BIND, KEY_HOSTS, KEY_PROXIES)}

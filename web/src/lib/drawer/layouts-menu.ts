@@ -5,6 +5,7 @@ import { rowElementFor } from '../item-menu/run/run-env';
 import { togglePinRow } from '../sidebar-shell/row-reorder';
 import * as GroupColor from './group-color';
 import { bridge, idOf } from './layouts-model';
+import { createGroupThenAssign } from '../sidebar-shell/group-assign';
 import { announce } from '../sidebar-shell/interaction-globals';
 
 export interface MenuItemContext { name: string; label?: string; layoutUuid?: string }
@@ -77,5 +78,6 @@ export function runMenuItem(itemId: string, ctx: MenuItemContext): Promise<void>
     }
     if (itemId === 'save-blueprint') return saveAsBlueprint(ctx);
     if (itemId === 'load-blueprint') { loadBlueprint(ctx); return Promise.resolve(); }
+    if (itemId === 'group') return createGroupThenAssign(null, undefined, ctx.name);
     return null;
 }

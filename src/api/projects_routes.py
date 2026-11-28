@@ -1,4 +1,5 @@
 
+import asyncio
 import sqlite3
 from typing import Optional, Union
 
@@ -75,9 +76,11 @@ async def get_projects(
     Returns:
         list[ProjectResponse] - never raises for a datastore fault.
     """
-    view = projects_service.current_view(
-        settings, include_archived=include_archived
-    )
+    def _read_projects():
+        v = projects_service.current_view(settings, include_archived=include_archived)
+        return v, projects_service.views_to_responses(v, ProjectResponse)
+
+    view, responses = await asyncio.to_thread(_read_projects)
 
     if view.degraded:
         logger.warning(
@@ -89,7 +92,7 @@ async def get_projects(
     else:
         logger.debug("projects_retrieved", count=len(view.projects))
 
-    return projects_service.views_to_responses(view, ProjectResponse)
+    return responses
 
 
 @router.get("/projects/authority", dependencies=[Depends(require_auth)])

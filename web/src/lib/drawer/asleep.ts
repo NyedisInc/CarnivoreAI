@@ -15,12 +15,14 @@ interface AsleepRecord {
     tmux_created_epoch?: number;
     agent_family?: string | null;
     agent_family_source?: string | null;
+    agent_wrapper_icon?: string | null;
     project_id?: number | null;
     project_name?: string | null;
     working_dir?: string | null;
     notifications_muted?: boolean;
     pinned_theme?: string | null;
     next_wake_at?: number | null;
+    offloaded?: boolean | null;
     automations_state?: string | null;
     automations_total?: number | null;
     automations_enabled?: number | null;
@@ -63,12 +65,14 @@ export function addRows(
             created_at_epoch: Number(rec.tmux_created_epoch) || 0,
             agent_family: rec.agent_family != null ? rec.agent_family : null,
             agent_family_source: rec.agent_family_source != null ? rec.agent_family_source : null,
+            agent_wrapper_icon: rec.agent_wrapper_icon != null ? rec.agent_wrapper_icon : null,
             project_id: rec.project_id != null ? rec.project_id : null,
             project_name: rec.project_name != null ? rec.project_name : null,
             working_dir: rec.working_dir != null ? rec.working_dir : null,
             notifications_muted: !!rec.notifications_muted,
             pinned_theme: rec.pinned_theme || null,
             next_wake_at: typeof rec.next_wake_at === 'number' && rec.next_wake_at > 0 ? rec.next_wake_at : null,
+            offloaded: rec.offloaded ?? null,
             automations_state: rec.automations_state ?? null,
             automations_total: rec.automations_total ?? null,
             automations_enabled: rec.automations_enabled ?? null,

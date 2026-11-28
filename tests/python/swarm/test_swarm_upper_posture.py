@@ -22,9 +22,9 @@ from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.launch_profiles.resolve import LaunchRequest, resolve_launch
 from src.core.launch_profiles.store import LaunchProfileStore
+from src.core.swarm.types import BodyIdentity
 from src.core.swarm import body, definition, delivery, launch, profiles, store, thread_port
 from src.core.swarm import body_create
-from src.core.swarm.body_create import BodyIdentity
 
 
 @pytest.fixture()

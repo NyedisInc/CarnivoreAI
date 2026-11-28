@@ -6,21 +6,21 @@
     import { isOneOf } from '../../opscenter/ui/stored-choice';
     import { t } from '../i18n/index.svelte';
     import { openFeaturesPage } from '../../plugins/sdk';
-    import { swarmInactive, setSwarmInactive } from '../../plugins/huddle/huddle-swarm-inactive.svelte';
-    import SwarmLedger from '../../plugins/huddle/swarm/SwarmLedger.svelte';
-    import SwarmOrg from '../../plugins/huddle/swarm/SwarmOrg.svelte';
-    import SwarmPanel from '../../plugins/huddle/swarm/SwarmPanel.svelte';
-    import SwarmSeatRefusal from '../../plugins/huddle/swarm/SwarmSeatRefusal.svelte';
+    import { swarmInactive, setSwarmInactive } from '../../plugins/taskmanager/huddle-swarm-inactive.svelte';
+    import SwarmLedger from '../../plugins/taskmanager/swarm/SwarmLedger.svelte';
+    import SwarmOrg from '../../plugins/taskmanager/swarm/SwarmOrg.svelte';
+    import SwarmPanel from '../../plugins/taskmanager/swarm/SwarmPanel.svelte';
+    import SwarmSeatRefusal from '../../plugins/taskmanager/swarm/SwarmSeatRefusal.svelte';
     import SwarmBoard from '../swarm-board/SwarmBoard.svelte';
     import { boardFocus, isFresh } from '../swarm-board/board-focus.svelte';
-    import { lineageFloor, type FloorItem, type FloorTarget } from '../../plugins/huddle/swarm/floor';
-    import { SWARM_TABS, SWARM_TAB_KEY } from '../../plugins/huddle/swarm/swarm-page';
-    import { createSwarmLive, openFloorTarget, turnOnSeat } from '../../plugins/huddle/swarm/swarm-live.svelte';
-    import { swarmSettings } from '../../plugins/huddle/swarm/swarm-settings.svelte';
-    import { saveTierOrder } from '../../plugins/huddle/swarm/node-order.svelte';
-    import { turnOnRefusal } from '../../plugins/huddle/swarm/turn-on-refusal';
-    import { buildTree, floorItems } from '../../plugins/huddle/swarm/swarm-tree';
-    import { filterKey, toggleFilter } from '../../plugins/huddle/agents/agent-page.svelte';
+    import { lineageFloor, type FloorItem, type FloorTarget } from '../../plugins/taskmanager/swarm/floor';
+    import { SWARM_TABS, SWARM_TAB_KEY } from '../../plugins/taskmanager/swarm/swarm-page';
+    import { createSwarmLive, openFloorTarget, turnOnSeat } from '../../plugins/taskmanager/swarm/swarm-live.svelte';
+    import { swarmSettings } from '../../plugins/taskmanager/swarm/swarm-settings.svelte';
+    import { saveTierOrder } from '../../plugins/taskmanager/swarm/node-order.svelte';
+    import { turnOnRefusal } from '../../plugins/taskmanager/swarm/turn-on-refusal';
+    import { buildTree, floorItems } from '../../plugins/taskmanager/swarm/swarm-tree';
+    import { filterKey, toggleFilter } from '../../plugins/taskmanager/agents/agent-page.svelte';
 
     interface Props {
         close?: () => void;

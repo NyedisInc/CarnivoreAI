@@ -9,14 +9,14 @@ START_ORDER = [
     "cli_command_shim", "server_log_breadcrumb", "server_log_rotate", "log_monitor", "auth_config",
     "projects_config_migration", "first_run_import", "notifications", "claude_hooks_strip", "local_servers",
     "log_monitoring", "refresh_store", "spectator_links_store", "refresh_purge_loop", "app_state_components", "relay",
-    "phone_link", "app_state_preferences", "deepsearch_scope", "event_hub", "pushes", "pack_orphan_ops",
+    "phone_link", "app_state_preferences", "deepsearch_scope", "event_hub", "pushes", "account_clients", "pack_orphan_ops",
     "companion_reconcile", "dev_hooks", "app_alerts", "account_notice", "self_check", "transcript_manifest", "pipeline",
     "browsers", "upload_sweeper", "skill_sweeper", "pipe_pruner", "skill_journal_recovery", "skill_auto_update",
-    "turn_checkpoints", "mac_awake", "crosstalk_dispatcher", "messaging", "attention_watcher", "notify_sources", "listing_push", "auto_sleep",
+    "turn_checkpoints", "retention", "mac_awake", "crosstalk_dispatcher", "messaging", "attention_watcher", "notify_sources", "listing_push", "auto_sleep",
     "mcp_bridge_migration", "automations", "work_backfill", "late_watches", "update_checker", "update_checker_route",
     "provider_ledger_poller", "argent_rollout", "db_integrity_scheduler", "db_integrity_scheduler_start", "session_journal",
-    "lineage_live", "stats", "ready_announcement", "federation_discovery", "byoai_features", "federation_link",
-    "plugin_host", "sidecar_runtime", "crosstalk_card_push", "gc_tuning", "request_log_rollup", "engine_clients",
+    "lineage_live", "stats", "mods_boot", "agy_boot", "federation_discovery", "byoai_features", "federation_link",
+    "plugin_host", "sidecar_runtime", "crosstalk_card_push", "gc_tuning", "request_log_rollup", "ready_announcement", "engine_clients",
 ]
 
 STOP_ORDER = [
@@ -28,7 +28,7 @@ STOP_ORDER = [
     "attention_watcher", "turn_checkpoints", "notify_sources", "core_services", "upload_sweeper", "server_log_rotate", "pipe_pruner",
     "skill_sweeper", "skill_journal_recovery", "work_backfill", "refresh_purge_loop", "refresh_store", "phone_link",
     "relay", "spectator_links_store", "browsers", "log_monitoring", "local_servers", "notifications",
-    "engine_clients", "argent_rollout",
+    "engine_clients", "argent_rollout", "retention",
 ]
 
 TEARDOWN_NAMES = [
@@ -44,7 +44,7 @@ TEARDOWN_NAMES = [
     "pipe_pruner_task", "skill_sweeper_task", "skill_journal_task", "work_backfill_task", "refresh_purge_task",
     "refresh_store", "phone_link_boot", "spectator_relay", "spectator_links_store", "browser_sweep_task",
     "browser_manager", "log_monitor", "local_servers", "notifications", "control_input", "tmux_control_readers",
-    "catalog_client", "argent_rollout",
+    "catalog_client", "argent_rollout", "retention_task",
 ]
 
 STOP_RULES = {name: (False, ()) for name in STOP_ORDER}

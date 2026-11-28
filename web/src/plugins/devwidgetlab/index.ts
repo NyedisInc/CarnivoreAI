@@ -1,4 +1,4 @@
-import manifest from '../../../../src/plugins/devwidgetlab/cplug.json';
+import manifest from '../../../../src/plugins/devwidgetlab/carnivore.toml';
 import type { CplugManifest, CplugWeb } from '../sdk';
 import { devwidgetlabTab } from './lab-tab';
 

@@ -88,6 +88,7 @@ export function releaseScheduledRuns(): void {
 let taskManagerRead: Resource<TaskManagerSchedule[]> | null = null;
 let taskManagerRefs = 0;
 
+/* the Task Manager */
 export function acquireTaskManagerSchedules(): Resource<TaskManagerSchedule[]> {
   if (taskManagerRead === null) {
     taskManagerRead = resource<TaskManagerSchedule[]>(readTaskManagerSchedules, {
@@ -101,6 +102,7 @@ export function acquireTaskManagerSchedules(): Resource<TaskManagerSchedule[]> {
   return taskManagerRead;
 }
 
+/* the Task Manager */
 export function releaseTaskManagerSchedules(): void {
   if (taskManagerRead === null) return;
   taskManagerRefs -= 1;

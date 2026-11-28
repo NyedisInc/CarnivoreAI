@@ -222,8 +222,20 @@
         window.addEventListener('message', onMessage);
     }
 
+    function adoptLive(info) {
+        if (row === null || ended || !info || !info.session || !info.session.id) return Promise.resolve();
+        if (String(info.session_row_id) !== String(row) || info.session.id === boundId) return Promise.resolve();
+        if (busy) { again = true; return Promise.resolve(); }
+        busy = true;
+        setTitle(info);
+        return bind(info, boundId !== '').catch(function (err) {
+            console.warn('[SoloWindow] adoptLive failed', err && err.message);
+        }).then(function () { busy = false; });
+    }
+
     var api = {
         active: active,
+        adoptLive: adoptLive,
         rowId: rowId,
         parseSolo: parseSolo,
         findRow: findRow,

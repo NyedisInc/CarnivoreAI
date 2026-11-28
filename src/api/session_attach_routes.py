@@ -9,10 +9,14 @@ from src.api.remote_route_guard import refuse_remote
 from src.api.resize_negotiation import adopt_grid
 from src.config import settings
 from src.core.hosts.registry import HostUnavailable
+from src.core.hosts.identity import parse_remote_session_id
+from src.core.session_ops import close_record
 from src.core.restart_live_gate import nothing_running
 from src.core.swarm import leaders as swarm_leaders
 from src.core.swarm import switch as swarm_switch
+from src.core.backup_health.offload_guard import OFFLOADED_CODE
 from src.core.launch_profiles import create_seam
+from src.core.session_respawn import RESPAWN_OFFLOADED
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_profiles.secrets import SecretError
 from src.core.tmux_listing import coerce_listing
@@ -27,7 +31,7 @@ from src.models import (
 )
 from src.api.launch_profile_errors import gone_profile_error
 from src.api.error_response import api_error, refusal_error
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 logger = structlog.get_logger()
 router = APIRouter()
@@ -256,6 +260,8 @@ async def respawn_session(request: Request, body: RespawnSessionRequest):
         from src.core.account_switch import resume_after_restart  # noqa: PLC0415
 
         resume_after_restart.schedule(request.app.state, body.session_name)
+    if result.get("kind") == RESPAWN_OFFLOADED:
+        result = {**result, "code": OFFLOADED_CODE}
     return RespawnSessionResponse(**result)
 
 
@@ -307,8 +313,19 @@ async def destroy_external_session(request: Request, name: str, confirm_name: Op
 
     logger.info("api_destroy_external_session_request", name=name)
 
+    socket = session_manager.tmux_socket_name()
+    local = parse_remote_session_id(name) is None
+    epoch = await close_record.read_external_epoch(name, socket) if local else None
+    result: Dict[str, Any] = {}
+
+    async def kill() -> None:
+        result.update(await session_manager.destroy_external_session(name))
+
     try:
-        result = await session_manager.destroy_external_session(name)
+        if local:
+            await close_record.stop_and_record(kill, socket=socket, name=name, epoch=epoch)
+        else:
+            await kill()
     except HostUnavailable as e:
         raise refusal_error(e, name=name) from e
     except ValueError as e:

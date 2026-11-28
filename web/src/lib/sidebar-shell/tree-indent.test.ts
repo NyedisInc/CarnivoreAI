@@ -27,7 +27,8 @@ const row = '<div class="session-sidebar-row"></div>';
 describe('the drawer tree indent', () => {
     const selectors = indentSelectors(band);
     const padded = selectors.join(', ');
-    const leaderOff = /\.session-sidebar-leader > \.session-sidebar-group__body \{\s*padding-inline-start:\s*0;/;
+    const leaderOff = /\.session-sidebar-leader > \.session-sidebar-group__body,\s*\.session-sidebar-list > \.session-sidebar-group > \.session-sidebar-group__body \{\s*padding-inline-start:\s*0;/;
+    const zeroed = '.session-sidebar-leader > .session-sidebar-group__body, .session-sidebar-list > .session-sidebar-group > .session-sidebar-group__body';
 
     it('declares one step token and one indent rule, in tokens only', () => {
         expect(band.match(/--sidebar-tree-step:/g)).toHaveLength(1);
@@ -50,8 +51,8 @@ describe('the drawer tree indent', () => {
         expect(offenders).toEqual([]);
     });
 
-    it('starts every heading, row, agents fold and layout member of depth N at N steps', () => {
-        document.body.innerHTML = band_(
+    it('starts top-level section children flush left (depth 0) and indents nested levels by one step each (#3391)', () => {
+        document.body.innerHTML = `<div class="session-sidebar-list">${band_(
             band_(
                 band_(
                     row + band_(row, 'session-sidebar-group--nested') + band_(row, 'agents'),
@@ -60,12 +61,19 @@ describe('the drawer tree indent', () => {
                 'company',
             ),
             'companies',
-        ) + `<div class="session-sidebar-group__body"><div class="session-sidebar-layout__members" id="lm">${row}</div></div>`;
-        const depthsOf = (sel: string): number[] => Array.from(document.querySelectorAll(sel)).map((e) => depthOf(e, padded));
-        expect(depthsOf('.session-sidebar-group__headerrow')).toEqual([0, 1, 2, 3, 3]);
-        expect(depthsOf('.session-sidebar-row')).toEqual([3, 4, 4, 1]);
-        expect(depthOf(document.querySelector('#lm')!, padded)).toBe(0);
-        expect(depthOf(document.querySelector('#lm .session-sidebar-row')!, padded)).toBe(1);
+        )}${band_(`<div class="session-sidebar-layout__members" id="lm">${row}</div>`, 'layouts')}</div>`;
+        const effectiveDepth = (el: Element): number => {
+            let n = 0;
+            for (let p = el.parentElement; p; p = p.parentElement) {
+                if (p.matches(padded) && !p.matches(zeroed)) n += 1;
+            }
+            return n;
+        };
+        const depthsOf = (sel: string): number[] => Array.from(document.querySelectorAll(sel)).map(effectiveDepth);
+        expect(depthsOf('.session-sidebar-group__headerrow')).toEqual([0, 0, 1, 2, 2, 0]);
+        expect(depthsOf('.session-sidebar-row')).toEqual([2, 3, 3, 1]);
+        expect(effectiveDepth(document.querySelector('#lm')!)).toBe(0);
+        expect(effectiveDepth(document.querySelector('#lm .session-sidebar-row')!)).toBe(1);
     });
 
     it('insets each divider to the level it sits at: left 0 inside the padded parent body', () => {

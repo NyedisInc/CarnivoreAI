@@ -2,12 +2,15 @@
   "api_routes": [
     "GET /v1/admin/submissions/{id}/report",
     "POST /v1/submissions/{id}/approve",
+    "POST /v1/submissions/{id}/pin",
+    "POST /v1/submissions/{id}/override",
     "POST /v1/submissions/{id}/regate",
     "POST /v1/admin/submissions/{id}/revoke",
+    "POST /v1/admin/items/{item_id}/revoke",
     "POST /v1/submissions/{id}/revocation-published"
   ],
   "area": "skills-catalog",
-  "description": "Admins signed in with a passkey review submissions by status. Opening a row shows the stored gate report, code files and sizes, AI summary and findings with scan coverage, and the diff against the published version. Approve quotes the report digest so you approve exactly what you saw. Reject and an AI-only override ask for a written reason; override covers skills, themes and both plugin runtimes. Missing scans and integrity failures cannot be overridden. The publish worker signs and publishes approved submissions; revoke takes a published item back.",
+  "description": "Admins signed in with a passkey review submissions by status. Opening a row shows the stored gate report, code files and sizes, two-sentence AI summary and findings with scan coverage, GitHub provenance, and the diff against the published version. Clean and Flagged plugins auto-publish immediately while Blocked submissions require an explicit maintainer override quoting the report digest. Reject and an AI-only override ask for a written reason; override covers skills, themes and both plugin runtimes. Missing scans and integrity failures cannot be overridden. The publish worker signs and publishes approved submissions; 1-click revoke takes a submission or all active versions of an item back immediately.",
   "docs": [
     "docs/catalog.md",
     "docs/warez/02-submission-pipeline.md"
@@ -45,7 +48,7 @@
     "hosted/catalog/api/routes_revoke.py",
     "web/src/admin/ReportView.svelte"
   ],
-  "updated": "2026-10-27",
+  "updated": "2026-11-26",
   "where": [
     "https://admin.carnivore.ai, the submissions queue."
   ]

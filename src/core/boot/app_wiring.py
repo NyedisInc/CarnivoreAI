@@ -38,6 +38,26 @@ def _uninstall_deepsearch(_ctx: "BootContext") -> None:
     deepsearch_index_scope.uninstall()
 
 
+async def _install_account_clients(ctx: "BootContext") -> None:
+    import sqlite3
+
+    from src.core.api_keys import store as api_key_store
+    from src.core.catalog import client_sessions
+    from src.core.db import DatastoreUnreadableError
+
+    services = ctx.services
+    if ctx.refresh_store is None:
+        return
+    ctx.refresh_store.on_family_dead = client_sessions.family_died(
+        services.settings_reader.state_dir, services.catalog.api_base_url)
+    try:
+        families = await ctx.refresh_store.live_families()
+        keys = [row["id"] for row in api_key_store.get_store().list() if not row.get("revoked_at")]
+        client_sessions.migrate(services.settings_reader.state_dir(), families, keys)
+    except (sqlite3.Error, DatastoreUnreadableError, OSError) as exc:
+        logger.warning("catalog_clients_migration_skipped", error=type(exc).__name__)
+
+
 def _install_pushes(ctx: "BootContext") -> None:
     state = ctx.app.state
     account_push.install(state)
@@ -139,6 +159,7 @@ def steps() -> list[BootStep]:
         BootStep(name="deepsearch_scope", order=250, stop_name="deepsearch_index_scope", start=_install_deepsearch_and_time_zone, stop=_uninstall_deepsearch,
                  stop_order=teardown_slot(14)),
         BootStep(name="pushes", order=270, start=_install_pushes),
+        BootStep(name="account_clients", order=271, start=_install_account_clients),
         BootStep(name="pack_orphan_ops", order=280, start=_close_orphan_pack_ops),
         BootStep(name="companion_reconcile", order=290, start=_install_companion_reconcile),
         BootStep(name="dev_hooks", order=300, start=_install_dev_hooks),

@@ -73,12 +73,15 @@ afterEach(async () => {
   localStorage.clear();
 });
 
-test('adding a terminal tab starts exactly one terminal and disposes none', () => {
-  const before = counts.started;
-  expect(before).toBeGreaterThanOrEqual(2);
+test('adding a background terminal tab defers start until visited, then starts exactly one and disposes none (#3290)', () => {
+  expect(counts.started).toBe(1);
   setGroups(terminalLayout, { [A]: { tabs: [A, B, C] } });
   flushSync();
-  expect(counts.started - before).toBe(1);
+  expect(counts.started).toBe(1);
+  expect(counts.disposed).toBe(0);
+  selectTab(terminalLayout, A, C);
+  flushSync();
+  expect(counts.started).toBe(2);
   expect(counts.disposed).toBe(0);
 });
 
@@ -90,13 +93,18 @@ test('adding a widget tab starts and disposes no terminal', () => {
   expect(counts.disposed).toBe(0);
 });
 
-test('closing a tab disposes only that tab, reordering and switching touch no terminal', () => {
+test('closing a visited tab disposes only that tab, reordering and switching touch no live terminal', () => {
   setGroups(terminalLayout, { [A]: { tabs: [A, B, C] } });
   flushSync();
+  selectTab(terminalLayout, A, B);
+  flushSync();
+  selectTab(terminalLayout, A, C);
+  flushSync();
   const started = counts.started;
+  expect(started).toBe(3);
   setGroups(terminalLayout, { [A]: { tabs: [A, C, B] } }); // reorder
   flushSync();
-  selectTab(terminalLayout, A, C); // switch
+  selectTab(terminalLayout, A, B);
   flushSync();
   expect(counts.started - started).toBe(0);
   expect(counts.disposed).toBe(0);
@@ -106,10 +114,14 @@ test('closing a tab disposes only that tab, reordering and switching touch no te
   expect(counts.disposed).toBe(1);
 });
 
-test('a tab taken down and drawn again at once (a move) keeps its live terminal; a closed one ends after the hold', () => {
+test('a visited tab taken down and drawn again at once (a move) keeps its live terminal; a closed one ends after the hold', () => {
   vi.useFakeTimers();
   setParking(true);
   try {
+    selectTab(terminalLayout, A, B);
+    flushSync();
+    selectTab(terminalLayout, A, A);
+    flushSync();
     const before = { started: counts.started, disposed: counts.disposed };
     setGroups(terminalLayout, { [A]: { tabs: [A] } });
     flushSync();

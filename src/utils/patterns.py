@@ -1,7 +1,7 @@
 
 import re
 import socket
-from typing import Optional, Dict, List, Callable
+from typing import Optional, Dict, Iterable, List, Callable
 from dataclasses import dataclass
 import structlog
 
@@ -108,38 +108,49 @@ class PatternDetector:
         self.callbacks[pattern_name].append(callback)
         logger.debug("pattern_callback_registered", pattern=pattern_name)
 
-    def detect_patterns(self, text: str, line_number: int = 0) -> List[PatternMatch]:
+    def scan_patterns(
+        self,
+        text: str,
+        line_number: int = 0,
+        *,
+        only_names: Optional[Iterable[str]] = None,
+    ) -> List[PatternMatch]:
         matches = []
-
+        allowed = None if only_names is None else set(only_names)
         for pattern_name, regex in self.PATTERNS.items():
+            if allowed is not None and pattern_name not in allowed:
+                continue
             match = regex.search(text)
             if match:
-                pattern_match = PatternMatch(
+                matches.append(PatternMatch(
                     pattern_name=pattern_name,
                     matched_text=match.group(0),
                     groups=match.groups(),
                     line_number=line_number,
-                )
-                matches.append(pattern_match)
+                ))
+        return matches
 
-                logger.debug(
-                    "pattern_detected",
-                    pattern=pattern_name,
-                    length=len(text),
-                    line=line_number,
-                )
+    def dispatch_matches(self, matches: List[PatternMatch]) -> None:
+        for pattern_match in matches:
+            pattern_name = pattern_match.pattern_name
+            logger.debug(
+                "pattern_detected",
+                pattern=pattern_name,
+                line=pattern_match.line_number,
+            )
+            for callback in self.callbacks.get(pattern_name, ()):
+                try:
+                    callback(pattern_match)
+                except Exception as e:
+                    logger.error(
+                        "pattern_callback_error",
+                        pattern=pattern_name,
+                        error=str(e),
+                    )
 
-                if pattern_name in self.callbacks:
-                    for callback in self.callbacks[pattern_name]:
-                        try:
-                            callback(pattern_match)
-                        except Exception as e:
-                            logger.error(
-                                "pattern_callback_error",
-                                pattern=pattern_name,
-                                error=str(e),
-                            )
-
+    def detect_patterns(self, text: str, line_number: int = 0) -> List[PatternMatch]:
+        matches = self.scan_patterns(text, line_number)
+        self.dispatch_matches(matches)
         return matches
 
     def extract_port(self, text: str) -> Optional[int]:

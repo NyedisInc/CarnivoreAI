@@ -44,7 +44,10 @@
     let devices = $state<Device[]>([]);
     let win = $state<PairWindow | null>(null);
     let busy = $state(false);
-    let problem = $state('');
+    let pairingPending = $state(false);
+    let actionProblem = $state('');
+    let loadProblem = $state('');
+    const problem = $derived(actionProblem || loadProblem);
     let note = $state('');
     let confirmingRevoke = $state<string | null>(null);
     let overLink = $state(false);
@@ -85,7 +88,7 @@
             status = await getStatus(fetcher);
             devices = await listDevices(fetcher);
             if (win) await followPairing(status.pairing.state);
-            problem = '';
+            loadProblem = '';
         } catch (error) {
             if (error instanceof ApiError && error.status === 403 && error.code === 'account_required') {
                 return;
@@ -95,7 +98,7 @@
                 stopPush();
                 return;
             }
-            problem = errorText(error);
+            loadProblem = errorText(error);
         } finally {
             loading = false;
             if (dirty && !overLink && document.visibilityState !== 'hidden') {
@@ -133,12 +136,12 @@
 
     async function act(work: () => Promise<void>): Promise<void> {
         busy = true;
-        problem = '';
+        actionProblem = '';
         note = '';
         try {
             await work();
         } catch (error) {
-            problem = errorText(error);
+            actionProblem = errorText(error);
         } finally {
             busy = false;
         }
@@ -157,15 +160,25 @@
         gated(() =>
             act(async () => {
                 sawPending = false;
-                win = await openWindow(fetcher);
+                pairingPending = true;
+                try {
+                    win = await openWindow(fetcher);
+                } finally {
+                    pairingPending = false;
+                }
             }),
         );
     const retry = () =>
         gated(() =>
             act(async () => {
                 sawPending = false;
-                await acknowledgeFailures(fetcher);
-                win = await openWindow(fetcher);
+                pairingPending = true;
+                try {
+                    await acknowledgeFailures(fetcher);
+                    win = await openWindow(fetcher);
+                } finally {
+                    pairingPending = false;
+                }
             }),
         );
     const revoke = (id: string) =>
@@ -196,7 +209,9 @@
 
 {#if !overLink}
 <div class="tm" data-pl="panel">
-    {#if status && locked && !status.enabled}
+    {#if status?.pack_member}
+        <State inline title={t('settings.phone_link.pack_member')} data-pl="pack-member" />
+    {:else if status && locked && !status.enabled}
         <div class="pl-signin" data-pl="signin">
             <p class="tm__sub">{t('settings.phone_link.signin.hint')}</p>
             <Button variant="confirm" data-pl="signin-btn" onclick={() => void gated(() => act(async () => { status = await setEnabled(true, fetcher); }))}>
@@ -242,13 +257,18 @@
             {:else}
             <div>
                 <Button variant="confirm" data-pl="pair" disabled={busy || !status.enabled} onclick={() => void pair()}>
-                    {t('settings.phone_link.pair')}
+                    {pairingPending ? t('settings.phone_link.pairing') : t('settings.phone_link.pair')}
                 </Button>
             </div>
+            {#if pairingPending}
+                <State inline title={status.cert ? t('settings.phone_link.pairing.starting') : t('settings.phone_link.pairing.first_cert')}
+                    role="status" data-pl="pairing-wait" />
+            {/if}
             {/if}
         {/if}
 
     {/if}
+    {#if status && problem}<State kind="error" inline title={problem} data-pl="problem" />{/if}
     {#if status}
         {#if devices.length > 0}
             <List label={t('settings.phone_link.switch')} data-pl="devices">
@@ -277,14 +297,17 @@
                     {/each}
                 {/snippet}
             </List>
-        {:else}
+        {:else if !status.pack_member}
             <p class="tm__sub" data-pl="empty">{t('settings.phone_link.empty')}</p>
         {/if}
-        <CustomDomain {t} {fetcher} part="main" />
+        {#if !status.pack_member}
+            <CustomDomain {t} {fetcher} part="main" />
+        {/if}
     {:else if !problem}
         <p class="tm__sub">{t('settings.phone_link.loading')}</p>
+    {:else}
+        <State kind="error" inline title={problem} data-pl="problem" />
     {/if}
     {#if note}<State inline title={note} role="status" data-pl="note" />{/if}
-    {#if problem}<State kind="error" inline title={problem} data-pl="problem" />{/if}
 </div>
 {/if}

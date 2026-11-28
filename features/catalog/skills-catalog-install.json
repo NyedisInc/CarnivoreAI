@@ -33,7 +33,7 @@
   "status": "stable",
   "summary": "install a skill or plugin from the catalog straight into a session.",
   "surfaces": [],
-  "updated": "2026-10-15",
+  "updated": "2026-11-26",
   "where": [
     "The install button on each skill card in the catalog."
   ]

@@ -8,7 +8,12 @@ import type { Translate } from '../sessions/types';
 
 export function uninstallableRow(rows: readonly InstalledItem[], itemId: string): InstalledItem | undefined {
     return rows.find(
-        (row) => row.item_id === itemId && row.kind === 'cplug' && row.source_index_url !== 'builtin' && typeof row.install_id === 'string' && row.install_id !== '',
+        (row) =>
+            row.item_id === itemId &&
+            (row.kind === 'cplug' || row.kind === 'plugin') &&
+            row.source_index_url !== 'builtin' &&
+            typeof row.install_id === 'string' &&
+            row.install_id !== '',
     );
 }
 

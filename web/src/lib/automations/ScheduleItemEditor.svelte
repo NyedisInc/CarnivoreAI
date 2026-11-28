@@ -5,7 +5,7 @@
   import NumberField from '../base/NumberField.svelte';
   import Select from '../base/Select.svelte';
   import { t } from '../i18n/index.svelte';
-  import { editorDraft, MAX_HOURS, REPEAT_KINDS, type EditorDraft, type RepeatKind } from '../../plugins/huddle/task-manager-schedule';
+  import { editorDraft, MAX_HOURS, REPEAT_KINDS, type EditorDraft, type RepeatKind } from '../../plugins/taskmanager/task-manager-schedule';
   import type { WritableSchedule } from '../task-manager-schedules/scheduled-api';
 
   interface Props {

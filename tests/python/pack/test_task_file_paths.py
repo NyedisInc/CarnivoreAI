@@ -10,6 +10,7 @@ import pytest
 
 from src.core.pack.migrate import manifest as manifest_mod
 from src.core.pack.migrate import task_manager_history, task_manager_side
+from src.core.work import folders
 from src.plugins.sdk import ports, task_folders
 from tests.python.pack.test_task_manager_side_compat import ITEM_INSERT, machine, sql
 
@@ -68,6 +69,18 @@ def parts_of(state: str) -> List[Dict[str, Any]]:
             for e in json.loads(r["parts"] or '{"files": []}')["files"]]
 
 
+def plugin_folder(state: str) -> Path:
+    return Path(state) / folders.PLUGINS_FOLDER / folders.CURRENT_ID
+
+
+def files_root(state: str) -> Path:
+    return Path(state).joinpath(*folders.files_rel(folders.CURRENT_ID).split("/"))
+
+
+def written_roots(state: str) -> list:
+    return [root for root in folders.files_roots(Path(state)) if root.exists()]
+
+
 def test_two_items_that_named_one_file_each_get_their_own_copy(tmp_path: Path):
     paste = task_folder(tmp_path)
     target = machine(tmp_path, "b")
@@ -76,7 +89,7 @@ def test_two_items_that_named_one_file_each_get_their_own_copy(tmp_path: Path):
     assert len(refs) == 2 and refs[0]["path"] != refs[1]["path"]
     for ref in refs:
         assert ref["path"] == f"files/{ref['item_id']}/{NAME}", "the path is the receiving item's own folder, not the source's absolute path"
-        assert (Path(target) / "cplugs" / "huddle" / ref["path"]).read_bytes() == BYTES
+        assert (plugin_folder(target) / ref["path"]).read_bytes() == BYTES
     assert paste.read_bytes() == BYTES, "the source file is never touched"
 
 
@@ -85,8 +98,8 @@ def test_deleting_one_items_copy_leaves_the_other_item_s_file(tmp_path: Path):
     target = machine(tmp_path, "b")
     task_manager_side.import_list(target, "4", source_with_two_items(tmp_path, paste), {})
     first, second = parts_of(target)
-    (Path(target) / "cplugs" / "huddle" / first["path"]).unlink()
-    assert (Path(target) / "cplugs" / "huddle" / second["path"]).read_bytes() == BYTES
+    (plugin_folder(target) / first["path"]).unlink()
+    assert (plugin_folder(target) / second["path"]).read_bytes() == BYTES
 
 
 def test_undo_removes_exactly_the_copies(tmp_path: Path):
@@ -119,7 +132,7 @@ def test_a_file_that_is_not_a_task_file_is_dropped_never_copied_and_the_message_
     assert parts_of(target) == [] and not record["task_files"] and sorted(record["task_files_dropped"]) == ["secret.txt", "shot.png"]
     texts = sorted(r["text"] for r in sql(target, "SELECT text FROM work_messages"))
     assert texts == ["see file\n[secret.txt was not on this computer]", "see file\n[shot.png was not on this computer]"]
-    assert not (Path(target) / "cplugs" / "huddle" / "files").exists()
+    assert written_roots(target) == []
 
 
 def test_a_files_only_message_is_never_left_an_empty_bubble(tmp_path: Path):
@@ -133,7 +146,7 @@ def test_a_files_only_message_is_never_left_an_empty_bubble(tmp_path: Path):
 def test_a_relative_path_is_dropped_because_pack_carries_no_bytes(tmp_path: Path):
     target = machine(tmp_path, "b")
     manifest = exported_with(tmp_path, [entry_for(f"files/1/{NAME}", "x.png")])
-    other = Path(target) / "cplugs" / "huddle" / "files" / "1"
+    other = files_root(target) / "1"
     other.mkdir(parents=True)
     (other / NAME).write_bytes(b"a local item's own file")
     record = task_manager_side.import_list(target, "4", manifest, {})

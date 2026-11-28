@@ -1,0 +1,1 @@
+import"./widget-lab-chunk-Check.js";var e={wide:1100,mid:720};function t(t){return t>=e.wide?24:t>=e.mid?12:1}export{t};

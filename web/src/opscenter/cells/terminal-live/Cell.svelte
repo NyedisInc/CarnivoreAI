@@ -62,7 +62,7 @@
   const dead = $derived(sessions.status === 'ok' && sessionId !== '' && row === null);
 
   const hue = $derived<StatusHue>(
-    row ? statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row)) : 'grey',
+    row ? statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row), row.activity_hint) : 'grey',
   );
   const statusWord = $derived(
     row ? statusLabel(row.activity_status, row.startup_gate, row.unread, hostOffline(row), row.activity_hint, usageLimitLabel(row)) : '',
@@ -79,7 +79,14 @@
     row === null ? '' : sessionId + '\n' + (row.tmux_session ?? ''),
   );
 
-  const live = $derived(sessionId !== '' && showsPane && !dead && bodyEl !== null);
+  const tabPane = useTabPane();
+  const frameHeader = useFrameHeader();
+  let visited = $state(tabPane ? tabPane.active : true);
+  $effect(() => {
+    if (tabPane?.active && !untrack(() => visited)) visited = true;
+  });
+
+  const live = $derived(visited && sessionId !== '' && showsPane && !dead && bodyEl !== null);
 
   const slotKey = $derived(instance);
 
@@ -125,8 +132,6 @@
     return el;
   }
 
-  const tabPane = useTabPane();
-  const frameHeader = useFrameHeader();
   const groupSlot = $derived(frameHeader?.gridSlot ?? null);
   $effect(() => {
     if (liveClient) followTab(liveClient, slotKey, tabPane, layoutZoom.isCovered(groupSlot));
@@ -218,10 +223,10 @@
         onfocusoutcapture={dropFocus}
       ></div>
     {/if}
-    {#if !dead}<SkillsDrawer {sessionId} slot={instance} {width} />{/if}
+    {#if visited && !dead}<SkillsDrawer {sessionId} slot={instance} {width} />{/if}
   </div>
 
-  {#if sessionId}
+  {#if visited && sessionId}
     <TerminalFoot {sessionId} {width} />
   {/if}
 </div>

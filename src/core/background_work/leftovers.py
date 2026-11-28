@@ -11,6 +11,7 @@ from src.core.attention.turn_counts import KIND_MONITOR
 from src.core.background_work.listing import ListedProcess
 from src.core.session_token_usage import claude_reader
 from src.core.session_transcript_presence import CONVERSATION_PRESENT
+from src.core.subagents.parent_index import parked_agent_ids, read_completion_index
 from src.core.subagents.parked_launches import OpenLaunch, conversation_launches
 from src.core.subagents.reader import agent_statuses
 
@@ -65,10 +66,12 @@ def finished_agent_ids(
     if not done:
         return done
     launches = conversation_launches(transcript_path)
-    if launches is None:
+    index = read_completion_index(transcript_path)
+    if launches is None or index is None:
         return None
     instant = now or datetime.now(timezone.utc)
-    return done - armed_monitor_owners(launches, done, now=instant, process_started_at=process_started_at)
+    armed = armed_monitor_owners(launches, done, now=instant, process_started_at=process_started_at)
+    return done - armed - parked_agent_ids(index, done)
 
 
 def armed_monitor_owners(

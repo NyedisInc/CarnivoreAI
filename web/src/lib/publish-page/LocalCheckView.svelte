@@ -87,6 +87,14 @@
                 </ul>
             </Panel>
         {/if}
+        {#if pv?.script_files?.length}
+            <Panel label={t('publish.page.local.scripts_warn_label')}>
+                <p class="d-reason" data-tone="yellow" role="status">{t('publish.page.local.scripts_warn', { count: pv.script_files.length })}</p>
+                <ul class="d-files">
+                    {#each pv.script_files ?? [] as sp (sp)}<li><span class="d-files__p pp-ident"><Ident text={sp} /></span></li>{/each}
+                </ul>
+            </Panel>
+        {/if}
         {#if notes}<Panel label={t('publish.page.local.notes')}><p class="d-lead d-lead--first">{notes}</p></Panel>{/if}
         {#if cleanRoomSkipExpected({ kind })}
             <Panel label={t('publish.page.checks.clean_room_label')}>

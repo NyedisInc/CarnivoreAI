@@ -25,6 +25,9 @@ CONNECTION_PRAGMAS = (
     "PRAGMA journal_mode=WAL",
     "PRAGMA foreign_keys=ON",
     "PRAGMA busy_timeout=30000",
+    "PRAGMA cache_size=-16000",
+    "PRAGMA temp_store=MEMORY",
+    "PRAGMA mmap_size=67108864",
     "PRAGMA journal_size_limit=67108864",
 )
 

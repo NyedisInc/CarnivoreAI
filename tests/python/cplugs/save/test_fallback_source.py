@@ -103,6 +103,7 @@ def test_the_boot_flag_defaults_off_raises_on_begin_and_lowers_on_end():
 def rig(tmp_path: Path, monkeypatch):
     state = tmp_path / "state"
     state.mkdir()
+    monkeypatch.setattr(fb, "_sources", {})
     monkeypatch.setattr(transcript_files, "state_dir", lambda: state)
     monkeypatch.setattr(transcript_files, "projects_dir", lambda: make_corpus(tmp_path))
     app = FastAPI()

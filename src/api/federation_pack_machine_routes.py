@@ -26,6 +26,7 @@ class ExchangeBody(BaseModel):
     settings: Optional[Dict[str, Any]] = None
     settings_sig: Optional[Dict[str, Any]] = None
     roster: Optional[Dict[str, Any]] = None
+    roster_v2: Optional[Dict[str, Any]] = None
     want_agents: bool = False
 
 
@@ -71,8 +72,12 @@ async def exchange_snapshots(body: ExchangeBody, principal: Principal = Depends(
 @router.put("/reserve")
 async def put_reserve(body: PatchBody, principal: Principal = Depends(_require_machine)) -> Dict[str, Any]:
     """Edit this machine's reserve on a peer's behalf: a comfort setting, so it may be loosened remotely (F22)."""
-    _peer(principal)
+    grant = _peer(principal)
     wired = _wired()
+    if capabilities.mesh_on():
+        alpha = await asyncio.to_thread(wired.runtime.content_alpha)
+        if alpha is None or grant.peer_install_id != alpha:
+            raise HTTPException(403, {"code": "pack_reserve_alpha_only", "detail": "the reserve changes only at the alpha or on this computer"})
     try:
         cfg = await asyncio.to_thread(wired.runtime.set_reserve, body.patch)
     except ValueError as exc:
@@ -89,7 +94,7 @@ async def put_tighten(body: PatchBody, principal: Principal = Depends(_require_m
     try:
         new = await asyncio.to_thread(wired.runtime.set_restrictions, body.patch, from_peer=True)
     except ValueError as exc:
-        raise HTTPException(422, {"code": "restrictions_invalid", "detail": " ".join(str(exc).split())[:300]}) from None
+        raise api_error(422, "restrictions_invalid", None, error_type=type(exc).__name__) from None
     except PermissionError as exc:
         raise restrictions_mod.refusal(f"loosen_refused:{exc}") from None
     await asyncio.to_thread(wired.sync_scopes)

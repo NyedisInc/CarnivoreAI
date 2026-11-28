@@ -22,9 +22,9 @@ def project_id_arg(args: dict) -> int:
     return value
 
 
-async def project_label(project_id: int) -> str:
+async def project_label(project_id: int, *, include_archived: bool = False) -> str:
     try:
-        return json.dumps(await _current_name(project_id))
+        return json.dumps(await _current_name(project_id, include_archived=include_archived))
     except ToolError:
         return f"project {project_id}"
 

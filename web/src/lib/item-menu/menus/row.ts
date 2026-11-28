@@ -21,6 +21,7 @@ export interface ResolvedRowItem {
     danger?: boolean;
     locked?: string;
     plugin?: boolean;
+    keyless?: boolean;
 }
 
 export const BRANCH_ITEM_IDS: readonly string[] = ['add-to', 'add-members', 'send-to'];
@@ -50,8 +51,12 @@ export function rowMenuItems(ctx: RowMenuCtx): ResolvedRowItem[] {
         if (!captured.includes(item.id)) continue;
         if (item.id === 'mark-unread' && ctx.unread === true && out.some((o) => o.id === 'mark-read')) continue;
         if (item.id === 'mark-unread' && (ctx.status === 'working' || ctx.status === 'working_subagent') && ctx.unread !== true) continue;
+        const enabled = !item.disabled;
         out.push({
-            id: item.id, order: item.order, separatorBefore: false, label: item.label, enabled: true, reason: '', plugin: true,
+            id: item.id, order: item.order, separatorBefore: false, label: item.label, enabled,
+            reason: enabled ? '' : (item.reason || 'Unavailable'), plugin: true,
+            ...(item.danger ? { danger: true } : {}),
+            ...(item.keyless ? { keyless: true } : {}),
             ...(item.locked ? { locked: item.feature ?? item.id } : {}),
         });
     }
@@ -112,12 +117,13 @@ function runNative(id: string, ctx: RowMenuCtx): void {
 
 export function rowNodes(ctx: RowMenuCtx, env: ItemMenuEnv): MenuNode[] {
     return rowMenuItems(ctx).map((item): MenuNode => {
-        const html = env.glyph(item.id);
+        const html = env.glyph(item.id === 'group' ? 'add' : item.id);
         const node: MenuNode = { id: item.id, label: item.label, ...(html ? { glyphHtml: html } : {}) };
         if (item.separatorBefore) node.sep = true;
-        if (!item.enabled) node.blocked = item.reason;
+        if (!item.enabled) node.blocked = item.reason || 'Unavailable';
         if (item.tone) node.tone = item.tone;
         if (item.danger) node.danger = true;
+        if (item.keyless) node.keyless = true;
         if (item.locked) node.locked = item.locked;
         if (BRANCH_ITEM_IDS.includes(item.id)) {
             node.children = item.enabled ? branchChildren(item.id, ctx, env).map((child) => withClose(child, env.close)) : [];

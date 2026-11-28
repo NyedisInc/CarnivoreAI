@@ -138,6 +138,13 @@ class RespawnSessionResponse(BaseModel):
             "live backend for; the client then reopens through adopt"
         ),
     )
+    code: Optional[str] = Field(
+        None,
+        description=(
+            "Machine code of a refusal a client acts on: 'offloaded' when the conversation is in the backup vault (kind is 'offloaded' too). "
+            "With session_uuid it is what opens the restore prompt; null session_uuid means the row could not be resolved and only the sentence in detail can be shown"
+        ),
+    )
     session_uuid: Optional[str] = Field(
         None,
         description=(

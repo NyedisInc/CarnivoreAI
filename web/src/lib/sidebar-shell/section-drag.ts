@@ -140,12 +140,22 @@ function repaint(): void {
 function place(d: Drag, list: Element, clientY: number): void {
     let key: string;
     if (d.groupUuid !== null) {
-        const others = memberWrappers(list).filter((el) => el !== d.el);
+        const parentKey = G.groupByUuid(d.groupUuid)?.parent_key ?? null;
+        const siblingSet = new Set(G.siblingsOf(d.groupUuid).map((g) => g.group_uuid));
+        const others = memberWrappers(list).filter((el) => {
+            if (el === d.el) return false;
+            const u = G.groupUuidOf(el.getAttribute(MEMBER_ATTR));
+            return !!u && siblingSet.has(u);
+        });
         const before = others.find((el) => clientY < headingMid(el));
         const beforeUuid = before ? G.groupUuidOf(before.getAttribute(MEMBER_ATTR)) : null;
-        const rest = d.baseGroups.filter((u) => u !== d.groupUuid);
+        const baseSiblings = d.baseGroups.filter((u) => siblingSet.has(u));
+        const rest = baseSiblings.filter((u) => u !== d.groupUuid);
         const at = beforeUuid ? rest.indexOf(beforeUuid) : -1;
-        const next = at === -1 ? [...rest, d.groupUuid as string] : [...rest.slice(0, at), d.groupUuid as string, ...rest.slice(at)];
+        const nextSiblings = at === -1 ? [...rest, d.groupUuid as string] : [...rest.slice(0, at), d.groupUuid as string, ...rest.slice(at)];
+        let si = 0;
+        const next = d.baseGroups.map((u) => (siblingSet.has(u) ? nextSiblings[si++] as string : u));
+        void parentKey;
         d.nextGroups = next;
         d.nextSections = null;
         key = `g:${next.join(',')}`;
@@ -284,17 +294,23 @@ export function onSectionKeydown(e: KeyboardEvent, row: Element): boolean {
     const name = labelOf(wrap);
     const uuid = member ? G.groupUuidOf(member.getAttribute(MEMBER_ATTR)) : null;
     if (uuid) {
-        const order = G.current().groups.map((g) => g.group_uuid);
-        const at = order.indexOf(uuid);
-        if (at === -1 || at + delta < 0 || at + delta >= order.length) {
+        const all = G.current().groups;
+        const target = all.find((g) => g.group_uuid === uuid);
+        if (!target) return true;
+        const parent = target.parent_key ?? null;
+        const siblings = all.filter((g) => (g.parent_key ?? null) === parent).map((g) => g.group_uuid);
+        const at = siblings.indexOf(uuid);
+        if (at === -1 || at + delta < 0 || at + delta >= siblings.length) {
             announce(t(delta < 0 ? 'sidebar.row.move.top_of_list' : 'sidebar.row.move.bottom_of_list', { name }));
             return true;
         }
-        const next = order.slice();
-        next[at] = order[at + delta] as string;
-        next[at + delta] = uuid;
+        const swapped = siblings.slice();
+        swapped[at] = siblings[at + delta] as string;
+        swapped[at + delta] = uuid;
+        let si = 0;
+        const next = all.map((g) => ((g.parent_key ?? null) === parent ? swapped[si++] as string : g.group_uuid));
         void writeGroupOrder(next).then((ok) => {
-            if (ok) announce(t('sidebar.group.moved', { position: at + delta + 1, total: order.length }));
+            if (ok) announce(t('sidebar.group.moved', { position: at + delta + 1, total: siblings.length }));
             focusHeading(key);
         });
         return true;

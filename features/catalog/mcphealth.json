@@ -4,11 +4,11 @@
   "area": "sessions",
   "status": "stable",
   "since": "2026-10-12",
-  "updated": "2026-10-25",
+  "updated": "2026-11-25",
   "summary": "watches every live session's mcp servers and puts a yellow ! on a row when one is down; a catalog plugin you install from warez, off until you approve it, with an allow or block list of servers and optional notifications.",
   "description": "The MCP server monitor is a catalog plugin (carnivore/mcphealth, sandboxed): it is no longer built into the app, so install it from warez and approve what it asks for. An install that had the built-in copy on keeps its settings, stays off until you approve the new sheet, and gets one alert pointing at warez. Until installed and on: with it off nothing is measured, no server is probed, no client log is read and no row shows the yellow !. Turned on it works as before: for every live Claude Code and Codex session it reads the configured servers, the session's own MCP client log, the stdio processes and a 60 second reachability probe, and names each down server with its reason in the row's tooltip. Its settings choose which servers may raise the !: all of them, only the ones you list, or all but the ones you list. A server left out is still measured but never shows on the row and never notifies. With notifications on, a server that may warn sends one notification when it goes down in a session and one when it comes back, never repeated while it stays down and none in the first minute after Carnivore starts.",
   "surfaces": [
-    "packages/cplugs/mcphealth/cplug.json",
+    "packages/cplugs/mcphealth/carnivore.toml",
     "packages/cplugs/mcphealth/mcphealth_main.py",
     "src/plugins/host/mcp_health_port.py",
     "src/core/mcp_health/monitor.py",

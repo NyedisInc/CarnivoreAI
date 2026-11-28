@@ -57,16 +57,17 @@ const records = [
     rec({ session_uuid: 'u-shut', tmux_name: 'carnivore_shut', closed: true, lifecycle: 'stopped' }),
 ];
 
-it('lists closed rows only while the toggle is on, and a closed row\'s pin stays either way', async () => {
+it('lists closed rows only while the toggle is on (or a search text, or a pin keeps one), and a closed row\'s pin stays either way', async () => {
     (globalThis as Record<string, unknown>).API = {
         listAttachableSessions: async () => [], listSessions: async () => [live],
         listSessionRecords: async () => records, listSessionCompanions: async () => [],
     };
-    save(['carnivore_shut'], []);
     setClosedShown(true);
     expect((await load(null)).rows.map((r) => r.name).sort()).toEqual(['carnivore_nap', 'carnivore_shut', 'cloude_live']);
     setClosedShown(false);
     const off = await load(null);
     expect(off.rows.map((r) => r.name).sort()).toEqual(['carnivore_nap', 'cloude_live']);
+    save(['carnivore_shut'], []);
+    expect((await load(null)).rows.map((r) => r.name).sort()).toEqual(['carnivore_nap', 'carnivore_shut', 'cloude_live']);
     expect(current().pinned).toContain('carnivore_shut');
 });

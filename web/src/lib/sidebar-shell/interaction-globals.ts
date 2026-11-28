@@ -11,6 +11,7 @@ export interface SessionGroup {
     gradient?: string | null;
     animation?: string | null;
     icon?: string | null;
+    parent_key?: string | null;
 }
 
 export interface GroupsBody {
@@ -39,9 +40,10 @@ export interface ProjectRow {
 
 export interface HeadingApi {
     listSessionGroups(): Promise<GroupsBody>;
-    createSessionGroup(name: string): Promise<GroupsBody>;
+    createSessionGroup(name: string, parentKey?: string | null): Promise<GroupsBody>;
     assignSessionGroup(name: string, uuid: string | null): Promise<GroupsBody>;
     renameSessionGroup(uuid: string, name: string): Promise<GroupsBody>;
+    setSessionGroupParent?(uuid: string, parentKey: string | null): Promise<GroupsBody>;
     reorderSessionGroups(order: string[]): Promise<GroupsBody>;
     deleteSessionGroup(uuid: string): Promise<GroupsBody>;
     setSessionGroupStyle(uuid: string, style: { colour: string; gradient: string | null; animation: string }): Promise<GroupsBody>;

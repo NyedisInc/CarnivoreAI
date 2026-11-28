@@ -70,7 +70,8 @@ def decode_cursor(cursor: Optional[str]) -> Tuple[int, int, str]:
 
 def _group(conn: sqlite3.Connection, conversation_id: str, hour: int, rev: int,
            excluded: FrozenSet[str], allow: Optional[FrozenSet[str]] = None,
-           names: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
+           names: Optional[Dict[str, str]] = None,
+           parents: Optional[Dict[str, str]] = None) -> Optional[Dict[str, Any]]:
     stored_usage = conn.execute(_USAGE_SQL, (hour, conversation_id)).fetchall()
     stored_counters = conn.execute(_COUNTER_SQL, (hour, conversation_id)).fetchall()
     usage = [r for r in stored_usage if r[1] not in excluded and (allow is None or r[1] in allow)]
@@ -82,7 +83,7 @@ def _group(conn: sqlite3.Connection, conversation_id: str, hour: int, rev: int,
         "conversation_id": conversation_id, "provider": first[0], "agent_kind": first[1], "hour": hour, "rev": rev,
         "usage": [list(r[:9]) for r in usage], "counters": [list(r[:5]) for r in counters],
     }
-    name = (names or {}).get(agent_names.root_of(conversation_id))
+    name = (names or {}).get(agent_names.root_of(conversation_id, parents))
     if name:
         group["agent_name"] = name
     return group
@@ -102,10 +103,18 @@ def export_rollup(conn: sqlite3.Connection, since_revision: int, *, until_revisi
     groups: List[Dict[str, Any]] = []
     used, last, complete = 0, after, True
     more = revision.exists(conn)
+    parents = {
+        cid.split(":", 1)[0]: parent.split(":", 1)[0]
+        for cid, parent in conn.execute(
+            "SELECT conversation_id, parent_conversation_id FROM dim_source "
+            "WHERE parent_conversation_id IS NOT NULL AND parent_conversation_id != ''"
+        ).fetchall()
+        if cid and parent
+    } if names else None
     while more and complete:
         chunk = conn.execute(_NEXT_SQL, (since, until, *last, _CHUNK)).fetchall()
         for conversation_id, hour, rev in chunk:
-            group = _group(conn, conversation_id, hour, rev, exclude_projects, allow_projects, names)
+            group = _group(conn, conversation_id, hour, rev, exclude_projects, allow_projects, names, parents)
             size = len(json.dumps(group, separators=(",", ":"))) if group is not None else 0
             if groups and used + size > budget:
                 complete = False
@@ -158,6 +167,13 @@ def allowed_projects(store: Any) -> Optional[FrozenSet[str]]:
     index = _folder_index(store)
     inside = {key for key, folded in index if gate.inside_folded(folded)}
     return frozenset(key for key, folded in index if not gate.inside_folded(folded)) - inside
+
+
+def withheld_keys(store: Any) -> FrozenSet[str]:
+    gate = peer_air_gap.load_gate(store.state_dir)
+    if not gate.active:
+        return frozenset()
+    return frozenset(key for key, folded in _folder_index(store) if gate.inside_folded(folded))
 
 
 def serve(store: Any, *, since_revision: int, until_revision: Optional[int], cursor: Optional[str],

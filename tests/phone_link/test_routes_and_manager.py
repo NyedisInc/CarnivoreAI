@@ -442,3 +442,18 @@ async def test_revoke_orphan_revokes_the_jti_in_the_store(monkeypatch):
     request = SimpleNamespace(app=SimpleNamespace(state=SimpleNamespace(refresh_store=_Store())))
     await routes._revoke_orphan(request, "refresh.jwt")
     assert revoked == ["j1"]
+
+
+@pytest.mark.asyncio
+async def test_pack_member_reports_pack_member_and_refuses_enable_and_pairing_window(mgr):
+    (mgr._state_dir / ".pack_joined").write_text("{}", encoding="utf-8")
+    async with make_app(mgr) as c:
+        st = await c.get("/api/v1/phone-link")
+        assert st.status_code == 200 and st.json()["pack_member"] is True
+        en = await c.put("/api/v1/phone-link", json={"enabled": True})
+        assert en.status_code == 409 and en.json()["code"] == "joined_local_only"
+        pw = await c.post("/api/v1/phone-link/pairing-window")
+        assert pw.status_code == 409 and pw.json()["code"] == "joined_local_only"
+        dis = await c.put("/api/v1/phone-link", json={"enabled": False})
+        assert dis.status_code == 200
+    assert mgr.started == 0

@@ -31,9 +31,9 @@ from src.core.crosstalk import bus, store as crosstalk_store
 from src.core.swarm import body, create, delivery, guard, reports, spawn, store, teardown, thread_port
 from src.core.swarm.cards import deliver, ops, permits, port as card_port
 from src.core.swarm.cards.names import CARD_TOOLS, OWNER_ONLY_CARD_TOOLS
-from src.plugins.huddle import rules, service
-from src.plugins.huddle.cards import policy
-from src.plugins.huddle.public import TaskManagerCardPort
+from src.plugins.taskmanager import rules, service
+from src.plugins.taskmanager.cards import policy
+from src.plugins.taskmanager.public import TaskManagerCardPort
 from src.core.work.storage import WorkStorage
 from src.plugins.sdk.cards import CardRefused
 

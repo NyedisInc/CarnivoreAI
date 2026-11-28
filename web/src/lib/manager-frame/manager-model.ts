@@ -61,7 +61,7 @@ export function visibleItems(
 }
 
 export function isNarrowed(query: string, filters: readonly ManagerFilter[]): boolean {
-    return query.trim() !== '' || filters.some((filter) => filter.on);
+    return query.trim() !== '' || filters.some((filter) => filter.on && filter.id !== 'all');
 }
 
 export function isSwitchable(item: ManagerItem, wired: boolean): boolean {

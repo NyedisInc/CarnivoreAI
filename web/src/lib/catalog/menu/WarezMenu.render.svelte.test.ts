@@ -16,7 +16,7 @@ const SOURCES: MenuSources = {
     storeTotal: 25,
     storeNewest: 5,
     storeUpdates: 0,
-    storeByKind: { skill: 7, theme: 16, mod: 1, plugin: 1 },
+    storeByKind: { skill: 7, theme: 16, mod: 1, plugin: 1, widget: 0, loadout: 0 },
     storeItems: [{ kind: 'skill', id: 'alex/scrooge', title: 'scrooge', installed: false }],
     installed: {
         skill: [{ key: 'sme', title: 'sme', word: 'on' }],
@@ -26,6 +26,8 @@ const SOURCES: MenuSources = {
             { key: 'huddle', title: 'huddle', word: 'on' },
             { key: 'swarm', title: 'swarm', word: 'off' },
         ],
+        widget: [],
+        loadout: [],
     },
     flagged: [],
     needs: [{ page: 'consent', count: 0 }],
@@ -180,6 +182,19 @@ describe('the warez menu', () => {
                 unmount(handle);
                 handle = null;
                 host.remove();
+            }
+        }
+    });
+
+    test('widgets and loadouts remain strictly separate browse rows under store and installed and round-trip through route hashes', () => {
+        const el = render(SOURCES);
+        for (const scope of ['store', 'installed'] as const) {
+            for (const kind of ['widget', 'loadout'] as const) {
+                const plural = kind === 'widget' ? 'widgets' : 'loadouts';
+                const target = row(el, `${scope}/${plural}`);
+                expect(target).not.toBeNull();
+                const node: MenuNode = { scope, page: 'kind', kind };
+                expect(parseNodeHash(nodeHash(node))).toEqual(node);
             }
         }
     });

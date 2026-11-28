@@ -8,7 +8,8 @@
   "docs": [
     "docs/stats-dashboard.md",
     "docs/stats-store-redesign.md",
-    "docs/stats-feed.md"
+    "docs/stats-feed.md",
+    "docs/federation.md"
   ],
   "examples": [
     "Turn stats off and clear: usage stats rebuilds its small database from your transcripts, keeping your charts, settings and recorded activity."
@@ -23,7 +24,8 @@
   "issues": [
     1189,
     1547,
-    1900
+    1900,
+    3128
   ],
   "keywords": [
     "stats",
@@ -42,7 +44,7 @@
   "surfaces": [
     "web/src/lib/settings-page/StatsCollectionPanel.svelte"
   ],
-  "updated": "2026-10-17",
+  "updated": "2026-11-21",
   "where": [
     "Settings, advanced, statistics."
   ]

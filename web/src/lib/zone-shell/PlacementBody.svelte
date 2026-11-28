@@ -72,7 +72,7 @@
   const popout = $derived(host === 'popout');
 
   const home = useHomeTerminal(() => ({ active: widget.id === 'core.terminal' && !unseen, target, claimKey: placementKey || `${host}:${widget.id}` }));
-  const resolved = $derived(resolvePlacement({ widget, view, target: home.target ?? (home.pending || home.failed ? 'pending' : null), instance: copy }));
+  const resolved = $derived(resolvePlacement({ widget, view, target: home.target ?? target ?? (home.pending || home.failed ? 'pending' : null), instance: copy }));
   const manifest = $derived(resolved?.cell ?? widget);
   const slot = $derived((resolved?.slot ?? widget.id.slice('core.'.length)) as SlotId);
   const family = $derived(manifest.instancing !== 'singleton');
@@ -99,7 +99,7 @@
   const surface = $derived(look.surface);
   const headShown = $derived(
     surface === 'rail'
-      ? !!meta?.ownHead || (!!placementKey && placementHeaderShown('rail', shownOptions, widget.id))
+      ? !!meta?.ownHead || (!!placementKey && placementHeaderShown('rail', shownOptions))
       : surface === 'drawer'
         ? !!meta?.ownHead || placementHeaderShown('drawer', shownOptions)
         : true,

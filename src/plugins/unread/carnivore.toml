@@ -1,0 +1,28 @@
+schema = 2
+api_version = 1
+id = "unread"
+name = "mark unread"
+description = "mark a session unread, or clear it, from its menu"
+name_key = "cplug.unread.name"
+description_key = "cplug.unread.description"
+version = "1.0.0"
+kind = "plugin"
+icon = "bell"
+author = "Alex (example-owner)"
+license = "MIT"
+min_app_version = "1.12.20"
+tier = "builtin"
+default_enabled = true
+data = []
+
+[ui]
+plugins = ["session-card-action"]
+
+[owns]
+strings = ["cplug.unread."]
+tests = ["tests/python/cplugs/unread/"]
+contributions = ["session.card_action"]
+
+[settings_schema]
+version = 1
+fields = {}

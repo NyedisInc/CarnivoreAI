@@ -120,6 +120,7 @@ def rig(tmp_path):
     {"network_hosts": [{"host": "*.example.com", "reason": "x"}]},
     {"network_hosts": [{"host": "localhost", "reason": "x"}]},
     {"network_hosts": [{"host": "api.example.com", "reason": "x", "auth": {"secret": "nope", "header": "X", "scheme": ""}}]},
+    {"network_hosts": [{"host": "api.example.com", "reason": "x", "auth": {"secret": ["nope"], "header": "X", "scheme": ""}}]},
     {"network_hosts": [{"host": "api.example.com", "reason": "x", "auth": {"secret": "token", "header": "Host", "scheme": ""}}]},
     {"lan_hosts": [{"host": "http://127.0.0.1:80", "reason": "x"}]},
     {"lan_hosts": [{"host": "http://169.254.169.254:80", "reason": "x"}]},
@@ -345,7 +346,7 @@ def test_the_secret_and_egress_routes_never_return_a_value(tmp_path, monkeypatch
     m = parse_manifest(manifest_raw())
     kc = FakeKeychain()
     monkeypatch.setattr(secret_store, "_Login", lambda: kc)
-    monkeypatch.setattr(runtime, "find", lambda cid: SimpleNamespace(manifest=m) if cid == "netdemo" else None)
+    monkeypatch.setattr(runtime, "find", lambda cid: SimpleNamespace(id="netdemo", manifest=m) if cid == "netdemo" else None)
     app = FastAPI()
     runtime.install(app, tmp_path)
     app.include_router(host_routes.router, prefix="/api/v1")

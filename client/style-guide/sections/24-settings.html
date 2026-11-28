@@ -55,11 +55,11 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         rail, the token, key and device rows, the search hits, the config bundle's changes) with its actions always shown. A panel inside a
         row draws no box of its own; the row's group is the one <code>Card</code>.</dd>
     <dt>an (i) note</dt>
-    <dd><code>web/src/lib/info-tip/InfoTip.svelte</code>: a <code>.info-tip</code> holding a 16px <code>.info-tip__btn</code> (an
-        italic <code>i</code> in a 1px hairline with a small square corner, muted, the accent on hover and while open) that
+    <dd><code>web/src/lib/info-tip/InfoTip.svelte</code>: a <code>.info-tip</code> holding the base <code>IconButton</code> (an
+        <code>i</code> in the shared framed square) that
         toggles a one-sentence <code>.info-tip__note</code> (<code>role="note"</code>) in place. Use it instead of a tooltip
         for a fact a person must be able to read: it is a real button, so a tap, Enter or Space opens it, Escape closes it,
-        and it is a thumb-sized target below 768px. A setting gets one by setting <code>info: true</code> in the registry and
+        and it is a thumb-sized target under a coarse pointer, as every base button is. A setting gets one by setting <code>info: true</code> in the registry and
         adding the catalog key <code>settings.item.&lt;id&gt;.info</code> (worked example: auto-sleep, which says pinned
         sessions never sleep automatically).</dd>
     <dt>a group is a tab</dt>
@@ -371,7 +371,7 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         shows a coral note and no button. The manual install command and the run-from-a-checkout command are always shown in
         <code>CopyField.svelte</code> boxes.</dd>
     <dt>features (Joe (ccsliinc), 2026-10-30, #2723)</dt>
-    <dd>The <code>features</code> section is a whole-screen section (<code>SettingsScreenSection.svelte</code>, <code>data-screen="features"</code>): the Plugins page's manager page in its <code>features</code> scope (<code>PluginsScreen.svelte</code>, <code>scope="features"</code>), so it adds no component or class. Every compiled-in item (tier builtin or core, and dev only while developer mode is on) is a card with its own on/off switch, on or off, and the side pane holds what it asks (the permission sheet), what it needs, its data and its settings, all through <code>GET</code> and <code>PUT /api/v1/cplugs</code>. It is the first entry under the rail's <code>features</code> heading; an enabled feature with settings also gets its own rail entry below it, and a store item with settings gets one under the <code>plugins</code> heading. Strings read <code>features.page.*</code> before <code>plugins.page.*</code> (<code>feature-words.ts</code>), so the page says "feature" wherever the plugins page says "plugin". Deep link: <code>#settings/features/&lt;id&gt;[/settings]</code>.</dd>
+    <dd>The <code>features</code> section is a whole-screen section (<code>SettingsScreenSection.svelte</code>, <code>data-screen="features"</code>): the Plugins page's manager page in its <code>features</code> scope (<code>PluginsScreen.svelte</code>, <code>scope="features"</code>), so it adds no component or class. Every compiled-in item (tier builtin or core, and dev only while developer mode is on) is a card with its own on/off switch, on or off, and the side pane holds what it asks (the permission sheet), what it needs, its data and its settings, all through <code>GET</code> and <code>PUT /api/v1/cplugs</code>. Built-in items also appear inside the unified Plugins tab alongside app, agent, and local dev plugins. It is the first entry under the rail's <code>features</code> heading; an enabled feature with settings also gets its own rail entry below it, and a store item with settings gets one under the <code>plugins</code> heading. Strings read <code>features.page.*</code> before <code>plugins.page.*</code> (<code>feature-words.ts</code>), so the page says "feature" wherever the plugins page says "plugin". Deep link: <code>#settings/features/&lt;id&gt;[/settings]</code>.</dd>
     <dt>plugins</dt>
     <dd>A plugin's own panel draws inside its side pane as a plugin-specific block (a <code>settings-panel</code> contribution, shown only while the plugin is on; <code>plugin-extras.ts</code>), with the same routes and stored values; each plugin documents its own panel in its own fragment. Usage stats is not a plugin (2026-10-16): its one switch, with the backfill and the confirmed clear, is Settings &gt; advanced &gt; statistics. There is no Settings &gt; plugins index any more (removed 2026-10-13): the gear on a plugin card is the door to its pane. A plugin's own settings are never drawn in Settings.</dd>
     <dt>the save model</dt>
@@ -442,9 +442,11 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
         rows (<code>.m1-row</code>), ghost cards for computers nearby (<code>.m1-ghost</code>), and a reading pane
         (<code>ComputerPane.svelte</code>: <code>.m1-pane__head</code>, tabs overview, projects, link and ssh). The wolf button
         (<code>WolfButton.svelte</code>, the base <code>IconButton</code> <code>[data-roster-key="leader"]</code>) opens a <code>.modal-btn</code> confirm before it makes a leader. The pack
-        settings panel (<code>SettingsPanel.svelte</code>, <code>.m1-sets</code>) folds into a gear in the title strip
+        settings panel (<code>SettingsPanel.svelte</code>, <code>.m1-sets</code>; the successor order rows of <code>PackReconnect.svelte</code> group the opt-in switch and the two <code>IconButton</code> <code>variant="strong"</code> arrows at the row end in <code>.pp-swrow__ctl</code>, a three column grid, under a small uppercase <code>.pp-swrow__col</code> label over the switch column; <code>.pp-k--sec</code> spaces a section heading below a hint) folds into a gear in the title strip
         (<code>[data-roster-key="gear"]</code>, a base <code>IconButton</code>; the panel and pane close keys are its close variant); its section headings use <code>--oc-text-bright</code>, the danger heading keeps coral
-        (<code>.m1-danger__k</code>). The overview tab's "what it has" block (<code>PaneAbilities.svelte</code>) reuses <code>.pp-facts</code>,
+        (<code>.m1-danger__k</code>). With the mesh switch on the panel adds a read only line for this computer's link switch and
+        <code>RemovedLogins.svelte</code> (the logins copied to removed computers: <code>.pp-grants</code> rows with a <code>.pp-st</code> shape and word per copy) <code>LeftoverStats.svelte</code> (old stats from computers no longer in the pack: <code>.pp-grants</code> rows of name, last seen and row count, each with a small danger <code>Button</code> that asks through <code>FedConfirmModal</code>; hidden with none; no new class), and <code>RotateWalk.svelte</code> (the "rotate everything" walk under it: the base <code>Button</code> to open it, then the same <code>.pp-grants</code> rows and <code>.pp-st</code> shape and word, <code>.pp-hint</code> help lines, the danger <code>Button</code> to cancel at argent and a plain link to github; no new class), and a member's link tab
+        shows its link state, age, who dialled and how the link is held in <code>.pp-facts</code>, and carries the "link with the other computers" switch (the shared <code>Check</code> role=switch: editable on the alpha only, read only elsewhere with its reason line); no new class. The overview tab's "what it has" block (<code>PaneAbilities.svelte</code>) reuses <code>.pp-facts</code>,
         <code>.pp-tools</code> and the base <code>Button</code>: facts, tools, the pegged line composed from figures (never the server's sentence), the
         read lines "takes work" and "may install tools" that jump to the editor, and "check again"; its labels are
         <code>LabelEditor.svelte</code>, a base <code>Tag</code> with a base <code>IconButton</code> remove each, a base <code>Field</code> and add. Status is a shape plus a word (<code>.pp-st</code>), never colour alone.</dd>
@@ -488,7 +490,7 @@ bar). A deep link is <code>#settings/&lt;section&gt;/&lt;tab&gt;</code>. Every s
     <dt>pack page: the jobs tab</dt>
     <dd><code>JobsTab.svelte</code> is the Pack page's <code>#pack/jobs</code> tab, drawn with the tab chrome the logins tab uses
         (<code>.pm-panel</code>, <code>.pl-titlebar</code>): a base <code>Segmented</code> live or all, a quiet caller chip button, and a
-        base <code>List</code> of <code>JobRow.svelte</code> rows, then a second list, "running here for another computer", read only.
+        base <code>List</code> of <code>JobRow.svelte</code> rows under their own small uppercase "jobs" label with a hairline above (<code>.pt-jobs</code>, the same section pattern as <code>.pt-numbers</code>), then a second list, "running here for another computer", read only.
         <code>JobRow.svelte</code> is a base <code>ListRow</code>: a state <code>Tag</code> leads, the task or command head is the primary text,
         "computer &middot; project" the secondary, the duration the meta, the why line and <code>JobDetails.svelte</code> (a base
         <code>Fold</code> over a <code>.pp-facts</code> list) below, and quiet "open worker" and "stop" buttons. "stop" opens

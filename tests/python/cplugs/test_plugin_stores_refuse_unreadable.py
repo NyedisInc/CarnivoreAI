@@ -2,20 +2,25 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
 
 import pytest
 
 from src.core.json_artifact import UnreadableArtifact, read_for_update
-from src.plugins.host import identity, sideload
+from src.plugins.host import identity, registry_store, sideload
 from src.plugins.runtime.children import ChildLedger
 
 UUID = "a" * 32
-TORN = b'{"installs": {"clock": {"uuid": "aaa'
+TORN = b'{"schema": 2, "generation": 1, "items": {"clock": {"install_uuid": "aaa'
 
 
 def _store_dir(state_dir: Path) -> Path:
     folder = state_dir / "cplugs"
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
+
+def _registry_dir(state_dir: Path) -> Path:
+    folder = registry_store.plugins_dir(state_dir)
     folder.mkdir(parents=True, exist_ok=True)
     return folder
 
@@ -41,21 +46,21 @@ def _children_forget(state_dir: Path) -> None:
 
 
 CASES = {
-    "installs-register": (identity.LEDGER_FILE, _ledger_write, (identity.LedgerUnreadable,)),
-    "sideload-switch": (sideload.FILE_NAME, _sideload_switch, (sideload.SideloadRefused,)),
-    "sideload-forget": (sideload.FILE_NAME, _sideload_forget, (sideload.SideloadRefused,)),
-    "sideload-put": (sideload.FILE_NAME, _sideload_put, (sideload.SideloadRefused,)),
-    "children-forget": ("children.json", _children_forget, ()),
+    "installs-register": (_registry_dir, registry_store.REGISTRY_FILE, _ledger_write, (identity.LedgerUnreadable,)),
+    "sideload-switch": (_registry_dir, registry_store.REGISTRY_FILE, _sideload_switch, (sideload.SideloadRefused,)),
+    "sideload-forget": (_registry_dir, registry_store.REGISTRY_FILE, _sideload_forget, (sideload.SideloadRefused,)),
+    "sideload-put": (_registry_dir, registry_store.REGISTRY_FILE, _sideload_put, (sideload.SideloadRefused,)),
+    "children-forget": (_store_dir, "children.json", _children_forget, ()),
 }
 
 
 @pytest.mark.parametrize("content", [TORN, b"[1, 2]", b"\xff\xfe\x00"])
 @pytest.mark.parametrize("case", sorted(CASES))
 def test_writer_leaves_an_unreadable_store_alone(tmp_path: Path, case: str, content: bytes) -> None:
-    name, writer, errors = CASES[case]
-    path = _store_dir(tmp_path) / name
+    mk_dir, name, writer, errors = CASES[case]
+    path = mk_dir(tmp_path) / name
     path.write_bytes(content)
-    sideload._snapshots.clear()
+    registry_store._cache.clear()
     if errors:
         with pytest.raises(errors):
             writer(tmp_path)
@@ -82,8 +87,9 @@ def test_child_reap_does_not_clear_an_unreadable_ledger(tmp_path: Path) -> None:
 
 
 def test_sideload_readers_still_default(tmp_path: Path) -> None:
-    (_store_dir(tmp_path) / sideload.FILE_NAME).write_bytes(TORN)
-    sideload._snapshots.clear()
+    registry_store.registry_path(tmp_path).parent.mkdir(parents=True, exist_ok=True)
+    registry_store.registry_path(tmp_path).write_bytes(TORN)
+    registry_store._cache.clear()
     assert sideload.items(tmp_path) == {} and sideload.installs(tmp_path) == {}
     assert sideload.is_on(tmp_path) is False
 

@@ -1,3 +1,4 @@
+/* the Task Manager */
 
 export interface BoardAttachment {
   file_id: string;
@@ -9,6 +10,7 @@ export interface BoardAttachment {
   sha256: string;
   added_at: string;
   revision: string | null;
+  /* the Task Manager */
   url: string | null;
 }
 

@@ -8,7 +8,6 @@ const PAIRS: readonly (readonly [string, string])[] = [
   ['core.tasks', 'core.tasks-all'],
   ['core.bookmarks', 'core.bookmarks-all'],
   ['core.automations', 'core.automations-all'],
-  ['core.task-manager', 'core.task-manager-all'],
   ['core.task-manager-mk2', 'core.task-manager-mk2-all'],
 ];
 
@@ -54,8 +53,6 @@ describe('a placement\'s view', () => {
     expect(cellManifestFor(tasks, 'all', CORE_MANIFESTS).id).toBe('core.tasks-all');
     expect(cellManifestFor(tasks, null, CORE_MANIFESTS).id).toBe('core.tasks');
     expect(cellManifestFor(CORE_MANIFESTS['core.notes']!, 'all', CORE_MANIFESTS).id).toBe('core.notes');
-    expect(viewWidgetId(CORE_MANIFESTS['core.task-manager']!, 'all')).toBe('core.task-manager-all');
-    expect(viewWidgetId(CORE_MANIFESTS['core.task-manager']!, null)).toBe('core.task-manager');
     expect(viewWidgetId(CORE_MANIFESTS['core.task-manager-mk2']!, 'all')).toBe('core.task-manager-mk2-all');
     expect(viewWidgetId(CORE_MANIFESTS['core.task-manager-mk2']!, null)).toBe('core.task-manager-mk2');
   });

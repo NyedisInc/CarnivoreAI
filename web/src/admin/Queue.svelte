@@ -8,12 +8,14 @@
     import SubmissionDetail from './SubmissionDetail.svelte';
     import Tabs, { panelAttrs } from '../opscenter/ui/Tabs.svelte';
     import { isLegacyPending } from './admin.js';
+    import { asSubmissionM5, canRevokeStatus, gitSourceLabel, reviewVerdictBadge } from './admin-m5-types.js';
     import { QUEUE_STAGES, queueStageOf, statusWord } from './queue-stage.js';
     import { ADMIN_KEYS } from '../../../client/js/labels/admin.js';
 
     let { host }: { host: AdminHost } = $props();
 
     let openId = $state('');
+    let quickRevokeId = $state('');
 
     const counts = $derived.by(() => {
         const out: Record<string, number> = { submitted: 0, in_review: 0, approved: 0, rejected: 0 };
@@ -44,12 +46,20 @@
         <ul class="admin-list">
             {#each rows as row (row.submission_id)}
                 {@const word = statusWord(row)}
+                {@const rowM5 = asSubmissionM5(row)}
+                {@const verdictPill = reviewVerdictBadge(rowM5)}
+                {@const gitMeta = gitSourceLabel(rowM5)}
+                {@const quickRevocable = canRevokeStatus(row.status) && openId !== row.submission_id}
+                {@const quickOpen = quickRevokeId === row.submission_id && host.revoking === row.submission_id}
                 <li class="admin-list__row">
                     <div class="admin-queue__head">
                     <p class="admin-list__name">
                         {row.name || row.submission_id}
                     </p>
                     <span class="admin-badge">{t(ADMIN_KEYS.queueKind, { kind: row.kind || 'skill' })}</span>
+                    {#if verdictPill}
+                        <span class="admin-badge admin-badge--{verdictPill.tone}">{t(verdictPill.key)}</span>
+                    {/if}
                     {#if row.media_only}
                         <span class="admin-badge">
                             {t(ADMIN_KEYS.queueRowHeroImage, { item: row.item_id || row.name || '' })}
@@ -72,6 +82,9 @@
                     <p class="admin-list__meta">
                         {t(ADMIN_KEYS.queueRowVersion, { version: row.version || '' })}
                     </p>
+                    {#if gitMeta.source}
+                        <p class="admin-list__meta">{gitMeta.source}</p>
+                    {/if}
                     {#if row.handle_status === 'pending'}
                         <p class="admin-list__meta">
                             {t(ADMIN_KEYS.queueRowHandlePending, { handle: row.handle || '' })}
@@ -88,10 +101,52 @@
                     {/if}
                     </div>
                     <Button
-                        onclick={() => (openId = openId === row.submission_id ? '' : row.submission_id)}
+                        onclick={() => {
+                            openId = openId === row.submission_id ? '' : row.submission_id;
+                            if (openId === row.submission_id && quickRevokeId === row.submission_id) {
+                                quickRevokeId = '';
+                            }
+                        }}
                     >
                         {t(openId === row.submission_id ? ADMIN_KEYS.detailClose : ADMIN_KEYS.detailOpen)}
                     </Button>
+                    {#if quickRevocable}
+                        {#if quickOpen}
+                            <div class="admin-quick-revoke" role="group" aria-label={t(ADMIN_KEYS.actionsLabel)}>
+                                <label class="admin-field" for={'quick-revoke-' + row.submission_id}>{t(ADMIN_KEYS.revokeLabel)}</label>
+                                <Field
+                                    id={'quick-revoke-' + row.submission_id}
+                                    data-admin-grow
+                                    maxlength={500}
+                                    value={host.revokeReason}
+                                    oninput={(event) => host.setRevokeReason(row.submission_id, event.currentTarget.value)}
+                                />
+                                <Button
+                                    variant="danger"
+                                    disabled={host.busy || !host.revokeReason.trim()}
+                                    onclick={() => void host.confirmRevoke().then((ok) => { if (ok) quickRevokeId = ''; })}
+                                >
+                                    {t(ADMIN_KEYS.queueQuickRevokeConfirm)}
+                                </Button>
+                                <Button
+                                    onclick={() => { quickRevokeId = ''; host.setRevokeReason(row.submission_id, ''); }}
+                                >
+                                    {t(ADMIN_KEYS.queueQuickRevokeCancel)}
+                                </Button>
+                            </div>
+                        {:else}
+                            <Button
+                                variant="danger"
+                                disabled={host.busy}
+                                onclick={() => {
+                                    quickRevokeId = row.submission_id;
+                                    host.setRevokeReason(row.submission_id, '');
+                                }}
+                            >
+                                {t(ADMIN_KEYS.queueActionQuickRevoke)}
+                            </Button>
+                        {/if}
+                    {/if}
                     {#if !isLegacyPending(row)}
                         
                     {:else if host.rejecting === row.submission_id}

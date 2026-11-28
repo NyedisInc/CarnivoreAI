@@ -5,7 +5,7 @@
 .pt-line { margin: 0; color: var(--oc-text-primary); overflow-wrap: anywhere; min-width: 0; }
 .pt-note { margin: 0; color: var(--oc-text-secondary); overflow-wrap: anywhere; min-width: 0; }
 .pt-publish { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--oc-line-faint); min-width: 0; }
-.pt-replicas, .pt-numbers, .pt-needs { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--oc-line-faint); min-width: 0; }
+.pt-replicas, .pt-numbers, .pt-needs, .pt-jobs { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--oc-line-faint); min-width: 0; }
 .pt-replica-list { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
 .pt-replica { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; min-width: 0; }
 .pt-actions { display: flex; justify-content: flex-end; }

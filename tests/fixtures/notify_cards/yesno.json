@@ -1,12 +1,12 @@
 {
   "kind": "yesno",
   "payload": {
-    "title": "api-docs asks",
+    "title": "api-docs has a question",
     "body": "merge exp/argent-widget-engine into master?",
     "path": "/sessions/ses_0123456789ab",
     "thread": "local|ses_0123456789ab",
     "v": 2,
-    "sub": "question on nostromo",
+    "sub": "",
     "kind": "yesno",
     "type": "session.question",
     "lv": "t",

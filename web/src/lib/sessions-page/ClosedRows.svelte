@@ -55,6 +55,7 @@
                 <span class="sp-c-prov"><span class="sp-mark" role="img" aria-label={mark.label} title={mark.label}>{@html mark.svg}</span><span>{r.provider}</span></span>
                 <span class="sp-c-latest">
                     {#if disk === 'on-disk'}<Tag data-tag="on-disk">{t('projects.page.disk.on')}</Tag>{/if}
+                    {#if disk === 'offloaded'}<Tag data-tag="offloaded">{t('projects.page.disk.offloaded')}</Tag>{/if}
                     {#if disk === 'gone'}<Tag tone="danger" data-tag="gone">{t('projects.page.disk.gone')}</Tag>{/if}
                     {#if previous > 0}<Tag data-previous-count={previous}>{t('projects.page.pc.row_tag', { count: previous })}</Tag>{/if}
                     {#if s.kind === 'automated'}<Tag>{t('projects.page.tag.automated')}</Tag>{/if}

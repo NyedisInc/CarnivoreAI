@@ -12,6 +12,9 @@
     --led-color-idle: var(--color-fg-muted, #8b8b8b);
     --led-color-unknown: var(--color-fg-muted, #8b8b8b);
 
+    --led-color-background: color-mix(in srgb, var(--led-color-idle) 78%, transparent);
+
+
     --led-color-dead: #494c4f;
     --led-color-disconnected: var(--color-danger, #ff4444);
 
@@ -93,6 +96,10 @@
     --led-ink: var(--led-color-idle);
 }
 
+.status-led[data-inner='background'] {
+    --led-ink: var(--led-color-background);
+}
+
 .status-led[data-inner='dead'] {
     --led-ink: var(--led-color-dead);
 }
@@ -106,7 +113,8 @@
 .status-led[data-inner='waiting-input'],
 .status-led[data-inner='asleep'],
 .status-led[data-inner='asleep-unread'],
-.status-led[data-inner='limit'] {
+.status-led[data-inner='limit'],
+.status-led[data-inner='background'] {
     --led-fill: transparent;
 }
 
@@ -115,7 +123,8 @@
 .status-led[data-inner='waiting-input']::after,
 .status-led[data-inner='asleep']::after,
 .status-led[data-inner='asleep-unread']::after,
-.status-led[data-inner='limit']::after {
+.status-led[data-inner='limit']::after,
+.status-led[data-inner='background']::after {
     content: '';
     display: block;
     position: absolute;
@@ -133,6 +142,11 @@
 .status-led[data-inner='working']::after {
     -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M12,23a9.63,9.63,0,0,1-8-9.5,9.51,9.51,0,0,1,6.79-9.1A1.66,1.66,0,0,0,12,2.81h0a1.67,1.67,0,0,0-1.94-1.64A11,11,0,0,0,12,23Z'/%3E%3C/svg%3E");
     mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='white' d='M12,23a9.63,9.63,0,0,1-8-9.5,9.51,9.51,0,0,1,6.79-9.1A1.66,1.66,0,0,0,12,2.81h0a1.67,1.67,0,0,0-1.94-1.64A11,11,0,0,0,12,23Z'/%3E%3C/svg%3E");
+}
+
+.status-led[data-inner='background']::after {
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='8.6' fill='none' stroke='white' stroke-width='3.8' stroke-linecap='round' stroke-dasharray='40 14'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='8.6' fill='none' stroke='white' stroke-width='3.8' stroke-linecap='round' stroke-dasharray='40 14'/%3E%3C/svg%3E");
 }
 
 .status-led[data-inner='waiting-permission']::after,
@@ -217,39 +231,37 @@
 
 
 .status-led[data-outer='active'] {
-    animation: status-led-breathe 2s ease-in-out infinite;
+    animation: amb-join-status-lights 1ms;
+    opacity: var(--amb-led-op);
 }
 
-@keyframes status-led-breathe {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.4;
-    }
+.status-led[data-inner='working'],
+.status-led[data-inner='background'] {
+    animation: amb-join-status-lights 1ms;
+    contain: layout style;
+    opacity: 1;
 }
 
-.status-led[data-outer='active'][data-inner='working'],
 .status-led[data-outer='active'][data-inner='waiting-permission'],
 .status-led[data-outer='active'][data-inner='waiting-input'] {
     animation: none;
+    opacity: 1;
 }
 
-@keyframes status-led-spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.status-led[data-inner='working']::after {
-    animation: status-led-spin 0.75s linear infinite;
+.status-led[data-inner='working']::after,
+.status-led[data-inner='background']::after {
+    contain: strict;
+    will-change: transform;
+    transform: rotate(var(--amb-led-deg, 0deg));
 }
 
 @media (prefers-reduced-motion: reduce) {
     .status-led,
     .status-led::after {
         animation: none !important;
+        opacity: 1;
+        transform: none;
+        will-change: auto;
     }
 }
 

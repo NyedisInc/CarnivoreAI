@@ -21,7 +21,7 @@ describe('the vocabularies', () => {
     });
 
 
-    test('the inner vocabulary is exactly the twelve documented states', () => {
+    test('the inner vocabulary is exactly the thirteen documented states', () => {
         expect([...Led.INNER_STATES]).toEqual([
             'working',
             'waiting-permission',
@@ -34,6 +34,7 @@ describe('the vocabularies', () => {
             'asleep',
             'asleep-unread',
             'limit',
+            'background',
             'unknown',
         ]);
     });

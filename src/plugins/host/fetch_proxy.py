@@ -8,7 +8,7 @@ import threading
 import time
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from typing import Any, Callable, Collection, Deque, Dict, List, Mapping, Optional, Set, Tuple
+from typing import Any, Callable, Collection, Deque, Dict, List, Mapping, Optional, Tuple
 from urllib.parse import urljoin
 
 import structlog
@@ -33,6 +33,7 @@ _POOL = ThreadPoolExecutor(max_workers=16, thread_name_prefix="cplug-fetch")
 _REDIRECTS = frozenset({301, 302, 303, 307, 308})
 _CROSS_HOST_KEEP = frozenset({"accept", "accept-language", "content-type"})
 _HEADER_NAME = re.compile(r"^[A-Za-z0-9-]{1,64}$")
+_SECRET_PLACEHOLDER = re.compile(r"\$SECRET:([A-Za-z][A-Za-z0-9_]{0,63})")
 _DROP_RESPONSE = frozenset({"set-cookie", "set-cookie2", "www-authenticate", "proxy-authenticate", "connection", "transfer-encoding"})
 
 
@@ -190,8 +191,35 @@ class PluginFetch:
         logger.info("cplug_fetch_refused", cplug=self._m.id, host=host, method=method, code=code)
         raise FetchRefused(code)
 
+    def _expand_header_secrets(self, headers: List[Tuple[str, str]], host: str) -> Tuple[List[Tuple[str, str]], List[str]]:
+        declared = {s.name for s in self._m.network.secrets}
+        out: List[Tuple[str, str]] = []
+        injected: List[str] = []
+        for hdr_name, hdr_val in headers:
+            if "$SECRET:" not in hdr_val:
+                out.append((hdr_name, hdr_val))
+                continue
+
+            def _sub(match: re.Match[str]) -> str:
+                key = match.group(1)
+                if key not in declared:
+                    raise Refused("secret_missing", f"{key} is not declared")
+                val = self._secrets.value_for(self._key, self._m, key, host)
+                if val is None:
+                    raise Refused("secret_missing", f"{key} is not stored for {host}")
+                if re.search(r"[\r\n\x00]", val):
+                    raise Refused("bad_header", "secret value is not valid in a header")
+                injected.append(val)
+                return val
+
+            expanded = _SECRET_PLACEHOLDER.sub(_sub, hdr_val)
+            if "$SECRET:" in expanded:
+                raise Refused("secret_missing", "malformed $SECRET placeholder")
+            out.append((hdr_name, expanded))
+        return out, injected
+
     def _hop(self, method: str, url: str, headers: Optional[Mapping[str, str]], body: Optional[bytes], deadline: float,
-             ) -> Tuple[RawResponse, Target, Optional[str]]:
+             ) -> Tuple[RawResponse, Target, Tuple[str, ...]]:
         started = self._clock()
         host, permission = "", ""
         try:
@@ -209,12 +237,13 @@ class PluginFetch:
                 raise Refused("peers_unknown", "the paired peers' addresses could not all be found")
             want = netguard.PRIVATE if route.kind == "lan" else netguard.PUBLIC
             ip = netguard.check_resolution(self._resolve(t.host, t.port), want, peers.addresses, self._is_own)
-            value = None
+            clean, injected = self._expand_header_secrets(clean, t.host)
             if auth is not None:
                 value = self._secrets.value_for(self._key, self._m, auth.secret, t.host)
                 if value is None:
                     raise Refused("secret_missing", f"{auth.secret} is not stored for {t.host}")
                 clean.append((auth.header, f"{auth.scheme} {value}".strip()))
+                injected.append(value)
             if not self._limiter.allow(self._m.id, t.host):
                 raise Refused("rate_limited", f"more than {RATE_PER_MINUTE} requests a minute to {t.host}")
         except Refused as exc:
@@ -230,20 +259,28 @@ class PluginFetch:
         except Exception as exc:  # noqa: BLE001
             logger.info("cplug_fetch_upstream_error", cplug=self._m.id, host=host, error_type=type(exc).__name__)
             self._refuse(url, method, "upstream_error", int((self._clock() - started) * 1000), host, permission)
-        echo = value is not None and (value.encode() in raw.body or any(value in v for _, v in raw.headers))
+        echo = any(v and (v.encode() in raw.body or any(v in hv for _, hv in raw.headers)) for v in injected)
         self._log.record(self._key, host=host, method=method, permission=permission, status=raw.status,
                          bytes_out=len(body or b""), bytes_in=len(raw.body), ms=int((self._clock() - started) * 1000),
                          outcome="credential_echo" if echo else "ok")
-        return raw, t, value
+        return raw, t, tuple(injected)
 
     @staticmethod
-    def _finish(raw: RawResponse, secret_value: Optional[str]) -> FetchResponse:
+    def _finish(raw: RawResponse, secret_values: Any) -> FetchResponse:
+        if isinstance(secret_values, str):
+            values: Tuple[str, ...] = (secret_values,) if secret_values else ()
+        elif secret_values:
+            values = tuple(v for v in secret_values if v)
+        else:
+            values = ()
         headers: Dict[str, str] = {}
         for name, value in raw.headers:
             low = name.lower()
-            if low in _DROP_RESPONSE or (secret_value and secret_value in value):
+            if low in _DROP_RESPONSE or any(v in value for v in values):
                 continue
             headers[low] = value
-        body = raw.body.replace(secret_value.encode(), b"[redacted]") if secret_value else raw.body
+        body = raw.body
+        for v in values:
+            body = body.replace(v.encode(), b"[redacted]")
         return FetchResponse(raw.status, headers, body, raw.truncated)
 

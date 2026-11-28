@@ -1,4 +1,12 @@
 
+import catalog from './i18n/catalog.en.js';
+
+const STATUS_LETTERS = Object.freeze({ needs_you: 'u', question: 'q', review: 'r', waiting: 'w', working: 'i', scheduled: 'l', open: 'e', todo: 't' });
+const STATUS_ENTRIES = Object.entries(STATUS_LETTERS).map(([key, letter]) => {
+    const name = ['status', ...key.split('_')].join('-');
+    return { name, letter, meaning: catalog['keymap.menu.' + name], ids: ['status:' + key], shares: catalog['keymap.shares.status'] };
+});
+
 export const LETTERS = Object.freeze([
     { name: 'new-agent', letter: 'n', meaning: 'new agent or session, show conversation backups, show status counts', verbs: ['new'], ids: ['new-session', 'new-in-folder', 'new-agent', 'agent', 'sort:name', 'show-restores', 'show-counts'], shares: 'show conversation backups is the timeline widget menu and show counts the TM Mark II widget menu, neither of which draws a new item' },
     { name: 'new-terminal', letter: 't', meaning: 'new terminal', ids: ['new-terminal-here', 'terminal', 'sort:project', 'show-stats', 'show-shells', 'turn-on-agent', 'turn-off-agent'], shares: 'sort and show-stats are widget and view menu items, no new-terminal item there; show shells is the war room widget menu; the agent switches are the project heading menu, which draws no new terminal' },
@@ -42,6 +50,7 @@ export const LETTERS = Object.freeze([
     { name: 'compact', letter: '1', meaning: 'compact, area closed', ids: ['bar-size-compact', 'area-closed', 'density-compact'], shares: 'compact is the bar size, area and density menus; peek zoom 100 is the war room widget menu only' },
     { name: 'cozy', letter: '2', meaning: 'cozy, area glance', ids: ['bar-size-cozy', 'area-glance', 'density-cozy'], shares: 'cozy is the bar size, area and density menus; peek zoom 25 is the war room widget menu only' },
     { name: 'detailed', letter: '3', meaning: 'detailed, area full', ids: ['bar-size-detailed', 'area-full', 'density-detailed'] },
+    ...STATUS_ENTRIES,
 ]);
 
 const BY_ID = Object.freeze(

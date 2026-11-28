@@ -9,7 +9,7 @@ import pytest
 
 from src.core.argent import cards_sync, notices, work_items
 from src.core.swarm.cards import notices as card_notices, port as card_port
-from src.plugins.huddle import lane
+from src.plugins.taskmanager import lane
 from tests.argent.test_argent_work_items import env, fixture  # noqa: F401
 
 APP = object()

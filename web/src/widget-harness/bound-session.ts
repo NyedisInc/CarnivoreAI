@@ -2,7 +2,7 @@ import { mountFileDrawerHeader } from '../lib/file-drawer/file-drawer';
 import { sessionList } from '../opscenter/widgets/fixtures/made-up';
 
 export const NEEDS_BOUND_SESSION: ReadonlySet<string> = new Set([
-  'core.notes', 'core.files', 'core.changes', 'core.task-manager', 'core.task-manager-mk2', 'core.timeline', 'core.session-contents',
+  'core.notes', 'core.files', 'core.changes', 'core.task-manager-mk2', 'core.timeline', 'core.session-contents',
   'core.tasks', 'core.bookmarks', 'core.automations', 'core.crosstalk', 'core.shell',
 ]);
 

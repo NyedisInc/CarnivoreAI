@@ -25,7 +25,7 @@ def _roster(eligible=("b",), home="a"):
 
 def _view(master="a", states=("connected", "connected", "disconnected"), roster_caps=(True, True, False)):
     rows = [{"install_id": i, "is_self": i == "a", "state": "self" if i == "a" else s,
-             "capabilities": [caps.CAP_ROSTER] if has else []} for i, s, has in zip("abc", states, roster_caps)]
+             "capabilities": [caps.CAP_MACHINE, caps.CAP_ROSTER] if has else [caps.CAP_MACHINE]} for i, s, has in zip("abc", states, roster_caps)]
     return {"master_install_id": master, "machines": rows}
 
 
@@ -63,3 +63,12 @@ def test_view_fields_and_the_off_only_mcp_surface():
     names = {s.name for s in SPECS}
     assert not {n for n in names if "reconnect" in n or "interim" in n} - {"pack_reconnect_off"}
     assert not {n for n in names if n.endswith("_on") and "reconnect" in n}
+
+
+def test_roster_v1_tells_a_measured_old_computer_from_one_never_heard_from():
+    rows = [{"install_id": "cur", "is_self": False, "state": "connected", "capabilities": [caps.CAP_MACHINE, caps.CAP_ROSTER]},
+            {"install_id": "old", "is_self": False, "state": "connected", "capabilities": [caps.CAP_MACHINE]},
+            {"install_id": "never", "is_self": False, "state": "disconnected", "capabilities": []},
+            {"install_id": "none", "is_self": False, "state": "disconnected"}]
+    view = _aug({"master_install_id": "cur", "machines": rows}, None)
+    assert [m["roster_v1"] for m in view["machines"]] == [True, False, None, None]

@@ -37,6 +37,7 @@ export function closedQuery(offset = 0, showHidden = false, archived = false): s
         agent: 'claude,codex',
         include_empty: 'false',
         project_state: 'all',
+        offloaded: 'true',
         include_automated: showHidden ? 'true' : 'false',
         sort: 'recent',
         limit: String(GROUPS_PER_PAGE),

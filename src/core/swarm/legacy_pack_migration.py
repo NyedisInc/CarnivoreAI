@@ -71,17 +71,27 @@ def _move_folder(state_dir: Path) -> bool:
 
 
 def _move_grant(state_dir: Path) -> bool:
-    def rewrite(docs: registry_store.Documents) -> bool:
-        cplugs = docs.load("state").get("cplugs")
+    def _swap(entry: Any) -> bool:
+        grants = entry.get("grants") if isinstance(entry, dict) else None
+        if isinstance(grants, list) and "pack" in grants:
+            entry["grants"] = ["swarm" if g == "pack" else g for g in grants if g != "pack" or "swarm" not in grants]
+            return True
+        return False
+
+    def rewrite(doc: Dict[str, Any]) -> bool:
         changed = False
-        for entry in (cplugs or {}).values():
-            grants = entry.get("grants") if isinstance(entry, dict) else None
-            if isinstance(grants, list) and "pack" in grants:
-                entry["grants"] = ["swarm" if g == "pack" else g for g in grants if g != "pack" or "swarm" not in grants]
+        for entry in (doc.get("items") or {}).values():
+            if isinstance(entry, dict) and not entry.get("unstored") and _swap(entry):
                 changed = True
+        for tomb in (doc.get("tombstones") or {}).values():
+            if isinstance(tomb, dict):
+                if _swap(tomb.get("state")):
+                    changed = True
+                if _swap(tomb):
+                    changed = True
         return changed
 
-    if not registry_store.cplugs_dir(state_dir).is_dir():
+    if not registry_store.registry_path(state_dir).is_file():
         return False
     try:
         return registry_store.commit(state_dir, rewrite, log_event="swarm_legacy_grant_write_failed")

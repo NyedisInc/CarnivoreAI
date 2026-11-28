@@ -15,8 +15,8 @@ vi.mock('../../lib/resource-push/boot', () => ({
 
 import BoardScreen from './BoardScreen.svelte';
 import { registerMarkdown } from '../sdk';
-import TaskManagerMarkdown from '../huddle/TaskManagerMarkdown.svelte';
-import { mdPlain } from '../huddle/task-manager-markdown';
+import TaskManagerMarkdown from '../taskmanager/TaskManagerMarkdown.svelte';
+import { mdPlain } from '../taskmanager/task-manager-markdown';
 
 let app: ReturnType<typeof mount> | null = null;
 const SUMMARY = '**Stats:** two rows now\n- bigger buttons\n- <img src=x onerror=alert(1)>';
@@ -30,7 +30,7 @@ async function settle(): Promise<void> {
 }
 
 beforeEach(() => {
-  registerMarkdown({ Block: TaskManagerMarkdown, plain: mdPlain });
+  registerMarkdown({ Block: TaskManagerMarkdown, plain: mdPlain }); // the Task Manager
   vi.stubGlobal('ResizeObserver', class { observe(): void {} unobserve(): void {} disconnect(): void {} });
   api.fetchBoard.mockResolvedValue(boardAnswer({ revisions: [revision(1), revision(2), revision(3, { summary: SUMMARY, answers_round: 'n1' })] }));
   api.fetchBoards.mockResolvedValue({ boards: [] });

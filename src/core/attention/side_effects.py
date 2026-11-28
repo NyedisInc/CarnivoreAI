@@ -11,6 +11,7 @@ from src.core import (
     session_agent_infer_apply,
     session_conversation_rebind,
 )
+from src.core.agy import title as agy_title
 from src.core.attention.ask_toasts import AskToasts, HeldAsk
 from src.core.attention.display import to_display
 from src.core.attention.evidence import FAMILY_CODEX, STATE_DONE_IDLE, STATE_NEEDS_USER
@@ -18,11 +19,12 @@ from src.core.attention.codex_identity import codex_bind_conversation
 from src.core.attention.codex_reader import CODEX_RECORD_ABSENT
 from src.core.attention.ledger import Transition
 from src.core.attention.manager_port import SideEffectsManager
+from src.core.attention import viewer_focus
 from src.core.attention.subagent_work import SubagentWorkStamp
 from src.core.resource_push.session_usage_watch import SessionUsageWatch
 from src.core.attention.registry_record import STALE_CAUSE_CONVERSATION
 from src.core.attention.watcher import Observation, WatchTarget
-from src.core.db_models import SESSION_CLAUDE_UUID_SOURCE_REGISTRY
+from src.core.db_models import SESSION_CLAUDE_UUID_SOURCE_AGENT_LOG, SESSION_CLAUDE_UUID_SOURCE_REGISTRY
 from src.core.hosts.identity import instance_name, is_remote_backend
 from src.core.swarm import guard as swarm_guard
 from src.core.swarm import watch as swarm_watch
@@ -76,8 +78,7 @@ class AttentionSideEffects:
 
 
     def _visible_viewer(self, session_id: str) -> bool:
-        negotiator = getattr(self._manager, "_terminal_size_negotiator", None)
-        return negotiator is not None and negotiator.visible_count(session_id) > 0
+        return viewer_focus.is_watched(self._manager, session_id)
 
     def set_unread(self, target: WatchTarget) -> None:
         tmux_name, _epoch = self.instance_for(target.session_id)
@@ -176,6 +177,12 @@ class AttentionSideEffects:
                 registry,
                 epoch,
             )
+        if observation.evidence.agent_bind_uuid:
+            self._guard(
+                "attention_conversation_bind_failed", session_id,
+                self._bind_agent_log, session_id, tmux_name,
+                observation.evidence.agent_bind_uuid, epoch,
+            )
         self._guard(
             "attention_startup_gate_failed",
             session_id,
@@ -217,7 +224,12 @@ class AttentionSideEffects:
                     EVENT_USER_PROMPT_SUBMIT,
                     observation.new_user_prompt_at,
                 )
-        if observation.transcript_appended and not codex:
+        agy_uuid = observation.evidence.agent_bind_uuid or (
+            observation.evidence.identity.conversation_uuid
+            if observation.evidence.identity is not None and not codex and not registry_present
+            else None
+        )
+        if (observation.transcript_appended and not codex) or agy_title.changed(agy_uuid):
             self._guard(
                 "attention_title_sync_failed", session_id, self._sync_title, session_id
             )
@@ -237,6 +249,15 @@ class AttentionSideEffects:
         codex_bind_conversation(
             self._manager, session_id=session_id, tmux_name=tmux_name,
             thread_uuid=uuid, epoch=epoch, pane_owned=True,
+        )
+
+    def _bind_agent_log(
+        self, session_id: str, tmux_name: Optional[str], uuid: Optional[str],
+        epoch: Optional[int],
+    ) -> None:
+        codex_bind_conversation(
+            self._manager, session_id=session_id, tmux_name=tmux_name, thread_uuid=uuid, epoch=epoch,
+            pane_owned=True, source=SESSION_CLAUDE_UUID_SOURCE_AGENT_LOG,
         )
 
     def _bind_conversation(

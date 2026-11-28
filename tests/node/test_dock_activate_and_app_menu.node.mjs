@@ -176,6 +176,8 @@ t('4 the chord audit finds nothing in the real menu, and fails on a stolen chord
   assert.ok(RESERVED_CHORDS.length >= 12);
   const roleOnly = [{ id: 'x', submenu: [{ id: 'x.f', role: 'togglefullscreen' }] }];
   assert.deepEqual(auditAccelerators(roleOnly), []);
+  const dupNoId = [{ id: 'menu', submenu: [{ accelerator: 'Shift+Cmd+Y', click: noop }, { accelerator: 'Shift+Cmd+Y', click: noop }] }];
+  assert.equal(auditAccelerators(dupNoId).length, 1);
 });
 t('5 Help has the help role; Window has the window role, a front item and no backtick accelerator', () => {
   const { tpl } = build();

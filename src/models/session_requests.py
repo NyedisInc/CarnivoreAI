@@ -102,6 +102,11 @@ class CreateSessionRequest(BaseModel):
     worktree: Optional[WorktreeSpec] = Field(
         None, description="Start in a new git worktree of the repository working_dir names (local only)")
 
+    disposable: bool = Field(
+        False,
+        description="Launch as a disposable scratch session (auto-mints /tmp/carnivore-scratch-<id> when working_dir is omitted and cleans it up on destroy)",
+    )
+
     @field_validator("model")
     @classmethod
     def _validate_model_id(cls, v: Optional[str]) -> Optional[str]:

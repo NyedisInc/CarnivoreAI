@@ -6,6 +6,7 @@ from typing import Any, Optional
 import structlog
 from fastapi.concurrency import run_in_threadpool
 
+from src.core.restart_live_gate import parse_probe
 from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, TmuxPresence, epoch_marks_other_instance
 from src.core.session_ops import row_probe
 
@@ -26,8 +27,8 @@ _REFUSALS = {
 
 
 def classify_husk(raw: Optional[str], name: str, epoch: Optional[int]) -> str:
-    parts = (raw or "").strip().split("|", 2)
-    if len(parts) != 3 or parts[2] != name or parts[0] not in ("0", "1") or epoch is None:
+    parts = parse_probe(raw)
+    if parts is None or parts[2] != name or epoch is None:
         return HUSK_UNKNOWN
     try:
         created = int(parts[1])
@@ -58,6 +59,7 @@ async def wake_dead_pane(
     from src.api.session_attach_routes import respawn_or_http
     from src.api.session_sleep_routes import WakeResponse
     from src.core.restart_live_gate import probe_line
+    from src.core.session_respawn import RESPAWN_OFFLOADED
 
     if presence.outcome == TMUX_GONE:
         return None
@@ -83,4 +85,5 @@ async def wake_dead_pane(
         session_id=result.get("session_id") if ok else None, tmux_session=name if ok else None,
         presence=presence.outcome, conversation=str(result.get("conversation") or "unknown"),
         command=result.get("command"), working_dir=row.get("working_dir"), detail=str(result.get("detail") or ""),
+        **({"code": "offloaded", "codes": ["offloaded"]} if result.get("kind") == RESPAWN_OFFLOADED else {}),
     )

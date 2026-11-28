@@ -1,12 +1,12 @@
 {
   "kind": "choice",
   "payload": {
-    "title": "billing-5 asks",
+    "title": "billing-5 has a question",
     "body": "which plan should I build: A, B or C?",
     "path": "/sessions/ses_0123456789ab",
     "thread": "local|ses_0123456789ab",
     "v": 2,
-    "sub": "pick one on nostromo",
+    "sub": "",
     "kind": "choice",
     "type": "session.question",
     "lv": "t",

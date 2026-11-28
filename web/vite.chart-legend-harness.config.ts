@@ -5,9 +5,10 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { tomlPlugin } from './vite.toml-plugin';
 
 export default defineConfig({
-    plugins: [svelte(), tailwindcss()],
+    plugins: [tomlPlugin(), svelte(), tailwindcss()],
     build: {
         outDir: process.env.HARNESS_OUT ?? mkdtempSync(join(tmpdir(), 'chart-legend-harness-')),
         emptyOutDir: true,

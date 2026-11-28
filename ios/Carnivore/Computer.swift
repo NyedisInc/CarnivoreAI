@@ -1,6 +1,6 @@
 import Foundation
 
-enum ComputerKind: String, Codable, CaseIterable {
+enum ComputerKind: String, Codable, CaseIterable, Sendable {
     case relay, lan, https
 
     var label: String {
@@ -12,7 +12,7 @@ enum ComputerKind: String, Codable, CaseIterable {
     }
 }
 
-enum AddressError: Error, Equatable {
+enum AddressError: Error, Equatable, Sendable {
     case empty
     case notALinkHost
     case notHttps
@@ -34,26 +34,47 @@ extension AddressError {
     }
 }
 
-struct Computer: Codable, Identifiable, Equatable {
+struct Computer: Codable, Identifiable, Equatable, Hashable, Sendable {
     var id = UUID()
     var name: String
     var kind: ComputerKind
     var origin: Origin
 
     var isUnencrypted: Bool { !origin.isEncrypted }
+
+    var isRawRelayHashName: Bool {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return true }
+        let lower = trimmed.lowercased()
+        if lower == origin.host.lowercased(), kind == .relay { return true }
+        return lower.range(of: "\\A[a-z2-7]{26}\\.link\\.carnivore\\.ai\\z", options: .regularExpression) != nil
+    }
+
+    var displayName: String {
+        isRawRelayHashName ? "My Computer" : name
+    }
+
+    var shortAddress: String {
+        if kind == .relay, origin.host.hasSuffix(".link.carnivore.ai") {
+            let prefix = String(origin.host.prefix(6))
+            return "Relay · \(prefix)…"
+        }
+        return origin.host
+    }
 }
 
 enum AddressParser {
     private static let linkHost = try! NSRegularExpression(
-        pattern: "^[a-z2-7]{26}\\.link\\.carnivore\\.ai$")
+        pattern: "\\A[a-z2-7]{26}\\.link\\.carnivore\\.ai\\z")
     private static let schemePrefix = try! NSRegularExpression(
-        pattern: "^[A-Za-z][A-Za-z0-9+.-]*:(?!\\d+(/|$))")
+        pattern: "\\A[A-Za-z][A-Za-z0-9+.-]*:(?!\\d+(/|\\z))")
     private static let hostChars = try! NSRegularExpression(
-        pattern: "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$|^\\[[0-9a-f:]+\\]$")
+        pattern: "\\A[a-z0-9]([a-z0-9.-]*[a-z0-9])?\\z|\\A\\[[0-9a-f:]+\\]\\z|\\A[0-9a-f:]+\\z")
 
     static func parse(_ input: String, kind: ComputerKind) -> Result<Origin, AddressError> {
         let text = input.trimmingCharacters(in: .whitespacesAndNewlines)
         if text.isEmpty { return .failure(.empty) }
+        if text.contains("\n") || text.contains("\r") { return .failure(.badHost) }
         let hasScheme = schemePrefix.firstMatch(
             in: text, range: NSRange(text.startIndex..., in: text)) != nil
         if hasScheme, !(text.lowercased().hasPrefix("http://") || text.lowercased().hasPrefix("https://")) {
@@ -64,11 +85,12 @@ enum AddressParser {
         case .relay, .https: withScheme = hasScheme ? text : "https://" + text
         case .lan: withScheme = hasScheme ? text : "http://" + text
         }
-        guard let comps = URLComponents(string: withScheme), let host = comps.host?.lowercased(),
-              !host.isEmpty else { return .failure(.badHost) }
+        guard let comps = URLComponents(string: withScheme), let rawHost = comps.host?.lowercased(),
+              !rawHost.isEmpty else { return .failure(.badHost) }
         if comps.user != nil || comps.password != nil { return .failure(.hasCredentials) }
+        let host = (rawHost.hasPrefix("[") && rawHost.hasSuffix("]")) ? String(rawHost.dropFirst().dropLast()) : rawHost
         let range = NSRange(host.startIndex..., in: host)
-        guard hostChars.firstMatch(in: host, range: range) != nil else { return .failure(.badHost) }
+        guard !host.isEmpty, hostChars.firstMatch(in: host, range: range) != nil else { return .failure(.badHost) }
         let scheme = comps.scheme?.lowercased() ?? ""
         switch kind {
         case .relay:
@@ -79,12 +101,12 @@ enum AddressParser {
         case .lan:
             if scheme != "http" && scheme != "https" { return .failure(.notHttpOrHttps) }
         }
-        var url = comps
-        url.path = ""
-        url.query = nil
-        url.fragment = nil
-        if kind == .lan, comps.port == nil, scheme == "http" { url.port = 8000 }
-        guard let built = url.url, let origin = Origin(url: built) else { return .failure(.badHost) }
+        let port = comps.port ?? (kind == .lan && scheme == "http" ? 8000 : (scheme == "https" ? 443 : 80))
+        let uriHost = host.contains(":") ? "[\(host)]" : host
+        let defaultPort = scheme == "https" ? 443 : 80
+        let portPart = port == defaultPort ? "" : ":\(port)"
+        guard let built = URL(string: "\(scheme)://\(uriHost)\(portPart)/"),
+              let origin = Origin(url: built) else { return .failure(.badHost) }
         return .success(origin)
     }
 }

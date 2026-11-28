@@ -51,6 +51,12 @@ def parked(question: str, kind: str = "question") -> StatusAnswer:
     return StatusAnswer(state=HostState.PARKED, question=question, question_kind=kind)
 
 
+def _memory_db() -> sqlite3.Connection:
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE projects (uid TEXT, air_gap INTEGER)")
+    return conn
+
+
 @pytest.fixture()
 def rig(tmp_path):
     target, notices = FakeTarget(), []
@@ -69,7 +75,7 @@ def rig(tmp_path):
     state.mkdir()
     jobs.mkdir()
     eng = Engine(state_dir=state, jobs_root=jobs, install_id="iid-a", target_for=lambda _i: target, sleep=no_sleep,
-                 open_db=lambda: sqlite3.connect(":memory:"), facts_for=facts, notifier=notifier)
+                 open_db=_memory_db, facts_for=facts, notifier=notifier)
     eng.target, eng.notices = target, notices  # type: ignore[attr-defined]
     return eng
 
@@ -159,7 +165,7 @@ def test_propose_computes_the_launch_on_the_caller_and_places_only_on_computers_
     view = PlaceView(self_input=SimpleNamespace(install_id="iid-a"), peers=peers, caps={"iid-old": ["pack.jobs"], "iid-b": ["pack.jobs", CAP_AGENT]})
     monkeypatch.setattr(rig, "_view_for", lambda root, uid: view)
 
-    def fake_place(work, uid, pol, v):
+    def fake_place(work, uid, pol, v, **kw):
         seen["peers"] = [p.install_id for p in v.peers]
         return PlaceAnswer("remote", "iid-b", "b", "room")
 
@@ -189,7 +195,7 @@ def test_an_unknown_agent_type_starts_nothing(rig, tmp_path, monkeypatch) -> Non
 
 
 def test_an_engine_without_a_facts_reader_refuses_agent_jobs(tmp_path) -> None:
-    eng = Engine(state_dir=tmp_path, jobs_root=tmp_path, install_id="iid-a", open_db=lambda: None)  # type: ignore[arg-type]
+    eng = Engine(state_dir=tmp_path, jobs_root=tmp_path / "jobs", install_id="iid-a", open_db=lambda: None)  # type: ignore[arg-type]
     with pytest.raises(JobError) as err:
         asyncio.run(eng.propose(_agent_req(str(tmp_path))))
     assert err.value.code == "agent_jobs_unavailable"

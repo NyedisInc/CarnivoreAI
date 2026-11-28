@@ -25,13 +25,13 @@ def test_session_rail_is_a_known_field_and_absent_by_default():
 def test_a_rail_round_trips_in_order_with_a_family_copy():
     values = ui_preferences.UiPreferenceValues(
         session_rail={"v": 1, "items": [
-            {"widget": "core.task-manager"},
+            {"widget": "core.task-manager-mk2"},
             {"widget": "core.changes"},
             {"widget": "core.terminal", "target": "row:7"},
         ]}
     )
     dumped = values.model_dump(exclude_none=True)["session_rail"]
-    assert [i["widget"] for i in dumped["items"]] == ["core.task-manager", "core.changes", "core.terminal"]
+    assert [i["widget"] for i in dumped["items"]] == ["core.task-manager-mk2", "core.changes", "core.terminal"]
     assert dumped["items"][2]["target"] == "row:7"
 
 

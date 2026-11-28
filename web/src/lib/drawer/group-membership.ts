@@ -3,6 +3,7 @@ import { EMPTY_CONTEXT, matches, type GroupRule, type RuleContext } from './grou
 
 export interface MembershipGroup {
     group_uuid: string;
+    parent_key?: string | null;
     rule?: GroupRule | null;
     members?: string[];
     member_session_uuids?: string[];
@@ -33,6 +34,14 @@ export function setRuleContext(ctx: RuleContext): void {
     ruleContext = ctx;
 }
 
+export function getRuleContext(): RuleContext {
+    return ruleContext;
+}
+
+export function listedRows(): Record<string, unknown>[] {
+    return Array.from(listed.values());
+}
+
 export function clear(): void {
     byName = new Map();
     byUuid = new Map();
@@ -44,7 +53,7 @@ export function clear(): void {
 export function rebuild(groups: readonly MembershipGroup[]): void {
     clear();
     for (const g of groups || []) {
-        if (g.rule) ruled.push({ uuid: g.group_uuid, rule: g.rule });
+        if (g.rule && !g.parent_key) ruled.push({ uuid: g.group_uuid, rule: g.rule });
         (g.members || []).forEach((name, i) => {
             byName.set(name, g.group_uuid);
             nameRank.set(name, i);
@@ -90,10 +99,31 @@ function ruledGroupOf(name: string): string | null {
     return hit ? hit.uuid : null;
 }
 
-export function countMatching(rule: GroupRule): number {
+export function countMatching(rule: GroupRule, scopeRows?: readonly Record<string, unknown>[]): number {
     let n = 0;
-    for (const row of listed.values()) if (matches(rule, row, ruleContext)) n += 1;
+    const pool = scopeRows ?? listed.values();
+    for (const row of pool) if (matches(rule, row, ruleContext)) n += 1;
     return n;
+}
+
+export function handPickedRowsFor<T extends { name: string; session_uuid?: string | null }>(
+    group: MembershipGroup, allRows: readonly T[],
+): T[] {
+    const uuidSet = new Set((group.member_session_uuids ?? []).filter(Boolean));
+    const nameSet = new Set((group.members ?? []).filter(Boolean));
+    const hasUuids = uuidSet.size > 0;
+    const out: T[] = [];
+    for (const row of allRows) {
+        if (!row || !row.name) continue;
+        if (row.name.startsWith('layout:')) {
+            if (uuidSet.has(row.name) || nameSet.has(row.name)) out.push(row);
+            continue;
+        }
+        const su = row.session_uuid || identities.get(row.name) || null;
+        const matched = su && hasUuids ? uuidSet.has(su) : nameSet.has(row.name);
+        if (matched) out.push(row);
+    }
+    return out;
 }
 
 export function memberRank(name: string): number | null {

@@ -1,4 +1,5 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
+import { CANCELLED, runWithOffloadRestore } from '../offload-prompt/offload-prompt';
 import { bookmarksTopic, type BookmarkList } from '../bookmarks/api';
 import { resourcePush } from '../resource-push/boot';
 import { SESSION_TIMELINE_TOPIC } from '../../opscenter/api/session-timeline.svelte';
@@ -28,7 +29,7 @@ export interface PanelReaders {
     conversations(sessionUuid: string): Promise<PanelConversations>;
     bookmarks(sessionUuid: string): Promise<BookmarkList>;
     timeline(sessionUuid: string): Promise<SessionTimeline>;
-    resume(sessionUuid: string, conversationId: string): Promise<void>;
+    resume(sessionUuid: string, conversationId: string): Promise<boolean | void>;
 }
 
 const seg = (value: string): string => encodeURIComponent(value);
@@ -38,7 +39,8 @@ export const defaultPanelReaders: PanelReaders = {
     bookmarks: (uuid) => authFetch<BookmarkList>(`/sessions/${seg(uuid)}/bookmarks`),
     timeline: (uuid) => authFetch<SessionTimeline>(`/sessions/${seg(uuid)}/timeline`),
     resume: async (uuid, id) => {
-        await authFetch(`/sessions/${seg(uuid)}/conversations/${seg(id)}/resume`, { method: 'POST' });
+        const done = await runWithOffloadRestore({ conversationId: id }, () => authFetch(`/sessions/${seg(uuid)}/conversations/${seg(id)}/resume`, { method: 'POST' }));
+        return done !== CANCELLED;
     },
 };
 
@@ -146,12 +148,12 @@ export class PanelData {
         }
     }
 
-    async resume(conversationId: string): Promise<void> {
+    async resume(conversationId: string): Promise<boolean> {
         const uuid = this.#uuid;
-        if (!uuid || this.resuming) return;
+        if (!uuid || this.resuming) return false;
         this.resuming = conversationId;
         try {
-            await this.#readers.resume(uuid, conversationId);
+            return (await this.#readers.resume(uuid, conversationId)) !== false;
         } finally {
             this.resuming = null;
         }

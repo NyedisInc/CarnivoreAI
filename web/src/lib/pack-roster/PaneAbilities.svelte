@@ -43,7 +43,7 @@
 {#if c.kind !== 'ssh-only' && c.machine}
   <section class="m1-sec" data-pm="abilities"><h3 class="pp-k">{t('roster.can.title')}</h3>
     {#if !can}
-      <p class="pp-hint" data-pm="abilities-old">{t('roster.can.old')}</p>
+      <p class="pp-hint" data-pm="abilities-old">{t(snap ? 'roster.can.old' : 'roster.can.unknown')}</p>
     {:else}
       <dl class="pp-facts">
         <dt>{t('roster.can.os')}</dt><dd>{can.os}{can.os_version ? ` ${can.os_version}` : ''}</dd>
@@ -65,13 +65,13 @@
     {#if pressure}<p class="pp-hint" data-pm="pressure">{pressureLine(pressure, t)}</p>{/if}
     {#if snap}
       <p class="pp-reserve" data-pm="can-rules">
-        <Button variant="quiet" size="sm" onclick={onWork} data-act="takes-work">{t('roster.can.takes_work', { state: onOff(snap.restrictions.may_host_agents) })}</Button>
-        <Button variant="quiet" size="sm" onclick={onWork} data-act="may-install">{t('roster.can.may_install', { state: onOff(snap.restrictions.may_install_tools) })}</Button>
+        <Button size="sm" onclick={onWork} data-act="takes-work">{t('roster.can.takes_work', { state: onOff(snap.restrictions.may_host_agents) })}</Button>
+        <Button size="sm" onclick={onWork} data-act="may-install">{t('roster.can.may_install', { state: onOff(snap.restrictions.may_install_tools) })}</Button>
       </p>
     {/if}
     {#if can}
       <p class="pp-reserve" data-pm="abilities-checked"><span data-pm="checked">{checked}</span>
-        <Button variant="quiet" size="sm" disabled={busy} onclick={() => void checkAgain()} data-act="check-again">{t('roster.can.check_again')}</Button></p>
+        <Button size="sm" disabled={busy} onclick={() => void checkAgain()} data-act="check-again">{t('roster.can.check_again')}</Button></p>
     {/if}
     {#if error}<p class="pp-warn" role="alert" data-pm="abilities-error">{error}</p>{/if}
   </section>

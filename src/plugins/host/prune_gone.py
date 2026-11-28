@@ -90,7 +90,10 @@ async def _prune_measured_gone(live: Any, item_id: str, name: str, state_dir: Pa
         return False
     await live.supervisor.disable(name, "folder_gone")
     await asyncio.to_thread(live.effects.cancel, name)
-    live.supervisor.forget(name)
+    if hasattr(live.supervisor, "forget_plugin"):
+        await live.supervisor.forget_plugin(name)
+    else:
+        live.supervisor.forget(name)
     dropped = await asyncio.to_thread(_drop_stores, state_dir, item_id)
     if dropped is None:
         return False

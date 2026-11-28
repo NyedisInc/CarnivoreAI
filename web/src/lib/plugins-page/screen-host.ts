@@ -1,5 +1,4 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import PluginsScreen from './PluginsScreen.svelte';
 import { pluginSettingsHash } from './plugin-settings-link';
 
 export const PLUGINS_SCREEN_CONTAINER = 'plugins-screen';
@@ -8,7 +7,7 @@ export const PLUGINS_HASH = '#plugins';
 
 export const LEGACY_TASK_MANAGER_SETTINGS_HASHES: readonly string[] = ['#swarm-settings', '#interactive-todo'];
 
-const host = createOverlayHost(PLUGINS_SCREEN_CONTAINER, PluginsScreen, PLUGINS_HASH, { aliases: LEGACY_TASK_MANAGER_SETTINGS_HASHES, props: { scope: 'plugins' } });
+const host = createOverlayHost(PLUGINS_SCREEN_CONTAINER, { load: () => import('./PluginsScreen.svelte') }, PLUGINS_HASH, { aliases: LEGACY_TASK_MANAGER_SETTINGS_HASHES, props: { scope: 'plugins' } });
 
 export const openPluginsScreen = (): boolean => host.open();
 

@@ -3,6 +3,7 @@ import { isOneOf } from '../../opscenter/ui/stored-choice';
 import type { TabDef } from '../../opscenter/ui/Tabs.svelte';
 import { scaleBytes } from '../../opscenter/viz/health';
 import type { Translate } from '../sessions/types';
+import { installedRevocationReason, isInstalledRevoked } from '../catalog/revocation';
 import { CPLUGS_ROUTE, type CplugItem, type CplugSurfaces } from './cplugs-adapter';
 import { visibleSchema } from './plugin-extras';
 import { hasPluginSettings } from './plugin-settings-link';
@@ -44,6 +45,13 @@ export function stateTone(plugin: Pick<CplugItem, 'state'>): StateTone {
 }
 
 export function paneReason(plugin: CplugItem, t: Translate): PaneReason | null {
+    if (isInstalledRevoked(plugin)) {
+        const reason = installedRevocationReason(plugin);
+        const more = reason
+            ? t('plugins.page.pane.reason.revoked_said', { reason })
+            : t('skill.revoked.notice');
+        return { kind: 'held', lead: t('plugins.page.pane.reason.revoked'), more };
+    }
     if (plugin.state === 'unavailable') {
         const more = plugin.heldReason
             ? t('plugins.page.pane.reason.held_said', { reason: plugin.heldReason })
@@ -77,7 +85,7 @@ export function bytesText(bytes: number, t: Translate): string {
 
 export function settingsCount(plugin: CplugItem): number | null {
     if (!plugin.settingsSchema || !hasPluginSettings(plugin)) return null;
-    const count = Object.keys(visibleSchema(plugin.cplugId, plugin.settingsSchema).fields).length;
+    const count = Object.keys(visibleSchema(plugin.settingsSchema).fields).length;
     return count > 0 ? count : null;
 }
 

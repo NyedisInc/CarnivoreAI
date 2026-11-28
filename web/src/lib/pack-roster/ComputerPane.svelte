@@ -14,13 +14,15 @@
   import PaneLink from './PaneLink.svelte';
   import PaneSsh from './PaneSsh.svelte';
   import { rosterUi, type PaneTab } from './roster-ui.svelte';
-  import type { RosterComputer } from './roster-model';
+  import { packMachines } from '../pack-machines/pack-machines-store.svelte';
+  import { meshOn, type RosterComputer } from './roster-model';
 
   const TABS: readonly PaneTab[] = ['overview', 'projects', 'link', 'ssh'];
   const { c, computers, nowMs, onClose }: { c: RosterComputer; computers: readonly RosterComputer[]; nowMs: number; onClose: () => void } = $props();
   let confirming = $state(false);
   let titleEl = $state<HTMLHeadingElement | undefined>();
   const tabDefs = $derived(TABS.map((id) => ({ id, label: t(`roster.tab.${id}`) })));
+  const selfIsAlpha = $derived(computers.some((x) => x.isSelf && x.isAlpha));
   const removable = $derived(!c.isSelf && c.entry !== null);
 
   $effect(() => {
@@ -50,7 +52,7 @@
         <Button variant="danger" size="sm" data-act="remove" disabled={activity.busy !== null} onclick={() => (confirming = true)}>{t('computers.row.remove')}</Button>
       {/if}</span></div>
   {#if confirming}
-    <div class="pp-confirm" data-open data-act="remove-confirm"><span class="pp-confirm__text">{t('computers.row.remove_confirm', { label: c.name })}</span>
+    <div class="pp-confirm" data-open data-act="remove-confirm"><span class="pp-confirm__text">{meshOn(packMachines.data) ? t(selfIsAlpha ? 'roster.remove.confirm_mesh' : c.isAlpha ? 'roster.remove.confirm_leave' : 'roster.remove.confirm_member', { label: c.name }) : t('computers.row.remove_confirm', { label: c.name })}</span>
       <span class="pp-confirm__row">
         <Button size="sm" onclick={() => (confirming = false)}>{t('computers.row.cancel')}</Button>
         <Button variant="danger" size="sm" data-act="remove-yes" disabled={activity.busy !== null} onclick={() => void removeIt()}>{t('computers.row.remove')}</Button></span></div>

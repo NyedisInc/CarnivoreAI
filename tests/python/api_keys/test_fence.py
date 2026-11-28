@@ -90,3 +90,23 @@ def test_public_review_links_refuse_a_key_and_the_owner_is_not_fenced(client, ow
         r = client.request(method, path, json=body, headers=bearer(secret))
         assert r.status_code == 403 and r.json()["detail"] == FORBIDDEN, (method, path, r.text)
         assert client.request(method, path, json=body, headers=bearer(owner_jwt)).status_code != 403, (method, path)
+
+
+def test_the_save_freeze_clear_route_is_the_owners_alone(client, owner_jwt, key_store, live_key, monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    from src.plugins.save import settings_routes
+    from src.plugins.save.vault import constants as VK
+
+    (tmp_path / VK.FREEZE_FILE).write_text('{"count": 10}', encoding="utf-8")
+    monkeypatch.setattr("src.plugins.host.runtime.host_for", lambda _app: SimpleNamespace(enabled=lambda _id: True, unavailable={}))
+    monkeypatch.setattr(settings_routes.RUNTIME, "vault", lambda: SimpleNamespace(root=tmp_path))
+    path = "/api/v1/cplugs/save/mass-gone/clear"
+    _, secret = live_key
+    refused = client.post(path, headers=bearer(secret))
+    assert refused.status_code == 403 and refused.json()["detail"] == FORBIDDEN, refused.text
+    assert (tmp_path / VK.FREEZE_FILE).is_file()
+    assert client.post(path).status_code == 401
+    cleared = client.post(path, headers=bearer(owner_jwt))
+    assert cleared.status_code == 200 and cleared.json() == {"cleared": True}
+    assert not (tmp_path / VK.FREEZE_FILE).exists()

@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS api_keys (
 );
 """
 _PUBLIC_COLUMNS = ("id", "name", "display_prefix", "created_at", "last_used_at", "revoked_at")
+_INITIALIZED_DBS: set[tuple[str, int]] = set()
+_INIT_LOCK = threading.Lock()
 
 
 class ApiKeyError(ValueError):
@@ -77,7 +79,7 @@ class ApiKeyStore:
         self._clock = clock
         self._lock = threading.Lock()
 
-    def _ensure_file(self, path: Path) -> None:
+    def _ensure_file(self, path: Path) -> int:
         try:
             fd = os.open(path, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
         except OSError as exc:
@@ -88,15 +90,24 @@ class ApiKeyStore:
                 raise ApiKeyStoreError("the api key file is not a regular file")
             if stat.S_IMODE(info.st_mode) != 0o600:
                 os.fchmod(fd, 0o600)
+            return info.st_ino
         finally:
             os.close(fd)
 
     def _connect(self) -> sqlite3.Connection:
         path = Path(self._path_of())
-        self._ensure_file(path)
+        ino = self._ensure_file(path)
         conn = sqlite3.connect(path, timeout=10.0)
         conn.row_factory = sqlite3.Row
-        conn.executescript(_SCHEMA)
+        conn.execute("PRAGMA synchronous=NORMAL")
+        key = (str(path.resolve()), ino)
+        with _INIT_LOCK:
+            needs_init = key not in _INITIALIZED_DBS
+        if needs_init:
+            conn.execute("PRAGMA journal_mode=WAL")
+            conn.executescript(_SCHEMA)
+            with _INIT_LOCK:
+                _INITIALIZED_DBS.add(key)
         return conn
 
     def create(self, name: str) -> tuple[dict, str]:

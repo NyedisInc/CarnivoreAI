@@ -31,7 +31,7 @@ describe('src/data/widget-contracts.json', () => {
   test('routes are generalized: a made-up session or list id becomes {id}', () => {
     expect(readRoutesOf('core.notes')).toContain('GET /sessions/{id}/note');
     expect(readRoutesOf('core.stat-sessions')).toContain('GET /sessions/list');
-    expect(readRoutesOf('core.task-manager')).toContain('GET /cplugs/huddle/lists/{id}');
+    expect(readRoutesOf('core.task-manager-mk2')).toContain('GET /cplugs/huddle/lists/{id}');
   });
 
   test('a collection route keeps its word and a made-up session id still generalizes', () => {

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import re
-from typing import Literal
+from typing import Literal, Optional
 
 from pydantic import field_validator
 
@@ -25,4 +25,23 @@ class CardMedia(_Doc):
     def _sha_shape(cls, value: str) -> str:
         if not MEDIA_SHA_RE.match(value):
             raise ValueError("media sha256 is not 64 lowercase hex")
+        return value
+
+
+class CardScreenshot(_Doc):
+
+    sha256: str
+    w: int
+    h: int
+    type: Literal["image/webp"]
+    bytes: int
+    source: Literal["author", "captured"]
+    surface: Optional[str] = None
+    caption: Optional[str] = None
+
+    @field_validator("sha256")
+    @classmethod
+    def _sha_shape(cls, value: str) -> str:
+        if not MEDIA_SHA_RE.match(value):
+            raise ValueError("screenshot sha256 is not 64 lowercase hex")
         return value

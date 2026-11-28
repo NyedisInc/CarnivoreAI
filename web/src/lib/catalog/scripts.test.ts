@@ -12,9 +12,12 @@ describe('which files are executable', () => {
         expect(isScriptFile({ path: './scripts/run.sh' })).toBe(true);
     });
 
-    test('an ordinary member is not, whatever it is called', () => {
+    test('script extensions and hook/bin/monitor directories are flagged as scripts (#3392)', () => {
         expect(isScriptFile({ path: 'SKILL.md' })).toBe(false);
-        expect(isScriptFile({ path: 'docs/example.sh' })).toBe(false);
+        expect(isScriptFile({ path: 'docs/example.sh' })).toBe(true);
+        expect(isScriptFile({ path: 'hooks/pre.json' })).toBe(true);
+        expect(isScriptFile({ path: 'bin/helper' })).toBe(true);
+        expect(isScriptFile({ path: 'effects.js' })).toBe(true);
         expect(isScriptFile({ path: 'scriptsy/run' })).toBe(false);
     });
 

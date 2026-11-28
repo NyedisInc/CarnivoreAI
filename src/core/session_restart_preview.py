@@ -10,9 +10,9 @@ from src.core.session_respawn import (
     RespawnPlan,
     pane_state_from_probe,
     project_restart_rung,
-    refuse_if_transcript_missing,
     resolve_respawn_plan,
 )
+from src.core.respawn.transcript_guard import refuse_if_transcript_missing
 
 WRAPPERS_OK: str = "ok"
 

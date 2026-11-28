@@ -4,11 +4,11 @@ from __future__ import annotations
 import sqlite3
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.inventory import locations
-from src.plugins.host.data_roots import VaultFolder
+from src.plugins.host.data_roots import VaultFolder, stored_settings
 from src.core.inventory.registry_side import DEEPSEARCH, READER_STATE, SIDE_DBS, SKILL_FIRES, STATS
 
 DERIVED_SIDE_DBS = frozenset({DEEPSEARCH, STATS, READER_STATE, SKILL_FIRES})
@@ -26,6 +26,12 @@ def claude_roots() -> Tuple[Path, ...]:
 
 def codex_home() -> Path:
     return locations.codex_home()
+
+
+def codex_account_homes() -> Tuple[Tuple[Optional[str], Path], ...]:
+    from src.core.provider_ledger import codex_homes as resolver
+
+    return tuple((h.managed_account_id, h.path) for h in resolver.account_homes_beside(codex_home()))
 
 
 def vault_folders(state_dir: Path) -> List[VaultFolder]:
@@ -76,4 +82,16 @@ def project_roots(state_dir: Path) -> List[Dict[str, Any]]:
     return sorted(rows, key=lambda r: len(r["root"] or ""), reverse=True)
 
 
-__all__ = ["DERIVED_SIDE_DBS", "SourceUnavailable", "claude_roots", "codex_home", "manifest_rows", "project_roots", "side_databases"]
+def plugin_settings(state_dir: Path, plugin_id: str) -> Dict[str, Any]:
+    return stored_settings(state_dir, plugin_id) or {}
+
+
+def project_names(state_dir: Path) -> Dict[int, str]:
+    try:
+        with closing(_connect_readonly(state_dir)) as conn:
+            return {int(r["id"]): str(r["display_name"] or "") for r in conn.execute("SELECT id, display_name FROM projects")}
+    except sqlite3.Error as exc:
+        raise SourceUnavailable(f"cannot read the projects table: {exc}") from exc
+
+
+__all__ = ["DERIVED_SIDE_DBS", "SourceUnavailable", "claude_roots", "codex_account_homes", "codex_home", "manifest_rows", "plugin_settings", "project_names", "project_roots", "side_databases"]

@@ -19,7 +19,8 @@
     "POST /api/v1/projects/{project_name}/publish-repo",
     "GET /api/v1/pack/machines/{machine}/labels",
     "PUT /api/v1/pack/machines/{machine}/labels",
-    "POST /api/v1/pack/machines/{machine}/rescan"
+    "POST /api/v1/pack/machines/{machine}/rescan",
+    "PUT /api/v1/pack/link-peers"
   ],
   "area": "settings",
   "docs": [
@@ -30,7 +31,8 @@
   "examples": [
     "See every paired computer's load, memory and disk beside the compute it keeps free for its owner.",
     "Make another computer the Pack alpha, and see at once when two computers disagree about which one it is.",
-    "Stop a paired computer from hosting more than two agents, from that computer or from this one."
+    "Stop a paired computer from hosting more than two agents, from that computer or from this one.",
+    "Switch the link off for a lost laptop from the alpha, then check its card on another member."
   ],
   "how_to": [
     "Open the pack row in the menu (press h with the menu focused). The computers tab lists every computer once, this computer first: its name, the alpha badge, a green computer icon for this computer, a two-computers icon for the link (green while the computer answers, grey within about half a minute of it going quiet), model and cores, cpu, memory and disk as segmented meters, and the installed tools row.",
@@ -42,7 +44,10 @@
     "On a project's page, open transport... to set air-gap, see which github account the project uses and where that came from, pick one of the logged-in accounts, see how a replica would get the code, and publish a private repo for a folder with no remote.",
     "A session or Swarm agent running on another computer wears that computer's name as a small badge on the Swarm page and in its chat header.",
     "The ssh tab holds ssh-only machines and the pairing tools.",
-    "Give a computer your own labels (up to 16 short words, from any paired computer) and rescan what it has; the labels and the probe of its tools, Xcode, GPUs and Homebrew ride in its snapshot so placement can ask for them. The idle keyboard rule is now on for every computer: after 10 idle minutes it keeps the smaller away share even inside the schedule."
+    "Give a computer your own labels (up to 16 short words, from any paired computer) and rescan what it has; the labels and the probe of its tools, Xcode, GPUs and Homebrew ride in its snapshot so placement can ask for them. The idle keyboard rule is now on for every computer: after 10 idle minutes it keeps the smaller away share even inside the schedule.",
+    "The pack holds 64 computers. A 65th is refused by name: the invite code answers 409 pack_full and add over ssh fails the job with pack_full, and the held signed computer list stays as it was. Computers 17 to 64 follow a takeover but only the first 16 can claim one; older apps see the first 16.",
+    "On the alpha, each computer has a link with the other computers switch (on by default). Turn it off for a computer you do not trust and every member drops its links to it within a list round; it stays a member of the alpha. A member shows the switch read only. If a computer cannot read its switches it makes no member links until a switch is edited or a current list arrives.",
+    "Driving another member's session and tightening another member's restrictions still go through the alpha."
   ],
   "id": "pack-machines",
   "issues": [
@@ -50,7 +55,12 @@
     1521,
     1618,
     1921,
-    2990
+    2990,
+    3132,
+    3195,
+    3215,
+    3250,
+    3307
   ],
   "keywords": [
     "pack",
@@ -80,7 +90,7 @@
     "web/src/lib/pack-machines/PackMeter.svelte",
     "web/src/lib/pack-machines/PackMarks.svelte"
   ],
-  "updated": "2026-11-16",
+  "updated": "2026-11-23",
   "where": [
     "Pack: the computers, work, logins and ssh tabs."
   ],

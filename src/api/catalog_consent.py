@@ -1,17 +1,21 @@
 
 from __future__ import annotations
 
+import re
+import tomllib
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 
 import structlog
 from fastapi import HTTPException, Request
 
-from src.api.catalog_views import host_of
+from src.api.catalog_views import host_of, is_version_flagged, warning_reasons_for_version
 from src.core.skills.install_types import CONSENT_REQUIRED
+from src.plugins.host import owner_switch
 from src.plugins.host.install_gates import CplugFacts
+from src.plugins.runtime.supervisor import safe_mode_from_env
 from src.core.skills.code_gate import staged_plugin_declares_code
-from src.core.skills.kinds import KIND_PLUGIN
+from src.core.skills.kinds import KIND_CPLUG, KIND_PLUGIN
 from src.core.skills.plugin_safe_subset import staged_mcp_servers
 from src.core.skills.ledger_types import InstalledItem
 from src.core.skills.manifest_preview import preview_manifest
@@ -22,6 +26,7 @@ from src.models.catalog_api import (
     InstalledUpdateRequest,
     InstallPreviewResponse,
     McpServerPreview,
+    PermissionDiffView,
     PreviewFile,
     UpdateConsent,
 )
@@ -29,6 +34,22 @@ from src.models.catalog_api import (
 DIGEST_PREFIX_LENGTH = 12
 
 logger = structlog.get_logger()
+
+
+def _cplug_runtime_active(request: Request) -> bool:
+    app_state = getattr(getattr(request, "app", None), "state", None)
+    live = getattr(app_state, "sidecar_runtime", None)
+    if live is not None and hasattr(live, "safe_mode"):
+        return not any(live.safe_mode().values())
+    services = getattr(app_state, "services", None)
+    reader = getattr(services, "settings_reader", None)
+    if reader is None:
+        return False
+    return owner_switch.read(reader.state_dir()) and not safe_mode_from_env()
+
+
+def _warning_reasons_for_version(version: ItemVersion) -> Optional[list[str]]:
+    return warning_reasons_for_version(version)
 
 
 def preview_body(
@@ -75,6 +96,22 @@ def preview_body(
             else version.review.model_dump(mode="json")
         ),
         plan_token=plan_token,
+        runtime_active=_cplug_runtime_active(request) if item.kind == KIND_CPLUG else None,
+        flagged=bool(
+            getattr(version, "requires_warning_ack", False)
+            or (version.review is not None and version.review.verdict == "flagged")
+        ),
+        requires_warning_ack=bool(
+            getattr(version, "requires_warning_ack", False)
+            or (version.review is not None and version.review.verdict == "flagged")
+        ),
+        warning_reasons=_warning_reasons_for_version(version),
+        provenance=(
+            version.provenance.model_dump(mode="json")
+            if getattr(version, "provenance", None) is not None
+            else None
+        ),
+        manifest_schema=getattr(version, "manifest_schema", None),
     )
 
 
@@ -147,6 +184,56 @@ def consent_sheet(
     return put_on_sheet(sheet, mod_facts)
 
 
+_MAX_RELEASE_NOTES_CHARS = 2400
+
+
+def extract_release_notes(staged_path: Any, version: str) -> Optional[str]:
+    root = Path(staged_path) if staged_path is not None else None
+    if root is None or not root.is_dir():
+        return None
+    manifest_file = root / "carnivore.toml"
+    if manifest_file.is_file():
+        try:
+            data = tomllib.loads(manifest_file.read_text(encoding="utf-8", errors="replace"))
+            raw = data.get("release_notes") or data.get("changelog")
+            if isinstance(raw, list):
+                joined = "\n".join(f"- {str(item).strip()}" for item in raw if str(item).strip())
+                if joined:
+                    return joined[:_MAX_RELEASE_NOTES_CHARS]
+            elif isinstance(raw, str) and raw.strip():
+                return raw.strip()[:_MAX_RELEASE_NOTES_CHARS]
+        except (OSError, tomllib.TOMLDecodeError):
+            pass
+
+    ver_clean = (version or "").strip().lstrip("vV")
+    ver_re = re.compile(rf"^#{{1,3}}\s+\[?v?{re.escape(ver_clean)}\]?(?:\b|\s|$)", re.IGNORECASE) if ver_clean else None
+    for name in ("RELEASE_NOTES.md", "CHANGELOG.md", "changelog.md", "release_notes.md"):
+        candidate = root / name
+        if not candidate.is_file():
+            continue
+        try:
+            text = candidate.read_text(encoding="utf-8", errors="replace").strip()
+        except OSError:
+            continue
+        if not text:
+            continue
+        lines = text.splitlines()
+        if ver_re is not None:
+            start = next((i for i, ln in enumerate(lines) if ver_re.match(ln.strip())), None)
+            if start is not None:
+                section: List[str] = []
+                for ln in lines[start + 1 :]:
+                    if re.match(r"^#{1,3}\s+", ln.strip()):
+                        break
+                    section.append(ln)
+                body = "\n".join(section).strip()
+                if body:
+                    return body[:_MAX_RELEASE_NOTES_CHARS]
+        if name.lower().startswith("release_notes"):
+            return text[:_MAX_RELEASE_NOTES_CHARS]
+    return None
+
+
 def consent_409(
     request: Request,
     item: CatalogItem,
@@ -156,6 +243,7 @@ def consent_409(
     *,
     detail: Optional[str] = None,
     diff: Optional[UpdateDiff] = None,
+    permission_diff: Optional[Any] = None,
     mod_facts: Any = None,
 ) -> HTTPException:
     wording = detail or (
@@ -172,6 +260,21 @@ def consent_409(
         mod_facts=mod_facts,
     )
     sheet.diff = diff
+    sheet.release_notes = extract_release_notes(getattr(staged, "path", None), version.v)
+    if permission_diff is not None:
+        raw_diff = (
+            permission_diff.as_dict()
+            if hasattr(permission_diff, "as_dict")
+            else permission_diff
+        )
+        sheet.permission_diff = PermissionDiffView.model_validate(raw_diff)
+    if is_version_flagged(version):
+        sheet.flagged = True
+        sheet.requires_warning_ack = True
+        if sheet.warning_reasons is None:
+            sheet.warning_reasons = warning_reasons_for_version(version)
+        if sheet.review is None and getattr(version, "review", None) is not None:
+            sheet.review = version.review.model_dump(mode="json")
     logger.info(
         "skill_consent_required",
         item_id=item.id,

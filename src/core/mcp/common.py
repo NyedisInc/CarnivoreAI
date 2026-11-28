@@ -5,6 +5,7 @@ import json
 from typing import Any
 
 from src.core.hosts.ddl import LOCAL_HOST_KEY
+from src.core.mcp import reply_sentence
 
 
 _TARGET_SCHEMA = {
@@ -52,6 +53,11 @@ def _summary(info: Any) -> dict:
     return row
 
 
+def _noted(target: str, info: Any) -> Any:
+    reply_sentence.note_name(target, (info.label or "").strip() or (info.claude_title or "").strip() or info.tmux_session)
+    return info
+
+
 def _resolve(infos: list, args: dict) -> Any:
     target = args.get("target")
     if not isinstance(target, str) or not target.strip():
@@ -59,8 +65,8 @@ def _resolve(infos: list, args: dict) -> Any:
     target = target.strip()
     for info in infos:
         if info.session.id == target:
-            return info
+            return _noted(target, info)
     for info in infos:
         if info.tmux_session == target and info.host_key == LOCAL_HOST_KEY:
-            return info
+            return _noted(target, info)
     raise ToolError(f"no live session matches target {target!r}")

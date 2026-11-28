@@ -1,6 +1,7 @@
 import { defineConfig, type Plugin } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
+import { tomlPlugin } from '../../../vite.toml-plugin';
 
 const PUBLIC_KEY_PREFIX = 'cplug.reviewboard.public.';
 
@@ -22,7 +23,7 @@ const entry = fileURLToPath(new URL('./public/visitor-page/main.ts', import.meta
 const outDir = fileURLToPath(new URL('../../../../client/dist', import.meta.url));
 
 export default defineConfig({
-    plugins: [publicStringsOnly(), svelte()],
+    plugins: [tomlPlugin(), publicStringsOnly(), svelte()],
     build: {
         outDir,
         emptyOutDir: false,

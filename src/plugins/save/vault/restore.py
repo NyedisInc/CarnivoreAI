@@ -13,7 +13,7 @@ import structlog
 from src.plugins.save.engine import layout
 from src.plugins.save.vault import constants as K
 from src.plugins.save.vault.chunks import BlobStore
-from src.plugins.save.vault.manifest import FileEntry, Manifest
+from src.plugins.save.vault.manifest import HOME_CODEX, FileEntry, Manifest, is_codex_account_home
 from src.plugins.sdk import transcript_files as tf
 from src.plugins.sdk.blob_codec import BlobCorrupt, BlobMissing, ChunkReader, PlaceConflict, chain_sha, place_no_clobber, sha256_file
 
@@ -40,6 +40,7 @@ class RestoreResult:
     written: List[Path] = field(default_factory=list)
     already_present: List[Path] = field(default_factory=list)
     skipped_conflicts: List[Path] = field(default_factory=list)
+    disk_newer: List[Path] = field(default_factory=list)
     bytes: int = 0
 
 
@@ -57,6 +58,31 @@ def file_matches(path: Path, entry: FileEntry) -> bool:
                 if len(seen) > len(entry.chunks) or seen[-1] != entry.chunks[len(seen) - 1].sha256:
                     return False
             return len(seen) == len(entry.chunks) and not reader.short
+    except OSError:
+        return False
+
+
+_COMPARE_PIECE: int = 1 << 20
+
+
+def starts_with_entry(path: Path, entry: FileEntry) -> bool:
+    if entry.role not in K.LINE_ROLES:
+        return False
+    try:
+        if os.path.getsize(path) <= entry.length:
+            return False
+        with open(path, "rb") as handle:
+            for chunk in entry.chunks:
+                remaining, digest = chunk.length, hashlib.sha256()
+                while remaining:
+                    raw = handle.read(min(remaining, _COMPARE_PIECE))
+                    if not raw:
+                        return False
+                    digest.update(raw)
+                    remaining -= len(raw)
+                if digest.hexdigest() != chunk.sha256:
+                    return False
+        return True
     except OSError:
         return False
 
@@ -85,7 +111,7 @@ def verify_manifest(blobs: BlobStore, manifest: Manifest) -> int:
     return manifest.raw_bytes()
 
 
-def _write_entry(blobs: BlobStore, entry: FileEntry, dest: Path, *, imported: bool = False) -> None:
+def write_entry(blobs: BlobStore, entry: FileEntry, dest: Path, *, imported: bool = False, strict: bool = False) -> None:
     tf.assert_test_write_allowed(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
     temp = dest.with_name(layout.temp_name(".vault-restore-"))
@@ -103,7 +129,7 @@ def _write_entry(blobs: BlobStore, entry: FileEntry, dest: Path, *, imported: bo
             raise RestoreError(f"{entry.rel}: the restored bytes do not match the manifest")
         _apply_metadata(temp, entry, imported=imported)
         try:
-            place_no_clobber(temp, dest)
+            place_no_clobber(temp, dest, strict=strict)
         except PlaceConflict:
             raise RestoreConflict([dest]) from None
     finally:
@@ -134,17 +160,28 @@ def restore_manifest(blobs: BlobStore, manifest: Manifest, destination: Callable
                      skip_conflicts: bool = False, only_roles: Optional[Iterable[str]] = None) -> RestoreResult:
     roles = set(only_roles) if only_roles is not None else None
     plan = [(e, destination(e)) for e in manifest.files if roles is None or e.role in roles]
-    conflicts = [d for e, d in plan if d.exists() and not file_matches(d, e)]
+    existing = [(e, d) for e, d in plan if d.exists()]
+    matched = {d for e, d in existing if file_matches(d, e)}
+    conflicts = [d for e, d in existing if d not in matched]
     if conflicts and not skip_conflicts:
         raise RestoreConflict(conflicts)
     result = RestoreResult()
     for entry, dest in plan:
         if dest in conflicts:
             result.skipped_conflicts.append(dest)
-        elif dest.exists():
+        elif dest in matched:
             result.already_present.append(dest)
+        elif dest.exists():
+            if file_matches(dest, entry):
+                result.already_present.append(dest)
+            elif starts_with_entry(dest, entry):
+                result.disk_newer.append(dest)
+            elif skip_conflicts:
+                result.skipped_conflicts.append(dest)
+            else:
+                raise RestoreConflict([dest])
         else:
-            _write_entry(blobs, entry, dest, imported=manifest.reason == K.REASON_IMPORT)
+            write_entry(blobs, entry, dest, imported=manifest.reason == K.REASON_IMPORT)
             result.written.append(dest)
             result.bytes += entry.length
     logger.info("vault_restored", unit=manifest.unit, point_id=manifest.point_id, written=len(result.written),
@@ -156,11 +193,13 @@ def restore_to_root(blobs: BlobStore, manifest: Manifest, target_root: Path, **k
     return restore_manifest(blobs, manifest, lambda e: Path(target_root) / e.home / e.rel, **kwargs)
 
 
-def restore_to_homes(blobs: BlobStore, manifest: Manifest, homes: Dict[str, Path], **kwargs) -> RestoreResult:
+def homes_destination(homes: Dict[str, Path]) -> Callable[[FileEntry], Path]:
     def destination(entry: FileEntry) -> Path:
         first, _, rest = entry.rel.partition("/")
         specific = homes.get(f"{entry.home}/{first}")
         home, inner = (specific, rest) if specific is not None and rest else (homes.get(entry.home), entry.rel)
+        if home is None and is_codex_account_home(entry.home):
+            home = homes.get(HOME_CODEX)
         if home is None:
             raise RestoreError(f"no folder given for home {entry.home!r}")
         dest = Path(home) / inner
@@ -169,4 +208,8 @@ def restore_to_homes(blobs: BlobStore, manifest: Manifest, homes: Dict[str, Path
             raise RestoreError(f"refusing to write outside {home}: {dest}")
         return dest
 
-    return restore_manifest(blobs, manifest, destination, **kwargs)
+    return destination
+
+
+def restore_to_homes(blobs: BlobStore, manifest: Manifest, homes: Dict[str, Path], **kwargs) -> RestoreResult:
+    return restore_manifest(blobs, manifest, homes_destination(homes), **kwargs)

@@ -26,11 +26,8 @@ export type HeadSurface = 'grid' | 'drawer' | 'rail' | 'popout';
 
 export const HEADER_OPTION = 'show_header';
 
-export const RAIL_HEADER_ON: ReadonlySet<string> = new Set(['core.task-list']);
-
-export function placementHeaderShown(surface: 'drawer' | 'rail', options: Readonly<Record<string, unknown>> | undefined, widgetId?: string): boolean {
+export function placementHeaderShown(surface: 'drawer' | 'rail', options: Readonly<Record<string, unknown>> | undefined): boolean {
   const stored = options?.[HEADER_OPTION];
-  if (typeof stored !== 'boolean' && surface === 'rail' && widgetId !== undefined && RAIL_HEADER_ON.has(widgetId)) return true;
   return headerShown(surface, typeof stored === 'boolean' ? stored : undefined);
 }
 

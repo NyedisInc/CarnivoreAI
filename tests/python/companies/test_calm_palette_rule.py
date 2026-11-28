@@ -13,51 +13,27 @@ from src.core.project_colors.palette import SOFT_PALETTE
 ROOT = Path(__file__).resolve().parents[3]
 THEMES = sorted((ROOT / "client/css/themes").glob("*/theme.json"))
 
-MIN_DE_SEMANTIC = 10.0
-MIN_DE_PAIR = 7.4
-MIN_CHROMA = 0.07
-MAX_CHROMA = 0.16
+MIN_DE_PAIR = 9.5
+MIN_CHROMA = 0.11
 MIN_CONTRAST = 2.0
 
-SEMANTIC_KEYS = (
-    "--color-accent", "--color-accent-strong", "--color-success", "--color-warning", "--color-danger",
-    "--color-info", "--color-status-connected", "--color-status-error", "--color-status-pending", "--color-fg-muted",
-)
-LED_DEAD = "#494c4f"
-OC_VIOLET = "#a98fe0"
-OLD_WHEEL = (
-    "#c17b87", "#c1897b", "#c1a57b", "#c1b87b", "#aac17b", "#7bc187",
-    "#7bc1aa", "#7bbbc1", "#7ba4c1", "#7b89c1", "#987bc1", "#c17bb3",
-)
 
-WHEEL_STILL_ALLOWED = ("#7b89c1", "#c17bb3")
-
-
-def _semantic_and_grounds():
-    semantic = [("led dead", LED_DEAD), ("oc violet", OC_VIOLET)]
+def _grounds():
     grounds = []
     for path in THEMES:
         vars_ = json.loads(path.read_text())["cssVars"]
-        for key in SEMANTIC_KEYS:
-            value = vars_.get(key, "")
-            if value.startswith("#") and len(value) == 7:
-                semantic.append((f"{path.parent.name} {key}", value.lower()))
         grounds += [vars_["--color-bg"].lower(), vars_["--color-bg-card"].lower()]
-    return semantic, grounds
+    return grounds
 
 
-SEMANTIC, GROUNDS = _semantic_and_grounds()
+GROUNDS = _grounds()
 
 
 def _violations(hex_: str):
     out = []
-    nearest = min(SEMANTIC, key=lambda s: delta_e_hex(hex_, s[1]))
-    de = delta_e_hex(hex_, nearest[1])
-    if de < MIN_DE_SEMANTIC:
-        out.append(f"deltaE {de:.1f} < {MIN_DE_SEMANTIC} from {nearest[0]} {nearest[1]}")
-    chroma = round(oklch(hex_)[1], 2)
-    if not MIN_CHROMA <= chroma <= MAX_CHROMA:
-        out.append(f"chroma {chroma:.3f} outside {MIN_CHROMA}..{MAX_CHROMA}")
+    chroma = round(oklch(hex_)[1], 3)
+    if chroma < MIN_CHROMA:
+        out.append(f"chroma {chroma:.3f} < {MIN_CHROMA}")
     worst = min(contrast_ratio(hex_, g) for g in GROUNDS)
     if worst < MIN_CONTRAST:
         out.append(f"contrast {worst:.2f} < {MIN_CONTRAST} on a theme ground")
@@ -65,28 +41,27 @@ def _violations(hex_: str):
 
 
 def test_every_shipped_theme_was_read():
-    assert len(THEMES) >= 12 and len(SEMANTIC) >= 100 and len(GROUNDS) >= 24
+    assert len(THEMES) >= 12 and len(GROUNDS) >= 24
 
 
 @pytest.mark.parametrize("hex_", SOFT_PALETTE)
-def test_palette_entry_stays_clear_of_every_semantic_color(hex_):
+def test_palette_entry_is_vibrant_and_readable_on_every_theme(hex_):
     assert _violations(hex_) == []
 
 
-def test_palette_entries_are_distinguishable_from_each_other():
-    assert len(SOFT_PALETTE) == len(set(SOFT_PALETTE)) >= 10
+def test_palette_spans_full_wheel_and_entries_are_distinguishable():
+    assert len(SOFT_PALETTE) == len(set(SOFT_PALETTE)) == 12
+    quadrants = {int(oklch(h)[2] // 90) % 4 for h in SOFT_PALETTE}
+    assert quadrants == {0, 1, 2, 3}
     for i, a in enumerate(SOFT_PALETTE):
         for b in SOFT_PALETTE[i + 1:]:
             assert delta_e_hex(a, b) >= MIN_DE_PAIR, (a, b)
 
 
-def test_the_rule_can_fail_the_old_status_like_colors_are_refused():
-    failing = [h for h in OLD_WHEEL if _violations(h)]
-    assert set(failing) == set(OLD_WHEEL) - set(WHEEL_STILL_ALLOWED)
-    assert any("deltaE" in v for v in _violations("#7bc187"))
-    assert any("contrast" in v for v in _violations("#c1b87b"))
-    assert any("chroma" in v for v in _violations("#ff4652"))
+def test_the_rule_rejects_dull_grays_and_unreadable_light_pastels():
     assert any("chroma" in v for v in _violations("#8a8a8a"))
+    assert any("chroma" in v for v in _violations("#966356"))
+    assert any("contrast" in v for v in _violations("#e8e48a"))
 
 
 def test_remap_lands_on_the_palette_and_keeps_siblings_apart():

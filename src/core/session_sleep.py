@@ -8,10 +8,16 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Set
 
 import structlog
 
+from src.core.lineage.row import is_lineage_row
 from src.core.sessions import offer_reservation
 from src.core.db_models import SESSION_LIFECYCLE_RUNNING, SESSION_LIFECYCLE_STOPPED
 from src.core.session_pane_death import LIFECYCLE_SOURCE_PANE_DEAD
 from src.core.sessions.host_port import SessionHost
+
+
+class SessionSleepRuntimeError(RuntimeError):
+    pass
+
 
 logger = structlog.get_logger()
 
@@ -54,6 +60,12 @@ def _transcript_absent(row: Mapping[str, Any], uuid: str) -> bool:
     if row.get("agent_family") == FAMILY_CODEX:
         home = pane_codex_home(row.get("tmux_socket"), row.get("tmux_name"), identity=gone_identity(row))
         return codex_rollout_presence(uuid, codex_home=home).missing
+    from src.core.agy.identity import row_is_agy
+
+    if row_is_agy(row):
+        from src.core.agy.transcripts import store_path
+
+        return store_path(uuid) is None
     from src.core.session_token_usage.claude_reader import locate_transcript
 
     return locate_transcript(uuid, working_dir=row.get("working_dir")).outcome == CONVERSATION_ABSENT
@@ -70,7 +82,9 @@ def is_asleep(row: Optional[Mapping[str, Any]]) -> bool:
 def is_closed(row: Optional[Mapping[str, Any]]) -> bool:
     if not row or row.get("archived_at"):
         return False
-    if row.get("lifecycle") != SESSION_LIFECYCLE_STOPPED or row.get("tmux_created_epoch") is None:
+    if row.get("lifecycle") != SESSION_LIFECYCLE_STOPPED or is_lineage_row(row):
+        return False
+    if row.get("tmux_created_epoch") is None and not str(row.get("claude_session_uuid") or "").strip():
         return False
     return not is_asleep(row)
 
@@ -186,7 +200,8 @@ def closed_rows(conn: sqlite3.Connection) -> List[Dict[str, Any]]:
         include_archived=False,
         include_automated=False,
     )
-    return [row for row in rows if is_closed(row) and str(row.get("claude_session_uuid") or "").strip()]
+    return [row for row in rows if is_closed(row) and (
+        str(row.get("claude_session_uuid") or "").strip() or row.get("agent_family") == "custom")]
 
 
 def companion_names(conn: sqlite3.Connection) -> Set[str]:
@@ -224,7 +239,8 @@ def reserved_names(owned: Iterable[str], *, db_path: Optional[Path] = None) -> S
     return names | offer_reservation.offered_names(db_path.parent)
 
 
-async def close_for_sleep(manager: SessionHost, *, name: str, socket: str) -> Dict[str, Any]:
+async def close_for_sleep(manager: SessionHost, *, name: str, socket: str,
+                          session_id: Optional[str] = None) -> Dict[str, Any]:
     from src.core.session_ghost_reap import drop_registration
 
     held = [
@@ -233,14 +249,19 @@ async def close_for_sleep(manager: SessionHost, *, name: str, socket: str) -> Di
         if getattr(backend, "tmux_session", None) == name
         and (getattr(backend, "socket_name", None) or socket) == socket
     ]
+    if session_id is not None:
+        ids = [await backend.tmux_session_id() for _sid, backend in held]
+        if any(read is None for read in ids):
+            raise RuntimeError(f"could not read the tmux session id of a registration holding {name!r}, so nothing was closed")
+        held = [pair for pair, read in zip(held, ids) if read == session_id]
     for sid, backend in held:
-        await backend.stop()
+        await backend.stop(kill_target=session_id)
         await drop_registration(
             manager, sid, reason="session_sleep", tmux_name=name, release_token=True
         )
     direct_rc: Optional[int] = None
     if not held:
-        direct_rc = await _kill_exact(name, socket)
+        direct_rc = await _kill_exact(name, socket, session_id)
     if name in manager._owned.names:
         manager._owned.names.discard(name)
         try:
@@ -257,14 +278,14 @@ async def close_for_sleep(manager: SessionHost, *, name: str, socket: str) -> Di
     return {"closed_registrations": len(held), "direct_kill_rc": direct_rc}
 
 
-async def _kill_exact(name: str, socket: str) -> int:
+async def _kill_exact(name: str, socket: str, session_id: Optional[str] = None) -> int:
     from src.core.tmux_backend import TmuxBackend
 
     probe = TmuxBackend.for_external(
         session_name=name, working_dir=Path.home(), on_output=None, socket_name=socket
     )
-    rc, _out, err = await probe._run_tmux("kill-session", "-t", f"={name}", check=False)
+    rc, _out, err = await probe._run_tmux("kill-session", "-t", session_id or f"={name}", check=False)
     text = err.decode("utf-8", errors="replace").strip()
     if rc != 0 and "can't find session" not in text.lower() and "no server" not in text.lower():
-        raise RuntimeError(f"tmux kill-session for {name!r} failed (rc={rc}): {text}")
+        raise SessionSleepRuntimeError(f"tmux kill-session for {name!r} failed (rc={rc}): {text}")
     return rc

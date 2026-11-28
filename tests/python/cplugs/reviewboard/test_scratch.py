@@ -15,7 +15,7 @@ from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
 from src.core.mcp import protocol, write_tools
 from src.core.mcp.caller import AgentCaller
-from src.plugins.huddle import board_port
+from src.plugins.taskmanager import board_port
 from src.plugins.reviewboard import scan, scratch
 from src.plugins.reviewboard.errors import TooLarge
 from src.plugins.sdk import ToolError, signed_links, uploads as sdk_uploads

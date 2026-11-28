@@ -6,6 +6,7 @@ from typing import Any, Awaitable, Callable, Optional
 
 import structlog
 
+from src.core.agy.identity import info_is_agy
 from src.core.approvals.extract import extract_dialog
 from src.core.attention_reader import AttentionEvidenceReader
 from src.core.session_startup_gate import GATE_READY, startup_screen_kind
@@ -22,8 +23,16 @@ AGENT_FAMILIES = frozenset({"claude", "codex"})
 Capture = Callable[[str], Awaitable[Optional[str]]]
 
 
+AGY_SCREENS = ("choose your color scheme:", "terms of service & data use", "do you trust the contents of this project?")
+
+
 def is_agent_pane(info: Any) -> bool:
-    return info.agent_family in AGENT_FAMILIES
+    return info.agent_family in AGENT_FAMILIES or info_is_agy(info)
+
+
+def agy_screen_open(text: str) -> bool:
+    lowered = (text or "").lower()
+    return any(marker in lowered for marker in AGY_SCREENS)
 
 
 async def _default_capture(manager: Any, tmux_name: str) -> Optional[str]:
@@ -51,7 +60,7 @@ async def dialog_verdict(app_state: Any, session_id: str, *, capture: Optional[C
         return UNREADABLE
     if text is None:
         return UNREADABLE
-    if extract_dialog(text, info.agent_family) is not None or startup_screen_kind(text) is not None:
+    if extract_dialog(text, info.agent_family) is not None or startup_screen_kind(text) is not None or (info_is_agy(info) and agy_screen_open(text)):
         logger.info("dialog_gate_open", session_id=session_id, source="fresh_capture")
         return OPEN
     return CLEAR

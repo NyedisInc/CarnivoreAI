@@ -1,5 +1,6 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { resource, type Resource } from '../../opscenter/api/poll.svelte';
+import { getShared, publishShared, writeColdCache } from '../../opscenter/viz/stats-bus';
 import type { FeedBody, FeedWindow } from './types';
 
 export const STATS_FEED_TOPIC = 'stats_feed';
@@ -27,8 +28,17 @@ function make(window: FeedWindow): Resource<FeedBody> {
   made = resource<FeedBody>(
     async () => {
       if (typeof document !== 'undefined' && document.hidden && held) return held;
+      if (!held) {
+        const shared = getShared<FeedBody>(`stats-feed:${window}`, 8_000);
+        if (shared) {
+          held = shared;
+          return held;
+        }
+      }
       const body = await authFetch<FeedBody>(`/stats/feed?window=${window}`);
       if (isFresher(held, body)) held = body;
+      publishShared(`stats-feed:${window}`, held as FeedBody);
+      writeColdCache(`stats-feed:${window}`, held as FeedBody);
       return held as FeedBody;
     },
     {

@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* cannot be read */
   import type { SessionGitStatus } from '../../api/types';
   import { t } from '../../../lib/i18n/index.svelte';
   import { fk } from './labels';

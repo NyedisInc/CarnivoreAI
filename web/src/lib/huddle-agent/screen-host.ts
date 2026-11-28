@@ -1,12 +1,12 @@
+/* the Task Manager */
 import { createOverlayHost } from '../manager-frame/overlay-host';
 import { registerCplugPage } from '../../plugins/sdk/pages';
-import { AGENT_HASH, AGENT_PAGE } from '../../plugins/huddle/agents/agent-page.svelte';
-import HuddleAgentScreen from './HuddleAgentScreen.svelte';
+import { AGENT_HASH, AGENT_PAGE } from '../../plugins/taskmanager/agents/agent-page.svelte';
 import { openAgentDrawerHost } from './drawer-host';
 
 export const HUDDLE_AGENT_CONTAINER = 'huddle-agent-screen';
 
-const host = createOverlayHost(HUDDLE_AGENT_CONTAINER, HuddleAgentScreen, AGENT_HASH);
+const host = createOverlayHost(HUDDLE_AGENT_CONTAINER, { load: () => import('./HuddleAgentScreen.svelte') }, AGENT_HASH);
 
 export const closeHuddleAgentScreen = (): boolean => host.close();
 

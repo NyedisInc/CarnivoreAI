@@ -18,7 +18,7 @@
   ],
   "how_to": [
     "Turn on developer mode on the plugins page and pick how long it stays on (twelve hours by default).",
-    "Add a folder that holds a plugin manifest (cplug.json) with add from folder, or drop the folder on the page (desktop app); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
+    "Add a folder that holds a plugin manifest (carnivore.toml / carnivore.json) with add from folder, or drop the folder on the page (desktop app); the plugin appears as local/<name> marked unverified, switched off with no permissions.",
     "Turn developer mode off to stop and hide every sideloaded plugin; your source folder is never touched.",
     "A sideloaded plugin whose carnivore.json asks for a page gets its own rail key: the slide-out is its menu and the main area shows its page; on a phone a menu | view switch picks one.",
     "Sideload a theme or a skill the same way: the kind is read from theme.json, SKILL.md or the plugin manifest. A folder that runs code answers with a consent sheet first; a theme's script still asks before it runs."
@@ -52,7 +52,7 @@
     "src/plugins/host/sidecar_page.py",
     "web/src/lib/plugins-page/drop-folder.ts"
   ],
-  "updated": "2026-11-09",
+  "updated": "2026-11-25",
   "where": [
     "The plugins page, the developer mode row beside the third-party switch."
   ]

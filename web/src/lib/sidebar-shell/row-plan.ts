@@ -1,9 +1,11 @@
+import type { SectionPlan } from './plan';
 import { str } from './row-field';
 import { badgeSlotPlan, bellLit, type BadgeSlotPlan } from '../session-badges';
 import { t } from '../i18n/index.svelte';
 import { hostOffline, loginExpiredLabel, usageLimitLabel } from '../led';
 import type { Membership } from '../swarm-membership/member-face';
 import { closedPart } from './row-closed';
+import { offloadedPart } from './row-offloaded';
 import { sessionMark } from '../sessions/agent-marks';
 import { iconVisible } from '../drawer/row-icon-prefs';
 import type { SidebarRow } from './legacy';
@@ -92,6 +94,7 @@ export interface SessionRowPlan {
     messaging: unknown;
     context: ContextPlan | null;
     provider: GlyphChip;
+    leadHtml?: string;
     model: ModelPlan | null;
     detailedCount: TextChip | null;
     detailedTimer: TextChip | null;
@@ -103,6 +106,8 @@ export interface SessionRowPlan {
     notice?: BodyFlag | null;
     archived?: GlyphChip;
     closed?: TextChip;
+    offloaded?: TextChip;
+    restore?: RowChipSpec;
     share: GlyphChip | null;
     keepAwake: GlyphChip | null;
     pin: Attrs | null;
@@ -130,7 +135,10 @@ export interface BrowserRowPlan {
 export interface LayoutMembersPlan {
     bodyId: string;
     uuid: string;
+    expanded?: boolean;
+    groups?: SectionPlan[];
     rows: RowPlan[];
+    sleepingRows?: RowPlan[];
 }
 
 export interface LayoutRowPlan {
@@ -147,15 +155,6 @@ export interface SearchHitPlan {
     name: { before: string; match: string; after: string };
     context: { project: { before: string; match: string; after: string } | null; folder: { before: string; match: string; after: string } | null } | null;
     conversationId: string | null;
-    facts: SearchRowFacts;
-}
-
-export interface SearchRowFacts {
-    age: string;
-    note: string | null;
-    model: ModelPlan | null;
-    modelName: string;
-    effort: string;
 }
 
 export type RowPlan = SessionRowPlan | BrowserRowPlan | LayoutRowPlan;
@@ -231,6 +230,7 @@ function sessionRowPlan(
     const body = rowBodyPlan(r, mode, led);
     const legacyMode = body ? 'compact' : mode;
     const cozyOrigin = legacyMode === 'cozy' ? originBadge(r, false) : null;
+    const prov = providerPlan(r);
     return {
         type: 'session',
         key: r.name,
@@ -248,8 +248,9 @@ function sessionRowPlan(
         messaging: r.messaging ?? null,
         badges: badgeSlotPlan(r as Record<string, unknown>),
         context: iconVisible(mode, 'context') ? contextPlan(r) : null,
-        provider: providerPlan(r),
-        model: body ? null : modelPlan(r),
+        provider: prov.chip,
+        ...(prov.leadHtml ? { leadHtml: prov.leadHtml } : {}),
+        model: modelPlan(r),
         detailedCount: legacyMode === 'detailed' ? subagentCount(r) : null,
         detailedTimer: legacyMode === 'detailed' ? timerPlan(r) : null,
         name: {
@@ -267,9 +268,10 @@ function sessionRowPlan(
         notice: body?.mode === 'detailed' ? null : codexHelpersFlag(r),
         ...archivedPart(r),
         ...closedPart(r),
+        ...offloadedPart(r, resolved === null ? r.name : resolved),
         share: sharePlan(r),
         keepAwake: cupVisible ? keepAwakeChip : null,
-        pin: pinVisible ? pinAttrs(r.name, !!r.is_pinned) : null,
+        pin: pinVisible ? pinAttrs(r.name, !!r.is_pinned, resolved === null ? r.name : resolved) : null,
         actions: (host.actions && !offersMenu)
             ? host.actions.specs(r.status, r.name, 'session-sidebar-row-delete')
             : [],
@@ -279,20 +281,23 @@ function sessionRowPlan(
     };
 }
 
-function providerPlan(r: SidebarRow): GlyphChip {
+function providerPlan(r: SidebarRow): { chip: GlyphChip; leadHtml: string } {
     const mark = sessionMark((r.agent_family as string | undefined) ?? null, (r as { agent_wrapper_icon?: string | null }).agent_wrapper_icon);
     const roles = roleMarks(r);
     return {
-        attrs: {
-            class: 'session-sidebar-row-provider',
-            'data-grip-session': r.name,
-            'data-agent-family': mark.key,
-            ...roles.attrs,
-            role: 'img',
-            'aria-label': mark.label,
-            title: mark.label,
+        chip: {
+            attrs: {
+                class: 'session-sidebar-row-provider',
+                'data-grip-session': r.name,
+                'data-agent-family': mark.key,
+                ...roles.attrs,
+                role: 'img',
+                'aria-label': mark.label,
+                title: mark.label,
+            },
+            svg: mark.svg,
         },
-        svg: mark.svg + roles.html,
+        leadHtml: roles.html,
     };
 }
 
@@ -391,6 +396,7 @@ function layoutRowPlan(
         ? {
             bodyId: body.bodyId,
             uuid: body.uuid,
+            ...(body.expanded !== undefined ? { expanded: body.expanded } : {}),
             rows: body.members
                 .filter((m, i, all) => all.findIndex((o) => o.name === m.name) === i)
                 .map((m) => buildRowPlan(m, density, body.band, undefined, host)),

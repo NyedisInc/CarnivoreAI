@@ -80,7 +80,7 @@ describe('openApprovalFor', () => {
     expect(add).not.toHaveBeenCalled();
   });
 
-  test('closes itself when no item is left anywhere, not when only that session is done', async () => {
+  test('closes itself immediately when no item is left anywhere, not when only that session is done', async () => {
     install();
     reply = { items: [item('dlg:ses_1:a', 'ses_1'), item('dlg:ses_2:b', 'ses_2')] };
     await openApprovalFor('ses_1');
@@ -90,28 +90,9 @@ describe('openApprovalFor', () => {
     expect(document.querySelector('[data-approval-inbox]')).not.toBeNull();
     expect(panelCards()).toEqual(['dlg:ses_2:b']);
     reply = { items: [] };
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await settle();
-    expect(document.querySelector('[data-approval-inbox]')).not.toBeNull();
-    await vi.advanceTimersByTimeAsync(2000);
-    await tick();
     expect(document.querySelector('[data-approval-inbox]')).toBeNull();
     expect(document.querySelector('[data-approval-empty]')).toBeNull();
-  });
-
-  test('a watcher pass that reads empty between two questions does not close the modal (settle)', async () => {
-    install();
-    reply = { items: [item('dlg:ses_1:q1', 'ses_1')] };
-    await openApprovalFor('ses_1');
-    await tick();
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    reply = { items: [] };
-    await settle();
-    reply = { items: [item('dlg:ses_1:q2', 'ses_1')] };
-    await vi.advanceTimersByTimeAsync(2000);
-    await tick();
-    expect(document.querySelector('[data-approval-inbox]')).not.toBeNull();
-    expect(panelCards()).toEqual(['dlg:ses_1:q2']);
   });
 
   test('stays open between the questions of one multi-question ask (item id changes, session does not)', async () => {

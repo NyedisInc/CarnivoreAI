@@ -6,6 +6,7 @@ import type { CplugRow } from '../../lib/plugins-page/cplugs-adapter';
 vi.mock('../../lib/cplug-ui/api', () => ({
     fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/pillpanic/view/game/t/index.html' })),
     callViewRoute: vi.fn(),
+    callViewTool: vi.fn(),
 }));
 
 const SLOT = 'pillpanic.game:panel-abcd1234';

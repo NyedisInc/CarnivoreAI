@@ -22,7 +22,8 @@ from src.core.session_instance_rekey import (  # noqa: E402
     IDENTITY_UNCHANGED,
     IDENTITY_UNCHECKED,
 )
-from src.core.session_respawn import (  # noqa: E402
+from src.core.session_respawn import (
+    # noqa: E402
     RESPAWN_AGENT,
     RESPAWN_CANNOT_DETERMINE,
     RESPAWN_NOT_DEAD,
@@ -30,9 +31,9 @@ from src.core.session_respawn import (  # noqa: E402
     RESPAWN_SHELL,
     RESPAWN_TRANSCRIPT_MISSING,
     project_restart_rung,
-    refuse_if_transcript_missing,
     resolve_respawn_plan,
 )
+from src.core.respawn.transcript_guard import refuse_if_transcript_missing
 from tests.s7_helpers import migrated_connection  # noqa: E402
 from tests.socket_guard import derive_test_socket  # noqa: E402
 

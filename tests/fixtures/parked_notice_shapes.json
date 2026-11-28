@@ -1,0 +1,204 @@
+{
+ "_provenance": "the example session (ses_example), Claude Code 2.1.330, 2026-11-21, copied read-only from the real conversation through a key whitelist; text redacted, paths replaced by {TASKS} and {SESSION}. parent[1..2] is the real parked notice (16:29:00Z); final_notice is the same agent's real plain finished notice from 04:25:38Z; shell_done_notice is the real completion notice of the agent's first shell (bo00ldjlt).",
+ "session": "00000000-0000-4000-8000-000000000001",
+ "parent": [
+  {
+   "type": "user",
+   "timestamp": "2026-11-21T15:45:39.480Z",
+   "isSidechain": false,
+   "sessionId": "{SESSION}",
+   "version": "2.1.330",
+   "origin": {
+    "kind": "human"
+   },
+   "promptSource": "typed",
+   "message": {
+    "role": "user",
+    "content": "redacted prompt"
+   }
+  },
+  {
+   "type": "queue-operation",
+   "timestamp": "2026-11-21T16:29:00.743Z",
+   "sessionId": "{SESSION}",
+   "operation": "enqueue",
+   "content": "<task-notification>\n<task-id>a1b2c3d4e5f607182</task-id>\n<output-file>{TASKS}/a1b2c3d4e5f607182.output</output-file>\n<status>completed</status>\n<summary>Agent \"Recreate control-plane for 40163137f\" is waiting on its own background work</summary>\n<note>This agent stopped with background work of its own still running. It may resume on its own when that work completes or reports, and the same task-id notifies again if it does; the result below may be interim.</note>\n<result>redacted</result>\n<usage><subagent_tokens>129234</subagent_tokens><tool_uses>10</tool_uses><duration_ms>870596</duration_ms></usage>\n</task-notification>"
+  },
+  {
+   "type": "user",
+   "timestamp": "2026-11-21T16:29:00.768Z",
+   "isSidechain": false,
+   "sessionId": "{SESSION}",
+   "version": "2.1.330",
+   "origin": {
+    "kind": "task-notification",
+    "producer": "session-task",
+    "runId": "0mwqmdhz5-629a891c"
+   },
+   "message": {
+    "role": "user",
+    "content": "<task-notification>\n<task-id>a1b2c3d4e5f607182</task-id>\n<output-file>{TASKS}/a1b2c3d4e5f607182.output</output-file>\n<status>completed</status>\n<summary>Agent \"Recreate control-plane for 40163137f\" is waiting on its own background work</summary>\n<note>This agent stopped with background work of its own still running. It may resume on its own when that work completes or reports, and the same task-id notifies again if it does; the result below may be interim.</note>\n<result>redacted</result>\n<usage><subagent_tokens>129234</subagent_tokens><tool_uses>10</tool_uses><duration_ms>870596</duration_ms></usage>\n</task-notification>"
+   }
+  },
+  {
+   "type": "assistant",
+   "timestamp": "2026-11-21T16:29:01.806Z",
+   "isSidechain": false,
+   "sessionId": "{SESSION}",
+   "version": "2.1.330",
+   "message": {
+    "role": "assistant",
+    "content": [
+     {
+      "type": "text",
+      "text": "redacted"
+     }
+    ],
+    "stop_reason": "end_turn"
+   }
+  },
+  {
+   "type": "system",
+   "timestamp": "2026-11-21T16:29:01.896Z",
+   "isSidechain": false,
+   "sessionId": "{SESSION}",
+   "version": "2.1.330",
+   "subtype": "turn_duration",
+   "durationMs": 1143
+  }
+ ],
+ "final_notice": [
+  {
+   "type": "queue-operation",
+   "timestamp": "2026-11-21T04:25:38.199Z",
+   "sessionId": "{SESSION}",
+   "operation": "enqueue",
+   "content": "<task-notification>\n<task-id>a1b2c3d4e5f607182</task-id>\n<output-file>{TASKS}/a1b2c3d4e5f607182.output</output-file>\n<status>completed</status>\n<summary>Agent \"Recreate control-plane for 40163137f\" finished</summary>\n<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>\n<result>redacted</result>\n<usage><subagent_tokens>123110</subagent_tokens><tool_uses>25</tool_uses><duration_ms>7100502</duration_ms></usage>\n</task-notification>"
+  },
+  {
+   "type": "user",
+   "timestamp": "2026-11-21T04:25:38.216Z",
+   "isSidechain": false,
+   "sessionId": "{SESSION}",
+   "version": "2.1.330",
+   "origin": {
+    "kind": "task-notification",
+    "producer": "session-task",
+    "runId": "0mwpwmy8t-1209d3e8"
+   },
+   "message": {
+    "role": "user",
+    "content": "<task-notification>\n<task-id>a1b2c3d4e5f607182</task-id>\n<output-file>{TASKS}/a1b2c3d4e5f607182.output</output-file>\n<status>completed</status>\n<summary>Agent \"Recreate control-plane for 40163137f\" finished</summary>\n<note>A task-notification fires each time this agent stops with no live background children of its own. The user can send it another message and resume it, so the same task-id may notify more than once.</note>\n<result>redacted</result>\n<usage><subagent_tokens>123110</subagent_tokens><tool_uses>25</tool_uses><duration_ms>7100502</duration_ms></usage>\n</task-notification>"
+   }
+  }
+ ],
+ "shell_done_notice": {
+  "type": "queue-operation",
+  "timestamp": "2026-11-21T16:25:46.769Z",
+  "sessionId": "{SESSION}",
+  "operation": "enqueue",
+  "content": "<task-notification>\n<task-id>bo00ldjlt</task-id>\n<tool-use-id>toolu_01SYNTHETICNOTICE000001</tool-use-id>\n<output-file>{TASKS}/bo00ldjlt.output</output-file>\n<status>completed</status>\n<summary>Background command \"redacted\" completed (exit code 0)</summary>\n</task-notification>"
+ },
+ "agents": {
+  "a1b2c3d4e5f607182": {
+   "meta": {
+    "agentType": "builder",
+    "isBuiltIn": false,
+    "launchedWithDefaults": true,
+    "description": "Recreate control-plane for 40163137f",
+    "toolUseId": "toolu_01SYNTHETICNOTICE000002",
+    "spawnDepth": 1,
+    "requestShape": "background",
+    "requestNonInteractive": true,
+    "model": "claude-sonnet-5-5",
+    "pickedEffortModel": "claude-opus-5-5"
+   },
+   "lines": [
+    {
+     "type": "assistant",
+     "timestamp": "2026-11-21T16:25:55.184Z",
+     "isSidechain": true,
+     "sessionId": "{SESSION}",
+     "version": "2.1.330",
+     "agentId": "a1b2c3d4e5f607182",
+     "message": {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "tool_use",
+        "id": "toolu_01SYNTHETICNOTICE000003",
+        "name": "Bash",
+        "input": {
+         "command": "redacted",
+         "timeout": 600000
+        }
+       }
+      ],
+      "stop_reason": "tool_use"
+     }
+    },
+    {
+     "type": "user",
+     "timestamp": "2026-11-21T16:28:55.720Z",
+     "isSidechain": true,
+     "sessionId": "{SESSION}",
+     "version": "2.1.330",
+     "agentId": "a1b2c3d4e5f607182",
+     "message": {
+      "role": "user",
+      "content": [
+       {
+        "type": "tool_result",
+        "tool_use_id": "toolu_01SYNTHETICNOTICE000003",
+        "content": "bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)\nCommand was moved to the background (ID: shell0001) after running for 180s. Output is being written to: {TASKS}/shell0001.output. You will be notified when it completes. It is running now: do not start a second copy while it runs. If it is no longer needed, stop it with TaskStop. To check interim output, use Read on that file path.",
+        "is_error": false
+       }
+      ]
+     },
+     "toolUseResult": {
+      "interrupted": false,
+      "isImage": false,
+      "noOutputExpected": false,
+      "backgroundTaskId": "shell0001",
+      "timedOutAfterMs": 180000,
+      "subagentCapApplied": true,
+      "stdout": "redacted",
+      "stderr": ""
+     }
+    },
+    {
+     "type": "assistant",
+     "timestamp": "2026-11-21T16:29:00.705Z",
+     "isSidechain": true,
+     "sessionId": "{SESSION}",
+     "version": "2.1.330",
+     "agentId": "a1b2c3d4e5f607182",
+     "message": {
+      "role": "assistant",
+      "content": [
+       {
+        "type": "text",
+        "text": "redacted"
+       }
+      ],
+      "stop_reason": "end_turn"
+     }
+    },
+    {
+     "type": "attachment",
+     "timestamp": "2026-11-21T16:29:00.736Z",
+     "isSidechain": true,
+     "sessionId": "{SESSION}",
+     "version": "2.1.330",
+     "agentId": "a1b2c3d4e5f607182",
+     "attachment": {
+      "type": "hook_success",
+      "hookName": "SubagentStop",
+      "hookEvent": "SubagentStop",
+      "exitCode": 0
+     }
+    }
+   ]
+  }
+ }
+}

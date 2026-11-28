@@ -1,6 +1,7 @@
+/* the Task Manager */
 import { createdMs, targetNameFor, type ApprovalItem } from '../approvals/approvals-model';
 import { headline } from '../approvals/approval-display';
-import type { TaskManagerGroup, HuddleItem } from '../../plugins/huddle/huddle-model';
+import type { TaskManagerGroup, HuddleItem } from '../../plugins/taskmanager/huddle-model';
 import { senderText, type AppAlert, type Severity } from '../app-alerts/alerts-model';
 import type { RunRow } from '../../opscenter/cells/developer/model';
 import { resultOf } from '../../opscenter/cells/developer/model';

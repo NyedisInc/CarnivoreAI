@@ -10,7 +10,8 @@
     import { announce, repaintDrawerRows } from './interaction-globals';
     import { hostOffKey } from './pack-filter';
     import { levelOf } from '../pack-machines/pack-meter-math';
-    import { packStats, percentText, specLine, stateWord } from './pack-stats';
+    import { packStats, percentText, relayerReachable, specLine, stateWord } from './pack-stats';
+    import { meshLinkOf, packSource } from './pack-source.svelte';
     import { fitRows } from './pack-fit';
     import type { PackPlan, PackRowPlan } from './plan';
 
@@ -38,7 +39,7 @@
     });
 </script>
 
-<Band kind="session-sidebar-pack" attrs={{ 'data-section': p.key, 'data-collapsed': p.open ? '0' : '1', 'data-count': String(p.count) }} heading={p.heading} bind:body>{#each p.rows as r (r.id)}{@const m = r.machine}{@const snap = m.snapshot}{@const st = packStats(m)}{@const line = p.density === 'detailed' ? specLine(m) : ''}{#snippet stats()}{#if !snap}<span class="sb-pack-row__state">{stateWord(m.state)}</span>{:else if meters}<span class="sb-pack-row__stats" data-stats="meters"><PackMeter small tip={false} label={t('drawer.pack.cpu')} pct={st.cpu} text={percentText(st.cpu)} reservePct={snap.reserve?.cpu_pct} title={t('pack.meter.cpu_title', { load: snap.load.load_1 ?? '-', cores: snap.load.cores ?? '-', reserve: snap.reserve?.cpu_pct ?? 0 })} /><PackMeter small tip={false} label={t('drawer.pack.ram')} pct={st.ram} text={percentText(st.ram)} reservePct={snap.reserve?.mem_pct} title={t('pack.meter.mem_title', { used: percentText(st.ram), reserve: snap.reserve?.mem_pct ?? 0 })} /><PackMeter small tip={false} label={t('drawer.pack.disk')} pct={st.disk} text={percentText(st.disk)} title={t('pack.meter.disk_title', { used: percentText(st.disk) })} /></span>{:else}<span class="sb-pack-row__stats" data-stats="numbers">{#each STATS as k (k)}<span class="sb-pack-stat" data-stat={k}>{#if k === 'disk'}<span class="sb-pack-stat__k" role="img" aria-label={t('drawer.pack.disk')}><Icon name="database" size={10} /></span>{:else}<span class="sb-pack-stat__k">{t(`drawer.pack.${k}`)}</span>{/if}<span class="sb-pack-stat__v" data-level={st[k] === null ? 'none' : levelOf(st[k])}>{percentText(st[k])}</span></span>{/each}</span>{/if}{/snippet}<Button variant="row" data-pack-computer={r.id} data-host-state={snap ? undefined : m.state} data-pack-off={r.off ? '' : undefined} aria-pressed={!r.off} aria-label={t('sidebar.pack.row.toggle', { name: r.label })} onclick={() => toggleComputer(r)}><span class="sb-pack-row__main"><PackMarks self={r.self} link={r.link} tips={false} size={14} />{#if r.alpha}<span class="sb-pack-row__wolf" data-mark="alpha" role="img" aria-label={t('drawer.pack.alpha')} title={t('drawer.pack.alpha')}><Icon name="wolf" size={14} /></span>{/if}{#if r.lightHtml}<span class="sb-pack-row__light">{@html r.lightHtml}</span>{/if}<span class="sb-pack-row__name">{r.label}</span>{#if !meters}{@render stats()}{/if}</span>{#if meters}{@render stats()}{/if}{#if line}<span class="sb-pack-row__meta">{line}</span>{/if}</Button>{/each}</Band>
+<Band kind="session-sidebar-pack" attrs={{ 'data-section': p.key, 'data-collapsed': p.open ? '0' : '1', 'data-count': String(p.count) }} heading={p.heading} bind:body>{#each p.rows as r (r.id)}{@const m = r.machine}{@const snap = m.snapshot}{@const st = packStats(m)}{@const line = p.density === 'detailed' ? specLine(m) : ''}{#snippet stats()}{#if !snap}<span class="sb-pack-row__state">{stateWord(m.state, meshLinkOf(m), relayerReachable(packSource()))}</span>{:else if meters}<span class="sb-pack-row__stats" data-stats="meters"><PackMeter small tip={false} label={t('drawer.pack.cpu')} pct={st.cpu} text={percentText(st.cpu)} reservePct={snap.reserve?.cpu_pct} title={t('pack.meter.cpu_title', { load: snap.load.busy_cores ?? snap.load.load_1 ?? '-', cores: snap.load.cores ?? '-', reserve: snap.reserve?.cpu_pct ?? 0 })} /><PackMeter small tip={false} label={t('drawer.pack.ram')} pct={st.ram} text={percentText(st.ram)} reservePct={snap.reserve?.mem_pct} title={t('pack.meter.mem_title', { used: percentText(st.ram), reserve: snap.reserve?.mem_pct ?? 0 })} /><PackMeter small tip={false} label={t('drawer.pack.disk')} pct={st.disk} text={percentText(st.disk)} title={t('pack.meter.disk_title', { used: percentText(st.disk) })} /></span>{:else}<span class="sb-pack-row__stats sb-pack-row__stats--cols" data-stats="numbers">{#each STATS as k (k)}<span class="sb-pack-stat" data-stat={k} title={`${k.toUpperCase()} ${percentText(st[k])}`}><span class="sb-pack-stat__v" data-level={st[k] === null ? 'none' : levelOf(st[k])}>{percentText(st[k])}</span></span>{/each}</span>{/if}{/snippet}<Button variant="row" data-pack-computer={r.id} data-host-state={snap ? undefined : m.state} data-pack-off={r.off ? '' : undefined} aria-pressed={!r.off} aria-label={t('sidebar.pack.row.toggle', { name: r.label })} onclick={() => toggleComputer(r)}><span class="sb-pack-row__main">{#if r.lightHtml}<span class="sb-pack-row__light">{@html r.lightHtml}</span>{/if}<PackMarks self={r.self} link={r.link} tips={false} size={14} remoteIcon="server" />{#if r.alpha}<span class="sb-pack-row__wolf" data-mark="alpha" role="img" aria-label={t('drawer.pack.alpha')} title={t('drawer.pack.alpha')}><Icon name="wolf" size={14} /></span>{/if}<span class="sb-pack-row__name">{r.label}</span>{#if !meters}{@render stats()}{/if}</span>{#if meters}{@render stats()}{/if}{#if line}<span class="sb-pack-row__meta">{line}</span>{/if}</Button>{/each}</Band>
 
 <style>
     @layer components {
@@ -52,8 +53,8 @@
             min-width: 0;
             gap: 0;
             padding: 0;
-            border: 1px solid var(--oc-line-panel);
-            border-radius: var(--oc-radius-sm);
+            border: var(--oc-border) solid transparent;
+            border-radius: var(--oc-radius);
             background: transparent;
             color: var(--oc-text-primary);
             font: inherit;
@@ -85,56 +86,60 @@
             flex: none;
             align-items: center;
             justify-content: flex-end;
-            gap: var(--oc-space-1);
+            gap: var(--oc-space-2);
             margin-inline-start: auto;
             font-family: var(--font-mono);
             font-variant-numeric: tabular-nums;
             white-space: nowrap;
         }
+        .sb-pack-row__stats--cols {
+            display: grid;
+            grid-template-columns: repeat(3, 2.2rem);
+            gap: var(--oc-space-2);
+            text-align: right;
+        }
         :global([data-pack-computer] > .sb-pack-row__stats), :global([data-pack-computer] > .sb-pack-row__state) {
             display: flex;
             margin-inline-start: 0;
-            padding: 0 var(--oc-space-1) var(--oc-space-2) var(--oc-space-3);
+            padding: 0 var(--oc-space-2) var(--oc-space-1-5) var(--oc-space-5);
             min-width: 0;
             overflow: hidden;
         }
         :global([data-pack-computer] > .sb-pack-row__stats[data-stats='meters']) {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 10px;
+            gap: var(--oc-space-2);
         }
         .sb-pack-row__state { font-size: 0.8em; color: var(--oc-text-muted); }
-        .sb-pack-stat { display: inline-flex; gap: 3px; align-items: baseline; font-size: 0.72em; }
-        .sb-pack-stat__k { color: var(--oc-text-muted); letter-spacing: 0.04em; }
-        .sb-pack-stat__k[role='img'] { display: inline-flex; align-self: center; }
+        .sb-pack-stat { display: inline-flex; justify-content: flex-end; align-items: baseline; font-size: var(--oc-fs-micro); }
         .sb-pack-stat:global([data-hide]) { display: none; }
-        .sb-pack-stat__v { font-weight: normal; color: var(--oc-green); }
+        .sb-pack-stat__v { font-weight: normal; color: var(--oc-text-muted); }
         .sb-pack-stat__v[data-level='high'] { color: var(--oc-yellow); }
         .sb-pack-stat__v[data-level='critical'] { color: var(--oc-coral); }
-        .sb-pack-stat__v[data-level='none'] { color: var(--oc-text-muted); }
+        .sb-pack-stat__v[data-level='none'] { color: var(--oc-text-dim); }
         .sb-pack-row__meta {
-            padding: 0 var(--oc-space-1) var(--oc-space-2) var(--oc-space-3);
+            padding: 0 var(--oc-space-2) var(--oc-space-1-5) var(--oc-space-5);
             font-family: var(--font-mono);
-            font-size: 0.56em;
+            font-size: 0.68em;
             color: var(--oc-text-muted);
             white-space: pre-wrap;
             overflow-wrap: anywhere;
         }
 
-        :global(.session-sidebar-panel[data-density='compact']) :global([data-pack-computer]) { min-height: 24px; }
+        :global(.session-sidebar-panel[data-density='compact']) :global([data-pack-computer]) { min-height: 26px; }
         :global(.session-sidebar-panel[data-density='compact']) .sb-pack-row__main {
-            padding: 2px 2px 2px var(--oc-space-2);
-            line-height: 1.15;
-            font-size: 0.78em;
+            padding: var(--oc-space-1) var(--oc-space-2);
+            line-height: 1.2;
+            font-size: 0.82em;
         }
-        :global(.session-sidebar-panel[data-density='cozy']) :global([data-pack-computer]) { min-height: 46px; }
+        :global(.session-sidebar-panel[data-density='cozy']) :global([data-pack-computer]) { min-height: 44px; }
         :global(.session-sidebar-panel:not([data-density='compact'])) .sb-pack-row__name { flex: none; max-width: 100%; }
-        :global(.session-sidebar-panel[data-density='detailed']) :global([data-pack-computer]) { min-height: 66px; }
+        :global(.session-sidebar-panel[data-density='detailed']) :global([data-pack-computer]) { min-height: 62px; }
         :global(.session-sidebar-panel[data-density='cozy']) .sb-pack-row__main,
         :global(.session-sidebar-panel[data-density='detailed']) .sb-pack-row__main {
-            padding: 10px 2px 2px 10px;
-            line-height: 1.4;
-            font-size: 0.92em;
+            padding: var(--oc-space-1-5) var(--oc-space-2) var(--oc-space-1);
+            line-height: 1.35;
+            font-size: 0.9em;
         }
     }
 </style>

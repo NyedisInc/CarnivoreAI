@@ -2,8 +2,8 @@
   import { onMount } from 'svelte';
   import { auth, initAuth, startEvents } from '../opscenter/api';
   import { t } from '../lib/i18n/index.svelte';
-  import AgentChatFrame from '../plugins/huddle/agents/AgentChatFrame.svelte';
-  import type { AgentDrawerTab } from '../plugins/huddle/agents/agent-page.svelte';
+  import AgentChatFrame from '../plugins/taskmanager/agents/AgentChatFrame.svelte';
+  import type { AgentDrawerTab } from '../plugins/taskmanager/agents/agent-page.svelte';
 
   let { agent }: { agent: number } = $props();
   let tab = $state<AgentDrawerTab>('chat');

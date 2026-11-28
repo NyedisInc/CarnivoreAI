@@ -144,7 +144,7 @@ class TestTheSendIsTheConsentTheUserRead:
 
 class TestPreflight:
 
-    def test_scripts_are_refused_and_the_send_stops_before_the_host(self, tmp_path, scan):
+    def test_scripts_are_allowed_with_warning_and_can_be_sent(self, tmp_path, scan):
         folder = make_skill(tmp_path)
         (folder / "scripts").mkdir()
         (folder / "scripts" / "run.sh").write_text("echo hi")
@@ -152,13 +152,15 @@ class TestPreflight:
         with hosted_proxy_app(tmp_path, responder=host(), include_aggregator=True) as app:
             sign_in(app.state)
             shown = preview(app.client).json()
-            assert shown["can_send"] is False
-            assert "scripts_not_supported" in [r["code"] for r in shown["refusals"]]
+            assert shown["can_send"] is True
+            assert shown["refusals"] == []
+            assert shown["script_files"] == ["scripts/run.sh"]
+            assert "contains_scripts" in shown["warnings"]
             sent = app.client.post(
                 "/catalog/submissions", json={"location": LOC, "version": "1.0.0", "digest": shown["digest"]}
             )
-            assert sent.status_code == 409 and sent.json()["detail"]["code"] == "folder_refused"
-            assert app.sent == []
+            assert sent.status_code == 200
+            assert sent.json()["submission_id"] == "abc123"
 
     def test_lint_cost_and_compat_are_reported_and_nothing_is_sent(self, tmp_path, scan):
         folder = make_skill(tmp_path)

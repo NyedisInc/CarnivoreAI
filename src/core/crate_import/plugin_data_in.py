@@ -23,6 +23,7 @@ from src.core.crate_import.env import BoardRelinkFailed, ImportEnv, StoreHome
 from src.core.crate_import.idmap import IdMap
 from src.core.crate_import.model import W_BOARD_UNLINKED, W_STORE_NO_FOLDER, W_STORE_PLUGIN_OFF, W_STORE_UNLOCATED, Collector
 from src.core.inventory.plugin_units import BOARD_SIDECAR, MAX_BOARD_DEPTH
+from src.core.work import folders as work_folders
 from src.plugins.sdk import task_folders
 
 logger = structlog.get_logger()
@@ -81,8 +82,8 @@ def undo_roots(entries: List[Dict[str, Any]], env: ImportEnv, import_id: Optiona
                 roots.append(Path(home.root))
         if entry.get(SCOPE_RECEIPT) is True and import_id:
             roots.append(env.backup_dir(import_id).parent)
-        if entry.get("task_files") is True:
-            roots.append(Path(env.state).joinpath(*task_files_in.FILES_DIR))
+        if entry.get(task_files_in.SCOPE_TASK_FILES) is True:
+            roots.extend(work_folders.files_roots(Path(env.state)))
     return list(dict.fromkeys(roots))
 
 

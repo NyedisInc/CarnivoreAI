@@ -10,13 +10,18 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import structlog
 
 from src.core.catalog import hosted_api, token_refresh
-from src.core.catalog.token_store import CatalogSession, open_token_store
+from src.core.catalog.token_store import (
+    MODE_BOUND, MODE_OWN, CatalogSession, open_token_store,
+)
 
 logger = structlog.get_logger()
 
 Subscriber = Callable[[Dict[str, Any]], None]
 
 _subscribers: List[Subscriber] = []
+_client_subscribers: List[Callable[[str], None]] = []
+FLAG_DEVICE_REVOKED = "device_revoked"
+FLAG_DEVICE_MINTED = "device_minted"
 _lock_holder: Optional[Tuple[asyncio.AbstractEventLoop, asyncio.Lock]] = None
 
 
@@ -51,6 +56,24 @@ def subscribe(callback: Subscriber) -> None:
 def unsubscribe(callback: Subscriber) -> None:
     if callback in _subscribers:
         _subscribers.remove(callback)
+
+
+def subscribe_client(callback: Callable[[str], None]) -> None:
+    if callback not in _client_subscribers:
+        _client_subscribers.append(callback)
+
+
+def unsubscribe_client(callback: Callable[[str], None]) -> None:
+    if callback in _client_subscribers:
+        _client_subscribers.remove(callback)
+
+
+def notify_client(client_key: str) -> None:
+    for callback in list(_client_subscribers):
+        try:
+            callback(client_key)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("catalog_auth_client_subscriber_failed", error=type(exc).__name__)
 
 
 def _notify(session: Optional[CatalogSession]) -> None:
@@ -103,8 +126,11 @@ def forget(state_dir: Path) -> bool:
     with open_token_store(state_dir) as store:
         held = store.read()
         removed = store.clear()
+        gone = store.clients_clear()
     if removed and not (held and held.is_guest):
         _notify(None)
+    for entry in gone:
+        notify_client(entry.client_key)
     return removed
 
 
@@ -112,9 +138,18 @@ def forget_if_access_is(state_dir: Path, access_token: str) -> bool:
     with open_token_store(state_dir) as store:
         held = store.read()
         removed = store.clear_if_access_is(access_token)
+    if removed:
+        _drop_bound_clients(state_dir)
     if removed and not (held and held.is_guest):
         _notify(None)
     return removed
+
+
+def _drop_bound_clients(state_dir: Path) -> None:
+    with open_token_store(state_dir) as store:
+        gone = store.clients_clear(bound_only=True)
+    for entry in gone:
+        notify_client(entry.client_key)
 
 
 def _action(held: Optional[CatalogSession], now: int, refused: Optional[str]) -> str:
@@ -152,7 +187,10 @@ async def bearer(
             with open_token_store(state_dir) as store:
                 cleared = store.clear_if_refresh_is(spent)
             logger.info("catalog_signin_rotation_refused", cleared=cleared)
+            if cleared:
+                _drop_bound_clients(state_dir)
             if cleared and not held.is_guest:  # type: ignore[union-attr]
+                _mark_device_revoked(state_dir)
                 _notify(None)
             raise SignedOut()
         if answer.status >= 400:
@@ -211,3 +249,120 @@ async def sign_out(state_dir: Path, api_base_url: str) -> None:
     except (SignedOut, RotationFailed, hosted_api.HostedUnavailable) as exc:
         logger.info("catalog_hosted_signout_skipped", error=type(exc).__name__)
     forget(state_dir)
+
+
+def _mark_device_revoked(state_dir: Path) -> None:
+    with open_token_store(state_dir) as store:
+        store.flag_set(FLAG_DEVICE_REVOKED, "1")
+        store.flag_clear(FLAG_DEVICE_MINTED)
+
+
+def device_session(state_dir: Path) -> Optional[CatalogSession]:
+    held = read_session(state_dir)
+    return None if held is None or held.is_guest else held
+
+
+def forget_credential(state_dir: Path, access_token: str) -> str:
+    if forget_if_access_is(state_dir, access_token):
+        _mark_device_revoked(state_dir)
+        return "device"
+    with open_token_store(state_dir) as store:
+        mine = [e for e in store.clients_all() if e.mode == MODE_OWN and e.access_token == access_token]
+        for entry in mine:
+            store.client_delete(entry.client_key)
+    for entry in mine:
+        notify_client(entry.client_key)
+    return "client" if mine else "none"
+
+
+async def _rotate_own(
+    state_dir: Path, api_base_url: str, client_key: str, clock: Callable[[], float], refused: Optional[str]
+) -> str:
+    def entry_session() -> Optional[CatalogSession]:
+        with open_token_store(state_dir) as store:
+            entry = store.client_get(client_key)
+        return entry.as_session() if entry is not None and entry.mode == MODE_OWN else None
+
+    held = entry_session()
+    action = _action(held, int(clock()), refused)
+    if action == token_refresh.SIGNED_OUT:
+        raise SignedOut()
+    if action == token_refresh.USE_ACCESS:
+        return held.access_token  # type: ignore[union-attr]
+    async with _lock():
+        held = entry_session()
+        action = _action(held, int(clock()), refused)
+        if action == token_refresh.SIGNED_OUT:
+            raise SignedOut()
+        if action == token_refresh.USE_ACCESS:
+            return held.access_token  # type: ignore[union-attr]
+        spent = held.refresh_token  # type: ignore[union-attr]
+        answer = await hosted_api.call(api_base_url, "POST", "/auth/refresh", json_body={"refresh_token": spent})
+        if answer.status == 401:
+            with open_token_store(state_dir) as store:
+                again = store.client_get(client_key)
+                if again is not None and again.refresh_token == spent:
+                    store.client_delete(client_key)
+            notify_client(client_key)
+            raise SignedOut()
+        if answer.status >= 400:
+            raise RotationFailed(answer.status, dict(answer.body))
+        replacement = token_refresh.session_from_refresh(
+            answer.body, fallback_login=held.login, now=int(clock()), provider=held.provider  # type: ignore[union-attr]
+        )
+        if replacement is None:
+            raise SignedOut()
+        with open_token_store(state_dir) as store:
+            swapped = store.client_save_if_refresh_is(client_key, spent, replacement)
+        if not swapped:
+            current = entry_session()
+            if current is None:
+                raise SignedOut()
+            return current.access_token
+        return replacement.access_token
+
+
+async def bearer_for(
+    state_dir: Path, api_base_url: str, client_key: Optional[str], clock: Callable[[], float] = time.time,
+    refused: Optional[str] = None, allow_guest: bool = False,
+) -> str:
+    held = read_session(state_dir)
+    if held is not None and held.is_guest:
+        if allow_guest:
+            return await bearer(state_dir, api_base_url, clock, refused, allow_guest=True)
+        raise SignedOut()
+    if client_key is None:
+        return await bearer(state_dir, api_base_url, clock, refused)
+    with open_token_store(state_dir) as store:
+        entry = store.client_get(client_key)
+    if entry is None:
+        raise SignedOut()
+    if entry.mode == MODE_BOUND:
+        if held is None or held.login != entry.login:
+            raise SignedOut()
+        return await bearer(state_dir, api_base_url, clock, refused)
+    return await _rotate_own(state_dir, api_base_url, client_key, clock, refused)
+
+
+class UnknownClient(Exception):
+    pass
+
+
+async def sign_out_client(state_dir: Path, api_base_url: str, client_key: Optional[str]) -> bool:
+    if client_key is None:
+        raise UnknownClient()
+    with open_token_store(state_dir) as store:
+        entry = store.client_get(client_key)
+    if entry is None:
+        return False
+    if entry.mode == MODE_OWN:
+        try:
+            token = await _rotate_own(state_dir, api_base_url, client_key, time.time, None)
+            await hosted_api.call(api_base_url, "POST", "/auth/signout", bearer=token)
+        except (SignedOut, RotationFailed, hosted_api.HostedUnavailable) as exc:
+            logger.info("catalog_client_hosted_signout_skipped", error=type(exc).__name__)
+    with open_token_store(state_dir) as store:
+        removed = store.client_delete(client_key)
+    if removed:
+        notify_client(client_key)
+    return removed

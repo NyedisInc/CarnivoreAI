@@ -4,10 +4,19 @@ from __future__ import annotations
 from types import SimpleNamespace
 from typing import Any
 
-from src.core.mcp import drawer_pins, federated, in_use, session_target
+from src.core.mcp import beast_mode, drawer_pins, federated, in_use, session_creators, session_target
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import _TARGET_SCHEMA, ToolError, _ok
 from src.core.mcp.write_tools import _request, _resolved_again, _via_route, park
+
+
+CREATOR_REASON = "the asking agent created this session"
+
+
+async def _run_by_creator(caller: AgentCaller, target_id: str, target_tmux: str, label: str, run: Any) -> dict:
+    return await beast_mode.run_unprompted(caller, "session_delete", run, target_id=target_id, target_tmux=target_tmux,
+                                           summary=f"DELETE {label} ({CREATOR_REASON})",
+                                           event="mcp_session_deleted_by_its_creator", approval_source=CREATOR_REASON)
 
 
 def _is_own(info: Any, caller: AgentCaller) -> bool:
@@ -49,6 +58,9 @@ async def _do_delete_asleep(manager: Any, uuid: str, row_id: Any) -> dict:
 async def _delete_asleep(manager: Any, caller: AgentCaller, row: dict) -> dict:
     uuid, row_id = str(row["session_uuid"]), row["id"]
     name = row.get("tmux_name") or uuid
+    if await session_creators.created_by_caller(manager, caller, uuid):
+        return await _run_by_creator(caller, uuid, "", f"asleep session {name}",
+                                     lambda: _do_delete_asleep(manager, uuid, row_id))
 
     async def run(approved: bool) -> dict:
         return await _do_delete_asleep(manager, uuid, row_id)
@@ -76,15 +88,23 @@ async def session_delete(manager: Any, caller: AgentCaller, args: dict) -> dict:
         return await _do_delete(app, info.session.id, epoch)
 
     name = info.tmux_session or info.session.id
+    usage = in_use.summarize(info, app.state.services.registry)
+    if (not in_use.blocks_beast(usage, "session_delete") and info.activity_status not in (None, "", "unknown")
+            and await session_creators.created_by_caller(manager, caller, info.session_uuid)):
+        fresh = await _resolved_again(app, info.session.id, epoch)
+        fresh_usage = in_use.summarize(fresh, app.state.services.registry)
+        if not in_use.blocks_beast(fresh_usage, "session_delete") and fresh.activity_status not in (None, "", "unknown"):
+            return await _run_by_creator(caller, info.session.id, info.tmux_session or "", f"session {name}",
+                                         lambda: run(True))
+        usage = fresh_usage
     return await park(manager, caller, info.session.id, info.tmux_session or "", "session_delete",
                       f"DELETE session {name} (its tmux session is killed)", {}, run,
-                      dedupe_key=f"session_delete:{info.session.id}", beast_eligible=False,
-                      in_use=in_use.summarize(info, app.state.services.registry))
+                      dedupe_key=f"session_delete:{info.session.id}", beast_eligible=False, in_use=usage)
 
 
 WRITE_TOOLS: dict = {
     "session_delete": (
-        "Delete a session (kills its tmux session), or a STOPPED one (asleep, or any stopped record) by session_uuid, or an asleep one by tmux name (its record leaves your lists, it is unpinned, nothing is killed). Always waits for the owner's approval, even in Beast mode. Refuses your own session and a paired computer's.",
+        "Delete a session (kills its tmux session). A stopped one (asleep or any stopped record) by session_uuid, or an asleep one by tmux name, only leaves your lists unpinned; nothing is killed. Always waits for owner approval, even in Beast mode, except a session YOU made with session_create and no work running: deleted at once and logged. Refuses your own session and a paired computer's.",
         {"target": _TARGET_SCHEMA}, ["target"], session_delete,
     ),
 }

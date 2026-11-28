@@ -1,6 +1,7 @@
 <!-- the page frame the reading pane -->
 <script lang="ts">
     import { Button, IconButton } from '../base';
+    import { openPluginStudio } from '../plugin-studio/screen-host';
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import Page from '../../opscenter/ui/Page.svelte';
     import PageToolbar, { type ToolbarFacet } from '../../opscenter/ui/PageToolbar.svelte';
@@ -13,6 +14,8 @@
     import type { Translate } from '../sessions/types';
     import { railStores } from '../session-rail/rail-store.svelte';
     import { widgetBars } from '../widget-bars/bar-settings.svelte';
+    import { panels } from '../cplug-ui/panel-views.svelte';
+    import { pluginsStore } from '../plugins/store.svelte';
     import Tabs, { panelAttrs, type TabDef } from '../../opscenter/ui/Tabs.svelte';
     import BarsSettings from './settings/BarsSettings.svelte';
     import { commitOnOpen, commitTab, initialTab, tabFromLocation, WIDGETS_TABS, type WidgetsTab } from './settings/tab-route';
@@ -69,6 +72,29 @@
         railStores.side.start();
         railStores.bottom.start();
         widgetBars.start();
+        if (!adapter) return pluginsStore.acquire();
+    });
+
+    let seenPanels: typeof panels.list | null = null;
+    let seenRows: typeof pluginsStore.rows | null = null;
+    $effect(() => {
+        const nextPanels = panels.list;
+        const nextRows = pluginsStore.rows;
+        if (!open) {
+            seenPanels = nextPanels;
+            seenRows = nextRows;
+            return;
+        }
+        if (seenPanels === null && seenRows === null) {
+            seenPanels = nextPanels;
+            seenRows = nextRows;
+            return;
+        }
+        if (nextPanels !== seenPanels || nextRows !== seenRows) {
+            seenPanels = nextPanels;
+            seenRows = nextRows;
+            void ctl.load();
+        }
     });
 
     export function show(): void {
@@ -147,6 +173,8 @@
         else if (id === 'board') view.board = next;
     }
     const lens = $derived(lensRows(ctl.items as readonly WidgetItem[], query, t));
+    /* the reading pane */
+    const openItem = $derived(selectedId === null || tab !== 'widgets' ? undefined : (ctl.items.find((one) => one.id === selectedId) as WidgetItem | undefined));
     const showLens = $derived(tab === 'widgets' && ctl.status.kind !== 'loading' && ctl.status.kind !== 'error');
 </script>
 
@@ -173,6 +201,22 @@
     <PlacesRail groups={lens.groups} fits={lens.fits} states={lens.states} busy={false} {t} onPick={pickLens} />
 {/snippet}
 
+{#snippet pane()}
+    {#if openItem}
+        {#key openItem.id}
+            <WidgetPane
+                item={openItem}
+                {t}
+                toggle={ctl.toggles[openItem.id]}
+                onToggle={(id, next) => void ctl.toggle(id, next)}
+                onMenu={(anchor, id) => openMenu?.(anchor, id)}
+                {settingsFor}
+                {previews}
+            />
+        {/key}
+    {/if}
+{/snippet}
+
 {#if open}
     <Page
         class="wp-screen"
@@ -186,12 +230,17 @@
         bar={tab === 'widgets' ? toolbar : undefined}
         side={showLens ? rail : undefined}
         sideLabel={lensLabel(lens)}
+        detail={openItem ? pane : undefined}
+        detailTitle={openItem?.name}
+        detailFill
+        onDetailClose={() => (selectedId = null)}
     >
         {#snippet tabs()}
             <Tabs tabs={tabDefs} active={tab} onSelect={pickTab} label={t('widgets.page.tab.label')} idBase="wp" />
         {/snippet}
         {#snippet actions()}
             {#if tab === 'widgets'}
+            <Button variant="secondary" data-k="build-plugin" onclick={() => void openPluginStudio({ template: 'widget' })}>{t('widgets.page.build_plugin_cta')}</Button>
             <Button data-k="reset-bars" title={t('widgets.places.reset.title')} onclick={() => void resetBars(t)}>{t('widgets.places.reset.label')}</Button>
             <Button data-k="help" title={t('widgets.places.help.title')} aria-label={t('widgets.places.help.title')} onclick={help}>{t('widgets.places.help.label')}</Button>
             {/if}
@@ -211,25 +260,7 @@
             onClear={() => (query = '')}
             limits={[t('widgets.page.limit.build_time')]}
             bind:openMenu
-        >
-            {#snippet detail()}
-                {@const item = ctl.items.find((one) => one.id === selectedId)}
-                {#if item}
-                    {#key item.id}
-                        <WidgetPane
-                            item={item as WidgetItem}
-                            {t}
-                            toggle={ctl.toggles[item.id]}
-                            onToggle={(id, next) => void ctl.toggle(id, next)}
-                            onMenu={(anchor, id) => openMenu?.(anchor, id)}
-                            onClose={() => (selectedId = null)}
-                            {settingsFor}
-                            {previews}
-                        />
-                    {/key}
-                {/if}
-            {/snippet}
-        </PlacesBody>
+        />
         {/if}
     </Page>
 {/if}

@@ -305,18 +305,18 @@ export class DeepSearchController implements DrawerSearchController {
   async refreshExports(): Promise<void> {
     if (this.phase !== 'done' || !this.#searched) return;
     const seq = this.#seq;
-    const fresh = new Map<string, DeepGroup['exported']>();
+    const fresh = new Map<string, Pick<DeepGroup, 'exported' | 'offloaded'>>();
     try {
       for (let offset = 0; offset < this.#localShown(); offset += PAGE_SIZE) {
         const answer = await this.#api.search(this.#searched, offset, new AbortController().signal, this.#scopeArg());
-        for (const g of answer.groups) fresh.set(g.conversationId, g.exported);
+        for (const g of answer.groups) fresh.set(g.conversationId, { exported: g.exported, offloaded: g.offloaded });
       }
     } catch (err) {
       console.warn('DeepSearch: the export status could not be refreshed', err);
       return;
     }
     if (seq !== this.#seq) return;
-    this.groups = this.groups.map((g) => (fresh.has(g.conversationId) && (g.hostKey === null || g.hostKey === 'local') ? { ...g, exported: fresh.get(g.conversationId) ?? null } : g));
+    this.groups = this.groups.map((g) => (fresh.has(g.conversationId) && (g.hostKey === null || g.hostKey === 'local') ? { ...g, exported: fresh.get(g.conversationId)?.exported ?? null, offloaded: fresh.get(g.conversationId)?.offloaded ?? false } : g));
   }
 
   #mergePeerAnswer(answer: DeepAnswer): void {

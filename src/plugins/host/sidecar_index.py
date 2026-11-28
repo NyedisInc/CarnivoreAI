@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import asyncio
 from datetime import timedelta
-from typing import Any, Callable, Dict, FrozenSet, Iterable, List, Optional
+from typing import Any, Dict, FrozenSet, Iterable, List, Optional
 
 import structlog
 
+from src.core import resource_push
 from src.core.catalog.revocation import VERSION_SUBJECT_SEPARATOR
 from src.core.skills import kinds
 from src.plugins.host import owner_switch, sidecar_registry
@@ -62,6 +63,7 @@ class IndexAdapter:
         try:
             view = await asyncio.to_thread(self._build, snapshot if snapshot is not None else cache.snapshot())
             await self._runtime.supervisor.set_index(view)
+            resource_push.notify("cplugs")
         except Exception as exc:  # noqa: BLE001
             logger.warning("cplug_index_sync_failed", error_type=type(exc).__name__)
 

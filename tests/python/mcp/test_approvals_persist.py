@@ -123,7 +123,7 @@ def test_huddle_item_is_gone_from_every_schema_but_still_accepted(env):
 
 
 def test_every_park_site_names_a_gated_tool():
-    literal = re.compile(r"park\([^)]*?['\"]([a-z_]+)['\"](?!\s*[\]:])", re.S)
+    literal = re.compile(r"(?<![A-Za-z0-9_])park\([^)]*?['\"]([a-z_]+)['\"](?!\s*[\]:])", re.S)
     found = set()
     for path in (ROOT / "src").rglob("*.py"):
         for match in literal.finditer(path.read_text()):
@@ -150,7 +150,8 @@ def test_no_tool_plugin_or_peer_path_can_decide():
     decide = re.compile(r"(?:store|get_store\(\))\.(approve|deny|execute_claimed|claim_for_beast|deny_for_caller|withdraw)\(")
     allowed = {"src/api/agent_action_routes.py", "src/api/mcp_admin_routes.py", "src/core/mcp/beast_mode.py",
                "src/core/mcp/pending.py",
-               "src/plugins/host/session_create_port.py"}
+               "src/plugins/host/session_create_port.py",
+               "src/plugins/host/sidecar_routes.py", "src/plugins/host/sidecar_services.py"}
     callers = {str(p.relative_to(ROOT)) for p in (ROOT / "src").rglob("*.py") if decide.search(p.read_text())}
     assert callers and callers <= allowed, sorted(callers - allowed)
     assert not (ROOT / "src/plugins/sdk/approvals.py").exists()

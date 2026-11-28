@@ -1,0 +1,1 @@
+import{r as e}from"./widget-lab-chunk-failure-reason.js";function t(t){return e(t)}export{t};

@@ -598,7 +598,7 @@ facts use the server's period summaries and keep missing data distinct from zero
         <code>.oc-ms-bar</code> with its <code>.oc-ms-fill</code>, the bright <code>.oc-ms-figure</code>, or <code>.oc-ms-figure--none</code>, the not-measured words as a quiet note across the bar's column); at 8 x 2
         (<code>.oc-ms--wide</code>) five columns sit side by side under hairline dividers, each with a small
         <code>.oc-ms-sub</code> line. Narrow but tall enough for the <code>all</code> height step
-        (<code>.oc-ms--tall</code>), all five meters stack in one column, spread evenly down the cell, and each bar meter gains its detail line under the bar (<code>.oc-ms-sub--below</code>). A figure the server could not measure prints the not-measured words, never a zero.</dd>
+        (<code>.oc-ms--tall</code>), all five meters stack in one column, spread evenly down the cell, and each bar meter gains its detail line under the bar (<code>.oc-ms-sub--below</code>). A figure the server could not measure prints the not-measured words, never a zero. In Pack mode (more than one reporting computer, <code>.oc-ms-wrap</code> / <code>.oc-ms-wrap--pack</code>), the meters show the deterministic Pack-wide aggregate and a compact strip (<code>.oc-ms-pack</code>) lists each computer's row (<code>.oc-ms-pack-row</code>: <code>.oc-ms-pack-label</code> and <code>.oc-ms-pack-stat</code>) in server-sorted order.</dd>
     <dt>placement</dt>
     <dd>Hidden by default; the Widgets list or the drawer area puts it on. Its title mark is the <code>cpu</code> icon.
         Pushed on the <code>machine_stats</code> topic, only while a widget is mounted and the tab is visible.</dd>
@@ -661,23 +661,14 @@ facts use the server's period summaries and keep missing data distinct from zero
         <code>--oc-yellow</code>, deleted and conflicted <code>--oc-coral</code>.</dd>
 </dl>
 
-<h3 class="sg-h3" id="cells-task-manager"><span id="cells-huddle"></span>the Task Manager cell</h3>
+<h3 class="sg-h3" id="cells-task-manager-mk2"><span id="cells-task-manager"></span><span id="cells-huddle"></span>the Task Manager cell (id task-manager-mk2)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
-    <dd>The Task Manager list of a session's project (<code>web/src/opscenter/cells/task-manager/Cell.svelte</code>, issue #1472):
-        the Task Manager plugin's own body pinned to that one list (<code>.oc-hdl</code>), so rows, replies and the add box are
-        the Task Manager page's.</dd>
-    <dt>placement</dt>
-    <dd>Session scoped like the changes cell. Hidden by default; its title mark is the <code>users</code> icon.</dd>
-    <dt>states</dt>
-    <dd>No session, or a session with no project, is one sentence (<code>.oc-hdl-note</code>).</dd>
-</dl>
-
-<h3 class="sg-h3" id="cells-task-manager-mk2">TM Mark II (the Task Manager, reshaped)</h3>
-<dl class="sg-facts">
-    <dt>use</dt>
-    <dd>A copy of the Task Manager widget Joe reshapes step by step (<code>web/src/opscenter/cells/task-manager-mk2/Cell.svelte</code>
-        and the all projects view <code>task-manager-mk2-all</code>, issue #1710); its rows, replies and add box are the Task Manager's.</dd>
+    <dd>The Task Manager widget (<code>web/src/plugins/taskmanager/mk2/Cell.svelte</code>, the plugin's body pinned to the session's project list, <code>.oc-hdl</code>;
+        and the all projects view <code>task-manager-mk2-all</code>; issue #1710, code name TM Mark II). It is the ONLY Task Manager widget since issue #2531
+        retired the original task manager, all task managers and the flat tasks list (Joe (ccsliinc), 2026-10-26), and its title is plain "task manager"
+        ("all task managers" for the all projects view). A saved slot of a retired widget reads back as this one in the same place at the same size.
+        Its rows, replies and add box are the Task Manager's.</dd>
     <dt>header</dt>
     <dd>The title strip prints the new Task Manager's count at its right (<code>Mk2Count.svelte</code>, the design's <code>.tm-head-count</code>): TWO per-task numbers (Joe (ccsliinc), 2026-10-23),
         <code>N needs you</code> and <code>N unread</code> (<code>.mk2-head-n</code>), each the same number as its filter chip (needs you counts tasks; unread counts the UNREAD MESSAGES of the active unread tasks, so marking a task read drops it by everything that task had unread; the unread filter chip shows that same message number while its filter still lists tasks, and the rail icon badge counts what needs you), a zero left out. When the strip is too narrow for the words (an <code>@container oc-head</code> rule) each is the chip's icon (<code>.mk2-head-ico</code>) and its number (<code>.mk2-head-num</code>) and the words (<code>.mk2-head-words</code>) stay as its <code>aria-label</code> and <code>title</code>. The body's top is <code>Mk2Bar.svelte</code>
@@ -724,12 +715,12 @@ facts use the server's period summaries and keep missing data distinct from zero
         (<code>.tn-resource</code>, shown here and nowhere else in Mark II). The task's crosstalk closes the details tab as foldable cards (<code>Mk2Crosstalk.svelte</code>: <code>.mk2-xt</code>, <code>.mk2-xt-card</code>, <code>.mk2-xt-head</code>, <code>.mk2-xt-who</code>, <code>.mk2-xt-time</code>, <code>.mk2-xt-line</code>, open <code>.mk2-xt-line--open</code>), closed by default, a click on the head opens one, and a line cut by its box reads whole on hover (the one cut-off-text tooltip). The conversation below the tabs is the Task Manager's own, unchanged.</dd>
 </dl>
 
-<h3 class="sg-h3" id="cells-task-manager-all"><span id="cells-huddle-all"></span>the all Task Manager lists cell</h3>
+<h3 class="sg-h3" id="cells-task-manager-all"><span id="cells-huddle-all"></span>the all task managers cell (id task-manager-mk2-all)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
-    <dd>Every Task Manager list at once (<code>web/src/opscenter/cells/task-manager-all/Cell.svelte</code>, issue #1492): the Task Manager
+    <dd>Every Task Manager list at once (<code>web/src/plugins/taskmanager/mk2-all/Cell.svelte</code>, issue #1492): the Task Manager
         plugin's own body on its all projects view (<code>.oc-hdl-all</code>), one section per list under its tracked
-        uppercase project head, with the same rows, replies and add box.</dd>
+        uppercase project head, with the same rows, replies and add box, in Mark II's look.</dd>
     <dt>placement</dt>
     <dd>Not session scoped, so it stays put when the selected session or project changes. Hidden by default; placed in
         either rail or on a dashboard in edit layout. Its title mark is the <code>users</code> icon.</dd>
@@ -1051,7 +1042,7 @@ facts use the server's period summaries and keep missing data distinct from zero
         the Task Manager items in "needs you", the automations whose latest run failed and the alerts in the top bell (the kinds are the shared contract the bell reads too, <code>web/src/lib/attention-kinds/</code>, <code>docs/widget-system.md</code> section 23), oldest first, one <code>.oc-qs-row</code> button each (a small icon, the
         ask in two lines, then a tracked uppercase kind, the session, project or sender, and how long it has waited). It answers
         nothing: a click opens the approval inbox on that session, the Task Manager item or the bell's panel. Every source is pushed
-        (<code>approvals</code>, <code>cplug.huddle.list</code> and the <code>app_alert.*</code> frames), so nothing polls at idle.
+        (<code>approvals</code>, <code>cplug.taskmanager.list</code> and the <code>app_alert.*</code> frames), so nothing polls at idle.
         It took over the approvals widget, retired 2026-10-12: a saved one becomes a copy listing approvals only. EACH COPY LISTS ITS OWN SOURCES (Joe (ccsliinc), 2026-10-11): in the drawer's widget area and the session rails the widget may be
         placed more than once, and a copy's settings (the gear in the area, the right-click menu in a rail's edit layout) are exactly four
         checks, stored on that copy alone (Joe (ccsliinc), Task Manager 404, 2026-10-12: "the checkboxes are the options in the right click. all, or
@@ -1073,15 +1064,16 @@ facts use the server's period summaries and keep missing data distinct from zero
     <dd>Hidden by default on both pages; the Widgets list and the drawer widget area offer it.</dd>
 </dl>
 
-<h3 class="sg-h3" id="cells-task-manager-list"><span id="cells-huddle-list"></span>the Task Manager list cell (id task-list)</h3>
+<h3 class="sg-h3" id="cells-task-manager-list"><span id="cells-huddle-list"></span>the task status list (the retired flat list's rows)</h3>
 <dl class="sg-facts">
     <dt>use</dt>
-    <dd>The Task Manager's items as ONE FLAT LIST (<code>web/src/opscenter/cells/task-list/Cell.svelte</code>, Joe (ccsliinc), Task Manager item 653, issue #1772, mockup r5), built for the right widget bar's drawer where it sits beside the notepad and is sized the notepad's way (the drawer's left edge and the section divider, <code>docs/widget-system.md</code> section 24). One item per row, never nested: questions, reviews, working, waiting, scheduled, then open. A row (<code>ListRow.svelte</code>) is the status mark (the Task Manager's own icon and token), the title and how old it is; a question wears the 2px <code>--oc-yellow-bright</code> stripe and the same yellow age. A REVIEW row also carries the approve key (<code>ApproveKey.svelte</code>, <code>.hl-approve</code>, the <code>approve</code> seal icon in <code>--oc-orange</code>; Joe (ccsliinc), 2026-10-14, #1797) at the right of its line: one press approves it exactly as the Task Manager's own tick does, no confirm. THE LIST ITSELF IS <code>ListBody.svelte</code> (the guts, shared): the same list also fills the Task Manager PROJECT ROW's status modal (<code>StatusList.svelte</code>, #1798) with no group headers; a SCHEDULED row there is listed like any other and carries no link (the automations key was dropped in #1875).
-        A press opens the row in place, one at a time (<code>ListRowOpen.svelte</code>): a question shows the Task Manager's real answer form (<code>TaskManagerAskForm</code>; a lone single or yes/no question instead draws its pills inline with no "other" key, and the reply box under it is the other), a review its latest line and the reply box, the rest the latest line, each ending with an "open in task manager" ICON key (<code>.oc-ibtn</code>, the <code>external</code> icon, an <code>aria-label</code> and the title popover; Joe (ccsliinc), 2026-10-14, #1797: no big text buttons in the widget). The reply box's send key is the <code>send</code> icon there too (<code>HuddleReply</code> with <code>iconSend</code>).</dd>
-    <dt>looks</dt>
-    <dd><strong>Compact</strong> rows are one 20px line (<code>.hl-sum</code>), <strong>two-line</strong> rows 36px with the latest post under the title (<code>.hl-line2</code>, the author <code>claude</code> in <code>--oc-orange</code>, <code>joe</code> in <code>--oc-text-dim</code>). The density choice (compact or two-line) is a radio pair in the widget's menu (Joe (ccsliinc), 2026-10-14); the hover keys are gone.</dd>
-    <dt>which statuses</dt>
-    <dd>Each copy lists only the statuses it ticks, from the right-click menu of its key or of the list: the shared cascade menu with the heading "show in list" and the Task Manager's six badge-menu checks and hotkeys (<code>q r o w a s</code>), stored on that copy's placement (<code>options.st_&lt;status&gt;</code>, absent is on), synced to every device. A tick keeps the menu open.</dd>
+    <dd>The widget with the id <code>task-list</code> (issue #1772) is RETIRED (Joe (ccsliinc), 2026-10-26, issue #2531); a saved slot of it reads back as
+        the Task Manager cell. What stays is the row list it drew (<code>web/src/lib/task-status-list/</code>): <code>ListBody.svelte</code> and
+        <code>ListRow.svelte</code> with the <code>.hl-*</code> classes, one row per item, a question wearing a yellow stripe, a review carrying the approve key
+        (<code>ApproveKey.svelte</code>), a compact one-line row or a two-line row with the latest post under the title, and a press opening the row in place
+        (<code>ListRowOpen.svelte</code>, its "open in task manager" icon key opening the Task Manager widget, with <code>MissingPopup.svelte</code> when
+        none is placed). It is drawn by the Task Manager's project row status modal (<code>StatusList.svelte</code>) and the plugin SDK's
+        <code>TaskStatusList</code>.</dd>
     <dt>reads from the theme</dt>
     <dd>Rows are separated by <code>--oc-line-rule</code>, hover on <code>--oc-ground-hover</code>, an open row sits on <code>--oc-ground-card</code>; titles are <code>--oc-text-primary</code>, the second line <code>--oc-text-muted</code>. No hardcoded color.</dd>
     <dt>placement</dt>

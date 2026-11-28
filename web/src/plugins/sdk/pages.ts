@@ -10,3 +10,5 @@ export function openCplugPage(id: string): boolean {
 }
 
 export { openPluginsScreen as openPluginsPage } from '../../lib/plugins-page/screen-host';
+
+export { openPluginStudio } from '../../lib/plugin-studio/screen-host';

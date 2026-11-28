@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import threading
 from typing import Dict, Optional
 
 from src.core.notifications.contracts import Sender
@@ -22,15 +23,31 @@ from src.core.notifications.kinds.webhook import WebhookSender
 from src.core.notifications.kinds.apns import ApnsKindSender
 from src.core.notifications.kinds.webpush import WebPushSender
 
+_LOCK = threading.RLock()
 _SENDERS: Dict[str, Sender] = {}
 
 
 def register(kind_id: str, sender: Sender) -> None:
-    _SENDERS[kind_id] = sender
+    with _LOCK:
+        _SENDERS[kind_id] = sender
+
+
+def unregister(kind_id: str) -> bool:
+    with _LOCK:
+        return _SENDERS.pop(kind_id, None) is not None
+
+
+def unregister_prefix(prefix: str) -> int:
+    with _LOCK:
+        victims = [k for k in _SENDERS if k.startswith(prefix)]
+        for k in victims:
+            _SENDERS.pop(k, None)
+        return len(victims)
 
 
 def sender_for(kind_id: str) -> Optional[Sender]:
-    return _SENDERS.get(kind_id)
+    with _LOCK:
+        return _SENDERS.get(kind_id)
 
 
 register(KIND_SLACK, SlackSender())

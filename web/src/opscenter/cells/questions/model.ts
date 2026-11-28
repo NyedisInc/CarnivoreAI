@@ -1,5 +1,5 @@
 import type { ApprovalItem } from '../../../lib/approvals/approvals-model';
-import type { TaskManagerGroup } from '../../../plugins/huddle/huddle-model';
+import type { TaskManagerGroup } from '../../../plugins/taskmanager/huddle-model';
 import type { AppAlert } from '../../../lib/app-alerts/alerts-model';
 import type { RunRow } from '../developer/model';
 import { alertRows, approvalRows, failedAutomationRows, taskManagerRows, type AttentionRow, type AttentionTarget, type Translate } from '../../../lib/attention-kinds/rows';
@@ -20,6 +20,7 @@ export function orderQuestions(rows: readonly QuestionRow[], options?: Placement
     .map((entry) => entry.row);
 }
 
+/* the Task Manager */
 export function mergeQuestions(
   approvals: readonly ApprovalItem[],
   groups: readonly TaskManagerGroup[] | null,

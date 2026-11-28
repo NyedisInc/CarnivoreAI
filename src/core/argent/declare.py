@@ -8,7 +8,7 @@ from typing import Any, Dict
 
 import structlog
 
-from src.core.argent import session_ref, timeline, work_items, writeback
+from src.core.argent import card_mirror, session_ref, timeline, work_items, writeback
 
 logger = structlog.get_logger()
 
@@ -43,14 +43,16 @@ async def declare(tmux_name: str, work_item_id: str, source: str, sub_agent_id: 
     if queued is not None:
         timeline.poke()
     if queued is not None and not sub_agent_id:
-        await _note_picked(tenant, ref, tmux_name, item_id)
+        await _note_picked(tenant, ref, tmux_name, item_id, source, item.get("kind") == "story")
     declared = await asyncio.to_thread(timeline.current, tenant, ref)
     row = next((d for d in declared if d["sub_agent_id"] == (sub_agent_id or "")), None) or {}
     return {"session_id": ref, "sub_agent_id": sub_agent_id or "", "work_item_id": item_id, "ts": row.get("ts", ""),
             "reason": row.get("reason", source), "changed": queued is not None}
 
 
-async def _note_picked(tenant: str, ref: str, tmux_name: str, item_id: str) -> None:
+async def _note_picked(tenant: str, ref: str, tmux_name: str, item_id: str, source: str, is_story: bool) -> None:
+    if is_story and source != "card":
+        await asyncio.to_thread(card_mirror.queue_picked, tenant, item_id, ref)
     try:
         await asyncio.to_thread(writeback.enqueue_milestone, tenant, ref, tmux_name, tmux_name, item_id, writeback.PICKED, [])
         writeback.poke()

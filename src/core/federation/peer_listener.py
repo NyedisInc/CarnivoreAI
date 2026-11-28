@@ -6,7 +6,7 @@ import contextlib
 import os
 import stat
 from pathlib import Path
-from typing import Any, Iterator, Optional, Tuple
+from typing import Any, FrozenSet, Iterator, Optional, Tuple
 
 import structlog
 import uvicorn
@@ -18,13 +18,18 @@ SOCKET_NAME_PREFIX = "peer-"
 
 class PeerLinkTag:
 
-    def __init__(self, app: Any) -> None:
+    def __init__(self, app: Any, public: Optional[FrozenSet[str]] = None) -> None:
         self.app = app
+        self._public = public
         self._allowed: Optional[list] = None
 
     def _permits(self, scope: Any) -> bool:
+        from src.api import mesh_dark
+
+        if mesh_dark.hidden(scope):
+            return False
         if self._allowed is None:
-            self._allowed = peer_allowed_routes(self.app)
+            self._allowed = peer_allowed_routes(self.app, self._public)
         return any(rx.match(scope["path"]) for rx in self._allowed)
 
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
@@ -86,7 +91,7 @@ class PeerListener:
             os.unlink(self.path)
 
 
-def peer_allowed_routes(app: Any) -> list:
+def peer_allowed_routes(app: Any, public: Optional[FrozenSet[str]] = None) -> list:
     from fastapi.routing import APIRoute, APIWebSocketRoute
     from starlette.routing import compile_path
 
@@ -104,6 +109,6 @@ def peer_allowed_routes(app: Any) -> list:
             elif hasattr(route, "routes"):
                 yield from walk(route.routes, prefix)
 
-    public = {"/api/v1/federation/token", "/api/v1/federation/prove"}
+    open_paths = public if public is not None else {"/api/v1/federation/token", "/api/v1/federation/prove"}
     return [compile_path(path)[0] for path, r in walk(app.routes)
-            if path in public or any(hasattr(c, "peer_scope") for c in calls(r.dependant))]
+            if path in open_paths or any(hasattr(c, "peer_scope") for c in calls(r.dependant))]

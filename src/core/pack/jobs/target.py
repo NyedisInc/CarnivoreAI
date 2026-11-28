@@ -9,7 +9,7 @@ from src.core.federation import peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.pack.jobs.types import (AdmitBody, CollectAnswer, HostState, JobError, JobIdBody, ReplyBody, RunStatus,
                                       StartBody, StatusAnswer, StopBody)
-from src.core.pack.jobs import bundle_io
+from src.core.pack.jobs import bundle_io, member_link
 from src.core.pack.transport import blobs
 
 SSH_PREFIX = "ssh:"
@@ -140,9 +140,11 @@ class PeerTarget:
 def peer_target(install_id: str) -> PeerTarget:
     links = peer_links.LINKS
     client = links.client(install_id) if links is not None else None
-    if client is None:
+    if client is not None:
+        return PeerTarget(install_id, install_id, blobs.request_via(client, 20.0), blobs.request_via(client, 300.0))
+    if not member_link.on():
         raise JobError("unreachable", "that computer is not connected", 502)
-    return PeerTarget(install_id, install_id, blobs.request_via(client, 20.0), blobs.request_via(client, 300.0))
+    return PeerTarget(install_id, install_id, member_link.request_for(install_id, 20.0), member_link.request_for(install_id, 300.0))
 
 
 def is_ssh(install_id: str) -> bool:

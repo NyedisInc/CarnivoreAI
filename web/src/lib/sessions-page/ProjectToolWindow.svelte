@@ -1,8 +1,13 @@
 <!-- a dialog is open -->
 <script lang="ts">
+    import { auth } from '../../opscenter/api/auth.svelte';
     import IconButton from '../base/IconButton.svelte';
     import '../projects-shared/projects-shared.css';
     import AnchoredPopup from '../dialog-frame/AnchoredPopup.svelte';
+    import SlotHost from '../cplug-ui/SlotHost.svelte';
+    import ViewFrame from '../cplug-ui/ViewFrame.svelte';
+    import { pluginDisplayName, resolveProjectPanelEntries, runSlotDescriptorAction } from '../plugins/slot-actions';
+    import { pluginsStore } from '../plugins/store.svelte';
     import type { Translate } from '../sessions/types';
     import ProjectTransport, { type DeckPage } from '../pack-transport/ProjectTransport.svelte';
     import { ageFormatter } from '../projects-shared/format';
@@ -21,13 +26,34 @@
 
     let page = $state<DeckPage>('home');
 
+    $effect(() => {
+        if (tool.kind !== 'slot-panel' || auth.state === 'signed-out') return;
+        return pluginsStore.acquire({ includeSlots: true });
+    });
+
     const panel = $derived(tool.kind === 'panel' ? (projectPanels().find((p) => p.id === tool.panelId) ?? null) : null);
     const Panel = $derived(panel?.component);
+    const slotPanel = $derived.by(() => {
+        if (tool.kind !== 'slot-panel') return null;
+        void pluginsStore.rows;
+        void pluginsStore.slots;
+        return resolveProjectPanelEntries().find((p) => p.pluginId === tool.pluginId && p.entryId === tool.entryId) ?? null;
+    });
+    const slotRow = $derived(tool.kind === 'slot-panel' ? pluginsStore.rowOf(tool.pluginId) : undefined);
     const age = $derived(ageFormatter(t, () => Date.now()));
     const title = $derived(
         tool.kind === 'settings'
             ? t('sessions.page.tool.settings_title', { name: project.name })
-            : t('sessions.page.tool.panel_title', { panel: panel ? t(panel.labelKey) : '', name: project.name }),
+            : tool.kind === 'panel'
+              ? t('sessions.page.tool.panel_title', { panel: panel ? t(panel.labelKey) : '', name: project.name })
+              : t('sessions.page.tool.panel_title', { panel: slotPanel?.label ?? tool.entryId, name: project.name }),
+    );
+    const dataProjectTool = $derived(
+        tool.kind === 'panel'
+            ? tool.panelId
+            : tool.kind === 'slot-panel'
+              ? `${tool.pluginId}:${tool.entryId}`
+              : 'settings',
     );
 
     function tally(count: number, read: PanelReadState): string {
@@ -38,7 +64,7 @@
 </script>
 
 
-<AnchoredPopup class="pw" tabindex={-1} label={title} data-project-tool={tool.kind === 'panel' ? tool.panelId : 'settings'}
+<AnchoredPopup class="pw" tabindex={-1} label={title} data-project-tool={dataProjectTool}
     placement="manual" initialFocus="self" dismissable={() => openModalCount() === 0} {onClose}>
     <div class="pw-title">
         {#if tool.kind === 'settings' && page !== 'home'}
@@ -58,6 +84,45 @@
             <div class="ph-table">
                 <Panel projectId={project.id} projectKey={String(project.id)} {header} isFolded={() => false} {age} {previewOf} />
             </div>
+        {:else if tool.kind === 'slot-panel'}
+            {#if slotPanel?.view}
+                <ViewFrame
+                    plugin={{
+                        cplugId: tool.pluginId,
+                        name: pluginDisplayName(tool.pluginId, slotRow),
+                        unverified: slotRow?.unverified === true,
+                        declared: { routes: slotRow?.routes ?? [], tools: slotRow?.declared_tools ?? [] },
+                        installKey: slotRow?.install_key ?? tool.pluginId,
+                    }}
+                    view={slotPanel.view}
+                    surface="panel"
+                    bar={false}
+                    {t}
+                />
+            {:else if slotPanel}
+                <SlotHost
+                    slot="project.panels"
+                    items={[slotPanel.contribution]}
+                    layout="column"
+                    run={(_entry, action) =>
+                        runSlotDescriptorAction(
+                            tool.pluginId,
+                            action.kind === 'route' || action.kind === 'tool' || action.kind === 'macro'
+                                ? {
+                                      ...action,
+                                      payload: {
+                                          project_id: project.id,
+                                          project_key: String(project.id),
+                                          ...(action.payload ?? {}),
+                                      },
+                                  }
+                                : action,
+                        )}
+                    {t}
+                />
+            {:else}
+                <p class="pw-tally" data-project-tool-empty>{t('cplug_ui.nothing_here')}</p>
+            {/if}
         {/if}
     </div>
 </AnchoredPopup>

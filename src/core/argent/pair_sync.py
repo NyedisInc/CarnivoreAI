@@ -48,16 +48,20 @@ class PairSync:
     def __init__(self, *, store: ArgentStore, tokens: TokenStore, self_id: str, self_label: str, peer: PeerFn,
                  listing: Callable[[], List[Tuple[str, str, str, List[str]]]], candidates: Callable[[], List[str]],
                  allows: Callable[[str], Optional[bool]], approved: Optional[Callable[[str], bool]] = None, config_path: Optional[Path] = None,
-                 state_dir: Optional[Path] = None, clock: Callable[[], float] = time.time) -> None:
+                 state_dir: Optional[Path] = None, clock: Callable[[], float] = time.time, members: Callable[[], List[str]] = lambda: [],
+                 cred_peer: Optional[PeerFn] = None, max_life: Optional[int] = None, frozen: Callable[[], bool] = lambda: False, denied: Callable[[str], bool] = lambda _iid: False) -> None:
         self._store, self._tokens, self._self_id, self._self_label = store, tokens, self_id, self_label
         self._peer, self._listing, self._candidates, self._config_path, self._clock = peer, listing, candidates, config_path, clock
         if state_dir is None:
             from src.config import settings as app_settings  # noqa: PLC0415
             state_dir = Path(app_settings.get_state_dir())
         self._state_dir = state_dir
-        self.credentials = CredentialSender(store=store, tokens=tokens, peer=peer, candidates=candidates, allows=allows,
+        self._members = members
+        self._cred_peer: PeerFn = cred_peer or peer
+        self.credentials = CredentialSender(store=store, tokens=tokens, peer=self._cred_peer, allows=allows,
+                                            candidates=lambda: list(dict.fromkeys(candidates() + members())),
                                             approved=approved, read_settings=lambda: settings_module.read(config_path), clock=clock,
-                                            label=self._label_of)
+                                            label=self._label_of, max_life=max_life, frozen=frozen, denied=denied)
         self._allows = allows
         self.poll = PollSender(self.send_links, clock)
         self.switch_sent: Dict[str, Dict[str, Any]] = {}
@@ -94,13 +98,20 @@ class PairSync:
         self._spawn(self._catch_up(install_id))
 
     def _label_of(self, install_id: str) -> str:
-        return next((label for iid, label, _state, _caps in self._listing() if iid == install_id), install_id)
+        found = next((label for iid, label, _state, _caps in self._listing() if iid == install_id), None)
+        if found is not None:
+            return found
+        from src.core.pack.relay import member_reach
+
+        lst = member_reach.held_v2()
+        entry = lst.entry(install_id) if lst is not None else None
+        return entry.label if entry is not None and entry.label else install_id
 
     async def credentials_pass(self) -> None:
         await self._push_credentials(None)
 
     async def credentials_requested(self, sender: str) -> None:
-        if sender not in self._candidates():
+        if sender not in self._candidates() and sender not in await asyncio.to_thread(self._members):
             return
         await self._push_credentials(sender, force=True)
 
@@ -120,7 +131,7 @@ class PairSync:
             if seen[1] >= MAX_ASK_TRIES or self._clock() < seen[2]:
                 return "waiting_on_owner"
         fails = seen[1] if seen is not None and seen[0] == held else 0
-        link = self._peer(owner)
+        link = self._cred_peer(owner)
         status = 0
         if link is not None and CAP_CREDENTIAL in link[1]:
             try:
@@ -148,6 +159,12 @@ class PairSync:
     async def _catch_up(self, install_id: str) -> None:
         await self.export(install_id, bump=False)
         await self._push_credentials(install_id)
+
+    async def revoke_removed(self, iid: str) -> str:
+        state = await self.credentials.revoke_removed(iid)
+        if state != "none":
+            resource_push.notify(topics.ARGENT_PAIR)
+        return state
 
     async def _push_credentials(self, only: Optional[str], force: bool = False) -> None:
         try:
@@ -240,7 +257,7 @@ class PairSync:
         rollout.ensure_running()
 
     async def receive_credential(self, sender: str, body: CredentialBody) -> int:
-        if sender == self._self_id or sender not in {row[0] for row in self._listing()}:
+        if sender == self._self_id or (sender not in {row[0] for row in self._listing()} and sender not in await asyncio.to_thread(self._members)):
             raise PairRefused("not_listed", 403)
         expiry = await asyncio.to_thread(receive_credential, sender, body, store=self._store, tokens=self._tokens,
                                          state_dir=self._state_dir, config_path=self._config_path, now=self._clock())
@@ -307,12 +324,15 @@ def start(links_getter: Callable[[], Any]) -> PairSync:
         return [row[0] for row in listing() if not direction.contained(row[0])]
 
     from src.api.peer_auth import open_db  # noqa: PLC0415
-    from src.core.pack.relay import approval  # noqa: PLC0415
+    from src.core.pack.machines import capabilities  # noqa: PLC0415
+    from src.core.argent import delegate  # noqa: PLC0415
+    from src.core.pack.relay import login_gate, member_reach  # noqa: PLC0415
 
     runtime = get_runtime()
     PAIR = PairSync(store=runtime.store, tokens=runtime.tokens, self_id=wired.runtime.install_id, self_label=wired.runtime.label, peer=peer,
-                    listing=listing, candidates=candidates, allows=lambda iid: machines_runtime.peer_restriction(iid, "may_receive_credentials"),
-                    approved=approval.reader(open_db))
+                    listing=listing, candidates=candidates, allows=member_reach.allows,
+                    approved=login_gate.gate(open_db, caps_of=member_reach.gate_caps_of(links_getter)), members=lambda: [iid for iid in member_reach.member_ids() if not direction.contained(iid)],
+                    cred_peer=member_reach.lookup(links_getter), max_life=delegate.MAX_LIFE_SECONDS if capabilities.mesh_on() else None, frozen=member_reach.list_unknown, denied=lambda iid: login_gate.local_no(open_db)(iid) or direction.contained(iid))
     PAIR.bind_loop(asyncio.get_running_loop())
     settings_module.add_listener(PAIR.on_settings_changed)
     links = links_getter()

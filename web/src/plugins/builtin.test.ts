@@ -8,7 +8,7 @@ describe('web ship list discovery', () => {
   test('the real list is every shipped plugin, in the hinted order', () => {
     const ids = BUILTIN_CPLUGS.map((c) => c.id);
     expect(ids).toEqual(SHIP_ORDER.filter((id) => ids.includes(id)).concat(ids.filter((id) => !SHIP_ORDER.includes(id)).sort()));
-    expect(ids).toContain('huddle');
+    expect(ids).toContain('taskmanager');
   });
 
   test('a deleted plugin folder is simply absent', () => {

@@ -1,3 +1,4 @@
+/* cannot be read */
 import type { SubmissionReport } from '../catalog/publish';
 import type { Translate } from '../sessions/types';
 import { mentionSkipped } from './checks-model';

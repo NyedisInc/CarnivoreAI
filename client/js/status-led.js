@@ -14,6 +14,7 @@ console.log('[StatusLed Module] Loading...');
         'asleep',
         'asleep-unread',
         'limit',
+        'background',
         'unknown',
     ];
 
@@ -37,6 +38,9 @@ console.log('[StatusLed Module] Loading...');
         asleep: 'asleep - stopped to free memory, wake it from the session menu',
         'asleep-unread': 'asleep, flagged unread - wake it to follow up',
         limit: 'over limit',
+        get background() {
+            return typeof globalThis.CloudeTr === 'function' ? globalThis.CloudeTr('session.status.background') : 'session.status.background';
+        },
         unknown: 'status not measured',
     };
 
@@ -161,6 +165,9 @@ console.log('[StatusLed Module] Loading...');
         }
 
         // A WORKING SESSION IS SOLID GREEN, unread flag or not
+        if (status === 'working_subagent' && s.activity_hint === 'background') {
+            return { inner: 'background', outer: 'steady' };
+        }
         if (
             status === 'working' ||
             status === 'working_subagent' ||

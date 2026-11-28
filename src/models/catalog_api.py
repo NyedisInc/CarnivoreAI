@@ -59,6 +59,68 @@ class IndexStatus(BaseModel):
     refreshed: Optional[bool] = None
 
 
+class RevocationsRefreshResponse(BaseModel):
+    """``POST /catalog/revocations/refresh``: immediate revocation sync status."""
+
+    serial: Optional[int] = None
+    generated_at: Optional[str] = None
+    revoked_keys: List[str] = Field(default_factory=list)
+    revoked_versions: List[str] = Field(default_factory=list)
+    refreshed: bool = False
+
+
+class PermissionDiffBucketView(BaseModel):
+    """Added or removed capabilities grouped by permission family."""
+
+    read: List[str] = Field(default_factory=list)
+    write: List[str] = Field(default_factory=list)
+    network: List[str] = Field(default_factory=list)
+    secrets: List[str] = Field(default_factory=list)
+    services_provides: List[str] = Field(default_factory=list)
+    services_consumes: List[str] = Field(default_factory=list)
+    events_on: List[str] = Field(default_factory=list)
+    events_emit: List[str] = Field(default_factory=list)
+    ui_slots: List[str] = Field(default_factory=list)
+    harnesses: List[str] = Field(default_factory=list)
+    channels: List[str] = Field(default_factory=list)
+
+
+class ExecutionEscalationView(BaseModel):
+    """Execution-surface escalation flags between installed and candidate update."""
+
+    tier0_to_run: bool = False
+    run_mode_changed: bool = False
+    old_run_mode: str = ""
+    new_run_mode: str = ""
+    run_cmd_changed: bool = False
+    old_run_cmd: List[str] = Field(default_factory=list)
+    new_run_cmd: List[str] = Field(default_factory=list)
+    trust_escalated: bool = False
+
+
+class ProvenanceDiffView(BaseModel):
+    """Upstream repository, tag, and commit SHA diff between installed and candidate update."""
+
+    commit_sha_mismatch: bool = False
+    repo_changed: bool = False
+    old_repo: str = ""
+    new_repo: str = ""
+    old_tag: str = ""
+    new_tag: str = ""
+    old_commit_sha: str = ""
+    new_commit_sha: str = ""
+
+
+class PermissionDiffView(BaseModel):
+    """Structured pre-swap permission and provenance diff carried on update consent sheets."""
+
+    requires_reconsent: bool = False
+    added: PermissionDiffBucketView = Field(default_factory=PermissionDiffBucketView)
+    removed: PermissionDiffBucketView = Field(default_factory=PermissionDiffBucketView)
+    execution_escalation: ExecutionEscalationView = Field(default_factory=ExecutionEscalationView)
+    provenance: ProvenanceDiffView = Field(default_factory=ProvenanceDiffView)
+
+
 class InstalledRef(BaseModel):
     """The local half of a catalog row: what this machine already has.
 
@@ -77,6 +139,7 @@ class InstalledRef(BaseModel):
     project_path: str
     version: str
     update_available: bool
+    revoked: bool = False
 
 
 class CatalogItemView(BaseModel):
@@ -96,6 +159,8 @@ class CatalogItemView(BaseModel):
             versions as signed, or null when no version carries one.
         cost: the index's estimated token cost block, or null when the
             index carries none.
+        installed_by_default: the id is on the server's installed-by-default list
+            (``src/api/catalog_default_installs.py``); Warez tags it.
     """
 
     id: str
@@ -111,6 +176,14 @@ class CatalogItemView(BaseModel):
     featured_rank: Optional[int] = None
     first_published_at: Optional[str] = None
     cost: Optional[Dict[str, Any]] = None
+    installed_by_default: bool = False
+    flagged: bool = False
+    requires_warning_ack: bool = False
+    warning_reasons: Optional[List[str]] = None
+    review: Optional[Dict[str, Any]] = None
+    revoked: bool = False
+    revocation_reason: Optional[str] = None
+    revoked_since: Optional[str] = None
 
 
 class CatalogListResponse(BaseModel):
@@ -180,6 +253,9 @@ class InstalledItemView(BaseModel):
     members: Optional[List[LoadoutMemberView]] = None
     complete: Optional[bool] = None
     mod_registration: Optional[str] = None
+    revoked: bool = False
+    revocation_reason: Optional[str] = None
+    revoked_since: Optional[str] = None
 
 
 class InstalledListResponse(BaseModel):
@@ -313,7 +389,15 @@ class InstallPreviewResponse(BaseModel):
     mod_settings_groups: Optional[List[str]] = None
     cplug_facts: Optional[Dict[str, Any]] = None
     cplug_facts_sha: Optional[str] = None
+    runtime_active: Optional[bool] = None
+    flagged: bool = False
+    requires_warning_ack: bool = False
+    warning_reasons: Optional[List[str]] = None
+    provenance: Optional[Dict[str, Any]] = None
+    manifest_schema: Optional[int] = None
     diff: Optional[UpdateDiff] = None
+    permission_diff: Optional[PermissionDiffView] = None
+    release_notes: Optional[str] = None
 
 
 class InstallConsent(BaseModel):
@@ -343,6 +427,8 @@ class InstallConsent(BaseModel):
     mod_flagged_ack: bool = False
     mod_report_sha: str = ""
     cplug_accepted: bool = False
+    cplug_flagged_ack: bool = False
+    acknowledge_flagged: bool = False
     cplug_facts_sha: str = ""
 
 
@@ -438,12 +524,15 @@ class UpdateConsent(BaseModel):
             a folder by omission.
     """
 
-    body_sha: str
+    body_sha: str = ""
     scripts: bool = False
     digest: Optional[str] = None
     mod_trust: bool = False
     mod_flagged_ack: bool = False
     mod_report_sha: str = ""
+    cplug_flagged_ack: bool = False
+    acknowledge_flagged: bool = False
+    accept_permission_escalation: bool = False
 
 
 class InstalledUpdateRequest(BaseModel):

@@ -73,6 +73,13 @@ class SessionGroupModel(BaseModel):
             "belongs when it matches ALL criteria (session_group_rule.py)"
         ),
     )
+    parent_key: Optional[str] = Field(
+        default=None,
+        description=(
+            "Enclosing drawer container key (null for top-level GROUPS, 'pinned', 'c:<id>', 'p:<id>', 'g:<uuid>', "
+            "'rogue', 'terminals', 'browsers', 'files'; schema v111, #3369)"
+        ),
+    )
 
 
 class SessionGroupsResponse(BaseModel):
@@ -92,10 +99,15 @@ class SessionGroupsResponse(BaseModel):
 
 class CreateGroupRequest(BaseModel):
     name: str = Field(..., description="Label, trimmed and bounded server-side")
+    parent_key: Optional[str] = Field(
+        default=None,
+        description="Optional enclosing container key to nest this group inside (null for top-level GROUPS)",
+    )
 
 
 class RenameGroupRequest(BaseModel):
-    name: str
+    name: Optional[str] = None
+    parent_key: Optional[str] = None
 
 
 class AssignRequest(BaseModel):
@@ -189,6 +201,7 @@ def _to_models(groups: List[store.SessionGroup]) -> List[SessionGroupModel]:
                 style_source=style.source,
                 icon=style.icon,
                 rule=g.rule,
+                parent_key=g.parent_key,
             )
         )
     return out
@@ -272,7 +285,7 @@ async def create_session_group(body: CreateGroupRequest, request: Request) -> Se
       agree. Every write endpoint here does the same.
     Raises: HTTPException 400 (bad name), 409 (limit), 503.
     """
-    await _write(request, store.create_group, body.name)
+    await _write(request, store.create_group, body.name, parent_key=body.parent_key)
     return await list_session_groups()
 
 
@@ -284,11 +297,15 @@ async def create_session_group(body: CreateGroupRequest, request: Request) -> Se
 async def rename_session_group(
     group_uuid: str, body: RenameGroupRequest, request: Request
 ) -> SessionGroupsResponse:
-    """Rename a group. Membership and position are untouched.
+    """Rename and/or reparent a group. Membership and position are untouched.
 
-    Raises: HTTPException 400 (bad name), 404, 503.
+    Raises: HTTPException 400 (bad name or parent_key), 404, 503.
     """
-    await _write(request, store.rename_group, group_uuid, body.name)
+    fields = body.model_fields_set
+    if "parent_key" in fields:
+        await _write(request, store.set_group_parent, group_uuid, body.parent_key)
+    if "name" in fields or "parent_key" not in fields:
+        await _write(request, store.rename_group, group_uuid, body.name)
     return await list_session_groups()
 
 

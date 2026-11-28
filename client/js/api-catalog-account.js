@@ -70,7 +70,13 @@ extendPrototype(API, {
     },
 
     async signOutOfCatalog() {
-        return await this.call('/catalog/auth/signout', { method: 'POST' });
+        return await this.call('/catalog/auth/signout', { method: 'POST', expectedStatuses: [409] });
+    },
+
+    async signOutOfAllDevices() {
+        return await this.call('/catalog/auth/signout-all', {
+            method: 'POST', body: { confirm: true }, expectedStatuses: [403, 502],
+        });
     },
 
     async getCatalogAccountSessions() {

@@ -58,7 +58,7 @@ def allowed_roots(locs: cs.Locations, project_roots: Iterable[str] = ()) -> List
     codex = Path(locs.codex_home())
     roots += [codex / "sessions", codex / "archived_sessions"]
     state = Path(locs.state_dir)
-    roots += [state / "cplugs" / "huddle" / "files", state / "swarm" / "desk"]
+    roots += [*cs.task_files_roots(state), state / "swarm" / "desk"]
     roots += [Path(p) for p in project_roots]
     return sorted({os.path.realpath(str(r)) for r in roots})
 

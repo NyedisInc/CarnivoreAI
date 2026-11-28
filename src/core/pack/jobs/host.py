@@ -19,7 +19,7 @@ from src.core.pack.jobs.agent_host import TASK_EXCLUDE, AgentDeps, AgentHost
 from src.core.pack.jobs.store import JobStore
 from src.core.pack.jobs.types import (AdmitBody, CollectAnswer, DepDir, HostJob, HostState, JobError, JobIdBody, ReplyBody, StartBody,
                                       StatusAnswer, StopBody)
-from src.core.pack.machines.restrictions import ACTION_HOST_AGENTS, Restrictions, enforce, live_agents as _live_agents
+from src.core.pack.machines.restrictions import ACTION_HOST_AGENTS, Restrictions, check, enforce, live_agents as _live_agents
 from src.core.pack.placement import workload
 from src.core.pack.transport import blobs
 
@@ -54,9 +54,9 @@ def default_admit(work: workload.Workload) -> Optional[str]:
 
 
 def default_request_for(install_id: str) -> blobs.Request:
-    from src.core.federation import peer_links
+    from src.core.pack.jobs import member_link
 
-    client = peer_links.LINKS.client(install_id) if peer_links.LINKS is not None else None
+    client = member_link.client_for(install_id)
     if client is None:
         raise JobError("unreachable", "the other computer is not connected", 502)
     return blobs.request_via(client, timeout=300.0)
@@ -150,7 +150,7 @@ class Host:
             json.dump(data, fh)
 
 
-    async def admit(self, caller: str, body: AdmitBody) -> Dict[str, Any]:
+    async def admit(self, caller: str, body: AdmitBody, member: bool = False) -> Dict[str, Any]:
         def run() -> None:
             self._gate_sync(caller, body.project_uid, new_agent=bool(body.agent_family))
             if body.agent_family:
@@ -161,7 +161,7 @@ class Host:
             if body.est_ram_gb is not None:
                 tag["est_ram_gb"] = body.est_ram_gb
             work = workload.resolve(tag)
-            host_admit.admit(self, caller, body, work)
+            host_admit.admit(self, caller, body, work, member)
 
         try:
             await asyncio.to_thread(run)
@@ -169,7 +169,22 @@ class Host:
             raise JobError("bad_request", str(exc), 422) from exc
         return {"ok": True}
 
-    async def start(self, caller: str, body: StartBody) -> Dict[str, Any]:
+    async def look(self, caller: str, project_uid: str) -> Dict[str, Any]:
+        def run() -> str:
+            try:
+                self._gate_sync(caller, project_uid)
+            except JobError as exc:
+                if exc.code != "project_not_here":
+                    return exc.code
+                broken = check(self._restrictions(), ACTION_HOST_AGENTS, project_uid=project_uid, company_uid=None, live_agents=self._live_agents())
+                return "pack_restricted" if broken else exc.code
+            return "ok"
+
+        verdict = await asyncio.to_thread(run)
+        shares = verdict in ("ok", "project_not_here")
+        return {"snapshot": host_admit.look_snapshot(await asyncio.to_thread(host_admit.own_snapshot)) if shares else None, "project": verdict}
+
+    async def start(self, caller: str, body: StartBody, member: bool = False) -> Dict[str, Any]:
         def sync() -> "tuple[Optional[HostJob], str, str]":
             existing = self.store.host_get(body.job_id)
             project = self._gate_sync(caller, body.project_uid, new_agent=body.agent is not None and existing is None)
@@ -188,7 +203,7 @@ class Host:
                 work = workload.resolve(tag)
             except ValueError as exc:
                 raise JobError("bad_request", str(exc), 422) from exc
-            host_admit.start_hold(self, caller, body.job_id, body.project_uid, work)
+            host_admit.start_hold(self, caller, body.job_id, body.project_uid, work, member)
             try:
                 path = bundle_io.received_path(self.state_dir, body.snapshot_blob_id, sender=caller)
             except blobs.BlobError as exc:
@@ -260,7 +275,7 @@ class Host:
             memo.update(result.memo)
             self._memo[body.job_id] = memo
             if not result.ok:
-                raise JobError("setup_failed", f"setup step {(result.failed_step or 0) + 1} failed (see the setup log on that computer)")
+                raise JobError("setup_failed", recipe.failure_text(steps, result.failed_step or 0))
             cwd = os.path.realpath(os.path.join(slot, body.scope))
             if os.path.commonpath([cwd, os.path.realpath(slot)]) != os.path.realpath(slot):
                 raise JobError("bad_scope", "the scope leaves the job folder", 422)
@@ -357,6 +372,27 @@ class Host:
         await self.agent.stop_worker_of(body.job_id)
         await asyncio.to_thread(run)
         return {"ok": True}
+
+    async def end_for_removed(self, caller: str) -> int:
+        live = [HostState.PREPARING, HostState.RUNNING, HostState.PARKED]
+        rows = await asyncio.to_thread(lambda: [r for r in self.store.host_list(live) if r.caller_install == caller])
+
+        def run(row: HostJob) -> None:
+            runner.stop(row.job_id, meta_dir=self._meta(row.job_id), socket=self.socket)
+            now = self._clock()
+            self.store.host_set(row.job_id, state=HostState.FAILED, detail="peer_left: the computer that placed this job left the Pack", ended_at=now)
+            self._free_job_slots(row.job_id, row.project_uid, now=now)
+
+        for row in rows:
+            task = self._tasks.get(row.job_id)
+            if task is not None:
+                task.cancel()
+                await asyncio.wait({task}, timeout=STOP_WAIT_S)
+            await self.agent.stop_worker_of(row.job_id)
+            await asyncio.to_thread(run, row)
+        for key in host_admit.HOLDS.keys_of(caller):
+            host_admit.HOLDS.drop(key)
+        return len(rows)
 
     async def reply(self, caller: str, body: ReplyBody) -> Dict[str, Any]:
         return await self.agent.reply(caller, body)

@@ -93,6 +93,9 @@ def _record_epoch_for_already_registered(
         if epoch is None:
             continue
         manager._instance_epochs[session_id] = epoch
+        sess = manager._registry.sessions.get(session_id)
+        if sess is not None and getattr(sess, "tmux_created_epoch", None) is None:
+            sess.tmux_created_epoch = epoch
         logger.info(
             "boot_readopt_epoch_recorded_for_registered",
             session_id=session_id,
@@ -139,6 +142,18 @@ def schedule_boot_readopt(
     return task
 
 
+async def _scrub_server_only_globals(socket: str) -> None:
+    from src.config import settings
+    from src.core.session_backend import build_backend
+    from src.core.tmux_backend import TmuxBackend
+
+    backend = build_backend(
+        settings, session_id="__readopt_env_scrub__", working_dir=Path.home(), on_output=None, socket_name_override=socket,
+    )
+    if isinstance(backend, TmuxBackend):
+        await backend.scrub_server_only_globals()
+
+
 async def readopt_surviving_sessions(
     manager: Any, listing: Any = None
 ) -> ReadoptReport:
@@ -163,6 +178,8 @@ async def readopt_surviving_sessions(
             outcome=READOPT_CANNOT_DETERMINE,
             detail=f"listing unavailable ({getattr(listing, 'reason', None)})",
         )
+
+    await _scrub_server_only_globals(socket)
 
     conn = None
     try:

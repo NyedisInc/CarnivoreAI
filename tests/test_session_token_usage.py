@@ -473,3 +473,16 @@ def test_no_family_at_all_is_unchecked(tmp_path):
         SessionSubject(None, UUID, None), projects_dir=tmp_path
     )
     assert usage.state == "unchecked"
+
+
+def test_short_model_name_and_agy_label_split():
+    from src.core.session_token_usage.agy_reader import split_model_name
+    from src.core.session_token_usage.model_table import display_name_for_model, short_model_name
+
+    assert short_model_name("Claude Fable 5_2") == "Fable 5.2"
+    assert display_name_for_model("claude-fable-5-2") == "Fable 5.2"
+    assert display_name_for_model("claude-haiku-5-5") == "Haiku 5.5"
+    assert short_model_name("gpt-6-sol") is None
+    assert split_model_name("Gemini 4 Neon (High)", None) == ("Gemini 4 Neon", "high")
+    assert split_model_name("Gemini 4 Neon (High)", "low") == ("Gemini 4 Neon", "low")
+    assert split_model_name("Gemini 4 Neon", None) == ("Gemini 4 Neon", None)

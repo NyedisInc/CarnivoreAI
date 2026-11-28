@@ -11,7 +11,7 @@ enum PushKeyStore {
         return (value?.isEmpty == false && value?.contains("$(") == false) ? value : nil
     }
 
-    static let accessibility = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+    static var accessibility: CFString { kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly }
 
     private static let registeredKey = "push.registered.v1"
     private static var defaults: UserDefaults { UserDefaults(suiteName: "group.ai.carnivore") ?? .standard }
@@ -27,6 +27,7 @@ enum PushKeyStore {
         let origin: String
         var key: Data
         var rowId: String?
+        var pendingKey: Data? = nil
     }
 
     static func entries() -> [Entry] {
@@ -59,18 +60,26 @@ enum PushKeyStore {
 
     static func preparing(_ list: [Entry], origin: String) -> (list: [Entry], key: SymmetricKey) {
         var out = list
-        if let i = out.firstIndex(where: { $0.origin == origin }), out[i].rowId == nil {
-            return (out, SymmetricKey(data: out[i].key))
+        if let i = out.firstIndex(where: { $0.origin == origin }) {
+            if out[i].rowId == nil {
+                return (out, SymmetricKey(data: out[i].key))
+            }
+            let fresh = SymmetricKey(size: .bits256)
+            out[i].pendingKey = fresh.withUnsafeBytes { Data($0) }
+            return (out, fresh)
         }
         let fresh = SymmetricKey(size: .bits256)
-        let entry = Entry(origin: origin, key: fresh.withUnsafeBytes { Data($0) }, rowId: nil)
-        if let i = out.firstIndex(where: { $0.origin == origin }) { out[i] = entry } else { out.append(entry) }
+        out.append(Entry(origin: origin, key: fresh.withUnsafeBytes { Data($0) }, rowId: nil, pendingKey: nil))
         return (out, fresh)
     }
 
     static func setting(rowId id: String, origin: String, in list: [Entry]) -> [Entry] {
         var out = list
         guard isRowId(id), let i = out.firstIndex(where: { $0.origin == origin }) else { return out }
+        if let pending = out[i].pendingKey, pending.count == 32 {
+            out[i].key = pending
+            out[i].pendingKey = nil
+        }
         out[i].rowId = id
         return out
     }
@@ -94,7 +103,7 @@ enum PushKeyStore {
     }
 
     static func needsReregistration(origin: String, registered: [String], entries list: [Entry]) -> Bool {
-        registered.contains(origin) && !list.contains { $0.origin == origin }
+        registered.contains(origin) && !list.contains { $0.origin == origin && $0.rowId != nil }
     }
 
     static func needsReregistration(origin: String) -> Bool {
@@ -116,6 +125,11 @@ enum PushKeyStore {
         if kept.count != list.count { save(kept) }
     }
 
+    static func removeAll() {
+        _ = save([])
+        defaults.removeObject(forKey: registeredKey)
+    }
+
     static func candidates() -> [PushRewrite.Candidate] {
         candidates(from: entries())
     }
@@ -133,7 +147,7 @@ enum PushKeyStore {
     }
 
     static func isRowId(_ value: String) -> Bool {
-        value.range(of: "^d_[0-9a-f]{12}$", options: .regularExpression) != nil
+        value.range(of: "\\Ad_[0-9a-f]{12}\\z", options: .regularExpression) != nil
     }
 }
 

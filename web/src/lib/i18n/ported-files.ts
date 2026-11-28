@@ -280,4 +280,7 @@ export const PORTED_FILES = [
     'web/src/lib/publish-page/timeline-model.ts',
     'web/src/lib/publish-page/card-model.ts',
     'web/src/lib/publish-page/side-data.ts',
+    'web/src/lib/catalog/RevokedBanner.svelte',
+    'web/src/lib/catalog/PermissionDiffPanel.svelte',
+    'web/src/lib/catalog/FlaggedWarningBox.svelte',
 ];

@@ -86,6 +86,9 @@ test('every window.X a client script reads is published by something', () => {
     for (const m of blob.matchAll(/Object\.assign\(\s*(?:hostWindow\(\)|window|globalThis)[^,]*,\s*\{\s*([A-Z][A-Za-z0-9_]*)\s*:/g)) {
         published.add(m[1]);
     }
+    for (const m of blob.matchAll(/\(\s*globalThis\s+as\s*\{[^}]*\}\s*\)\s*\.\s*([A-Z][A-Za-z0-9_]*)\s*=(?!=)/g)) {
+        published.add(m[1]);
+    }
     for (const rel of walk('web/src', ['.ts', '.svelte'])) {
         for (const name of aliasedGlobalPublications(read(rel))) published.add(name);
     }
@@ -132,6 +135,7 @@ test('every DOM id a client script looks up is emitted somewhere', () => {
     for (const m of blob.matchAll(/\bid\s*=\s*"([A-Za-z0-9_\-]+)"/g)) emitted.add(m[1]);
     for (const m of blob.matchAll(/\bid\s*=\s*'([A-Za-z0-9_\-]+)'/g)) emitted.add(m[1]);
     for (const m of blob.matchAll(/\.id\s*=\s*['"]([A-Za-z0-9_\-]+)['"]/g)) emitted.add(m[1]);
+    for (const m of blob.matchAll(/[{,]\s*id\s*:\s*['"]([A-Za-z0-9_\-]+)['"]/g)) emitted.add(m[1]);
     for (const m of blob.matchAll(
         /setAttribute\(\s*['"]id['"]\s*,\s*['"]([A-Za-z0-9_\-]+)['"]/g,
     )) emitted.add(m[1]);

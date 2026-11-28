@@ -1,91 +1,13 @@
-@property --ap-pn-w {
-    syntax: '<length>';
-    inherits: true;
-    initial-value: 0px;
-}
-
-@property --ap-pn-dock {
-    syntax: '<length>';
-    inherits: true;
-    initial-value: 0px;
-}
-
 @layer components {
-    .ap-page > * {
-        --ap-pn-w: 100cqi;
-        --ap-pn-dock: 0px;
-    }
-
-    @container ap-page (min-width: 900px) {
-        .ap-page > * {
-            --ap-pn-w: clamp(340px, 36cqi, 760px);
-            --ap-pn-dock: var(--ap-pn-w);
-        }
-    }
-
-    .ap-page[data-pane-open] > :not(.ap-pn) {
-        margin-right: var(--ap-pn-dock);
-    }
-
-    @container ap-page (max-width: 899.98px) {
-        .ap-page[data-pane-open] .ap-listcol {
-            visibility: hidden;
-        }
-    }
-
     .ap-page .ap-pn {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        z-index: var(--oc-z-sheet);
         display: flex;
         flex-direction: column;
-        width: var(--ap-pn-w);
-        max-width: 100%;
         min-width: 0;
-        background: var(--oc-ground-panel);
-        box-shadow:
-            -1px 0 0 0 var(--oc-line-rule),
-            -12px 0 24px -16px var(--oc-backdrop);
         outline: none;
-        transform: translateX(100%);
-        visibility: hidden;
-        transition:
-            transform var(--oc-motion) ease-out,
-            visibility 0s linear var(--oc-motion);
-    }
-
-    .ap-page .ap-pn[data-open] {
-        transform: none;
-        visibility: visible;
-        transition:
-            transform var(--oc-motion) ease-out,
-            visibility 0s;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .ap-page .ap-pn,
-        .ap-page .ap-pn[data-open] {
-            transition: none;
-        }
-    }
-
-    .ap-page .ap-pn-bar {
-        flex: none;
-        justify-content: space-between;
-    }
-
-    .ap-page .ap-pn-bar-l {
-        margin-right: auto;
     }
 
     .ap-page .ap-pn-scroll {
         position: relative;
-        flex: 1 1 0;
-        min-height: 0;
-        overflow-y: auto;
-        overscroll-behavior: contain;
         padding-bottom: var(--oc-space-5);
     }
 
@@ -516,25 +438,6 @@
     }
 
     @media (max-width: 767px) {
-        .ap-page .ap-pn {
-            position: sticky;
-            order: -1;
-            flex: none;
-            align-self: stretch;
-            width: auto;
-            height: calc(100dvh - var(--overlay-top, 0px));
-            margin-bottom: calc(-1 * (100dvh - var(--overlay-top, 0px)));
-        }
-
-        .ap-page .ap-pn-close,
-        .ap-page .ap-pn-bar-l {
-            display: none;
-        }
-
-        .ap-page .ap-pn-bar {
-            justify-content: flex-start;
-        }
-
         .ap-page .ap-pn-ic {
             min-width: var(--oc-tap);
             min-height: var(--oc-tap);
@@ -553,22 +456,6 @@
 
         .ap-page .ap-pn-ed .auto-form__row > .oc-select-row:has(> select) {
             flex-basis: 100%;
-        }
-    }
-
-    .ap-page [data-pane-back] {
-        display: none;
-    }
-
-    @media (max-width: 767px) {
-        .ap-page [data-pane-back] {
-            display: inline-flex;
-            min-width: var(--oc-tap);
-            min-height: var(--oc-tap);
-        }
-
-        .ap-page [data-pane-x] {
-            display: none;
         }
     }
 }

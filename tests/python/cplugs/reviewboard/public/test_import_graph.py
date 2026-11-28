@@ -8,7 +8,7 @@ from typing import Iterator, Set
 ROOT = Path(__file__).resolve().parents[5]
 START = ("src.plugins.reviewboard.public.edge", "src.plugins.reviewboard.public.headers", "src.plugins.reviewboard.public.routes", "src.plugins.reviewboard.public.listener")
 PUBLIC = "src.plugins.reviewboard.public"
-FORBIDDEN = ("src.api", "src.main", "src.core", "src.utils", "src.models", "src.config", "src.plugins.huddle", "src.plugins.reviewboard", "src.plugins.share")
+FORBIDDEN = ("src.api", "src.main", "src.core", "src.utils", "src.models", "src.config", "src.plugins.taskmanager", "src.plugins.reviewboard", "src.plugins.share")
 NOT_FOLLOWED = {"src", "src.plugins", "src.plugins.sdk", "src.plugins.reviewboard.public"}
 EXPECTED = {"src.plugins.reviewboard.public.edge", "src.plugins.reviewboard.public.headers", "src.plugins.reviewboard.public.routes", "src.plugins.reviewboard.public.listener",
             "src.plugins.sdk.sandboxed_html", "src.plugins.reviewboard.public.read", "src.plugins.reviewboard.public.resolve", "src.plugins.reviewboard.public.respond",

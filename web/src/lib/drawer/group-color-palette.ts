@@ -14,8 +14,6 @@ export const GRADIENT_STOPS: Record<(typeof GRADIENTS)[number], readonly [string
     neon: ['cyan', 'violet'],
 };
 
-const FX_WINDOWS = 24;
-
 export interface RowStyle {
     colour: string | null;
     gradient: string | null;
@@ -42,10 +40,8 @@ export function styleAttrs(subject: RowStyle | null, prefix: StylePrefix): strin
     return out;
 }
 
-export function fxHtml(attrs: string, prefix: StylePrefix, text: string): string {
-    if (attrs.indexOf(` data-${prefix}-anim="shimmer"`) === -1) return '';
-    const escaped = String(text).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-    return `<span class="band-fx-host" data-anim-host aria-hidden="true"><span class="band-fx">${`<i data-t="${escaped}"></i>`.repeat(FX_WINDOWS)}</span></span>`;
+export function fxHtml(_attrs: string, _prefix: StylePrefix, _text: string): string {
+    return '';
 }
 
 export function nextStyle(style: RowStyle, field: string, value: string): RowStyle {

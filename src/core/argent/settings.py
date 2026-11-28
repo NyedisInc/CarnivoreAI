@@ -35,10 +35,11 @@ class ArgentSettings:
     enabled: bool = False
     token_pointer: Optional[Dict[str, str]] = None
     refuse_direct_launch: bool = False
+    codex_auth_mode: str = "token"
 
     def as_public(self) -> Dict[str, Any]:
         return {"server_url": self.server_url, "gateway_url": self.gateway_url, "ca_path": self.ca_path, "enabled": self.enabled,
-                "refuse_direct_launch": self.refuse_direct_launch,
+                "refuse_direct_launch": self.refuse_direct_launch, "codex_auth_mode": self.codex_auth_mode,
                 "token_account": (self.token_pointer or {}).get("account", "")}
 
 
@@ -54,7 +55,8 @@ def parse(block: Any) -> ArgentSettings:
     text = lambda key: str(block.get(key)) if isinstance(block.get(key), str) else ""  # noqa: E731
     return ArgentSettings(server_url=text("serverUrl"), gateway_url=text("gatewayUrl"), ca_path=text("caPath"),
                           enabled=block.get("enabled") is True, token_pointer=clean if len(clean) == 2 else None,
-                          refuse_direct_launch=block.get("refuseDirectLaunch") is True)
+                          refuse_direct_launch=block.get("refuseDirectLaunch") is True,
+                          codex_auth_mode="passthrough" if block.get("codexAuthMode") == "passthrough" else "token")
 
 
 def read(path: Optional[Path] = None) -> ArgentSettings:

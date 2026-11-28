@@ -12,8 +12,8 @@ from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp_usage import old_names as counter, report, rollup
 from src.plugins.sdk import old_names as sdk
-from tests.python.cplugs.huddle.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
-from tests.python.cplugs.huddle.test_task_manager_routes import app, client  # noqa: F401
+from tests.python.cplugs.taskmanager.test_task_manager_mcp import CALLER, call, huddle_store, manager  # noqa: F401
+from tests.python.cplugs.taskmanager.test_task_manager_routes import app, client  # noqa: F401
 from tests.python.mcp.test_mcp_usage_counter import world  # noqa: F401
 
 NOW = datetime(2026, 10, 14, 12, 0, tzinfo=timezone.utc)
@@ -61,8 +61,8 @@ def test_a_retired_task_manager_state_name_is_refused_and_counted_nowhere(counti
     item = store.add("all", "later", actor="joe")["id"]
     ok, _ = call(manager, "task_manager_update", {"item": item, "state": "back_burner"})
     assert not ok
-    made = client.post("/api/v1/cplugs/huddle/lists/12/items", json={"text": "park it"}).json()
-    assert 400 <= client.patch(f"/api/v1/cplugs/huddle/items/{made['id']}", json={"state": "waiting_install"}).status_code < 500
+    made = client.post("/api/v1/cplugs/taskmanager/lists/12/items", json={"text": "park it"}).json()
+    assert 400 <= client.patch(f"/api/v1/cplugs/taskmanager/items/{made['id']}", json={"state": "waiting_install"}).status_code < 500
     assert _counted(counting) == {}
 
 

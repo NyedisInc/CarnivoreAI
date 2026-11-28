@@ -97,7 +97,7 @@ def world(tmp_path: Path, monkeypatch) -> World:
         return CallerFacts("claude", "work", "default")
 
     async def infos() -> list:
-        return [SimpleNamespace(session=SimpleNamespace(id="ses_c"), session_uuid="u-c", launched_with=w.permissions and {"permissions": w.permissions})]
+        return [SimpleNamespace(session=SimpleNamespace(id="ses_c"), host_key="local", label=None, claude_title=None, tmux_session="", session_uuid="u-c", launched_with=w.permissions and {"permissions": w.permissions})]
 
     monkeypatch.setattr(create_mod, "_carry", carry)
     monkeypatch.setattr(create_mod, "_post", post)

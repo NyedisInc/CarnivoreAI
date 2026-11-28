@@ -16,7 +16,7 @@ from src.core.transcript_manifest import constants as K
 
 router = APIRouter(prefix="/transcripts", tags=["transcripts"], dependencies=[Depends(require_auth)])
 
-_FAMILIES = (K.FAMILY_CLAUDE, K.FAMILY_CODEX)
+_FAMILIES = (K.FAMILY_CLAUDE, K.FAMILY_CODEX, K.FAMILY_AGY)
 
 
 def _state_dir() -> Path:

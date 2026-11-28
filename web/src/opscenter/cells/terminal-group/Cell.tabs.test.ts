@@ -101,7 +101,7 @@ test('the tab icon opens the same component menu the old corner button did (#514
   expect(icon.getAttribute('aria-expanded')).toBe('false');
 });
 
-test('two tabs: both mounted, only the active one visible and reachable; a click swaps the view, not the grid', () => {
+test('two tabs: both panes keep theme scope, only the active one visible and reachable; a click swaps the view, not the grid', () => {
   setGroups(terminalLayout, { [A]: { tabs: [A, B] } });
   const before = JSON.stringify(terminalLayout.state.layout);
   const root = draw();

@@ -16,6 +16,7 @@ from src.core.session_token_usage import claude_reader, codex_reader
 from src.core.session_token_usage.model_table import (
     cost_tier_for_model,
     display_name_for_model,
+    short_model_name,
     estimate_cost_usd,
     window_for_model,
 )
@@ -106,7 +107,7 @@ def _ok(
         state="ok",
         family=family,
         model=model,
-        model_display_name=model_display or display_name_for_model(model),
+        model_display_name=(short_model_name(model_display) or model_display) or display_name_for_model(model),
         model_cost_tier=cost_tier_for_model(priced),
         effort=effort,
         input_tokens=input_tokens,
@@ -284,6 +285,20 @@ def read_session_token_usage(
         )
     if family == FAMILY_CODEX:
         return _read_codex(session_row, codex_home=codex_home, rollout_path=rollout_path)
+    if family in ("custom", "agy"):
+        from src.config import settings
+        from src.core.session_token_usage.agy_reader import read_agy_usage
+
+        agy = read_agy_usage(settings.get_state_dir(), session_row.conversation_uuid)
+        if agy is not None:
+            return agy
+        if family == "agy":
+            return _unchecked("no agy status line reading has landed for this session yet")
+        from src.core.session_token_usage.copilot_reader import read_copilot_usage
+
+        copilot = read_copilot_usage(session_row.conversation_uuid)
+        if copilot is not None:
+            return copilot
     if not family:
         return _unchecked(
             "this session's agent family has not been determined, so which "

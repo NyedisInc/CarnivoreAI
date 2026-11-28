@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from src.plugins.host import install_gates
-from src.plugins.host.sidecar_manifest import SidecarManifestError, load_sidecar_manifest
+from src.plugins.host.plugin_manifest import SidecarManifestError, load_sidecar_manifest
 from tests.python.cplugs.preview_fixtures import BAD, GOOD
 
 PACKAGE = Path(__file__).resolve().parents[3] / "packages" / "cplugs" / "mcphealth"
@@ -18,12 +18,13 @@ PACKAGE = Path(__file__).resolve().parents[3] / "packages" / "cplugs" / "mcpheal
 def _staged(tmp_path: Path, preview: object = "preview.png", data: bytes = GOOD["png"], extra_key: bool = False, name: str = "preview.png") -> Path:
     dest = tmp_path / "mcphealth"
     shutil.copytree(PACKAGE, dest, ignore=shutil.ignore_patterns("__pycache__"))
-    doc = json.loads((dest / "cplug.json").read_text())
+    prefix = ""
     if preview is not None:
-        doc["preview"] = preview
+        prefix += f"preview = {json.dumps(preview)}\n"
     if extra_key:
-        doc["banner"] = "x"
-    (dest / "cplug.json").write_text(json.dumps(doc))
+        prefix += 'banner = "x"\n'
+    if prefix:
+        (dest / "carnivore.toml").write_text(prefix + (dest / "carnivore.toml").read_text())
     if data is not None:
         (dest / name).write_bytes(data)
     return dest

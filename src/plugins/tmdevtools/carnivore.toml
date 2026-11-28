@@ -1,0 +1,37 @@
+schema = 2
+api_version = 1
+id = "tmdevtools"
+name = "task-manager-dev-tools"
+description = "experimental. lets claude scroll your task manager to the top, fold and unfold projects, groups and tasks, close an opened task card, and list projects and tasks by status. needs the task manager. off by default: with it off there are no dev tool routes and no dev tools."
+name_key = "cplug.tmdevtools.name"
+description_key = "cplug.tmdevtools.description"
+version = "0.1.0"
+kind = "plugin"
+icon = "plug"
+author = "Carnivore"
+license = "MIT"
+min_app_version = "1.16.1"
+tier = "dev"
+default_enabled = false
+tool_family = "task_manager"
+requires = ["taskmanager"]
+data = []
+
+[permissions]
+write = ["agent_writes"]
+
+[ui]
+routes = true
+topics = ["command"]
+
+[mcp]
+tools = [
+  "task_manager_dev_scroll_set",
+  "task_manager_dev_fold_set",
+  "task_manager_dev_tasks_list",
+]
+
+[owns]
+routes = ["/commands", "/fold", "/scroll-top", "/tasks"]
+strings = ["cplug.tmdevtools."]
+tests = ["tests/python/cplugs/tmdevtools/", "web/src/cplugs/tmdevtools/"]

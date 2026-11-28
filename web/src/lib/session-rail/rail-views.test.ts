@@ -98,9 +98,9 @@ describe('the drawn view', () => {
   });
 
   test('a rail stored with an old all sessions id reads as the merged widget showing that view', () => {
-    follow(RAIL_FIELD, one({ widget: 'core.task-manager-all' }));
-    expect(keyIn('side', 'core.task-manager').querySelector('[data-widget-globe]')).not.toBeNull();
-    expect(keyIn('side', 'core.task-manager-all')).toBeNull();
+    follow(RAIL_FIELD, one({ widget: 'core.task-manager-mk2-all' }));
+    expect(keyIn('side', 'core.task-manager-mk2').querySelector('[data-widget-globe]')).not.toBeNull();
+    expect(keyIn('side', 'core.task-manager-mk2-all')).toBeNull();
   });
 });
 

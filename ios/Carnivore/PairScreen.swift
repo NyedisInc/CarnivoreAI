@@ -6,6 +6,7 @@ struct PairScreen: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var theme: ThemeStore
     @State private var message: String?
+    @State private var manualMessage: String?
     @State private var typing = false
     @State private var address = ""
     @State private var pending: PairTarget?
@@ -22,7 +23,11 @@ struct PairScreen: View {
                     Text(message).font(.system(.footnote, design: .monospaced)).foregroundStyle(theme.palette.danger)
                         .padding(.horizontal)
                 }
-                Button(Strings.scanTypeInstead) { typing = true }.padding(.bottom)
+                Button(Strings.scanTypeInstead) {
+                    manualMessage = nil
+                    typing = true
+                }
+                .padding(.bottom)
             }
             .navigationTitle(Strings.scanTitle)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button(Strings.actionCancel) { dismiss() } } }
@@ -51,7 +56,7 @@ struct PairScreen: View {
                 Text(Strings.scanManualHint).font(.footnote)
                 TextField(Strings.addPlaceholderRelay, text: $address)
                     .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                if let message { Text(message).foregroundStyle(theme.palette.danger).font(.footnote) }
+                if let manualMessage { Text(manualMessage).foregroundStyle(theme.palette.danger).font(.footnote) }
                 Button(Strings.scanManualOpen, action: openManual)
             }
             .navigationTitle(Strings.scanManualTitle)
@@ -73,9 +78,12 @@ struct PairScreen: View {
 
     private func decide(_ result: Result<PairTarget, PairError>, code: String?) {
         switch result {
-        case .failure(let error): message = code == nil && error == .unknownHost ? Strings.scanRefusedTyped : Self.text(for: error)
+        case .failure(let error):
+            let text = code == nil && error == .unknownHost ? Strings.scanRefusedTyped : Self.text(for: error)
+            if code == nil { manualMessage = text } else { message = text }
         case .success(let target):
             message = nil
+            manualMessage = nil
             if !target.needsConfirm { open(target) } else if typing { queued = target; typing = false } else {
                 pendingCode = code
                 pending = target
@@ -89,7 +97,7 @@ struct PairScreen: View {
             return nil
         }.first
         guard let origin = parsed else {
-            message = AddressError.badHost.message
+            manualMessage = AddressError.badHost.message
             return
         }
         decide(PairURL.manual(origin, known: store.computers.map(\.origin)), code: nil)
@@ -99,8 +107,7 @@ struct PairScreen: View {
 
     private func open(_ origin: Origin, kind: ComputerKind, url: URL) {
         let computer = store.computers.first { $0.origin == origin }
-            ?? Computer(name: origin.host, kind: kind, origin: origin)
-        if !store.computers.contains(where: { $0.origin == origin }) { store.add(computer) }
+            ?? store.add(Computer(name: origin.host, kind: kind, origin: origin))
         typing = false
         finish(computer, url)
     }

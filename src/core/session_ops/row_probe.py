@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import sqlite3
 from contextlib import closing
 from pathlib import Path
@@ -96,15 +97,29 @@ def measure_presence(name: str, socket_name: str) -> TmuxPresence:
     )
 
 
-def measure_row_presence(row: Dict[str, Any], name: str, socket_name: str) -> TmuxPresence:
+def measure_row_presence(row: Dict[str, Any], name: str, socket_name: str, *, require_known_epoch: bool = False) -> TmuxPresence:
     presence = measure_presence(name, socket_name)
     epoch = row.get("tmux_created_epoch")
-    if presence.outcome != TMUX_PRESENT or epoch is None:
+    if presence.outcome != TMUX_PRESENT:
         return presence
-    observed = restart_live_gate.probe_epoch(restart_live_gate.probe_line(name, socket_name), name)
+    if epoch is None:
+        return _unproven_owner(presence) if require_known_epoch else presence
+    line = restart_live_gate.probe_line(name, socket_name)
+    observed = restart_live_gate.probe_epoch(line, name)
     if epoch_marks_other_instance(epoch, observed):
         return presence_as_other_instance(presence)
-    return presence
+    session_id = restart_live_gate.probe_session_id(line, name)
+    if require_known_epoch and (observed is None or session_id is None):
+        return _unproven_owner(presence)
+    return dataclasses.replace(presence, session_id=session_id)
+
+
+def _unproven_owner(presence: TmuxPresence) -> TmuxPresence:
+    return TmuxPresence(
+        outcome=TMUX_UNKNOWN,
+        detail="a session with this name is running, but its creation time could not be matched to this row, so it was not evaluated",
+        listed=presence.listed,
+    )
 
 
 def read_row(session_uuid: str) -> Dict[str, Any]:

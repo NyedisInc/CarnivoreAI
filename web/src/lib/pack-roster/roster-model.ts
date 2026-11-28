@@ -1,6 +1,7 @@
-import type { ComputerEntry, ComputersView } from '../computers/computers-api';
+import type { ComputerEntry, ComputersView, MeshLink } from '../computers/computers-api';
 import type { PackMachine, PackMachinesView, TakeoverReason } from '../pack-machines/pack-machines-store.svelte';
 import type { DiscoveredMac, PeerRow } from '../hosts-page/federation-api';
+import { relayerReachable } from '../sidebar-shell/pack-stats';
 import { machineKey, type HostRow } from '../hosts-page/hosts-adapter';
 
 export type RosterKind = 'pack' | 'ssh-only' | 'paired-older';
@@ -13,7 +14,10 @@ export interface RosterComputer {
   id: string;
   name: string;
   kind: RosterKind;
-  transport: 'local' | 'ssh' | 'tls';
+  transport: 'local' | 'ssh' | 'tls' | null;
+  member: boolean;
+  appVersion: string | null;
+  relayerUp?: boolean;
   isSelf: boolean;
   isAlpha: boolean;
   machine: PackMachine | null;
@@ -29,6 +33,8 @@ export interface RosterComputer {
   needsUpdate: boolean;
   rank: number | null;
   eligible: boolean;
+  mesh: MeshLink | null;
+  seenFrom?: 'card' | 'none' | 'held';
 }
 
 export interface RosterInputs {
@@ -36,6 +42,18 @@ export interface RosterInputs {
   machines: readonly PackMachine[];
   hosts: readonly HostRow[];
   peers: readonly PeerRow[];
+}
+
+export const MESH_CAP = 'pack.mesh_v1';
+
+export const meshOn = (view: PackMachinesView | null): boolean => view?.machines.some((m) => m.is_self && m.capabilities.includes(MESH_CAP)) === true;
+
+export function selfOffWhy(view: PackMachinesView | null): 'off' | 'off_unlisted' | 'off_not_capable' | 'off_other' {
+  const self = view?.machines.find((m) => m.is_self);
+  if (!self) return 'off_other';
+  if (self.link_peers == null) return 'off_unlisted';
+  if (self.mesh_capable === false) return 'off_not_capable';
+  return self.link_peers === false ? 'off' : 'off_other';
 }
 
 function dialOf(entry: ComputerEntry | null, isSelf: boolean): string {
@@ -50,7 +68,9 @@ export function buildRoster(input: RosterInputs): RosterComputer[] {
   const peerByIid = new Map(input.peers.map((p) => [p.peer_install_id, p]));
   const known = new Set<string>();
   const out: RosterComputer[] = [];
-  const sshHosts = input.hosts.filter((h) => !h.local && !input.peers.some((p) => p.key === h.key));
+  const meshLinks = new Map((input.view?.mesh?.links ?? []).map((l) => [l.install_id, l]));
+  const meshHost = (h: HostRow): boolean => input.view?.mesh !== undefined && (h.ssh_target ?? '') === '';
+  const sshHosts = input.hosts.filter((h) => !h.local && !input.peers.some((p) => p.key === h.key) && !meshHost(h));
   const claimed = new Set<string>();
   const hostFor = (id: string, name: string): { host: HostRow | null; by: 'link' | 'target' | null } => {
     const linked = sshHosts.find((h) => h.computer_install_id === id);
@@ -67,31 +87,47 @@ export function buildRoster(input: RosterInputs): RosterComputer[] {
     const { host, by } = hostFor(id, name);
     if (host) claimed.add(host.key);
     const peer = peerByIid.get(id) ?? null;
+    const meshKeys = isSelf ? [] : input.hosts.filter((h) => meshHost(h) && h.computer_install_id === id).map((h) => h.key);
     const local = input.hosts.find((h) => h.local) ?? null;
+    const link = !entry && !isSelf ? (meshLinks.get(id) ?? null) : null;
+    const linkSince = link?.since != null ? new Date(link.since * 1000).toISOString() : null;
+    const base = isSelf ? null : link ? (link.state === 'linked' ? linkSince : null) : (entry?.last_link_at ?? null);
+    const meshOnly = input.view?.mesh !== undefined && !entry && !isSelf;
+    const atMs = meshOnly ? input.view?.heard?.[id]?.at_ms : undefined;
+    const card = typeof atMs === 'number' && Number.isFinite(atMs) ? new Date(atMs).toISOString() : null;
+    const lastSeen = card !== null && (base === null || Date.parse(card) > Date.parse(base)) ? card : base;
+    const seenFrom = !meshOnly ? undefined : lastSeen === null ? (link?.state === 'held_over' ? 'held' : 'none') : lastSeen === card ? 'card' : undefined;
+    const member = machine !== null && !entry && !isSelf && machine.is_master !== true;
+    const appVersion = member ? (input.view?.heard?.[id]?.app_version || null) : null;
     out.push({
       id, name, kind: entry?.transport === 'ssh' && !isSelf && machine?.paired !== true ? 'paired-older' : 'pack',
-      transport: isSelf ? 'local' : (entry?.transport ?? (peer ? 'tls' : 'ssh')), isSelf, isAlpha: machine?.is_master === true,
+      transport: isSelf ? 'local' : member ? (peer ? 'tls' : null) : (entry?.transport ?? (peer ? 'tls' : 'ssh')), member, appVersion, relayerUp: relayerReachable(input.machines), isSelf, isAlpha: machine?.is_master === true,
       machine, entry, host, matchedBy: by, peer,
-      hostKeys: [...(isSelf && local ? [local.key] : []), ...(peer ? [peer.key] : []), ...(host ? [host.key] : [])],
-      dial: dialOf(entry, isSelf), since: entry?.dial?.since ?? null, lastSeen: isSelf ? null : (entry?.last_link_at ?? null),
+      hostKeys: [...(isSelf && local ? [local.key] : []), ...(peer ? [peer.key] : []), ...(host ? [host.key] : []), ...meshKeys],
+      dial: link ? link.state : dialOf(entry, isSelf), since: link ? linkSince : (entry?.dial?.since ?? null),
+      lastSeen,
       viaRelay: machine?.link_path === 'relay', needsUpdate: !isSelf && machine?.paired === true && machine.roster_v1 === false,
-      rank: machine?.rank ?? null, eligible: machine?.eligible === true,
+      rank: machine?.rank ?? null, eligible: machine?.eligible === true, mesh: link, ...(seenFrom ? { seenFrom } : {}),
     });
   };
   [...input.machines].sort((a, b) => Number(b.is_self) - Number(a.is_self)).forEach((m) => add(m, entries.get(m.install_id) ?? null));
   (input.view?.computers ?? []).forEach((c) => add(null, c));
   sshHosts.filter((h) => !claimed.has(h.key)).forEach((host) => {
-    out.push({ id: `host:${host.key}`, name: host.label || host.key, kind: 'ssh-only', transport: 'ssh', isSelf: false, isAlpha: false, machine: null, entry: null,
+    out.push({ id: `host:${host.key}`, name: host.label || host.key, kind: 'ssh-only', transport: 'ssh', member: false, appVersion: null, isSelf: false, isAlpha: false, machine: null, entry: null,
       host, matchedBy: null, peer: null, hostKeys: [host.key], dial: 'ssh', since: null, lastSeen: host.probed_at,
-      viaRelay: false, needsUpdate: false, rank: null, eligible: false });
+      viaRelay: false, needsUpdate: false, rank: null, eligible: false, mesh: null });
   });
   return out;
+}
+
+export function alphaVouches(c: RosterComputer): boolean {
+  return c.member && c.machine?.state === 'reported_connected' && c.relayerUp !== false;
 }
 
 export function lookFlags(c: RosterComputer): Record<'unreach' | 'hostkey' | 'probe' | 'identity', boolean> {
   const probe = c.host?.probe_state ?? '';
   return {
-    unreach: ['unreachable', 'refused', 'local_network_blocked'].includes(c.dial) || c.entry?.state === 'disconnected',
+    unreach: (c.dial === 'unreachable' ? !alphaVouches(c) : ['refused', 'local_network_blocked', 'excluded'].includes(c.dial)) || c.entry?.state === 'disconnected',
     hostkey: probe === 'host_key_unknown' || c.dial === 'host_key_changed',
     probe: ['unreachable', 'auth_failed', 'handshake_refused', 'timeout'].includes(probe),
     identity: c.dial === 'cert_mismatch' || c.peer?.state === 'identity_changed',
@@ -105,7 +141,7 @@ export function inFilter(c: RosterComputer, key: FilterKey): boolean {
   if (key === 'inpack') return c.kind === 'pack';
   if (key === 'overssh') return c.transport === 'ssh' && !c.isSelf;
   if (key === 'sshonly') return c.kind === 'ssh-only';
-  if (key === 'older') return c.transport === 'ssh' && !c.isSelf && c.kind !== 'ssh-only';
+  if (key === 'older') return c.member ? c.machine?.roster_v1 === false : c.transport === 'ssh' && !c.isSelf && c.kind !== 'ssh-only';
   return lookFlags(c)[key];
 }
 
@@ -117,8 +153,9 @@ export function countsOf(list: readonly RosterComputer[]): Record<FilterKey, num
 
 export function freeCpu(c: RosterComputer): number | null {
   const load = c.machine?.snapshot?.load;
-  if (!load || load.load_1 == null || load.cores == null || ['unreachable', 'refused', 'local_network_blocked'].includes(c.dial)) return null;
-  return Math.max(0, Math.round(load.cores - load.load_1));
+  const used = load?.busy_cores ?? load?.load_1;
+  if (!load || used == null || load.cores == null || ['unreachable', 'refused', 'local_network_blocked'].includes(c.dial)) return null;
+  return Math.max(0, Math.round(load.cores - used));
 }
 
 export function haystack(c: RosterComputer): string {

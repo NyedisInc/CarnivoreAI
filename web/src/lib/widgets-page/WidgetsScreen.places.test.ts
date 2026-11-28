@@ -23,6 +23,9 @@ import { rowsOf } from './places-state.svelte';
 import { resetView } from './places-view.svelte';
 import { addToPlace } from './places-writes';
 import type { Fetcher } from '../item-settings/api';
+import { stubResizeObserver } from './settings/mock-test-support';
+
+stubResizeObserver();
 
 const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
 proto['showPopover'] ??= function () {};
@@ -148,6 +151,7 @@ describe('the nav frame (#2775)', () => {
             expect(button.closest('[data-btn-density="frame"]')).not.toBeNull();
             expect(button.hasAttribute('data-size')).toBe(false);
         }
+        // the reading pane
         expect(page.querySelector('[data-frame-region="frame"][data-scroll="self"] [data-frame-region="body"][data-scroll="self"] > .oc-page__fill > .wp-body > .oc-page__scroll')).not.toBeNull();
     });
 
@@ -188,7 +192,10 @@ describe('one body (#2775)', () => {
         card(root, 'core.activity-log').querySelector<HTMLButtonElement>('[data-card-open]')!.click();
         await settle();
         expect(root.querySelectorAll('.oc-page__body').length, 'pane open').toBe(1);
-        expect(root.querySelector('.oc-page__fill > .wp-body.wp-body--reading > .wp-detail')).not.toBeNull();
+        const region = root.querySelector('.oc-page__frame--detail > [data-frame-region="detail"]')!;
+        expect(region.querySelector('[data-widget-pane="core.activity-log"]')).not.toBeNull();
+        expect(root.querySelector('.wp-body [data-widget-pane]')).toBeNull();
+        expect(root.querySelector('.wp-detail, .wp-body--reading')).toBeNull();
         expect(root.querySelectorAll('.oc-page__scroll').length, 'one list column').toBe(1);
     });
 });

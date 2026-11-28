@@ -112,6 +112,7 @@ export class TimelineActions {
     });
   }
 
+  /* transcript is not on this computer */
   async peek(rowId: number, mark: Mark): Promise<void> {
     if (mark.entry_uuid === null || this.peeks[mark.id] !== undefined) return;
     const turns = bookmarkPreviewSettings().turns;

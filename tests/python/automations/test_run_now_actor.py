@@ -20,7 +20,7 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from src.api import automation_routes  # noqa: E402
 from src.api.auth import require_auth  # noqa: E402
-from src.core.automations import gates, run_by, targets  # noqa: E402
+from src.core.automations import command_allowlist, gates, run_by, targets  # noqa: E402
 from src.core.automations import models as m  # noqa: E402
 from src.core.automations.scheduler import NOTE_BY, Scheduler  # noqa: E402
 from src.core.automations.store import AutomationStore  # noqa: E402
@@ -44,6 +44,7 @@ def world(tmp_path, monkeypatch):
 
     for kind in m.TARGET_KINDS:
         monkeypatch.setitem(targets.RUNNERS, kind, _runner)
+    monkeypatch.setattr(command_allowlist, "allows", lambda text, path=None: True)
     state = tmp_path / "state"
     state.mkdir()
     migrated_connection(state).close()

@@ -103,21 +103,21 @@ def test_a_theme_is_relayed_with_its_kind_and_its_files(tmp_path, scan):
         assert files == {"theme.json": THEME_JSON.encode(), "background.webp": PNG}
 
 
-def test_a_plugin_with_hooks_is_refused_locally_before_any_outbound_request(tmp_path, scan):
+def test_a_plugin_with_hooks_is_allowed_with_script_warning(tmp_path, scan):
     folder = make_plugin(tmp_path, hooks=True)
     scan["locs"] = [loc("plugin", folder)]
     with hosted_proxy_app(tmp_path, responder=route_responder({"/submissions": (201, SUBMITTED)}),
                           include_aggregator=True) as app:
         sign_in(app.state)
         shown, sent = send(app, scan["locs"][0])
-        refusal = shown.json()["refusals"]
-        assert shown.json()["can_send"] is False
-        assert any(r["code"] == "plugin_not_safe" and r["path"] == "hooks/hooks.json" for r in refusal), refusal
-        assert sent.status_code == 409 and sent.json()["detail"]["code"] == "folder_refused"
-        assert app.sent == [], "nothing may leave the Mac for an unsafe plugin"
+        assert shown.json()["can_send"] is True
+        assert shown.json()["refusals"] == []
+        assert "hooks/hooks.json" in shown.json()["script_files"]
+        assert "contains_scripts" in shown.json()["warnings"]
+        assert sent.status_code == 200
 
 
-def test_a_clean_plugin_relays_and_a_theme_with_effects_is_refused_locally(tmp_path, scan):
+def test_a_clean_plugin_relays_and_a_theme_with_effects_is_allowed_with_warning(tmp_path, scan):
     plugin = make_plugin(tmp_path, hooks=False)
     scan["locs"] = [loc("plugin", plugin)]
     with hosted_proxy_app(tmp_path, responder=route_responder({"/submissions": (201, SUBMITTED)}),
@@ -126,20 +126,21 @@ def test_a_clean_plugin_relays_and_a_theme_with_effects_is_refused_locally(tmp_p
         _, sent = send(app, scan["locs"][0])
         assert sent.status_code == 200 and submitted_body(app)["kind"] == "plugin"
     theme = make_theme(tmp_path)
-    (theme / "effects.js").write_text("alert(1)")
+    (theme / "effects.js").write_text("export default () => {};")
     scan["locs"] = [loc("theme", theme)]
-    with hosted_proxy_app(tmp_path, responder=route_responder({}), include_aggregator=True) as app:
+    with hosted_proxy_app(tmp_path, responder=route_responder({"/submissions": (201, SUBMITTED)}), include_aggregator=True) as app:
         sign_in(app.state)
-        shown, _ = send(app, scan["locs"][0])
-        assert any(r["code"] == "scripts_not_supported" and r["path"] == "effects.js"
-                   for r in shown.json()["refusals"])
-        assert app.sent == []
+        shown, sent = send(app, scan["locs"][0])
+        assert shown.json()["can_send"] is True
+        assert "effects.js" in shown.json()["script_files"]
+        assert "contains_scripts" in shown.json()["warnings"]
+        assert sent.status_code == 200
 
 
 def test_a_hosted_409_passes_through_with_its_paths(tmp_path, scan):
     folder = make_theme(tmp_path)
     scan["locs"] = [loc("theme", folder)]
-    hosted = {"code": "plugin_not_safe", "detail": "a plugin may not carry: hooks/hooks.json (path not allowed)"}
+    hosted = {"code": "plugin_not_safe", "detail": "a plugin may not carry: .env (path not allowed)"}
     with hosted_proxy_app(tmp_path, responder=route_responder({"/submissions": (409, hosted)}),
                           include_aggregator=True) as app:
         sign_in(app.state)
@@ -148,8 +149,8 @@ def test_a_hosted_409_passes_through_with_its_paths(tmp_path, scan):
         assert sent.json()["detail"] == hosted
 
 
-@pytest.mark.parametrize("extra", [".env", "lib/run.py", "data/blob.bin"])
-def test_an_unlisted_plugin_path_is_refused_locally_before_any_outbound_request(tmp_path, scan, extra):
+@pytest.mark.parametrize("extra", [".env", ".git/config", "node_modules/pkg/index.js"])
+def test_hidden_and_node_modules_plugin_paths_are_refused_locally(tmp_path, scan, extra):
     folder = make_plugin(tmp_path, hooks=False)
     target = folder / extra
     target.parent.mkdir(parents=True, exist_ok=True)

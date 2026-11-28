@@ -77,6 +77,10 @@ def flow_responder(poll=(200, AUTHORIZED)):
     )
 
 
+def _top(body):
+    return {k: v for k, v in body.items() if k not in ("client", "computer")}
+
+
 class TestOpeningAFlow:
 
     def test_the_user_code_and_the_url_come_back(self, tmp_path):
@@ -183,14 +187,14 @@ class TestTheSessionRoute:
         with hosted_proxy_app(tmp_path, responder=flow_responder()) as app:
             answer = app.client.get("/catalog/auth/session")
         assert answer.status_code == 200
-        assert answer.json() == {"signed_in": False, "login": None, "provider": None, "email": None}
+        assert _top(answer.json()) == {"signed_in": False, "login": None, "provider": None, "email": None}
 
     def test_after_a_flow_it_names_the_account(self, tmp_path):
         with hosted_proxy_app(tmp_path, responder=flow_responder()) as app:
             flow_id = app.client.post("/catalog/auth/device/start").json()["flow_id"]
             app.client.post("/catalog/auth/device/poll", json={"flow_id": flow_id})
             answer = app.client.get("/catalog/auth/session")
-        assert answer.json() == {
+        assert _top(answer.json()) == {
             "signed_in": True,
             "login": "example-owner",
             "provider": "github",
@@ -208,9 +212,9 @@ class TestTheSessionRoute:
             app.client.post("/catalog/auth/device/poll", json={"flow_id": flow_id})
             answer = app.client.post("/catalog/auth/signout")
             state = app.state
-        assert answer.json() == {"signed_in": False, "login": None, "provider": None, "email": None}
+        assert answer.status_code == 409
         with open_token_store(state) as store:
-            assert store.read() is None
+            assert store.read() is not None
 
 
 class TestNoWriteRouteIsStubbed:

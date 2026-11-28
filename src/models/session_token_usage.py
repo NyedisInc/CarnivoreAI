@@ -9,7 +9,7 @@ from src.models.provider_ledger import AccountUsage
 
 TokenUsageState = Literal["ok", "absent", "unchecked"]
 
-TokenUsageFamily = Literal["claude", "codex"]
+TokenUsageFamily = Literal["claude", "codex", "agy", "copilot"]
 
 
 class DelegatedUsage(BaseModel):

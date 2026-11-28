@@ -13,6 +13,12 @@ PathStamp = Optional[Tuple[int, int]]
 
 
 def signal_paths(account: ProviderAccount) -> List[Path]:
+    if account.provider == "antigravity":
+        from src.config import settings
+        from src.core.agy.state import state_folder
+
+        folder = state_folder(Path(settings.get_state_dir()))
+        return [folder, folder]
     profile_dir = profile_dir_for(account)
     directory = Path(os.path.expanduser(profile_dir))
     if account.provider == "claude":

@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, ValidationError
 
 from src.plugins.reviewboard import attachment_removal, attachments, wire
 from src.plugins.reviewboard.errors import BadRequest, BoardError, LengthRequired, TooLarge
-from src.plugins.reviewboard.routes import Ctx, router
+from src.plugins.reviewboard.routes_common import Ctx, router
 from src.plugins.sdk import CplugContext
 
 

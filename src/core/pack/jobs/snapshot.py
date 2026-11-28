@@ -20,7 +20,10 @@ from src.core.pack.jobs.types import DepDir, JobError, Snapshot
 log = structlog.get_logger()
 _LOCK_GLOBS = (":(glob)**/package-lock.json", ":(glob)**/requirements*.txt")
 _REQ = re.compile(r"^requirements.*\.txt$")
-HARNESS_CONFIG_PATHS = (".claude/settings.json", ".claude/settings.local.json", ".mcp.json", ".codex/config.toml")
+HARNESS_CONFIG_PATHS = (
+    ".claude/settings.json", ".claude/settings.local.json", ".mcp.json", ".codex/config.toml",
+    ".agents/hooks.json", ".agent/hooks.json", "_agents/hooks.json", "_agent/hooks.json",
+)
 
 
 def harness_paths(scope: str) -> List[str]:
@@ -185,7 +188,8 @@ def _untracked(toplevel: str, scope: str, env: Dict[str, str], git_dir: str, not
 
 
 def take(folder: str, project_uid: str, job_id: str, *, jobs_root: Path, carry: Sequence[str] = (),
-         clock: Callable[[], float] = time.time, project_root: Optional[str] = None, agent: bool = False) -> Snapshot:
+         clock: Callable[[], float] = time.time, project_root: Optional[str] = None, agent: bool = False,
+         commit_ref: Optional[str] = None) -> Snapshot:
     top_cp = gitio.run(["rev-parse", "--show-toplevel"], cwd=folder, check=False)
     if top_cp.returncode != 0:
         raise JobError("not_a_repo", "the folder is not inside a git work tree")
@@ -220,28 +224,34 @@ def take(folder: str, project_uid: str, job_id: str, *, jobs_root: Path, carry: 
         def git(*args: str, check: bool = True, input: Optional[bytes] = None):
             return gitio.run(list(args), git_dir=git_dir, work_tree=toplevel, cwd=toplevel, env=env, check=check, input=input)
 
-        scope_spec = f":(literal){scope}" if scope else "."
-        modified = _nul(git("diff-files", "--name-only", "-z", "--", scope_spec))
-        untracked, untracked_bytes = _untracked(toplevel, scope, env, git_dir, notes)
-        total = untracked_bytes + sum(_file_size(os.path.join(toplevel, m)) for m in modified)
-        if len(untracked) > guards.MAX_UNTRACKED_FILES or total > guards.MAX_SNAPSHOT_BYTES:
-            raise JobError("snapshot_too_large", f"{len(untracked)} new files and {total // (1024 * 1024)} MiB are over the limit "
-                           f"({guards.MAX_UNTRACKED_FILES} files, {guards.MAX_SNAPSHOT_BYTES // 1024 ** 3} GiB)")
-        git("add", "-u", "--", scope_spec)
-        if untracked:
-            listing = os.path.join(tmp, "paths")
-            Path(listing).write_bytes(b"\0".join(f":(literal){u}".encode("utf-8", "surrogateescape") for u in untracked) + b"\0")
-            git("add", f"--pathspec-from-file={listing}", "--pathspec-file-nul")
-        for pattern in carry:
-            forced = _nul(git("ls-files", "-z", "-o", "-i", "--exclude-standard", "--", pattern, *guards.exclude_pathspecs(), check=False))
-            total += sum(_file_size(os.path.join(toplevel, f)) for f in forced)
-            if len(forced) > guards.MAX_UNTRACKED_FILES or total > guards.MAX_SNAPSHOT_BYTES:
-                raise JobError("snapshot_too_large", f"carry pattern {pattern} brings in too much ({total // (1024 * 1024)} MiB in all)")
-            if git("add", "-f", "--", pattern, *guards.exclude_pathspecs(), check=False).returncode != 0:
-                notes.append(f"carry pattern {pattern} matched nothing")
-        if agent:
-            _pin_harness_config(git, head, scope)
-        tree = gitio.out(git("write-tree"))
+        untracked: List[str] = []
+        if commit_ref is not None:
+            if git("cat-file", "-e", f"{commit_ref}^{{commit}}", check=False).returncode != 0:
+                raise JobError("bad_request", "that commit is not in the project's repository", 422)
+            tree = gitio.out(git("rev-parse", f"{commit_ref}^{{tree}}"))
+        else:
+            scope_spec = f":(literal){scope}" if scope else "."
+            modified = _nul(git("diff-files", "--name-only", "-z", "--", scope_spec))
+            untracked, untracked_bytes = _untracked(toplevel, scope, env, git_dir, notes)
+            total = untracked_bytes + sum(_file_size(os.path.join(toplevel, m)) for m in modified)
+            if len(untracked) > guards.MAX_UNTRACKED_FILES or total > guards.MAX_SNAPSHOT_BYTES:
+                raise JobError("snapshot_too_large", f"{len(untracked)} new files and {total // (1024 * 1024)} MiB are over the limit "
+                               f"({guards.MAX_UNTRACKED_FILES} files, {guards.MAX_SNAPSHOT_BYTES // 1024 ** 3} GiB)")
+            git("add", "-u", "--", scope_spec)
+            if untracked:
+                listing = os.path.join(tmp, "paths")
+                Path(listing).write_bytes(b"\0".join(f":(literal){u}".encode("utf-8", "surrogateescape") for u in untracked) + b"\0")
+                git("add", f"--pathspec-from-file={listing}", "--pathspec-file-nul")
+            for pattern in carry:
+                forced = _nul(git("ls-files", "-z", "-o", "-i", "--exclude-standard", "--", pattern, *guards.exclude_pathspecs(), check=False))
+                total += sum(_file_size(os.path.join(toplevel, f)) for f in forced)
+                if len(forced) > guards.MAX_UNTRACKED_FILES or total > guards.MAX_SNAPSHOT_BYTES:
+                    raise JobError("snapshot_too_large", f"carry pattern {pattern} brings in too much ({total // (1024 * 1024)} MiB in all)")
+                if git("add", "-f", "--", pattern, *guards.exclude_pathspecs(), check=False).returncode != 0:
+                    notes.append(f"carry pattern {pattern} matched nothing")
+            if agent:
+                _pin_harness_config(git, head, scope)
+            tree = gitio.out(git("write-tree"))
         parent = ["-p", head] if head else []
         commit = gitio.out(git("commit-tree", tree, *parent, "-m", f"carnivore job {job_id}"))
         gitio.run(["update-ref", f"refs/heads/job-{job_id}", commit], git_dir=side)

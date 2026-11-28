@@ -50,6 +50,19 @@
     padding-right: var(--oc-space-1);
 }
 
+.session-sidebar-group__headerrow .session-sidebar-group__gutter {
+    display: none;
+}
+
+.session-sidebar-group[data-section] > .session-sidebar-group__headerrow[data-band-kind="reserved"] .session-sidebar-group__gutter {
+    display: flex;
+}
+
+.session-sidebar-group__headerrow:not([data-band-kind="reserved"]) > .session-sidebar-group__header,
+.session-sidebar-group .session-sidebar-group > .session-sidebar-group__headerrow[data-band-kind="reserved"] > .session-sidebar-group__header {
+    padding-inline-start: var(--oc-space-2);
+}
+
 .session-sidebar-group__menu {
     --oc-ibtn-size: 20px;
     flex: 0 0 auto;
@@ -80,7 +93,7 @@
     color: var(--oc-text-secondary);
     font-family: inherit;
     font-size: 0.8em;
-    font-weight: bold;
+    font-weight: 500;
     letter-spacing: 0.6px;
     text-transform: uppercase;
     text-align: left;
@@ -91,8 +104,9 @@
 }
 
 .session-sidebar-group__header--projects {
-    font-size: 0.88em;
-    font-weight: 800;
+    font-size: 0.8em;
+    font-weight: 500;
+    letter-spacing: normal;
 }
 
 .session-sidebar-group__headerrow[data-band-kind="project"] .session-sidebar-group__label,
@@ -167,11 +181,28 @@
 
 
 .session-sidebar-list--dragging .session-sidebar-group[data-group="pinned"][data-count="0"]
-.session-sidebar-group__body {
+.session-sidebar-group__body,
+.session-sidebar-newgroup {
     min-height: 28px;
     border: 1px dashed var(--oc-orange);
     border-radius: var(--oc-radius-sm);
     background: var(--oc-orange-tint);
+}
+
+.session-sidebar-newgroup {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: var(--oc-space-1) 0;
+    color: var(--oc-orange);
+    font-family: var(--font-mono);
+    font-size: var(--oc-fs-label);
+    letter-spacing: var(--oc-tracking-caps);
+    text-transform: uppercase;
+}
+
+.session-sidebar-newgroup[data-over="1"] {
+    border-style: solid;
 }
 
 

@@ -12,9 +12,8 @@ from src.core.plugin_health import model
 from src.core.plugin_health.claude_plugins import measured_digest
 from src.core.skills import kinds
 from src.core.skills.ledger_types import HARNESS_CLAUDE, InstallTarget
-from src.plugins.host import identity, sidecar_registry, sideload
-from src.plugins.host import state as owner_state
-from tests.python.plugin_health.world import FAR_FUTURE, make_world, write_code
+from src.plugins.host import identity, registry_store, sidecar_registry, sideload
+from tests.python.plugin_health.world import make_world, write_code
 
 EXPIRED = "2020-01-01T00:00:00Z"
 
@@ -62,11 +61,12 @@ def add_claude_plugins(w, tmp_path: Path) -> None:
 
 
 def add_leftovers(w) -> None:
-    path = owner_state.state_path(w.state)
-    data = json.loads(path.read_text())
-    for i in range(16 - len(data["cplugs"])):
-        data["cplugs"][f"ghost{i}"] = {"enabled": False, "grants": [], "settings": {}, "revision": 1, "digest": ""}
-    path.write_text(json.dumps(data))
+    def put(doc) -> None:
+        items = doc.setdefault("items", {})
+        for i in range(16 - len(items)):
+            items[f"ghost{i}"] = {"kind": "feature", "enabled": False, "grants": [], "settings": {}, "revision": 1, "digest": ""}
+
+    registry_store.commit(w.state, put)
     (w.state / "cplugs" / ("ab" * 16)).mkdir(parents=True)
     (w.state / "cplugs" / ("ab" * 16) / "note.txt").write_text("x" * 100)
     (w.state / "cplugs" / "oldplugin").mkdir()

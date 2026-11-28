@@ -23,9 +23,13 @@
     import { isReadonly } from './readonly';
     import ContentsBlock from './ContentsBlock.svelte';
     import DeprecatedMark from './DeprecatedMark.svelte';
+    import RevokedBanner from './RevokedBanner.svelte';
+    import Tag from '../base/Tag.svelte';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import CardMediaImg from './CardMediaImg.svelte';
     import CardImageRow from './CardImageRow.svelte';
+    import CardScreenshotsRow from './CardScreenshotsRow.svelte';
+    import ScreenshotGallery from './ScreenshotGallery.svelte';
     import { previewFor } from './card-image-store.svelte';
     import { latestVersion, type CardView } from './card';
     import { gradeView } from './grade';
@@ -48,7 +52,7 @@
         t: Translate;
         onInstall: () => void;
         onLedgerChange: (id: string, row: InstalledItem | null, installId?: string | null) => void;
-        onClose: () => void;
+        onClose?: () => void;
         signedIn?: boolean;
         palette?: PreviewPalette | null;
         onAdd?: ((target: 'global' | 'project', projectPath?: string) => void) | null;
@@ -197,6 +201,10 @@
 </script>
 
 {#snippet warnings()}
+{#if card.revoked}
+    <div class="detail-sec"><RevokedBanner reason={card.revocationReason} since={card.revokedSince} {t} /></div>
+{/if}
+
 {#if card.deprecated}
     <div class="detail-sec"><DeprecatedMark supersededBy={card.supersededBy} {t} /></div>
 {/if}
@@ -223,8 +231,8 @@
 
     {#if inspectTheme && palette}
         
-        <div class="detail-sec detail__tins" data-detail-sec="inspector">
-            <button type="button" class="modal-close detail__close" data-detail-close aria-label={t('warez.detail.close')} onclick={onClose}>&times;</button>
+        <div class="detail-sec detail__tins" class:detail__tins--bare={!onClose} data-detail-sec="inspector">
+            {#if onClose}<button type="button" class="modal-close detail__close" data-detail-close aria-label={t('warez.detail.close')} onclick={onClose}>&times;</button>{/if}
             {@render warnings()}
             <ThemeInspector
                 manifest={themeManifest}
@@ -254,6 +262,13 @@
         <div class="detail__ovrow">
             <div class="detail__ov detail__ov--tl" data-detail-ov="tl">
                 <h2 class="detail__title"><KindMark kind={card.kind} size="lg" {t} /><span class="detail__titletext">{card.headline}</span></h2>
+                {#if card.isCplug || card.isPlugin}
+                    {#if card.flagged || card.verdict === 'flagged'}
+                        <Tag tone="warn" data-detail-verdict="flagged">{t(SKILL_KEYS.flaggedBadge)}</Tag>
+                    {:else if card.verdict === 'clean'}
+                        <Tag tone="ok" data-detail-verdict="clean">{t(SKILL_KEYS.cleanBadge)}</Tag>
+                    {/if}
+                {/if}
                 <div class="detail__sub">{subLine}</div>
                 {#if loading}
                     <span class="detail__loading">{t(SKILL_KEYS.detailLoading)}</span>
@@ -268,7 +283,7 @@
             </div>
             {/if}
         </div>
-        <button type="button" class="modal-close detail__close" data-detail-close aria-label={t('warez.detail.close')} onclick={onClose}>&times;</button>
+        {#if onClose}<button type="button" class="modal-close detail__close" data-detail-close aria-label={t('warez.detail.close')} onclick={onClose}>&times;</button>{/if}
     </div>
 
     <div class="detail__dt">
@@ -301,11 +316,20 @@
         <div class="detail-sec detail-sec--acts" data-detail-sec="acts">{@render acts()}</div>
     {/if}
 
+    {#if !inspectTheme && card.screenshots && card.screenshots.length > 0}
+        <div class="detail-sec" data-detail-sec="screenshots">
+            <ScreenshotGallery screenshots={card.screenshots} itemName={card.headline} {t} />
+        </div>
+    {/if}
+
     
     {#if !readonly}
     <div class="detail-sec" data-detail-sec="card-image" hidden={!cardImageOwner}>
         {#key card.id}
             <CardImageRow {card} {host} {signedIn} {t} bind:owns={cardImageOwner} />
+            {#if cardImageOwner}
+                <CardScreenshotsRow {card} {host} {t} />
+            {/if}
         {/key}
     </div>
     {/if}
@@ -494,6 +518,10 @@
     .detail__tins {
         position: relative;
         padding-top: 40px;
+    }
+
+    .detail__tins--bare {
+        padding-top: 0;
     }
 
     .detail__tins > :global(.tins) {

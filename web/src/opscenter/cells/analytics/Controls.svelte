@@ -1,14 +1,29 @@
 <script lang="ts">
   import { Button, Field, Select } from '../../../lib/base';
-  import { analytics, requestBackfill, setCollectionEnabled } from './state.svelte';
+  import { analytics, requestBackfill, setAnalyticsFilter, setAnalyticsTimezone, setCollectionEnabled, type GlobalFilterKey } from './state.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
   import { live, watchLive } from '../../viz/noc-feed.svelte';
+  import { displayHostFilterValue } from '../../viz/plan';
+  import { selfHostInstallId } from './host-id.svelte';
 
   $effect(() => watchLive());
 
-  function setFilter(key: 'provider' | 'host' | 'project' | 'model' | 'agent_kind' | 'account_id' | 'window', value: string): void {
-    analytics.filters[key] = value || undefined;
-    analytics.revision++;
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const timezoneOptions = $derived.by(() => {
+    const out = [localTz];
+    if (!out.includes('UTC')) out.push('UTC');
+    if (analytics.timezone && !out.includes(analytics.timezone)) out.push(analytics.timezone);
+    return out;
+  });
+
+  function setFilter(key: GlobalFilterKey, value: string): void {
+    setAnalyticsFilter(key, value);
+  }
+
+  function filterValue(dimension: GlobalFilterKey): string {
+    const raw = analytics.filters[dimension];
+    if (dimension === 'host') return displayHostFilterValue(raw, analytics.dimensions.host ?? [], selfHostInstallId());
+    return raw || '';
   }
 
   let notice = $state('');
@@ -27,9 +42,9 @@
 <div class="analytics-controls" role="group" aria-label="{t('analytics.history')}">
   <details class="analytics-options"><summary>{t('analytics.filters')}</summary><div class="analytics-options__body">
   <div class="analytics-options__fields">
-  <label class="oc-select-row"><span class="oc-sub">{t('analytics.timezone')}</span> <Select size="sm" value={analytics.timezone} onchange={(event) => { analytics.timezone = event.currentTarget.value; analytics.revision++; }}>{#snippet children()}<option value={Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'}>{Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'}</option><option value="UTC">UTC</option>{/snippet}</Select></label>
+  <label class="oc-select-row"><span class="oc-sub">{t('analytics.timezone')}</span> <Select size="sm" value={analytics.timezone} onchange={(event) => setAnalyticsTimezone(event.currentTarget.value)}>{#snippet children()}{#each timezoneOptions as tz (tz)}<option value={tz}>{tz}</option>{/each}{/snippet}</Select></label>
   {#each ['provider', 'host', 'project', 'model', 'agent_kind', 'account_id', 'window'] as dimension (dimension)}
-    <label class="oc-select-row"><span class="oc-sub">{t(`analytics.${dimension}`)}</span> <Select size="sm" value={analytics.filters[dimension as keyof typeof analytics.filters] || ''} onchange={(event) => setFilter(dimension as 'provider' | 'host' | 'project' | 'model' | 'agent_kind' | 'account_id' | 'window', event.currentTarget.value)}>{#snippet children()}
+    <label class="oc-select-row"><span class="oc-sub">{t(`analytics.${dimension}`)}</span> <Select size="sm" value={filterValue(dimension as GlobalFilterKey)} onchange={(event) => setFilter(dimension as GlobalFilterKey, event.currentTarget.value)}>{#snippet children()}
       <option value="">{t('analytics.all')}</option>
       {#each analytics.dimensions[dimension] || [] as item (item.key)}
         {#if item.filter_value}<option value={item.filter_value}>{item.label}</option>{/if}

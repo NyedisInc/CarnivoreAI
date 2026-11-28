@@ -148,8 +148,8 @@ def test_never_and_unexplained_permissions_and_the_first_party_control(rig, monk
     assert r.json()["detail"]["code"] == "reason_missing"
 
     monkeypatch.undo()
-    assert put(rig, {"revision": 0, "enabled": True, "grants": {"app": ["sessions.read"]}}, "huddle").status_code == 200
-    assert rig.client.get("/api/v1/cplugs/huddle/sheet").json()["consent_required"] is False
+    assert put(rig, {"revision": 0, "enabled": True, "grants": {"app": ["sessions.read"]}}, "taskmanager").status_code == 200
+    assert rig.client.get("/api/v1/cplugs/taskmanager/sheet").json()["consent_required"] is False
 
 
 
@@ -171,10 +171,10 @@ def test_mcp_cplug_update_is_limited_to_disable_and_revoke(tmp_path, monkeypatch
     pane = AgentCaller("ses_1", "cloude_a", "ses_1")
 
     def call(args):
-        result = asyncio.run(tools.call_tool(manager, pane, "cplug_update", {"cplug_id": "huddle", "revision": 0, **args}))
+        result = asyncio.run(tools.call_tool(manager, pane, "cplug_update", {"cplug_id": "taskmanager", "revision": 0, **args}))
         return not result.get("isError"), result["content"][0]["text"]
 
-    granted = list(owner_state.get(host.state_dir, runtime.find("huddle").manifest).grants)
+    granted = list(owner_state.get(host.state_dir, runtime.find("taskmanager").manifest).grants)
     for refused in ({"enabled": True}, {"settings": {"k": 1}}, {"grants": {"app": granted + ["made.up"]}},
                     {"consent": {}}, {}, {"enabled": False, "settings": {"k": 1}}):
         ok, text = call(refused)
@@ -194,7 +194,7 @@ def test_every_capability_call_lands_in_the_activity_log(rig):
         asked["n"] += 1
         return []
 
-    ctx = host.context("huddle", infos=infos)
+    ctx = host.context("taskmanager", infos=infos)
     assert type(ctx.sessions).__mro__[1] is capabilities.Sessions
     assert asyncio.run(ctx.sessions.list()) == [] and asyncio.run(ctx.sessions.list()) == [] and asked["n"] == 2
     assert ctx.toast("ses_abc123", "fixed title") is None
@@ -203,7 +203,7 @@ def test_every_capability_call_lands_in_the_activity_log(rig):
         ctx.sessions.nonesuch
 
     log = activity_log.ActivityLog(rig.tmp)
-    rows = log.recent("huddle")
+    rows = log.recent("taskmanager")
     by_method = {(r["method"], r["target"]): r for r in rows}
     assert by_method[("sessions.list", "")]["count"] == 2 and by_method[("sessions.list", "")]["permission"] == "sessions.read"
     assert ("toast", "ses_abc123") in by_method and by_method[("toast", "ses_abc123")]["permission"] == "notify"
@@ -213,16 +213,16 @@ def test_every_capability_call_lands_in_the_activity_log(rig):
     async def boom():
         raise RuntimeError("secret detail")
 
-    ctx2 = host.context("huddle", infos=boom)
+    ctx2 = host.context("taskmanager", infos=boom)
     with pytest.raises(RuntimeError):
         asyncio.run(ctx2.sessions.list())
-    assert log.recent("huddle", 1)[0]["status"] == "error:RuntimeError" and "secret detail" not in json.dumps(log.recent("huddle"))
+    assert log.recent("taskmanager", 1)[0]["status"] == "error:RuntimeError" and "secret detail" not in json.dumps(log.recent("taskmanager"))
 
-    got = rig.client.get("/api/v1/cplugs/huddle/activity").json()["activity"]
-    assert got[0]["status"] == "error:RuntimeError" and len(got) == len(log.recent("huddle"))
+    got = rig.client.get("/api/v1/cplugs/taskmanager/activity").json()["activity"]
+    assert got[0]["status"] == "error:RuntimeError" and len(got) == len(log.recent("taskmanager"))
     assert rig.client.get("/api/v1/cplugs/nonesuch/activity").status_code == 404
     rig.app.dependency_overrides.clear()
-    assert rig.client.get("/api/v1/cplugs/huddle/activity").status_code == 401
+    assert rig.client.get("/api/v1/cplugs/taskmanager/activity").status_code == 401
 
 
 def test_a_third_party_toast_carries_the_plugin_id_and_is_capped(monkeypatch):
@@ -238,7 +238,7 @@ def test_a_third_party_toast_carries_the_plugin_id_and_is_capped(monkeypatch):
     monkeypatch.setattr(models, "ToastNewMessage", lambda toast: SimpleNamespace(model_dump_json=lambda: "{}"))
     state = SimpleNamespace(session_manager=manager)
     capabilities.toaster("tpdemo", state, "tpdemo: ")("ses_1", "Your key was revoked " + "x" * 300)
-    capabilities.toaster("huddle", state)("ses_1", "plain")
+    capabilities.toaster("taskmanager", state)("ses_1", "plain")
     assert titles[0].startswith("tpdemo: Your key") and len(titles[0]) == 80 and titles[1] == "plain"
 
 
@@ -255,7 +255,7 @@ def test_a_third_party_alert_is_namespaced_and_cannot_reach_a_host_string(monkey
 
     raised = []
     monkeypatch.setattr(service, "raise_alert", lambda key, **kw: raised.append((key, kw["title_key"])) or {})
-    outside, inside = capabilities.alerter("tpdemo", True), capabilities.alerter("huddle")
+    outside, inside = capabilities.alerter("tpdemo", True), capabilities.alerter("taskmanager")
     for key in ("integrity", "Integrity", "a.b", "x" * 33, ""):
         if key == "integrity":
             outside(key, "warning", "cplug.tpdemo.alert")
@@ -266,7 +266,7 @@ def test_a_third_party_alert_is_namespaced_and_cannot_reach_a_host_string(monkey
         with pytest.raises(ValueError):
             outside("mine", "warning", title_key)
     inside("integrity", "warning", "any.key")
-    assert raised == [("cplug.tpdemo.p.integrity", "cplug.tpdemo.alert"), ("cplug.huddle.integrity", "any.key")]
+    assert raised == [("cplug.tpdemo.p.integrity", "cplug.tpdemo.alert"), ("cplug.taskmanager.integrity", "any.key")]
 
 
 def test_a_third_party_toast_refuses_urls_and_spends_a_budget(monkeypatch):
@@ -292,7 +292,7 @@ def test_a_third_party_toast_refuses_urls_and_spends_a_budget(monkeypatch):
     assert outside("ses_1", "one too many") is None and len(titles) == capabilities.TOAST_BUDGET
     clock["t"] += capabilities.TOAST_WINDOW_S + 1
     assert outside("ses_1", "next hour") is not None
-    inside = capabilities.toaster("huddle", state)
+    inside = capabilities.toaster("taskmanager", state)
     assert all(inside("ses_1", "see https://ok.example") for _ in range(10))
 
 
@@ -320,7 +320,7 @@ def test_a_third_party_context_only_ever_holds_allow_listed_sessions_and_project
         SimpleNamespace(id=1, name="p", path="/Users/x/secret", default_launch_profile="d")])
     assert ctx.projects.get(1) == {"id": 1, "name": "p"}
     assert capabilities.Projects().get(1)["path"] == "/Users/x/secret"
-    full = rig.host.context("huddle", infos=infos)
+    full = rig.host.context("taskmanager", infos=infos)
     assert asyncio.run(full.sessions.list()) == [info]
 
 

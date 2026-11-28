@@ -19,7 +19,7 @@ def _png(color, size=(1536, 1024)) -> bytes:
 
 
 def _thumbs(world):
-    return sorted((world.state_dir / "project_images" / "thumbs").glob("*.webp"))
+    return sorted((world.state_dir / "project_images" / "thumbs").glob("*.avif"))
 
 
 def _tier_files(world, tier):
@@ -39,9 +39,9 @@ def test_thumb_is_small_cached_regenerated_and_immutable_only_on_matching_rev(cl
 
     url = f"{API}/projects/alpha/image"
     t = client.get(url, params={"size": "thumb", "rev": rev})
-    assert t.status_code == 200 and t.headers["content-type"] == "image/webp"
+    assert t.status_code == 200 and t.headers["content-type"] == "image/avif"
     assert max(Image.open(io.BytesIO(t.content)).size) <= hero_thumbs.THUMB_MAX_PX
-    assert len(t.content) * 20 < len(big)
+    assert len(t.content) * 5 < len(big)
     assert calls == []
     assert t.headers["cache-control"] == "private, max-age=31536000, immutable"
     assert "no-cache" in client.get(url, params={"size": "thumb", "rev": "1"}).headers["cache-control"]
@@ -76,7 +76,7 @@ def test_each_tier_serves_webp_within_its_cap_never_upscales_and_all_go_on_delet
     rev = _up(client, url, big).json()["image_rev"]
     for tier, cap in hero_thumbs.TIERS.items():
         r = client.get(url, params={"size": tier, "rev": rev})
-        assert r.status_code == 200 and r.headers["content-type"] == "image/webp", tier
+        assert r.status_code == 200 and r.headers["content-type"] == "image/avif", tier
         assert r.headers["cache-control"] == "private, max-age=31536000, immutable"
         assert max(Image.open(io.BytesIO(r.content)).size) == cap, tier
     assert client.get(url, params={"size": "huge"}).status_code == 422

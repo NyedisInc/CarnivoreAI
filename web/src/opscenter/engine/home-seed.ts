@@ -38,9 +38,14 @@ export function setHomeSeedLevel(level: number): void {
 }
 
 let referencedIds: (() => Set<string>) | null = null;
+let syncedBoardsFn: (() => boolean) | null = null;
 
 export function homeReferencedAnalytics(): Set<string> | null {
   return referencedIds ? referencedIds() : null;
+}
+
+export function homeHasSyncedBoards(): boolean {
+  return syncedBoardsFn ? syncedBoardsFn() : false;
 }
 
 export function whenHomeSyncReady(): Promise<void> {
@@ -48,9 +53,10 @@ export function whenHomeSyncReady(): Promise<void> {
 }
 
 export const seedControl = {
-  attach(notify: () => void, referenced?: () => Set<string>): void {
+  attach(notify: () => void, referenced?: () => Set<string>, hasSyncedBoards?: () => boolean): void {
     onWanted = notify;
     referencedIds = referenced ?? null;
+    syncedBoardsFn = hasSyncedBoards ?? null;
     ready = new Promise<void>((resolve) => {
       readyResolve = resolve;
     });
@@ -69,6 +75,7 @@ export const seedControl = {
   reset(): void {
     onWanted = null;
     referencedIds = null;
+    syncedBoardsFn = null;
     serverLevel = null;
     wanted = 0;
     seedControl.markReady();

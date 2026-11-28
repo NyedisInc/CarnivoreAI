@@ -75,6 +75,10 @@ class SessionRecord(BaseModel):
         default=None,
         description="Unresolved renders as UNKNOWN, never as 'claude'",
     )
+    agent_wrapper_icon: Optional[str] = Field(
+        default=None,
+        description="The launch profile's picked icon id, so a stored custom-agent row (agy) draws its own mark",
+    )
     model: Optional[str] = Field(default=None)
     archived_at: Optional[str] = Field(
         default=None,
@@ -154,6 +158,14 @@ class SessionRecord(BaseModel):
             "session (a Task Manager item's fire_at or repeat whose tell lands on it, or an automation aimed at it "
             "with if_asleep wake), stamped by src.api.asleep_wake_listing. None means nothing scheduled will wake "
             "it, or it is not measured, and is never 0; the row draws its wake clock only for a positive number"
+        ),
+    )
+    offloaded: Optional[bool] = Field(
+        default=None,
+        description=(
+            "ASLEEP ROWS ONLY (#2867): True when this sleeping session's conversation was offloaded to the backup vault on purpose (the core marker, "
+            "src.api.asleep_offloaded), so the drawer shows an 'offloaded' tag and a restore button instead of a plain sleeping row. False = read, "
+            "nothing offloaded; null = not measured (not an asleep row, or the marker could not be read)."
         ),
     )
     automations_state: Optional[str] = Field(

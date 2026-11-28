@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import asyncio
+import contextvars
+import inspect
 import json
+import os
 import sys
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 API_VERSION = "1.0"
 MAX_FRAME_BYTES = 1024 * 1024
+_bus_token: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("cplug_bus_token", default=None)
 
 
 class HostError(Exception):
@@ -19,6 +23,43 @@ class HostError(Exception):
         self.data = data or {}
 
 
+class _MethodNotFoundError(KeyError):
+    pass
+
+
+class _ServiceClient:
+
+    def __init__(self, send: Callable[[str, Dict[str, Any]], Awaitable[Any]]) -> None:
+        self._send = send
+
+    async def call(self, service: str, method: str, args: Optional[Dict[str, Any]] = None) -> Any:
+        return await self._send("service.call", {"service": service, "method": method, "args": args or {}})
+
+
+class _EventsClient:
+
+    def __init__(self, send: Callable[[str, Dict[str, Any]], Awaitable[Any]]) -> None:
+        self._send = send
+
+    async def emit(self, event: str, payload: Optional[Dict[str, Any]] = None) -> Any:
+        return await self._send("events.emit", {"event": event, "payload": payload or {}})
+
+
+class _UiClient:
+
+    def __init__(self, send: Callable[[str, Dict[str, Any]], Awaitable[Any]]) -> None:
+        self._send = send
+
+    async def invalidate(self, surface: Optional[str] = None) -> Any:
+        params: Dict[str, Any] = {}
+        if surface is not None:
+            params["surface"] = surface
+        return await self._send("ui.invalidate", params)
+
+    async def slot_publish(self, slot: str, items: List[Dict[str, Any]]) -> Any:
+        return await self._send("ui.slot.publish", {"slot": slot, "items": items})
+
+
 class Host:
 
     def __init__(self, send: Callable[[str, Dict[str, Any]], Awaitable[Any]]) -> None:
@@ -27,6 +68,9 @@ class Host:
         self.storage = _Namespace(send, "storage")
         self.notify = _Namespace(send, "notify")
         self.projects = _Namespace(send, "projects")
+        self.service = _ServiceClient(send)
+        self.events = _EventsClient(send)
+        self.ui = _UiClient(send)
 
     async def http_fetch(self, url: str, method: str = "GET", headers: Optional[Dict[str, str]] = None,
                          body: Optional[str] = None) -> Dict[str, Any]:
@@ -96,6 +140,9 @@ class Plugin:
         self._routes: Dict[str, Callable[..., Awaitable[Any]]] = {}
         self._events: Dict[str, Callable[..., Awaitable[Any]]] = {}
         self._timers: Dict[str, Callable[..., Awaitable[Any]]] = {}
+        self._ui_surfaces: Dict[str, Callable[..., Awaitable[Any]]] = {}
+        self._services: Dict[str, Dict[str, Callable[..., Any]]] = {}
+        self._channels: Dict[str, Callable[..., Any]] = {}
         self.settings: Dict[str, Any] = {}
         self.granted: List[str] = []
         self._next_id = 0
@@ -123,15 +170,40 @@ class Plugin:
             return fn
         return deco
 
+    def on(self, family: str):
+        return self.on_event(family)
+
+    def service(self, name: str, method: Optional[str] = None):
+        def deco(fn):
+            self._services.setdefault(name, {})[method or fn.__name__] = fn
+            return fn
+        return deco
+
     def timer(self, name: str):
         def deco(fn):
             self._timers[name] = fn
             return fn
         return deco
 
+    def ui(self, surface: str):
+        def deco(fn):
+            self._ui_surfaces[surface] = fn
+            return fn
+        return deco
+
+    def channel(self, name: str):
+        def deco(fn):
+            self._channels[name] = fn
+            return fn
+        return deco
+
     async def _call(self, method: str, params: Dict[str, Any]) -> Any:
         if self._write is None:
             raise RuntimeError("the plugin is not connected to a host")
+        if method == "service.call" and isinstance(params, dict) and "_bus_token" not in params:
+            bus_tok = _bus_token.get() or (os.environ.get("CARNIVORE_BUS_TOKEN", "").strip() or None)
+            if bus_tok:
+                params = {**params, "_bus_token": bus_tok}
         self._next_id += 1
         rid = self._next_id
         fut: asyncio.Future = asyncio.get_running_loop().create_future()
@@ -144,7 +216,7 @@ class Plugin:
             self.settings, self.granted = params.get("settings", {}), list(params.get("granted", []))
             return {"api_version": API_VERSION,
                     "capabilities": {"tools": bool(self._tools), "routes": bool(self._routes), "events": bool(self._events),
-                                     "timers": bool(self._timers)},
+                                     "timers": bool(self._timers), "services": bool(self._services)},
                     "subscriptions": sorted(self._events)}
         if method == "ping":
             return {"ts": 0}
@@ -163,6 +235,28 @@ class Plugin:
         if method == "timer.tick":
             await self._timers[params["name"]](params.get("scheduled_for"))
             return {}
+        if method == "ui.render":
+            surface = params.get("surface", "")
+            doc = await self._ui_surfaces[surface](params.get("params") or {})
+            return {"document": doc}
+        if method == "service.call":
+            svc = str(params.get("service", ""))
+            meth = str(params.get("method", ""))
+            fn = self._services.get(svc, {}).get(meth)
+            if fn is None:
+                raise _MethodNotFoundError(f"{svc}.{meth}")
+            args = params.get("args") if isinstance(params.get("args"), dict) else {}
+            out = fn(args, {"service": svc, "method": meth})
+            return await out if inspect.isawaitable(out) else out
+        if method == "channel.send":
+            ch = str(params.get("channel", ""))
+            fn = self._channels.get(ch)
+            if fn is None:
+                raise _MethodNotFoundError(ch)
+            ev = params.get("event") if isinstance(params.get("event"), dict) else {}
+            cfg = params.get("config") if isinstance(params.get("config"), dict) else {}
+            out = fn(ev, cfg)
+            return await out if inspect.isawaitable(out) else out
         raise KeyError(method)
 
     def _dispatch_frame(self, frame: Dict[str, Any], tasks: set) -> None:
@@ -178,13 +272,21 @@ class Plugin:
 
         async def run() -> None:
             rid = frame.get("id")
+            params = frame.get("params") or {}
+            raw_tok = params.get("_bus_token") if isinstance(params, dict) else None
+            btok = _bus_token.set(raw_tok if isinstance(raw_tok, str) and raw_tok else None)
             try:
-                result = await self.handle(frame["method"], frame.get("params") or {})
+                result = await self.handle(frame["method"], params)
                 if rid is not None:
                     self._write({"jsonrpc": "2.0", "id": rid, "result": result if result is not None else {}})
+            except _MethodNotFoundError:
+                if rid is not None:
+                    self._write({"jsonrpc": "2.0", "id": rid, "error": {"code": -32601, "message": "method_not_found"}})
             except (KeyError, TypeError, ValueError, HostError) as exc:
                 if rid is not None:
                     self._write({"jsonrpc": "2.0", "id": rid, "error": {"code": -32603, "message": type(exc).__name__}})
+            finally:
+                _bus_token.reset(btok)
 
         task = asyncio.get_running_loop().create_task(run())
         tasks.add(task)

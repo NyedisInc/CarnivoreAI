@@ -108,7 +108,7 @@ def no_token_store(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     def boom(*_a: Any, **_k: Any) -> None:
         raise AssertionError("offline mode must never open tui_auth.json")
 
-    monkeypatch.setattr("src.tui.token_store.TokenStore", boom)
+    monkeypatch.setattr("src.core.cli_command.token_store.TokenStore", boom)
     monkeypatch.setattr(launch, "run_offline", lambda settings_obj: picked.append("offline") or 0)
     return picked
 

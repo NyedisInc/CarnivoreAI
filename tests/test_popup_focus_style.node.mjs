@@ -45,15 +45,14 @@ const LOOK = /(^|\n)\s*(background|background-color|border|box-shadow)\s*:/;
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 
-test('the shared file registers one angle and declares one keyframes', () => {
+test('the shared file drives the popup sheen on the 24 fps clock with no @property or infinite keyframes', () => {
     const css = noComments(read(SHARED));
-    assert.equal((css.match(/@property\s+--pf-angle\b/g) || []).length, 1);
-    assert.equal((css.match(/@keyframes\s+popup-focus-orbit\b/g) || []).length, 1);
-    assert.equal((css.match(/@keyframes\s+/g) || []).length, 1, 'only the registered-angle lap of the short lived menus; the selected cell steps on the ambient ticker');
+    assert.equal((css.match(/@property\s+--pf-angle\b/g) || []).length, 0);
+    assert.equal((css.match(/@keyframes\s+/g) || []).length, 0);
     const body = ruleBody(css, '.popup-focus');
     assert.ok(body, 'expected the .popup-focus rule');
-    assert.match(body, /animation:\s*popup-focus-orbit\s+6s\s+linear\s+infinite/);
-    assert.match(body, /conic-gradient\(\s*from var\(--pf-angle\)/);
+    assert.match(body, /animation:\s*amb-join-dialog-glow\s+1ms/);
+    assert.match(body, /conic-gradient\(\s*from var\(--pf-angle,\s*0deg\)/);
     assert.match(body, /border:\s*1px solid transparent/);
 });
 

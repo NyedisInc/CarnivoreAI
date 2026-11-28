@@ -63,6 +63,7 @@ from src.core.inventory.plan_refs import plan_slugs  # noqa: F401
 from src.core.inventory.vault_claims import STORE_VAULT  # noqa: F401
 from src.core.message_model_secrets import ALL_DETECTORS  # noqa: F401
 from src.core.project_move.plan import PaneListing  # noqa: F401
+from src.core.work.folders import archive_rel as task_file_archive_rel, files_roots as task_files_roots  # noqa: F401
 from src.plugins.sdk.crate_rows import BATCH_ROWS, RowBatch, RowQuery, preflight, snapshot_rows  # noqa: F401
 from src.plugins.sdk.vault_sources import SourceUnavailable
 
@@ -279,5 +280,5 @@ __all__ = [
     "BATCH_ROWS", "RowBatch", "RowQuery", "preflight", "snapshot_rows", "SourceUnavailable", "CrateTargetError",
     "locations", "resolve", "declared_store_rels", "superseded_by_declaration", "live_panes", "live_blocker", "is_local_host", "project_air_gapped", "install_identity",
     "app_version", "load_trust_map", "journal_entries", "scan_counts", "redact", "detectors_digest", "fallback_sources", "backup_provider_id", "backup_families",
-    "fork_relatives", "plan_slugs",
+    "fork_relatives", "plan_slugs", "task_file_archive_rel", "task_files_roots",
 ]

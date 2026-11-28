@@ -62,6 +62,7 @@ function squash(s: string): string {
 
 const SHOWS_SPILL = new Set(['', 'visible']);
 
+/* the Task Manager */
 function cutsOff(n: HTMLElement): boolean {
     if (n.scrollWidth > n.clientWidth) return true;
     return n.scrollHeight > n.clientHeight && !SHOWS_SPILL.has(getComputedStyle(n).overflowY);

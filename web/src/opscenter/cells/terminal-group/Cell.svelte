@@ -31,6 +31,8 @@
   import ZoneToolbar from '../../../lib/zone-shell/ZoneToolbar.svelte';
   import { createZone } from '../../../lib/zone-shell/zone.svelte';
   import { linkZoneToFrame, seedFrameHeader } from '../../../lib/zone-shell/frame-link.svelte';
+  import { applyComet, cometKind } from '../../../lib/comet/comet';
+  import { comet, startComet } from '../../../lib/comet/comet-pref.svelte';
   import type { TabRef, ZoneMenuAnchor } from '../../../lib/zone-shell/zone-types';
 
   let props: CellProps = $props();
@@ -103,6 +105,15 @@
     return () => {
       frameHeader.title = null;
     };
+  });
+
+  startComet();
+  $effect(() => {
+    const frame = root?.closest<HTMLElement>('.oc-frame');
+    if (!frame) return;
+    const face = ctl.items.find((item) => item.id === ctl.active)?.face;
+    applyComet(frame, comet.on ? cometKind(face) : null, comet.lap);
+    return () => applyComet(frame, null, comet.lap);
   });
 
   $effect(() => {

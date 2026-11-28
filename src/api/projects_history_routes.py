@@ -12,6 +12,7 @@ from fastapi.concurrency import run_in_threadpool
 
 from src.api import peer_auth
 from src.config import settings
+from src.core.backup_health import offload_guard
 from src.core.federation import peer_fanout, peer_merge
 from src.models.project_history import ProjectHistoryResponse
 from src.api.error_response import api_error
@@ -104,6 +105,9 @@ async def get_projects_history(
     offset: int = Query(0, description="Groups to skip"),
     limit: int = Query(25, description="Groups per page, 1 to 100"),
     session_limit: int = Query(10, description="Sessions returned per group, 1 to 500; session_total says how many match"),
+    offloaded: bool = Query(
+        False, description="Also list a session whose conversation is offloaded to the backup vault, whatever its state (the page offers its restore)"
+    ),
     include_automated: bool = Query(
         False,
         description="Include kind='automated' rows (scheduler runs, headless probes). Off by default: lists are the user's own.",
@@ -139,7 +143,7 @@ async def get_projects_history(
         parsed = HistoryQuery.parse(
             q=q, state=state, agent=agent, since=since, until=until,
             project_state=project_state, include_empty=include_empty, project=project,
-            sort=sort, offset=offset, limit=limit, session_limit=session_limit,
+            sort=sort, offset=offset, limit=limit, session_limit=session_limit, offloaded=offloaded,
         )
     except HistoryQueryError as exc:
         raise api_error(400, "invalid_request", exc, step="get_projects_history") from exc
@@ -175,6 +179,7 @@ async def get_projects_history(
         live_id_of=live_id_of,
         transcripts=transcripts,
         theme_of=_theme_reader(),
+        offloaded=await run_in_threadpool(offload_guard.offloaded_ids),
     )
     result = await run_in_threadpool(build_history, projects, rows, parsed, facts)
     logger.debug(

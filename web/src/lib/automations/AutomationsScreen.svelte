@@ -16,7 +16,7 @@
   import DetailPane from './pane/DetailPane.svelte';
   import { feed } from './feed-store.svelte';
   import { isUnread } from './logic/feed';
-  import { closePane, data, feedShown, follow, openNew, reloadFeed, setTop, takeAddress } from './page-store.svelte';
+  import { closeDrawer, closePane, data, feedShown, follow, openNew, reloadFeed, setTop, takeAddress } from './page-store.svelte';
   import { unread } from './read-state.svelte';
   import { writeFeedRun } from './route';
   import { AUTOMATIONS_TABS } from './tabs';
@@ -39,6 +39,14 @@
     })),
   );
   const paneShown = $derived(data.status === 'ready' && (data.top === 'automations' || (data.top === 'advanced' && data.tab === 'automations')));
+  const detailKind = $derived<'drawer' | 'pane' | null>(data.drawer ? 'drawer' : paneShown && data.paneOpen ? 'pane' : null);
+  const detailTitle = $derived(
+    detailKind === 'pane'
+      ? t('automations.page.pane.title')
+      : detailKind === 'drawer'
+        ? t(data.drawer?.kind === 'run' ? 'automations.simple.dr.label_run' : 'automations.simple.dr.label_automation')
+        : undefined,
+  );
   const canAdd = $derived(data.targets !== null);
 
   $effect(() => (open && !data.fixture ? follow() : undefined));
@@ -83,6 +91,10 @@
 
 {#snippet notice()}<State inline title={data.notice ?? ''} data-automations-notice />{/snippet}
 
+{#snippet detailContent()}
+  {#if detailKind === 'drawer'}<ItemDrawer />{:else}<DetailPane />{/if}
+{/snippet}
+
 {#if open}
   <Page
     title={t('automations.page.title')}
@@ -94,6 +106,11 @@
     data-pane-open={data.paneOpen ? '' : undefined}
     data-drawer-open={data.drawer ? '' : undefined}
     notes={data.notice ? notice : undefined}
+    detail={detailKind ? detailContent : undefined}
+    {detailTitle}
+    detailFill
+    detailAccent={detailKind === 'drawer'}
+    onDetailClose={detailKind === 'drawer' ? closeDrawer : closePane}
   >
     {#snippet actions()}
       <div class="ap-acts">
@@ -116,7 +133,5 @@
         <OverviewTab />
       {/if}
     </div>
-    {#if paneShown}<DetailPane />{/if}
-    <ItemDrawer />
   </Page>
 {/if}

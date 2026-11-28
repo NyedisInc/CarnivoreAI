@@ -1,6 +1,7 @@
 import { ApiError } from '../../opscenter/api/auth.svelte';
 import { openSession } from '../../plugins/sdk/sessions.svelte';
 import { t } from '../i18n/index.svelte';
+import { CANCELLED, runWithOffloadRestore } from '../offload-prompt/offload-prompt';
 import type { ConversationTarget, OpenOutcome } from '../conversation-open/open';
 import { bookmarkAt, branchAt, copyText, linkUrl, resumeSession } from './result-actions';
 import type { DeepGroup, DeepHit } from './deepsearch-api';
@@ -26,7 +27,8 @@ export class HitRunner {
     this.#host.say('');
     if ((state !== 'live' && state !== 'asleep') || !group.sessionUuid) return false;
     try {
-      if (state === 'asleep') await resumeSession(group.sessionUuid);
+      const uuid = group.sessionUuid;
+      if (state === 'asleep' && (await runWithOffloadRestore({ sessionUuid: uuid, conversationId: group.conversationId }, () => resumeSession(uuid))) === CANCELLED) return false;
       const outcome = await this.#host.open(targetOf(group));
       return outcome === 'switched' || outcome === 'page';
     } catch (err) {

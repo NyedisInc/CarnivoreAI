@@ -25,6 +25,7 @@ from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, Inst
 from src.plugins.host import developer_mode, identity, risk, runtime, sideload, sideload_git, sideload_kind, sideload_other
 from src.plugins.host import state as owner_state
 from src.plugins.host.owner_switch import _runtime as _sidecar_runtime
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, has_v2_manifest, load_raw_v2
 
 logger = structlog.get_logger()
 
@@ -79,12 +80,19 @@ async def _stop(live: Any, name: str, *, forget: bool = False) -> None:
     await live.supervisor.disable(name, "sideload")
     await asyncio.to_thread(live.effects.cancel, name)
     if forget:
-        live.supervisor.forget(name)
+        if hasattr(live.supervisor, "forget_plugin"):
+            await live.supervisor.forget_plugin(name)
+        else:
+            live.supervisor.forget(name)
 
 
 async def stop_all_local(live: Any) -> None:
+    from src.plugins.host import dev_lease, dev_routes  # noqa: PLC0415
+
+    dev_lease.store_for(live.state_dir).clear_all()
     for name in list(sideload.items(live.state_dir)):
-        await _stop(live, name)
+        async with dev_routes.reload_lock(live.state_dir, name):
+            await _stop(live, name)
     await asyncio.to_thread(_reload, live)
 
 
@@ -160,12 +168,27 @@ def name_of(source: Path, given: Optional[str]) -> str:
         if not isinstance(given, str) or not identity.INSTALL_NAME.match(given):
             raise sideload.SideloadRefused("name_invalid", f"an install name must match {identity.INSTALL_NAME.pattern}", 409)
         return given
-    try:
-        found = json.loads((source / "cplug.json").read_text(encoding="utf-8")).get("id")
-    except (OSError, ValueError, AttributeError):
-        found = None
+    found: Any = None
+    if has_v2_manifest(source):
+        try:
+            raw, _fname = load_raw_v2(source)
+            found = raw.get("id")
+        except (ManifestV2Error, OSError, ValueError, AttributeError):
+            found = None
+    elif (source / "cplug.json").is_file():
+        try:
+            found = json.loads((source / "cplug.json").read_text(encoding="utf-8")).get("id")
+        except (OSError, ValueError, AttributeError):
+            found = None
+    elif (source / "carnivore.json").is_file():
+        try:
+            raw_c = json.loads((source / "carnivore.json").read_text(encoding="utf-8"))
+            raw_id = raw_c.get("id") if isinstance(raw_c, dict) else None
+            found = raw_id.rpartition("/")[2] if isinstance(raw_id, str) and "/" in raw_id else raw_id
+        except (OSError, ValueError, AttributeError):
+            found = None
     if not isinstance(found, str) or not identity.INSTALL_NAME.match(found):
-        raise sideload.SideloadRefused("source_missing", "the folder has no readable cplug.json with a valid id", 422)
+        raise sideload.SideloadRefused("source_missing", "the folder has no readable manifest with a valid id", 422)
     return found
 
 
@@ -178,8 +201,9 @@ def _sync_blocking(state_dir: Path, source: Path, given: Optional[str]) -> Dict[
             shutil.rmtree(staging, ignore_errors=True)
             sideload.touch(state_dir, name, source, sideload.wall)
             return {"name": name, "digest": digest, "unchanged": True, "staging": None, "manifest": manifest}
-        shipped = frozenset(d.id for d in runtime.definitions())
-        identity.register_install(state_dir, name, f"{sideload.LOCAL_PUBLISHER}/{name}", shipped, sideload=True, source=str(source))
+        shipped = runtime.reserved_plugin_ids()
+        identity.register_install(state_dir, name, f"{sideload.LOCAL_PUBLISHER}/{name}", shipped, sideload=True, source=str(source),
+                                  renamed_ids=runtime.renamed_ids())
     except identity.InstallRefused as exc:
         shutil.rmtree(staging, ignore_errors=True)
         raise HTTPException(status_code=409, detail={"code": exc.code, "detail": str(exc)}) from exc
@@ -249,7 +273,7 @@ async def _sync_other(live: Any, kind: str, source: Path, given: Optional[str], 
 
 
 async def sync_folder(live: Any, source: Path, given: Optional[str], *, env: Optional[sideload_other.Env] = None, consent: Optional[InstallConsent] = None,
-                      root: Optional[Path] = None) -> Dict[str, Any]:
+                      root: Optional[Path] = None, _lock_held: bool = False) -> Dict[str, Any]:
     state_dir = live.state_dir
     if not source.is_symlink():
         source = Path(os.path.realpath(source))
@@ -262,19 +286,27 @@ async def sync_folder(live: Any, source: Path, given: Optional[str], *, env: Opt
     if kind != kinds.KIND_CPLUG:
         return await _sync_other(live, kind, source, given, env, consent)
     try:
-        staged = await asyncio.to_thread(_sync_blocking, state_dir, source, given)
-        manifest = staged["manifest"]
-        changed: list = []
-        if not staged["unchanged"]:
-            await _stop(live, staged["name"])
-            changed = await asyncio.to_thread(_commit_blocking, state_dir, source, staged)
-            await asyncio.to_thread(_reload, live)
+        plugin_name = await asyncio.to_thread(name_of, source, given)
+        from src.plugins.host import dev_routes  # noqa: PLC0415
+
+        lock_cm: Any = contextlib.nullcontext() if _lock_held else dev_routes.reload_lock(state_dir, plugin_name)
+        async with lock_cm:
+            staged = await asyncio.to_thread(_sync_blocking, state_dir, source, given)
+            manifest = staged["manifest"]
+            changed: list = []
+            if not staged["unchanged"]:
+                from src.plugins.host import dev_lease  # noqa: PLC0415
+
+                dev_lease.store_for(state_dir).revoke_plugin(staged["name"])
+                await _stop(live, staged["name"])
+                changed = await asyncio.to_thread(_commit_blocking, state_dir, source, staged)
+                await asyncio.to_thread(_reload, live)
+            held = owner_state.get(state_dir, manifest)
     except sideload.SideloadRefused as exc:
         raise _refuse(exc) from exc
     except (OSError, ValueError) as exc:
         logger.warning("cplug_sideload_failed", error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail={"code": "sideload_failed", "detail": "the folder could not be copied or recorded"}) from exc
-    held = owner_state.get(state_dir, manifest)
     return {"id": staged["name"], "kind": kinds.KIND_CPLUG, "item_id": f"{sideload.LOCAL_PUBLISHER}/{staged['name']}", "tier": sideload.TIER_LOCAL, "unverified": True,
             "digest": staged["digest"], "unchanged": staged["unchanged"], "changed": changed,
             "needs_approval": held.enabled and risk.consent_owed(sideload.TIER_LOCAL, staged["digest"], held.digest)}
@@ -309,14 +341,18 @@ async def delete_sideload(request: Request, name: str = Query(..., min_length=1,
         raise HTTPException(status_code=409, detail={"code": "kind_required", "detail": f"{name} is sideloaded as {' and '.join(held)}; say which kind"})
     if held[0] != kinds.KIND_CPLUG:
         return await _remove_other(live, request, held[0], name)
-    await _stop(live, name, forget=True)
-    try:
-        found = await asyncio.to_thread(_delete_blocking, live.state_dir, name)
-    except sideload.SideloadRefused as exc:
-        raise _refuse(exc) from exc
-    if not found:
-        raise HTTPException(status_code=404, detail={"code": "sideload_unknown", "detail": f"{name} is not sideloaded"})
-    await asyncio.to_thread(_reload, live)
+    from src.plugins.host import dev_lease, dev_routes  # noqa: PLC0415
+
+    async with dev_routes.reload_lock(live.state_dir, name):
+        dev_lease.store_for(live.state_dir).revoke_plugin(name)
+        await _stop(live, name, forget=True)
+        try:
+            found = await asyncio.to_thread(_delete_blocking, live.state_dir, name)
+        except sideload.SideloadRefused as exc:
+            raise _refuse(exc) from exc
+        if not found:
+            raise HTTPException(status_code=404, detail={"code": "sideload_unknown", "detail": f"{name} is not sideloaded"})
+        await asyncio.to_thread(_reload, live)
     return {"removed": name}
 
 

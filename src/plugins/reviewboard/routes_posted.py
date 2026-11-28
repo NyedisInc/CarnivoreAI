@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.plugins.reviewboard import opener, pages, wire
 from src.plugins.reviewboard.errors import BoardError, BoardNotFound
-from src.plugins.reviewboard.routes import Ctx, router
+from src.plugins.reviewboard.routes_common import Ctx, router
 from src.plugins.sdk import CplugContext
 
 

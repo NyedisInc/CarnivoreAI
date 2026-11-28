@@ -111,7 +111,7 @@ async def _tracker_wins(app_state: Any, ops: Any, card: Mapping[str, Any], row: 
     note = f"the tracker {word} this story ({row.get('source') or 'argent'} {row.get('external_key') or row['id']}). finish your turn and stop; the tracker decides."
     for target in (("todo",) if verdict == BACKLOG else ("done", "todo")):
         try:
-            await ops.set_column(app_state, int(card["id"]), {"column": target, "note": note if mid_work else ""}, by="owner")
+            await ops.set_column(app_state, int(card["id"]), {"column": target, "note": note if mid_work else "", "from_tracker": True}, by="owner")
         except CardRefused as exc:
             logger.info("argent_card_tracker_move_refused", code=exc.code, target=target)
             continue

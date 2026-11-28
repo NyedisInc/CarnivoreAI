@@ -4,6 +4,7 @@ import { contextFromRow, type RowMenuCtx } from '../item-menu/row-context';
 import { ROW_ITEMS } from '../item-menu/menus/row-items';
 import { runTable } from '../item-menu/run/index';
 import { readAnimations, saveAnimations } from '../motion/animations-pref';
+import { resolvePluginCommands, runSlotDescriptorAction } from '../plugins/slot-actions';
 import type { DrawerRowLike, PaletteItem } from './palette-sources';
 
 export const PALETTE_CONTAINER = 'command-palette';
@@ -50,9 +51,28 @@ export function appActions(rows: readonly DrawerRowLike[]): PaletteItem[] {
         app('animations', readAnimations() ? 'palette.action.animations_off' : 'palette.action.animations_on', () => saveAnimations(!readAnimations())),
         app('settings', 'palette.action.settings', () => host.openSettings()),
         app('pair-computer', 'palette.action.pair_computer', () => host.openHosts()),
+        app('build-plugin', 'palette.action.build_plugin', () => host.openPluginStudio()),
     ];
     if (typeof terminalSearch === 'function') list.push(app('terminal-search', 'palette.action.terminal_search', () => terminalSearch()));
     const inView = host.primarySessionId();
     const row = inView ? rows.find((r) => r.session_id === inView) : undefined;
-    return row ? [...list, ...sessionActions(row)] : list;
+    const matchedRow = row ?? (inView ? rows.find((r) => r.session_uuid === inView) : undefined);
+    const sessionRef = matchedRow
+        ? String(matchedRow.session_uuid || matchedRow.session_id || matchedRow.name || '') || null
+        : (inView || null);
+    const pluginItems: PaletteItem[] = resolvePluginCommands().map((cmd) => ({
+        id: `plugin-cmd:${cmd.pluginId}:${cmd.commandId}`,
+        kind: 'action',
+        title: cmd.label,
+        subtitle: cmd.subtitle,
+        run: () =>
+            runSlotDescriptorAction(cmd.pluginId, cmd.action, {
+                sessionRef,
+                confirm: cmd.confirm,
+                title: cmd.label,
+                tone: cmd.tone,
+            }),
+    }));
+    const base = row ? [...list, ...sessionActions(row)] : list;
+    return pluginItems.length ? [...base, ...pluginItems] : base;
 }

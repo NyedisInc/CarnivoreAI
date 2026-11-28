@@ -9,22 +9,23 @@ import structlog
 logger = structlog.get_logger()
 
 PAGE_KEYS = ("menu", "main")
+PAGE_OPTIONAL_KEYS = ("popout",)
 TOPIC_NAME = re.compile(r"^[a-z][a-z0-9_]{0,23}$")
 MAX_TOPICS = 8
 PAGE_SURFACE = "panel"
 
 
-def parse_page(raw: Any, views: Sequence[Mapping[str, Any]]) -> Tuple[Optional[Mapping[str, str]], str]:
+def parse_page(raw: Any, views: Sequence[Mapping[str, Any]]) -> Tuple[Optional[Mapping[str, Any]], str]:
     if raw is None:
         return None, ""
     if not isinstance(raw, dict):
         return None, "page must be an object"
-    unknown = sorted(set(raw) - set(PAGE_KEYS))
+    unknown = sorted(set(raw) - set(PAGE_KEYS) - set(PAGE_OPTIONAL_KEYS))
     if unknown:
         logger.warning("cplug_page_unknown_keys", keys=[k[:40] for k in unknown])
     panels = {v["name"] for v in views if PAGE_SURFACE in v.get("surfaces", ())}
     declared = {v["name"] for v in views}
-    page = {}
+    page: dict[str, Any] = {}
     for key in PAGE_KEYS:
         name = raw.get(key)
         if not isinstance(name, str) or not name:
@@ -34,6 +35,11 @@ def parse_page(raw: Any, views: Sequence[Mapping[str, Any]]) -> Tuple[Optional[M
         if name not in panels:
             return None, f"page.{key} names a view without the panel surface"
         page[key] = name
+    if "popout" in raw:
+        pop = raw["popout"]
+        if not isinstance(pop, (bool, dict)):
+            return None, "page.popout must be a boolean or object"
+        page["popout"] = dict(pop) if isinstance(pop, dict) else pop
     return page, ""
 
 

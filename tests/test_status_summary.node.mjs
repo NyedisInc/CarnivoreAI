@@ -440,6 +440,18 @@ test('ONE working among idle reads working / active', () => {
     assert.equal(s.outer, 'active');
 });
 
+test('only-background work in a group reads the gray spinner; one generating member makes it green (#3118)', () => {
+    const bg = { status: 'working_subagent', activity_hint: 'background' };
+    const alone = plain(Summary.summarizeStates([{ status: 'idle' }, bg]));
+    assert.equal(alone.inner, 'background');
+    assert.equal(alone.outer, 'steady');
+    assert.equal(alone.bucket, 'working');
+    const mixed = plain(Summary.summarizeStates([bg, { status: 'working' }]));
+    assert.equal(mixed.inner, 'working');
+    assert.equal(mixed.outer, 'active');
+    assert.equal(plain(Summary.summarizeStates([{ status: 'working_subagent' }])).inner, 'working');
+});
+
 test('ONE done-unread among read rows reads done / unread - and never breathes', () => {
     const s = plain(
         Summary.summarizeStates([

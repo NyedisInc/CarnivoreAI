@@ -108,4 +108,7 @@ def assert_no_dangling_assets(plugin_id: str) -> None:
     if d.router is not None:
         assert all(r.path.startswith(prefix) for r in d.router.routes), "a route outside the plugin's prefix"
     assert set(d.tools) <= set(d.manifest.surfaces.mcp_tools), "a tool the manifest does not declare"
-    assert REPO_ROOT.joinpath("src", "plugins", plugin_id, "cplug.json").is_file()
+    assert (
+        REPO_ROOT.joinpath("src", "plugins", plugin_id, "carnivore.toml").is_file()
+        or REPO_ROOT.joinpath("src", "plugins", plugin_id, "cplug.json").is_file()
+    )

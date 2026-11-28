@@ -137,24 +137,21 @@ def _route_fixture(monkeypatch, *, scripts: int):
 
 
 @pytest.mark.asyncio
-async def test_a_cplug_with_scripts_is_refused_before_anything_is_fetched(monkeypatch):
-    from fastapi import HTTPException
-    from src.api.catalog_install_support import fetch_and_stage_with
+async def test_a_cplug_with_scripts_is_not_hard_refused_before_consent(monkeypatch):
+    from src.api.catalog_install_support import refuse_cplug_scripts
 
     item = SimpleNamespace(id="acme/clock", kind=kinds.KIND_CPLUG)
-    with pytest.raises(HTTPException) as err:
-        await fetch_and_stage_with(SimpleNamespace(), item, SimpleNamespace(scripts=2), allow_scripts=True)
-    assert err.value.status_code == 409 and err.value.detail["code"] == "scripts_not_supported"
+    assert refuse_cplug_scripts(item, SimpleNamespace(scripts=2)) is None
 
 
 @pytest.mark.asyncio
-async def test_install_refuses_cplug_scripts_with_the_clear_code_not_a_consent_request(monkeypatch):
+async def test_install_demands_consent_for_cplug_scripts(monkeypatch):
     from fastapi import HTTPException
 
     routes, request, body, calls = _route_fixture(monkeypatch, scripts=3)
     with pytest.raises(HTTPException) as err:
         await routes.run_install(request, body)
-    assert err.value.detail["code"] == "scripts_not_supported"
+    assert err.value.detail["code"] == "consent_required"
     assert calls == ["root"]
 
 

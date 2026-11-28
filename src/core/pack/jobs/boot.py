@@ -10,7 +10,9 @@ from typing import Any, Optional
 
 import structlog
 
-from src.core.pack.jobs import agent_facts, agent_host, agent_launch, carry, host_admit, install, keep_sync, paths, place, prewarm, tell
+from src.core.federation import mesh_peers
+from src.core.pack.machines import capabilities as caps_mod
+from src.core.pack.jobs import agent_facts, agent_host, agent_launch, carry, host_admit, install, keep_sync, member_view, paths, place, prewarm, replicas, tell
 from src.core.pack.jobs.engine import Engine
 from src.core.pack.jobs.feed import JobsFeed
 from src.core.pack.jobs.host import Host, default_request_for
@@ -91,8 +93,30 @@ def build(app: Any = None) -> "tuple[Host, Engine]":
     installer = install.Installer(the_host.store, jobs_root, restrictions=the_host._restrictions, owns_job=owns,  # noqa: SLF001
                                   on_installing=_publish_installing, on_done=_reprobe_after_install)
     _wire_feed(app, the_host, the_engine)
+    _wire_jobs_load_extra(the_host)
     _built.update(host=the_host, engine=the_engine, installer=installer)
     return the_host, the_engine
+
+
+def _wire_jobs_load_extra(the_host: Host) -> None:
+    try:
+        from src.core.pack.jobs.types import HostState
+        from src.core.pack.machines import runtime
+        from src.core.pack.reserve.holds import HOLDS
+
+        wired = runtime.wiring()
+        if wired is None:
+            return
+
+        def jobs_load() -> dict:
+            live = the_host.store.host_list([HostState.PREPARING, HostState.RUNNING, HostState.PARKED])
+            warm = sorted({r["project_uid"] for r in the_host.store.slot_rows() if r.get("project_uid") and r.get("memo")})[:64]
+            held_cpu, held_ram, held_n = HOLDS.total()
+            return {"active_count": len(live), "held_cpu": held_cpu, "held_ram_gb": held_ram, "held_n": held_n, "warm_projects": warm}
+
+        wired.runtime.collector.add_extra("jobs_load", jobs_load)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _keep_sync(the_engine: Engine) -> keep_sync.KeepSync:
@@ -110,10 +134,20 @@ def _keep_sync(the_engine: Engine) -> keep_sync.KeepSync:
 
         return beast_mode.approval_skip("delegate")
 
-    syncer = keep_sync.KeepSync(the_engine.store, carry=carry.default_carry, view_for=place.live_view, gauge=host_admit.own_snapshot, prewarm=warm,
-                                project_of=carry.project_row, may_prewarm=may_prewarm)
+    async def make_copy(name: str, uid: str, peer: str) -> bool:
+        from src.core.pack.identity import home
+
+        made = await replicas.ensure(name, uid, peer, store=the_engine.store)
+        home.notify_changed()
+        return made
+
+    syncer = keep_sync.KeepSync(the_engine.store, carry=functools.partial(carry.default_carry, copy_send=True), view_for=place.live_view, gauge=host_admit.own_snapshot, prewarm=warm,
+                                project_of=carry.project_row, may_prewarm=may_prewarm, make_copy=make_copy,
+                                members=functools.partial(member_view.for_copies, store=the_engine.store, self_iid=the_engine.install_id))
     if peer_links.LINKS is not None:
         peer_links.LINKS.add_connect_listener(syncer.on_reconnect)
+    if caps_mod.mesh_on():
+        mesh_peers.add_connect_listener(syncer.on_reconnect)
     return syncer
 
 

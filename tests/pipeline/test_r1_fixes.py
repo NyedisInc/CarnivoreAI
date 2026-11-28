@@ -42,8 +42,8 @@ def test_m1_a_stored_off_save_plugin_stops_neither_the_boot_nor_a_lifecycle_trig
     fake = type("FakeEngine", (), {"db_path": db, "write_milestone": lambda self, *a, **k: written})()
     monkeypatch.delenv("CLOUDE_TEST_MODE", raising=False)
     monkeypatch.delenv("CLOUDE_SAVE_PIPELINE", raising=False)
-    monkeypatch.setattr(runtime, "start", lambda *a: started.append(a))
-    monkeypatch.setattr(runtime, "ensure", lambda *a: fake)
+    monkeypatch.setattr(runtime, "start", lambda *a, **k: started.append(a))
+    monkeypatch.setattr(runtime, "ensure", lambda *a, **k: fake)
     assert wiring.install() is True and started == [()]
     assert triggers.enqueue("kill", lambda conn: None, state_dir=tmp_path, db_path=db).result(timeout=5).state == "done"
 

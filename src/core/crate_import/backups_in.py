@@ -124,8 +124,9 @@ def _incoming(reader: CrateReader, point: Point, env: ImportEnv, enc: Dict[str, 
     for item in meta["files"]:
         record = point.records[item["n"]]
         rel = _remap_rel(item["home"], str(item["rel"]), enc)
+        home = home_of.get(item["home"]) or (home_of["codex"] if str(item["home"]).startswith("codex@") else Path("/"))
         files.append(fb.IncomingFile(
-            role=str(item["role"]), home=str(item["home"]), rel=rel, source_path=str(home_of.get(item["home"], Path("/")) / rel),
+            role=str(item["role"]), home=str(item["home"]), rel=rel, source_path=str(home / rel),
             length=int(item["length"]), sha256=record.content_sha256, mode=int(item.get("mode") or 0), mtime_ns=int(item.get("mtime_ns") or 0),
             lines=int(item.get("lines") or 0), read=lambda r=record: reader.file_chunks(r)))
     working = meta.get("working_dir")

@@ -92,7 +92,7 @@ describe('the item menu draws the colors entry as the swatch row', () => {
         const picks: string[] = [];
         real.itemMenuState.open = {
             type: 'project',
-            nodes: entryNodes([{ label: '', id: 'project-color', onPick: () => undefined, colors: { value: '#4e69ba', onPick: (k) => picks.push(k) } }], () => '', () => {}),
+            nodes: entryNodes([{ label: '', id: 'project-color', onPick: () => undefined, colors: { value: '#4a80eb', onPick: (k) => picks.push(k) } }], () => '', () => {}),
             ariaLabel: 'menu', at: null, anchor: document.body, nestedIn: null, seq: 0,
         };
         const { default: ItemMenuHost } = await import('../item-menu/ItemMenuHost.svelte');
@@ -102,9 +102,9 @@ describe('the item menu draws the colors entry as the swatch row', () => {
         flushSync();
         const row = host.querySelector('[data-heading-menu-colors] [data-project-color-picker]');
         expect(row).not.toBeNull();
-        expect(host.querySelector('[data-project-color="#4e69ba"]')!.getAttribute('aria-checked')).toBe('true');
-        host.querySelector<HTMLElement>('[data-project-color="#966356"]')!.click();
-        expect(picks).toEqual(['#966356']);
+        expect(host.querySelector('[data-project-color="#4a80eb"]')!.getAttribute('aria-checked')).toBe('true');
+        host.querySelector<HTMLElement>('[data-project-color="#e6495c"]')!.click();
+        expect(picks).toEqual(['#e6495c']);
         unmount(app);
         real.itemMenuState.open = null;
         host.remove();

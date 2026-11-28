@@ -47,6 +47,7 @@ export class ProjectsController {
     status = $state<'loading' | 'ready' | 'error'>('loading');
     errorText = $state('');
     notice = $state('');
+    noticeKind = $state<'info' | 'error'>('info');
     overview = $state<HistoryGroup[]>([]);
     /* did not answer */
     peerGroups = $state<HistoryGroup[]>([]);
@@ -283,13 +284,16 @@ export class ProjectsController {
     async #runProject(call: () => Promise<unknown>): Promise<void> {
         this.projectBusy = true;
         this.notice = '';
+        this.noticeKind = 'info';
         try {
             await call();
             await this.load();
         } catch (error) {
+            this.noticeKind = 'error';
             this.notice = this.#words(error);
         } finally {
             this.projectBusy = false;
+            this.#deps.onChanged?.();
         }
     }
 
@@ -451,14 +455,17 @@ export class ProjectsController {
         if (!yes) return;
         this.projectBusy = true;
         this.notice = '';
+        this.noticeKind = 'info';
         try {
             await remove(name);
             if (this.route.project === key) this.go(PROJECTS_HOME);
             await this.load();
         } catch (error) {
+            this.noticeKind = 'error';
             this.notice = this.#words(error);
         } finally {
             this.projectBusy = false;
+            this.#deps.onChanged?.();
         }
     }
 

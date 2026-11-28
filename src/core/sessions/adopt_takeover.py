@@ -70,7 +70,7 @@ def _refusal(owner: Mapping[str, Any], socket: str) -> Optional[str]:
     return None
 
 
-def _recreate_in_flight(owner: Mapping[str, Any]) -> Optional[str]:
+def recreate_in_flight(owner: Mapping[str, Any]) -> Optional[str]:
     from src.core import restart_inflight
 
     if restart_inflight.in_flight(str(owner.get("session_uuid") or "")):
@@ -102,7 +102,7 @@ def take_over_retired_owner(
     owner = row_for_claude_uuid(conn, claude_uuid or "")
     if owner is None:
         return AdoptTakeover(None, None, "no row records this conversation")
-    refusal = _recreate_in_flight(owner) or _refusal(owner, socket) or _ambiguity(conn, claude_uuid or "")
+    refusal = recreate_in_flight(owner) or _refusal(owner, socket) or _ambiguity(conn, claude_uuid or "")
     if refusal is None:
         decision = decide_conversation_takeover(
             incumbent_row_id=owner.get("id"),

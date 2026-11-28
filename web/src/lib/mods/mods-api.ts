@@ -15,6 +15,7 @@ export interface ModEntry {
   is_mod: boolean;
   present: boolean;
   removable: boolean;
+  restored?: boolean;
 }
 
 export interface ModGroup {

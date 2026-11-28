@@ -13,6 +13,7 @@ from src.api.auth import require_auth
 from src.api.swarm_switch_routes import require_swarm_on
 from src.core import db, session_change_notice, single_flight
 from src.core.read_caches.ttl_flight import TtlFlight
+from src.core.swarm.types import ProjectMissing, TurnOnError
 from src.core.swarm import answers, body, fact_life, company_agent, company_promote, create, export as swarm_export, facts, leaders, memory, owner_message, profiles, project_agent, project_promote, promotion, rename as swarm_rename, rewind, routing, settings as swarm_settings, promotion_store, store, stream, thread_port, turn_off, views
 from src.core.swarm.body import BodyError
 from src.models.swarm import (
@@ -138,9 +139,9 @@ async def turn_on_project_agent(project_id: int, request: Request, payload: Opti
         agent = await project_agent.turn_on(request.app.state, project_id, (payload or SwarmTurnOnRequest()).launch_profile)
     except profiles.ProfileRefused as exc:
         raise HTTPException(status_code=422, detail={"code": "invalid_agent", "message": str(exc)}) from exc
-    except project_agent.ProjectMissing as exc:
+    except ProjectMissing as exc:
         raise HTTPException(status_code=404, detail={"code": "project_not_found", "message": str(exc)}) from exc
-    except project_agent.TurnOnError as exc:
+    except TurnOnError as exc:
         raise HTTPException(status_code=409, detail={"code": "swarm_refused", "message": str(exc)}) from exc
     except (BodyError, db.DatastoreUnreadableError, sqlite3.Error) as exc:
         _refused(exc)
@@ -157,9 +158,9 @@ async def promote_session_to_project_agent(project_id: int, payload: SwarmPromot
     """
     try:
         agent = await project_promote.promote_session(request.app.state, payload.session_uuid, project_id)
-    except project_agent.ProjectMissing as exc:
+    except ProjectMissing as exc:
         raise HTTPException(status_code=404, detail={"code": "project_not_found", "message": str(exc)}) from exc
-    except project_agent.TurnOnError as exc:
+    except TurnOnError as exc:
         raise HTTPException(status_code=409, detail={"code": "swarm_refused", "message": str(exc)}) from exc
     except (BodyError, db.DatastoreUnreadableError, sqlite3.Error) as exc:
         _refused(exc)
@@ -180,7 +181,7 @@ async def turn_on_company_agent(company_id: int, request: Request, payload: Opti
         raise HTTPException(status_code=422, detail={"code": "invalid_agent", "message": str(exc)}) from exc
     except company_agent.CompanyMissing as exc:
         raise HTTPException(status_code=404, detail={"code": "company_not_found", "message": str(exc)}) from exc
-    except project_agent.TurnOnError as exc:
+    except TurnOnError as exc:
         raise HTTPException(status_code=409, detail={"code": "swarm_refused", "message": str(exc)}) from exc
     except (BodyError, db.DatastoreUnreadableError, sqlite3.Error) as exc:
         _refused(exc)
@@ -199,9 +200,9 @@ async def promote_session_to_company_agent(company_id: int, payload: SwarmPromot
         agent = await company_promote.promote_session(request.app.state, payload.session_uuid, company_id)
     except company_agent.CompanyMissing as exc:
         raise HTTPException(status_code=404, detail={"code": "company_not_found", "message": str(exc)}) from exc
-    except project_agent.ProjectMissing as exc:
+    except ProjectMissing as exc:
         raise HTTPException(status_code=404, detail={"code": "project_not_found", "message": str(exc)}) from exc
-    except project_agent.TurnOnError as exc:
+    except TurnOnError as exc:
         raise HTTPException(status_code=409, detail={"code": "swarm_refused", "message": str(exc)}) from exc
     except (BodyError, db.DatastoreUnreadableError, sqlite3.Error) as exc:
         _refused(exc)

@@ -1,7 +1,7 @@
 import type { Translate } from '../sessions/types';
 import { LEDGER_KEYS } from './ledger-model';
 
-export type ProviderKind = 'claude' | 'codex';
+export type ProviderKind = 'claude' | 'codex' | 'antigravity';
 
 export const DEFAULT_CLAUDE_CONFIG_DIR = '~/.claude';
 
@@ -86,13 +86,13 @@ export function storedAccountBody(
 ): AccountBody | null {
     const name = typeof edit.name === 'string' ? edit.name.trim() : '';
     const color = edit.color;
-    const provider = stored.provider === 'codex' ? 'codex' : stored.provider;
-    if (!name || (provider !== 'claude' && provider !== 'codex')) return null;
-    const managed = stored.managed === true;
+    const provider = stored.provider;
+    if (!name || (provider !== 'claude' && provider !== 'codex' && provider !== 'antigravity')) return null;
+    const managed = provider === 'antigravity' ? false : stored.managed === true;
     const body: AccountBody = { name, provider, managed, color };
     // and an empty string
     if (typeof edit.short_name === 'string') body.short_name = edit.short_name.trim();
-    if (managed) return body;
+    if (managed || provider === 'antigravity') return body;
     const claudeDir = stored.claude_config_dir;
     const codexHome = stored.codex_home;
     if (typeof claudeDir !== 'string' || typeof codexHome !== 'string') return null;

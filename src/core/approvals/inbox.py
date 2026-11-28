@@ -23,6 +23,12 @@ Signature = FrozenSet[Tuple[str, str, str]]
 DEBOUNCE_SECONDS: float = 0.3
 
 
+async def startup_would_answer(dialog: Any, info: Any) -> bool:
+    from src.core.approvals.auto_answer.engine import will_answer  # noqa: PLC0415
+
+    return await will_answer(dialog, info)
+
+
 class Provider(Protocol):
 
     def signature(self) -> Signature:
@@ -96,7 +102,7 @@ class DialogProvider:
                 "plain_yes": plain_yes_label(dialog), "plain_no": plain_no_label(dialog),
                 "summary": summary_line(dialog) if plain_yes_label(dialog) else None,
                 "created_at": self._first_seen.get((session_id, dialog.fingerprint)),
-                "beast_would_answer": self._beast(session_id),
+                "beast_would_answer": self._beast(session_id) or (dialog.startup_kind is not None and await startup_would_answer(dialog, info)),
             }
             out.append({**item, **await served_fields(info, self._watcher(), dialog)})
         return out

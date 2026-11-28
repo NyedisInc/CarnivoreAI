@@ -12,6 +12,7 @@ import { watchKeepAwakeRepaint } from '../drawer/keep-awake-repaint';
 import { runTable } from '../item-menu/run';
 import { rowMenuBridge } from '../item-menu/row-bridge';
 import { closeRowMenu, installRowMenuOpener } from '../item-menu/row-open';
+import { setSleepingFolded } from '../drawer/sleep-fold.svelte';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..');
 
@@ -153,6 +154,7 @@ export function loadRowInteractions(sidebarShell: unknown): LegacyWindow {
 }
 
 export function startRowRun(groups: unknown[] = []) {
+    setSleepingFolded(false);
     confirmer?.stop();
     confirmer = autoAnswerConfirm((a) => {
         events.push(['app.confirm', a.title, a.message, a.details, a.okLabel, a.cancelLabel, a.variant === 'danger' ? 'danger' : 'primary']);

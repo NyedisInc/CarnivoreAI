@@ -35,7 +35,14 @@ const CPU_X86_64 = 0x01000007;
 const CPU_NAMES = { [CPU_ARM64]: 'arm64', [CPU_X86_64]: 'x86_64' };
 const FAT_MAGIC = 0xcafebabe;
 const FAT_MAGIC_64 = 0xcafebabf;
-const FRAMEWORK_REL = path.join('mac-universal', 'Carnivore.app', 'Contents', 'Frameworks', 'Electron Framework.framework', 'Versions', 'A', 'Electron Framework');
+const MH_MAGIC_64_LE = 0xcffaedfe;
+const MH_MAGIC_64_BE = 0xfeedfacf;
+const FRAMEWORK_IN_APP = path.join('Carnivore.app', 'Contents', 'Frameworks', 'Electron Framework.framework', 'Versions', 'A', 'Electron Framework');
+const FRAMEWORK_REL = path.join('mac-universal', FRAMEWORK_IN_APP);
+const SPLIT_TARGETS = [
+    { dir: 'mac-arm64', cpu: CPU_ARM64, arch: 'arm64' },
+    { dir: 'mac', cpu: CPU_X86_64, arch: 'x86_64' },
+];
 
 class FuseError extends Error {}
 
@@ -79,6 +86,32 @@ function fatSlices(buf) {
     return slices;
 }
 
+function extractWire(bytes, arch) {
+    const first = bytes.indexOf(SENTINEL);
+    if (first === -1) throw new FuseError(`the ${arch} slice has no fuse sentinel`);
+    if (bytes.indexOf(SENTINEL, first + 1) !== -1) throw new FuseError(`the ${arch} slice holds more than one fuse sentinel`);
+    const at = first + SENTINEL.length;
+    if (bytes[at] !== WIRE_VERSION) throw new FuseError(`the ${arch} slice carries fuse wire version ${bytes[at]}, this check reads version ${WIRE_VERSION}`);
+    const length = bytes[at + 1];
+    if (length <= WASM_TRAP_INDEX - 1 || at + 2 + length > bytes.length) throw new FuseError(`the ${arch} slice's fuse wire is ${length} long, shorter than the ${Object.keys(FUSE_INDEX).length} fuses this check pins`);
+    return { arch, wire: [...bytes.subarray(at + 2, at + 2 + length)] };
+}
+
+function readThinWire(buf, expectedCpu) {
+    if (buf.length < 8) throw new FuseError('the Electron Framework file is too small to be a Mach-O binary');
+    const magic = buf.readUInt32BE(0);
+    if (magic !== MH_MAGIC_64_LE && magic !== MH_MAGIC_64_BE) {
+        throw new FuseError('the Electron Framework is not a 64-bit Mach-O binary');
+    }
+    const cpu = magic === MH_MAGIC_64_LE ? buf.readUInt32LE(4) : buf.readUInt32BE(4);
+    const arch = CPU_NAMES[cpu];
+    if (!arch) throw new FuseError(`the Electron Framework carries unsupported CPU type 0x${cpu.toString(16)}`);
+    if (expectedCpu && cpu !== expectedCpu) {
+        throw new FuseError(`the Electron Framework is ${arch}, expected ${CPU_NAMES[expectedCpu]}`);
+    }
+    return [extractWire(buf, arch)];
+}
+
 function readSliceWires(buf) {
     const slices = fatSlices(buf);
     const out = [];
@@ -86,15 +119,7 @@ function readSliceWires(buf) {
         const slice = slices.find((s) => s.cpu === want);
         const arch = CPU_NAMES[want];
         if (!slice) throw new FuseError(`the Electron Framework has no ${arch} slice: the build is not universal`);
-        const bytes = buf.subarray(slice.start, slice.end);
-        const first = bytes.indexOf(SENTINEL);
-        if (first === -1) throw new FuseError(`the ${arch} slice has no fuse sentinel`);
-        if (bytes.indexOf(SENTINEL, first + 1) !== -1) throw new FuseError(`the ${arch} slice holds more than one fuse sentinel`);
-        const at = first + SENTINEL.length;
-        if (bytes[at] !== WIRE_VERSION) throw new FuseError(`the ${arch} slice carries fuse wire version ${bytes[at]}, this check reads version ${WIRE_VERSION}`);
-        const length = bytes[at + 1];
-        if (length <= WASM_TRAP_INDEX - 1 || at + 2 + length > bytes.length) throw new FuseError(`the ${arch} slice's fuse wire is ${length} long, shorter than the ${Object.keys(FUSE_INDEX).length} fuses this check pins`);
-        out.push({ arch, wire: [...bytes.subarray(at + 2, at + 2 + length)] });
+        out.push(extractWire(buf.subarray(slice.start, slice.end), arch));
     }
     return out;
 }
@@ -112,10 +137,20 @@ function mismatches(wires, expected) {
 }
 
 function checkBuilt(macOSDir, builderArgs) {
-    const expected = expectedFromPackage(JSON.parse(fs.readFileSync(path.join(macOSDir, 'package.json'), 'utf8')));
-    const binary = path.join(path.resolve(macOSDir, outputDirFromArgs(builderArgs)), FRAMEWORK_REL);
-    if (!fs.existsSync(binary)) throw new FuseError(`the build wrote no ${binary}: cannot read its fuses`);
-    const wires = readSliceWires(fs.readFileSync(binary));
+    const pkg = JSON.parse(fs.readFileSync(path.join(macOSDir, 'package.json'), 'utf8'));
+    const expected = expectedFromPackage(pkg);
+    const outRoot = path.resolve(macOSDir, outputDirFromArgs(builderArgs));
+    const universalBin = path.join(outRoot, FRAMEWORK_REL);
+    const wires = [];
+    if (fs.existsSync(universalBin)) {
+        wires.push(...readSliceWires(fs.readFileSync(universalBin)));
+    } else {
+        for (const target of SPLIT_TARGETS) {
+            const binary = path.join(outRoot, target.dir, FRAMEWORK_IN_APP);
+            if (!fs.existsSync(binary)) throw new FuseError(`the build wrote no ${binary}: cannot read its fuses`);
+            wires.push(...readThinWire(fs.readFileSync(binary), target.cpu));
+        }
+    }
     const bad = mismatches(wires, expected);
     if (bad.length > 0) throw new FuseError(`the built Electron's fuses differ from package.json: ${bad.join('; ')}`);
     return `built binary fuses match package.json on ${wires.map((w) => w.arch).join(' and ')} (${Object.keys(expected).length} fuses plus WasmTrapHandlers)`;
@@ -147,6 +182,6 @@ function main(argv) {
 if (require.main === module) process.exitCode = main(process.argv.slice(2));
 
 module.exports = {
-    SENTINEL, FUSE_INDEX, HARDENED, WASM_TRAP_INDEX, FRAMEWORK_REL, FuseError,
-    expectedFromPackage, checkPackage, fatSlices, readSliceWires, mismatches, checkBuilt,
+    SENTINEL, FUSE_INDEX, HARDENED, WASM_TRAP_INDEX, FRAMEWORK_REL, FRAMEWORK_IN_APP, SPLIT_TARGETS, FuseError,
+    expectedFromPackage, checkPackage, fatSlices, readThinWire, readSliceWires, mismatches, checkBuilt,
 };

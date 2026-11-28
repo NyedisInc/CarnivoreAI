@@ -5,6 +5,7 @@
 </script>
 
 <script lang="ts">
+  /* the Task Manager */
   import '../../../lib/ledger/ledger-chrome.css';
   import { untrack } from 'svelte';
   import type { CellProps } from '../../lib/cell';
@@ -43,6 +44,7 @@
   const unread = $derived(attentionUnread());
   const broken = $derived(rows.length === 0 && attentionBroken());
 
+  /* the Task Manager */
   const MARKS = { approval: 'check-circle', huddle: 'chat', alert: 'bell', automation: 'clock' } as const;
 
   async function open(row: QuestionRow): Promise<void> {

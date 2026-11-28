@@ -23,8 +23,17 @@ from tests.python.api_keys.conftest import bearer, client, owner_jwt  # noqa: F4
 
 NAME, ITEM = "pet", "acme/pet"
 VIEWS = [{"name": "walk", "surfaces": ["overlay", "panel"], "files": ["index.html", "pet.js", "pet.css", "art/pet.png", "art/logo.svg", "f.woff2"]}]
-CPLUG = {"schema": 1, "id": NAME, "name": "Pet", "description": "A pet.", "version": "1.0.0", "entry": "main.py",
-         "permissions": {"app": []}, "tools": [], "routes": ["feed"], "views": VIEWS}
+CPLUG = {
+    "schema": 2,
+    "id": NAME,
+    "name": "Pet",
+    "description": "A pet.",
+    "version": "1.0.0",
+    "kind": "plugin",
+    "author": "acme",
+    "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    "ui": {"routes": ["feed"], "views": VIEWS},
+}
 APP_CSP = ("default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; img-src 'self' data: blob:; "
            "font-src 'self' data:; frame-ancestors 'none';")
 
@@ -39,7 +48,7 @@ def world(tmp_path, monkeypatch):
     state = tmp_path / "state"
     root = state / "plugins" / NAME
     (root / "views" / "walk" / "art").mkdir(parents=True)
-    (root / "cplug.json").write_text(json.dumps(CPLUG))
+    (root / "carnivore.json").write_text(json.dumps(CPLUG))
     (root / "main.py").write_text("x = 1\n")
     v = root / "views" / "walk"
     (v / "index.html").write_text('<script src="pet.js"></script>')
@@ -75,7 +84,13 @@ def ticket(client, jwt, name="walk"):  # noqa: F811
 def test_a_declared_file_is_served_with_the_exact_view_policy_and_a_fixed_type(client, owner_jwt, world):  # noqa: F811
     base, index = ticket(client, owner_jwt)
     r = client.get(index)
-    assert r.status_code == 200 and r.content == b'<script src="pet.js"></script>'
+    assert r.status_code == 200
+    assert b'<link rel="stylesheet" href="carnivore-frame.css">' in r.content
+    assert b'<script src="pet.js"></script>' in r.content
+    frame_css = client.get(base + "carnivore-frame.css")
+    assert frame_css.status_code == 200 and frame_css.headers["content-type"].startswith("text/css")
+    assert frame_css.headers["cross-origin-resource-policy"] == "cross-origin"
+    assert "--oc-ground-page" in frame_css.text
     own = f"http://testserver{base}"
     assert r.headers["content-security-policy"] == (
         f"default-src 'none'; script-src {own}; style-src {own} 'unsafe-inline'; connect-src 'none'; img-src 'self' data: blob:; "
@@ -99,8 +114,8 @@ def test_the_apps_own_csp_is_byte_identical_and_the_view_route_does_not_leak_its
 def test_only_declared_files_of_the_view_in_the_code_root_are_served(client, owner_jwt, world):  # noqa: F811
     base, _ = ticket(client, owner_jwt)
     assert client.get(base + "secret.js").status_code == 404
-    assert client.get(base + "cplug.json").status_code == 404 and client.get(base + "../../cplug.json").status_code == 404
-    assert client.get(base + "..%2F..%2Fcplug.json").status_code == 404 and client.get(base + "%2e%2e/main.py").status_code == 404
+    assert client.get(base + "carnivore.json").status_code == 404 and client.get(base + "../../carnivore.json").status_code == 404
+    assert client.get(base + "..%2F..%2Fcarnivore.json").status_code == 404 and client.get(base + "%2e%2e/main.py").status_code == 404
     assert client.get(base + "views.js").status_code == 404
     (world.root / "views" / "walk" / "pet.js").unlink()
     (world.root / "views" / "walk" / "pet.js").symlink_to(world.root / "main.py")
@@ -143,17 +158,18 @@ def test_a_plugin_that_is_off_or_held_answers_409_for_the_file_and_the_ticket(cl
 
 
 def test_the_manifest_refuses_a_view_that_could_reach_outside_its_folder():
-    from src.plugins.host.sidecar_manifest import SidecarManifestError, parse_sidecar_manifest
+    from src.plugins.host.plugin_manifest import from_manifest_v2
+    from src.plugins.sdk.manifest_v2 import ManifestV2Error, parse_manifest_v2
 
     def parse(views):
-        return parse_sidecar_manifest({**CPLUG, "views": views}, NAME, "d")
+        return from_manifest_v2(parse_manifest_v2({**CPLUG, "ui": {"routes": ["feed"], "views": views}}), "d")
 
     assert parse(VIEWS).views[0]["files"][0] == "index.html"
     for bad in ([{"name": "w", "surfaces": ["panel"], "files": ["../x.js", "index.html"]}], [{"name": "w", "surfaces": ["panel"], "files": ["/etc/passwd.js", "index.html"]}],
                 [{"name": "w", "surfaces": ["panel"], "files": ["index.html", "a.exe"]}], [{"name": "w", "surfaces": ["panel"], "files": ["pet.js"]}],
                 [{"name": "w", "surfaces": ["page"], "files": ["index.html"]}], [{"name": "W", "surfaces": ["panel"], "files": ["index.html"]}],
                 [{"name": "w", "surfaces": ["panel"], "files": ["index.html"], "extra": 1}], [{"name": "w", "surfaces": ["panel"], "files": ["index.html", "html"]}]):
-        with pytest.raises(SidecarManifestError):
+        with pytest.raises(ManifestV2Error):
             parse(bad)
 
 
@@ -180,3 +196,19 @@ def test_the_view_policy_names_its_residual_network_channels():
 
     doc = build_view_csp.__doc__ or ""
     assert "WebRTC" in doc and "self-navigation" in doc and "will-frame-navigate" in doc
+
+
+def test_cplug_owner_tool_refuses_peer_token_with_403_peer_forbidden(client, world, monkeypatch):  # noqa: F811
+    import time
+    import jwt as pyjwt
+    from src.core.federation import peer_token
+
+    monkeypatch.setattr(peer_token, "is_peer_token", lambda tok: tok.startswith("peer."))
+    fake_peer = "peer." + pyjwt.encode({"typ": peer_token.PEER_TYP, "sub": "grant", "iat": int(time.time())}, "k", algorithm="HS256")
+    resp = client.post(
+        "/api/v1/cplug-owner/tool",
+        json={"cplug_id": NAME, "tool": "pet_say", "args": {}},
+        headers=bearer(fake_peer),
+    )
+    assert resp.status_code == 403
+    assert resp.json()["detail"]["code"] == "peer_forbidden"

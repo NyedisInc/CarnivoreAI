@@ -10,6 +10,7 @@ import pytest
 from tests.python.swarm.test_swarm_s7_smokefix import _db, _suggest, env  # noqa: F401,E402
 from src.core.db import connect, db_path_for
 from src.core.mcp.common import ToolError
+from src.core.swarm.types import TurnOnError
 from src.core.swarm import body_create, company_desk, project_agent, store, stream_sources
 
 
@@ -24,7 +25,7 @@ def test_a_company_hq_and_alpha_folder_take_no_project_agent_and_nothing_is_writ
         store.update_agent(conn, env.agents["alpha"]["id"], project_id=home["id"])
     before = _count(env)
     for project in (env.hq, home):
-        with pytest.raises(project_agent.TurnOnError, match="already runs|already sits"):
+        with pytest.raises(TurnOnError, match="already runs|already sits"):
             asyncio.run(project_agent.turn_on(SimpleNamespace(), project["id"]))
     with pytest.raises(ToolError):
         _suggest(env, "acmeboss", kind="project", name="Acme HQ", reason="turn on its agent")
@@ -48,7 +49,7 @@ def test_a_project_on_a_paired_computer_takes_no_agent_here_and_says_why(env):
         conn.commit()
         remote_id = cur.lastrowid
     before = _count(env)
-    with pytest.raises(project_agent.TurnOnError, match="another computer") as caught:
+    with pytest.raises(TurnOnError, match="another computer") as caught:
         asyncio.run(project_agent.turn_on(SimpleNamespace(), remote_id))
     assert "missing" not in str(caught.value)
     assert _count(env) == before

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from dataclasses import dataclass
 from typing import Callable, FrozenSet, List, Optional
 
@@ -39,12 +40,18 @@ class ListenerSnapshot:
     listeners: Optional[FrozenSet[int]]
     table: ProcessTable
 
-    def pane_listeners(self, pane_pid: int) -> List[int]:
+    def pane_listeners(self, pane_pid: int, exclude_pid: Optional[int] = None) -> List[int]:
         if pane_pid not in self.table.rows:
             raise MeasureError("the pane pid is not in the process table")
+        tree = [proc.pid for proc in self.table.descendants(pane_pid) if proc.pid != exclude_pid]
         if self.listeners is None:
-            return [proc.pid for proc in self.table.descendants(pane_pid) if pid_holds_listener(proc.pid)]
-        return [proc.pid for proc in self.table.descendants(pane_pid) if proc.pid in self.listeners]
+            return [pid for pid in tree if pid_holds_listener(pid)]
+        return [pid for pid in tree if pid in self.listeners]
+
+    def holder_label(self, pid: int) -> str:
+        row = self.table.rows.get(pid)
+        argv = row.command.split(None, 1) if row is not None else []
+        return "%s %d" % (os.path.basename(argv[0]), pid) if argv else str(pid)
 
 
 def take_snapshot() -> ListenerSnapshot:

@@ -52,20 +52,34 @@ async def get_session_subagents(request: Request, session_id: str) -> SessionSub
     """
     session_manager = request.app.state.session_manager
     refuse_remote(session_manager, session_id, "the subagents read")
-    info = await session_manager.get_session_info(session_id)
-    if info is None:
-        raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
-    tmux_name = info.tmux_session
-    working_dir = info.session.working_dir if info.session is not None else None
-    conversation_uuid = (
-        session_manager.claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
-    )
+    fast = getattr(session_manager, "resolve_session_ref", None)
+    if callable(fast):
+        ref = await fast(session_id)
+        if ref is None:
+            raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
+        tmux_name = ref.get("tmux_session")
+        working_dir = ref.get("working_dir")
+        agent_family = ref.get("agent_family")
+        row_id = ref.get("session_id") or session_id
+        conversation_uuid = ref.get("claude_session_uuid") or (
+            await asyncio.to_thread(session_manager.claude_uuid_for_tmux_name, tmux_name) if tmux_name else None
+        )
+    else:
+        info = await session_manager.get_session_info(session_id)
+        if info is None:
+            raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
+        tmux_name = info.tmux_session
+        working_dir = info.session.working_dir if info.session is not None else None
+        agent_family = info.agent_family
+        row_id = info.session.id if info.session is not None else session_id
+        conversation_uuid = (
+            session_manager.claude_uuid_for_tmux_name(tmux_name) if tmux_name else None
+        )
     subject = SessionSubject(
-        agent_family=info.agent_family,
+        agent_family=agent_family,
         conversation_uuid=conversation_uuid,
         working_dir=working_dir,
     )
-    row_id = info.session.id if info.session is not None else session_id
     started_at = process_started_at_for(session_manager, row_id, conversation_uuid)
     result = await asyncio.to_thread(
         read_session_subagents, subject, process_started_at=started_at

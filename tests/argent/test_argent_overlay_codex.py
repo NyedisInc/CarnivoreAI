@@ -12,7 +12,7 @@ import pytest
 import structlog
 
 from src.config.launch_profiles import LaunchProfile
-from src.core.argent import health, mint, overlay as overlay_module, overlay_codex, settings as argent_settings
+from src.core.argent import codex_words, health, mint, overlay as overlay_module, overlay_codex, settings as argent_settings
 from src.core.argent.overlay import SECRET_NAME, ArgentOverlay, codex_preamble
 from src.core.launch_profiles import create_seam
 from src.core.launch_profiles.resolve import LaunchRequest, resolve_launch
@@ -63,20 +63,43 @@ def assert_no_key(*haystacks: Any) -> None:
 def test_flags_present_key_nowhere(on, tmp_path):
     plan = launch(tmp_path)
     assert plan.overlay is not None and plan.overlay.flags
-    want = ['model_provider="argent"', f'model_providers.argent.base_url="{GATEWAY}/chatgpt/backend-api/codex"',
-            "model_providers.argent.requires_openai_auth=true", 'model_providers.argent.wire_api="responses"',
+    want = ['model_provider="argent"', 'model_providers.argent.base_url="${CARNIVORE_GATEWAY_CODEX_BASE}"',
+            "model_providers.argent.requires_openai_auth=${CARNIVORE_GATEWAY_CODEX_AUTH}", 'model_providers.argent.wire_api="responses"',
             'model_providers.argent.env_http_headers={"x-api-key" = "CARNIVORE_GATEWAY_CODEX_KEY"}']
     for flag in want:
-        assert flag in plan.overlay.flags and shlex.quote(flag) in plan.command, flag
+        assert flag in plan.overlay.flags and codex_words.quote_word(flag).replace("'", "'\"'\"'") in plan.command, flag
     assert SECRET_NAME in plan.command and overlay_codex.HEADER_ENV in plan.command
     with structlog.testing.capture_logs() as logs:
         prepared = run(create_seam.prepare(plan, overlay_ctx=ctx(tmp_path)))
-    assert prepared.late == {SECRET_NAME: KEY} and on["mints"] == [("carnivore_cx", "codex")]
+    assert prepared.late == {SECRET_NAME: KEY, overlay_codex.AUTH_DELIVERY: "false"} and on["mints"] == [("carnivore_cx", "codex")]
     assert json.loads(prepared.record)["argent"] == {"tethered": True, "reason": "", "mint_epoch": int(NOW + 1)}
     assert_no_key(plan.command, plan.argv_tail, plan.overlay.flags, plan.env_set, plan.secret_refs, prepared.record, prepared.staged, logs)
     leaky = plan.command.replace(overlay_codex.HEADER_ENV, KEY)
     with pytest.raises(AssertionError):
         assert_no_key(leaky)
+
+
+@pytest.mark.parametrize("mode,chatgpt,base,auth", [("token", True, "/nyedis/openai/v1", "false"), ("passthrough", True, "/nyedis/chatgpt/backend-api/codex", "true"),
+                                                      ("passthrough", False, "/nyedis/openai/v1", "false")])
+def test_auth_modes_route_and_expand_in_a_real_shell(on, tmp_path, monkeypatch, mode, chatgpt, base, auth):
+    assert argent_settings.parse({}).codex_auth_mode == "token"
+    on["cfg"] = argent_settings.ArgentSettings(server_url="https://cp.argent.test", gateway_url=GATEWAY, ca_path=CA, enabled=True, codex_auth_mode=mode)
+
+    async def fake_mint(ref, name, kind, *, transport=None):
+        minted = mint.MintedKey(KEY)
+        minted.codex_base = f"{GATEWAY}/nyedis/openai/v1"
+        minted.codex_chatgpt_base = f"{GATEWAY}/nyedis/chatgpt/backend-api/codex" if chatgpt else ""
+        return minted
+
+    monkeypatch.setattr(mint, "mint_session_key", fake_mint)
+    plan = launch(tmp_path)
+    prepared = run(create_seam.prepare(plan, overlay_ctx=ctx(tmp_path)))
+    script = tmp_path / "w.sh"
+    script.write_text(plan.overlay.preamble + "\nprintf '%s\\n' " + " ".join(codex_words.quote_word(w) for w in plan.overlay.flags) + "\n")
+    out = subprocess.run(["/bin/sh", str(script)], env={"PATH": "/usr/bin:/bin", **prepared.late}, capture_output=True, text=True, timeout=30).stdout.splitlines()
+    assert f'model_providers.argent.base_url="{GATEWAY}{base}"' in out and f"model_providers.argent.requires_openai_auth={auth}" in out
+    assert codex_words.expand_words(plan.overlay.flags, {codex_words.BASE_ENV: GATEWAY + base, codex_words.AUTH_ENV: auth}) == [w for w in out]
+    assert_no_key(plan.command, plan.overlay.flags, {k: v for k, v in prepared.late.items() if k != SECRET_NAME}, prepared.record)
 
 
 def test_preamble_exports_the_header_variable_in_a_real_shell(tmp_path):

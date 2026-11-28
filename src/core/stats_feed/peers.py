@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, ValidationError, f
 from src.core.db import DatastoreUnreadableError
 from src.core.db_reuse.kept_read import hot_read
 from src.core.federation import peer_fanout, peer_hosts
-from src.core.stats_feed.model import Classes, PeerWord, WindowSpec, fold, merge
+from src.core.stats_feed.model import Classes, PeerWord, WindowSpec, fold, merge, window_start
 
 if TYPE_CHECKING:
     from src.core.stats_feed.feed import StatsFeed
@@ -215,14 +215,58 @@ def _totals(bars: Sequence[Optional[Classes]]) -> Optional[Dict[str, int]]:
     return {"fresh": total.fresh, "cache_write": total.cache_write, "cache_read": total.cache_read, "out": total.out}
 
 
-def overlay(book: PeerBook, spec: WindowSpec, now: float, mono: float, own_bars: list,
-            own_rate: Optional[Dict[str, float]], own_word: str) -> Merged:
+def _telemetry_bars(buckets_1m: Any, spec: WindowSpec, now: float) -> Optional[list]:
+    if not isinstance(buckets_1m, list) or not buckets_1m:
+        return None
+    start = window_start(spec, now)
+    last = int(now // spec.bucket_s) * spec.bucket_s
+    rows: Dict[int, Classes] = {}
+    for bucket in buckets_1m:
+        if not isinstance(bucket, (list, tuple)) or len(bucket) != 5:
+            continue
+        t, fresh, write, read, out = bucket
+        b_start = min(int(t) - int(t) % spec.bucket_s, last)
+        rows[b_start] = rows.get(b_start, Classes()).plus(Classes(int(fresh), int(write), int(read), int(out)))
+    if not rows:
+        return None
+    min_covered = min(rows)
+    bars: list = []
+    for index in range(spec.buckets):
+        lo = start + index * spec.bucket_s
+        if lo in rows:
+            bars.append(rows[lo])
+        elif lo >= min_covered:
+            bars.append(Classes())
+        else:
+            bars.append(None)
+    return bars
+
+
+def overlay(
+    book: PeerBook,
+    spec: WindowSpec,
+    now: float,
+    mono: float,
+    own_bars: list,
+    own_rate: Optional[Dict[str, float]],
+    own_word: str,
+    *,
+    peer_telemetry: Optional[Dict[str, Dict[str, Any]]] = None,
+) -> Merged:
+    if peer_telemetry is None:
+        from src.core.pack.globalsync import mesh_telemetry
+
+        peer_telemetry = mesh_telemetry.active_peers(now=now)
+
     bars, rates, sources, any_down = list(own_bars), [own_rate] if own_rate else [], [], False
+    direct_iids = set()
     for item in sorted(book.items.values(), key=lambda i: i.label):
         counted = _counted(item, mono)
         peer_bars = _bars(item.answer, spec, now, counted[0]) if counted and item.answer else None
         if peer_bars is not None:
             bars = merge(bars, [peer_bars])
+            if item.answer is not None:
+                direct_iids.add(item.answer.install_id)
             if counted and counted[1] is not None:
                 rates.append({**counted[1].model_dump()})
         answer = item.answer
@@ -234,6 +278,35 @@ def overlay(book: PeerBook, spec: WindowSpec, now: float, mono: float, own_bars:
             "skewed": item.skew is not None and abs(item.skew) > SKEW_FLAG_S,
             "totals": _totals(peer_bars) if peer_bars is not None else None})
         any_down = any_down or word != "ok"
+
+    for origin_iid, tel in sorted(
+        (peer_telemetry or {}).items(),
+        key=lambda kv: (str((kv[1] or {}).get("label") or kv[0]).lower(), kv[0]),
+    ):
+        if origin_iid in direct_iids or not isinstance(tel, dict):
+            continue
+        vitals = tel.get("vitals_15m") if isinstance(tel.get("vitals_15m"), dict) else {}
+        tel_bars = _telemetry_bars(vitals.get("feed_buckets_1m"), spec, now)
+        if tel_bars is not None:
+            bars = merge(bars, [tel_bars])
+        tel_rate = vitals.get("feed_rate")
+        if isinstance(tel_rate, dict) and all(
+            k in tel_rate and isinstance(tel_rate[k], (int, float)) and not isinstance(tel_rate[k], bool)
+            for k in ("span_seconds", "fresh", "cache_write", "cache_read", "out")
+        ):
+            rates.append({k: float(tel_rate[k]) for k in ("span_seconds", "fresh", "cache_write", "cache_read", "out")})
+        sources.append({
+            "host_key": f"mesh:{origin_iid}",
+            "label": str(tel.get("label") or origin_iid),
+            "state": "ok",
+            "via_mesh": True,
+            "data_through": tel.get("ts"),
+            "as_of": tel.get("ts"),
+            "skew_seconds": None,
+            "skewed": False,
+            "totals": _totals(tel_bars) if tel_bars is not None else None,
+        })
+
     rate = None
     if rates:
         rate = {k: round(sum(r[k] for r in rates), 1) for k in ("fresh", "cache_write", "cache_read", "out")}

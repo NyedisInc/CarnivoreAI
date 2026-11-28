@@ -1,6 +1,7 @@
 import { SETTINGS_SECTIONS, type SectionId } from './settings-registry';
 import { hashNamesPage, type HashEnv } from '../menu-page/menu-page-hash';
 import { menuPage } from '../menu-page/menu-pages';
+import { canonicalPluginId } from '../../plugins/host/renamed-ids';
 
 const HASH = /^#?settings\/([a-z_]+)(?:\/([a-z_]+))?$/;
 
@@ -63,7 +64,8 @@ export function writeSettingsFragment(
 
 export function settingsPluginOf(hash: string | null | undefined): string | null {
     if (typeof hash !== 'string') return null;
-    return PLUGIN_HASH.exec(withoutHighlight(hash))?.[1] ?? null;
+    const id = PLUGIN_HASH.exec(withoutHighlight(hash))?.[1];
+    return id === undefined ? null : canonicalPluginId(id);
 }
 
 export function settingsPluginFragment(cplugId: string): string {
@@ -78,7 +80,7 @@ export interface FeatureLink {
 export function settingsFeatureOf(hash: string | null | undefined): FeatureLink | null {
     if (typeof hash !== 'string') return null;
     const match = FEATURE_HASH.exec(withoutHighlight(hash));
-    return match ? { id: match[1]!, settings: match[2] === 'settings' } : null;
+    return match ? { id: canonicalPluginId(match[1]!), settings: match[2] === 'settings' } : null;
 }
 
 export function settingsFeatureFragment(id: string, settings = false): string {

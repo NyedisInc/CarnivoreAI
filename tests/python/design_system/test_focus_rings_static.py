@@ -40,7 +40,6 @@ FOCUS_PAINT_KNOWN: dict[str, int] = {
     "web/src/lib/browser/BrowserView.svelte": 1,
     "web/src/lib/catalog/AddSplit.svelte": 1,
     "web/src/lib/catalog/CatalogCard.svelte": 1,
-    "web/src/lib/catalog/FilterGroup.svelte": 1,
     "web/src/lib/catalog/warez-card.css": 1,
     "web/src/lib/crosstalk/terminal-cards/terminal-cards.css": 1,
     "web/src/lib/dynamic-tabs/WidgetAreaBar.svelte": 1,

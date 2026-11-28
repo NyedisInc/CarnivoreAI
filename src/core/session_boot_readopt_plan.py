@@ -172,6 +172,7 @@ def session_for(target: ReadoptTarget) -> Session:
         agent_type=target.agent_type,
         agent_type_via_fingerprint=target.via_fingerprint,
         tmux_session=target.name,
+        tmux_created_epoch=target.epoch,
     )
 
 

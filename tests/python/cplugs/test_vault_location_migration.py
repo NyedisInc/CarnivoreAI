@@ -9,7 +9,7 @@ from src.plugins.sdk import data_decl
 from src.core.backup_health import vault_record
 from src.core.inventory.locations import Locations
 from src.core.inventory.vault_claims import vault_root
-from src.plugins.host import data_roots, purge_kept, runtime, state as owner_state
+from src.plugins.host import data_roots, purge_kept, registry_store, runtime
 from src.plugins.host.vault_location_migration import migrate
 from tests.python.cplugs.save.vault_helpers import store_save_settings
 
@@ -29,7 +29,7 @@ def _config(tmp_path: Path, location: str | None) -> Path:
 
 
 def _save_settings(state: Path) -> dict:
-    return json.loads(owner_state.state_path(state).read_text())["cplugs"]["save"]["settings"]
+    return json.loads(registry_store.registry_path(state).read_text())["items"]["save"]["settings"]
 
 
 def test_a_set_location_is_copied_once_and_nothing_else_changes(tmp_path: Path) -> None:
@@ -58,16 +58,16 @@ def test_an_unset_or_blank_location_stays_blank_and_reads_as_the_default(tmp_pat
 def test_an_already_migrated_install_is_left_alone(tmp_path: Path) -> None:
     state = tmp_path / "state"
     store_save_settings(state, {"vaultLocation": ""})
-    revision = json.loads(owner_state.state_path(state).read_text())["cplugs"]["save"]["revision"]
+    revision = json.loads(registry_store.registry_path(state).read_text())["items"]["save"]["revision"]
     assert migrate(state, _config(tmp_path, "/Volumes/Old/vault")) is None
-    stored = json.loads(owner_state.state_path(state).read_text())["cplugs"]["save"]
+    stored = json.loads(registry_store.registry_path(state).read_text())["items"]["save"]
     assert stored["revision"] == revision and stored["settings"] == {"vaultLocation": ""}
 
 
 def test_with_no_stored_entry_nothing_is_written_and_the_old_value_is_still_read(tmp_path: Path) -> None:
     state = tmp_path / "state"
     config = _config(tmp_path, str(tmp_path / "old" / "vault"))
-    assert migrate(state, config) is None and not owner_state.state_path(state).exists()
+    assert migrate(state, config) is None and not registry_store.registry_path(state).exists()
     assert vault_record.resolve_root(state, config) == tmp_path / "old" / "vault"
 
 

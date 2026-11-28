@@ -5,7 +5,8 @@ import os
 from pathlib import Path
 from typing import List, Optional, Sequence
 
-SYNCED_ROOTS: Sequence[str] = ("~/Library/Mobile Documents", "~/Library/CloudStorage", "~/Dropbox")
+ICLOUD_DRIVE: str = "~/Library/Mobile Documents"
+SYNCED_ROOTS: Sequence[str] = (ICLOUD_DRIVE, "~/Library/CloudStorage", "~/Dropbox")
 
 
 def _inside(path: str, root: str) -> bool:

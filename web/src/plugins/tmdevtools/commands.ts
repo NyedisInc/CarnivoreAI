@@ -1,3 +1,4 @@
+/* the Task Manager */
 import { authFetch, familyOf, resourcePush, taskManagerView, type TaskManagerFold } from '../sdk';
 
 export const COMMAND_FAMILY = 'cplug.tmdevtools.command';

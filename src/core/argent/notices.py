@@ -55,8 +55,8 @@ def budget_warn(item_id: str, item_name: str, spent: str, cap: str) -> None:
 def hold_actions(item_id: str, item_name: str, owner: str, spent: str, cap: str) -> Tuple[Tuple[Dict[str, Any], ...], Dict[str, str]]:
     panel = {"id": "argent_open_budget", "label_key": "app_alert.action.argent_open_budget", "href": BUDGET_PANEL}
     params = {"item": item_name, "owner": owner or "-", "spent": spent, "cap": cap}
-    actions = ({"id": "argent_request_budget", "label_key": "app_alert.action.argent_ask_owner" if owner else "app_alert.action.argent_request_budget", "method": "POST",
-                "route": "/argent/budget/requests", "body": {"item_id": item_id}}, panel)
+    actions = ({"id": "argent_request_budget", "label_key": "app_alert.action.argent_ask_owner" if owner else "app_alert.action.argent_request_budget",
+                "href": f"{BUDGET_PANEL}?ask={quote(item_id, safe='')}"}, panel)
     return actions, params
 
 
@@ -64,6 +64,15 @@ def budget_hold(item_id: str, item_name: str, owner: str, spent: str, cap: str) 
     actions, params = hold_actions(item_id, item_name, owner, spent, cap)
     service.raise_alert(BUDGET_HOLD_PREFIX + item_id, source=SOURCE, severity=K.SEV_ERROR, title_key="app_alert.argent.budget_hold.title",
                         detail_key="app_alert.argent.budget_hold.detail", sticky=True, auto_resolve=False, actions=actions, params=params)
+
+
+BUDGET_REQUEST_PREFIX = "argent.budget.request:"
+
+
+def budget_request_decided(request_id: str, item_name: str, state: str, amount: str, reason: str) -> None:
+    detail = "app_alert.argent.budget_denied.detail_bare" if state == "denied" and not reason else f"app_alert.argent.budget_{state}.detail"
+    service.raise_alert(BUDGET_REQUEST_PREFIX + request_id, source=SOURCE, severity=K.SEV_INFO if state == "approved" else K.SEV_WARN,
+                        title_key=f"app_alert.argent.budget_{state}.title", detail_key=detail, params={"item": item_name, "amount": amount, "reason": reason}, auto_resolve=False)
 
 
 def hold_lifted(item_id: str, item_name: str) -> None:
@@ -111,6 +120,11 @@ def writeback_review_resolved(row_id: int) -> None:
 def writeback_refused(row_id: int, item_title: str) -> None:
     service.raise_alert(f"{WRITEBACK_REFUSED_PREFIX}{row_id}", source=SOURCE, severity=K.SEV_INFO, title_key="app_alert.argent.writeback_refused.title",
                         detail_key="app_alert.argent.writeback_refused.detail", params={"item": item_title}, auto_resolve=False)
+
+
+def writeback_tracker_newer(row_id: int, item_title: str, state: str) -> None:
+    service.raise_alert(f"{WRITEBACK_REFUSED_PREFIX}{row_id}", source=SOURCE, severity=K.SEV_INFO, title_key="app_alert.argent.writeback_tracker_newer.title",
+                        detail_key="app_alert.argent.writeback_tracker_newer.detail", params={"item": item_title, "state": state or "in a newer state"}, auto_resolve=False)
 
 
 def writeback_blocked_secret(row_id: int, item_title: str) -> None:

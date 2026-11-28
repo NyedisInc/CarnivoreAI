@@ -13,6 +13,7 @@ function parseBundleVersion(text) {
   return match ? match[1].trim() : null;
 }
 
+/* cannot be read */
 function readDiskVersion({ exe, fsImpl = fs }) {
   try {
     return parseBundleVersion(fsImpl.readFileSync(path.resolve(exe, '..', '..', 'Info.plist'), 'utf8'));

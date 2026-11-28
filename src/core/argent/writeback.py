@@ -8,7 +8,7 @@ import sqlite3
 import time
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import quote
 
 import structlog
@@ -24,6 +24,11 @@ from src.core.argent.client import ArgentClient, ArgentError, NotFound, RateLimi
 from src.core.argent.runtime import get_runtime
 from src.core.resource_push import topics
 
+
+class WritebackError(ValueError):
+    pass
+
+
 logger = structlog.get_logger()
 
 WINDOW_SECONDS = 600.0
@@ -38,6 +43,8 @@ COLLECTING, REVIEW, READY, POSTED, DISCARDED, BLOCKED, FAILED = "collecting", "r
 FINISHED = (POSTED, DISCARDED, BLOCKED, FAILED)
 COMMIT, PICKED, CLOSE = "commit", "picked", "close"
 MILESTONES = (COMMIT, PICKED, CLOSE)
+MOVE_CLOSE, MOVE_PICKED = "move_close", "move_picked"
+MOVES = (MOVE_CLOSE, MOVE_PICKED)
 
 
 class EditError(Exception):
@@ -102,6 +109,29 @@ def enqueue_milestone(tenant: str, ref: str, tmux_name: str, session_name: str, 
         except sqlite3.Error:
             conn.execute("ROLLBACK")
             raise
+
+
+def enqueue_move(tenant: str, item_id: str, milestone: str, *, reason: str = "", session_id: str = "", now: Optional[float] = None,
+                 state_dir: Optional[Path] = None) -> int:
+    if milestone not in MOVES or not item_id:
+        raise WritebackError("a status mirror needs a move and an item")
+    moment = time.time() if now is None else now
+    with closing(_conn(state_dir)) as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        try:
+            waiting = conn.execute("SELECT id FROM writeback WHERE tenant_id = ? AND item_id = ? AND milestone = ? AND state = ?", (tenant, item_id, milestone, READY)).fetchone()
+            if waiting is not None:
+                conn.execute("COMMIT")
+                return int(waiting["id"])
+            cur = conn.execute("INSERT INTO writeback (tenant_id, session_ref, tmux_name, item_id, milestone, state, payload, created_at, due_at) VALUES (?, ?, '', ?, ?, ?, ?, ?, ?)",
+                               (tenant, session_id, item_id, milestone, READY, json.dumps({"reason": reason}), moment, moment))
+            _prune(conn, tenant, moment)
+            conn.execute("COMMIT")
+        except sqlite3.Error:
+            conn.execute("ROLLBACK")
+            raise
+    poke()
+    return int(cur.lastrowid or 0)
 
 
 def on_commits(tenant: str, ref: str, tmux_name: str, session_name: str, made: List[Any], *, state_dir: Optional[Path] = None) -> int:
@@ -268,6 +298,17 @@ def idempotency_key(tenant: str, row: sqlite3.Row) -> str:
     return "cwb-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:40]
 
 
+def _request(row: sqlite3.Row) -> Tuple[str, Dict[str, Any]]:
+    if row["milestone"] == MOVE_CLOSE:
+        return "close", {"reason": str(json.loads(row["payload"] or "{}").get("reason") or ""), "comment": False}
+    if row["milestone"] == MOVE_PICKED:
+        body: Dict[str, Any] = {"kind": "status", "milestone": "picked"}
+        if row["session_ref"]:
+            body["session_id"] = row["session_ref"]
+        return "writeback", body
+    return "writeback", {"kind": "comment", "body": row["body"]}
+
+
 async def send(client: ArgentClient, tenant: str, row: sqlite3.Row, state_dir: Optional[Path], now: float) -> None:
     title = await asyncio.to_thread(_title, tenant, row["item_id"])
     if classifier.has_secret(row["body"]):
@@ -282,8 +323,8 @@ async def send(client: ArgentClient, tenant: str, row: sqlite3.Row, state_dir: O
         await _retry(row, attempts, state_dir, 0, now)
         return
     try:
-        reply = await client.post(f"/v1/my/work-items/{quote(str(row['item_id']), safe='')}/writeback", json={"kind": "comment", "body": row["body"]},
-                                  headers={"Idempotency-Key": key})
+        route, payload = _request(row)
+        reply = await client.post(f"/v1/my/work-items/{quote(str(row['item_id']), safe='')}/{route}", json=payload, headers={"Idempotency-Key": key})
     except Unauthorized:
         await asyncio.to_thread(_set, row["id"], state_dir, next_try=now + LOGIN_RETRY_SECONDS)
         return
@@ -297,15 +338,21 @@ async def send(client: ArgentClient, tenant: str, row: sqlite3.Row, state_dir: O
         if exc.status == 409 and exc.code == "tracker.not_connected":
             await _retry(row, attempts, state_dir, exc.status, now)
             return
+        if exc.status == 400 and row["milestone"] == MOVE_PICKED:
+            await _retry(row, attempts, state_dir, exc.status, now)
+            return
         if exc.status and exc.status < 500:
             logger.info("argent_writeback_refused_by_argent", status=exc.status, code=exc.code)
             await asyncio.to_thread(_set, row["id"], state_dir, state=FAILED, attempts=attempts, result=exc.code or str(exc.status))
             return
         await _retry(row, attempts, state_dir, exc.status, now)
         return
-    refused = reply.body.get("status_refused") is True
+    held = reply.body.get("status_refused")
+    refused = held is True or (isinstance(held, str) and bool(held.strip()))
     await asyncio.to_thread(_set, row["id"], state_dir, state=POSTED, attempts=attempts, result="status_refused" if refused else "ok")
-    if refused:
+    if refused and row["milestone"] in MOVES:
+        notices.writeback_tracker_newer(row["id"], title, " ".join(held.split())[:60] if isinstance(held, str) else "")
+    elif refused:
         notices.writeback_refused(row["id"], title)
 
 

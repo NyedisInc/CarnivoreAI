@@ -10,8 +10,9 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 import structlog
 
+from src.core.deepsearch import fallback_hook
 from src.core.pipeline import contract as C
-from src.core.pipeline import activity, plugin_db, recent, registry, scan, status, switch
+from src.core.pipeline import activity, gone_notice, plugin_db, recent, registry, scan, status, switch
 from src.core.pipeline.deliver import (Delivery, FileTarget, PluginRun, SKIP_BUDGET, SKIP_GONE, SKIP_ICLOUD,
                                        SKIP_TIMEOUT, SKIP_UNREADABLE, deliver_file, deliver_file_removed, deliver_removed)
 from src.core.pipeline.lifecycle import Lifecycle
@@ -52,6 +53,7 @@ class Engine:
                  wall: Callable[[], float] = time.time, wait: Wait = _real_wait,
                  refresh_fn: Optional[Callable[[], Any]] = None,
                  scan_interval: float = scan.SCAN_INTERVAL_SECONDS,
+                 boot_scan_delay: float = 0.0,
                  lineage_fn: Optional[Callable[[str], Optional[C.Lineage]]] = None,
                  lifecycle_writer: Optional[Callable[..., str]] = None,
                  recent_runs: Optional[recent.RecentRuns] = None,
@@ -63,6 +65,7 @@ class Engine:
         self._wall = wall
         self._wait = wait
         self._scan_interval = scan_interval
+        self._boot_scan_delay = max(0.0, float(boot_scan_delay))
         self._lineage_fn = lineage_fn if lineage_fn is not None else (
             (lambda conv: lineage_of(self.db_path, conv)) if self.db_path is not None else (lambda conv: None))
         self.dirty = DirtySet(clock)
@@ -122,6 +125,9 @@ class Engine:
         if created:
             self._wake.set()
         return created
+
+    def files_gone(self, conversation_id: str) -> int:
+        return gone_notice.mark_files_gone(self.state_dir, self.active_plugins(), conversation_id, self.mark_file_removed, TRIGGER_LIVE)
 
     def rescan(self) -> None:
         with self._rescan_lock:
@@ -189,6 +195,8 @@ class Engine:
             self.wakes += 1
 
     def run_scan(self) -> None:
+        if self._boot_scan_delay > 0 and self._wait(self._stop, self._boot_scan_delay):
+            return
         while not self._stop.is_set():
             self.scanner.run_once()
             self.scan_ticks += 1
@@ -347,11 +355,13 @@ class Engine:
                 thread = threading.Thread(target=body, name=name, daemon=True)
                 self._threads[name] = thread
                 thread.start()
+            fallback_hook.on_conversation_gone(self.files_gone)
             logger.info("pipeline_started", plugins=[p.id for p in self.plugins], threads=sorted(self._threads),
                         scan_interval_s=self._scan_interval)
         self._push()
 
     def stop(self, timeout: float = 10.0) -> None:
+        fallback_hook.remove_gone_listener(self.files_gone)
         with self._start_lock:
             self._stop.set()
             self._wake.set()

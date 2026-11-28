@@ -16,8 +16,7 @@ from fastapi import FastAPI
 
 from src.api import catalog_cplug_gates
 from src.api.auth import require_auth
-from src.plugins.host import identity, owner_switch, routes as host_routes, runtime, sidecar_boot, sidecar_index, sidecar_registry
-from src.plugins.host import state as owner_state
+from src.plugins.host import identity, owner_switch, registry_store, routes as host_routes, runtime, sidecar_boot, sidecar_index, sidecar_registry
 from src.plugins.runtime import index_expiry, sandbox
 
 try:
@@ -33,14 +32,14 @@ NAME, ITEM, KEY_ID = "clock", "acme/clock", "5F522AB084F4E697"
 TOOL = {"name": "clock_now", "description": "The time.", "gate": "read", "inputSchema": {"type": "object"}}
 
 
-def cplug_json(version: str) -> dict:
-    return {"schema": 1, "id": NAME, "name": "Clock", "description": "Tells the time.", "version": version, "entry": "main.py",
-            "permissions": {"app": ["notify"]}, "tools": [TOOL]}
-
-
-SIDE = {"kind": "cplug", "id": ITEM, "name": "Clock", "version": "1.0.0", "api_version": 1, "min_app_version": "1.12.20", "author": "acme",
-        "license": "MIT", "tier": "catalog", "scope": ["global"], "icon": "plug", "default_enabled": False,
-        "permissions": [{"name": "notify", "reason": "tells you when the time is up"}], "owns": {}, "data": []}
+def carnivore_json(version: str) -> dict:
+    return {
+        "schema": 2, "kind": "plugin", "id": NAME, "name": "Clock", "description": "Tells the time.", "version": version,
+        "api_version": 1, "min_app_version": "1.12.20", "author": "acme", "license": "MIT", "tier": "catalog",
+        "icon": "plug", "default_enabled": False, "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+        "permissions": {"write": ["notify"], "reasons": {"notify": "tells you when the time is up"}},
+        "mcp": {"tools": [TOOL]}, "owns": {}, "data": [],
+    }
 
 
 def plugin_source(answer: str) -> str:
@@ -62,8 +61,7 @@ def alive(pgid: int) -> bool:
 def lay_code(state: Path, version: str, answer: str) -> None:
     root = state / "plugins" / NAME
     root.mkdir(parents=True, exist_ok=True)
-    (root / "cplug.json").write_text(json.dumps(cplug_json(version)))
-    (root / "carnivore.json").write_text(json.dumps({**SIDE, "version": version}))
+    (root / "carnivore.json").write_text(json.dumps(carnivore_json(version)))
     (root / "main.py").write_text(plugin_source(answer))
 
 
@@ -192,4 +190,4 @@ def test_update_and_revocation_and_freshness_stop_the_process(tmp_path, monkeypa
         asyncio.run(asyncio.wait_for(go(), 240))
     finally:
         sidecar_registry.install(None)
-        owner_state._file_cache.clear()
+        registry_store._cache.clear()

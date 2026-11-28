@@ -70,7 +70,8 @@ def _get(kind: str, row_id: int, rev: Optional[str], size: Optional[str]) -> Fil
     if size is not None:
         thumb = hero_thumbs.thumb_for(kind, row_id, path, size)
         if thumb is not None:
-            return FileResponse(thumb, media_type="image/webp", headers={"Cache-Control": cache})
+            thumb_media = terminal_background.content_type_for_extension(thumb.suffix.lstrip(".")) or "image/avif"
+            return FileResponse(thumb, media_type=thumb_media, headers={"Cache-Control": cache})
     return FileResponse(path, media_type=media_type, headers={"Cache-Control": cache})
 
 

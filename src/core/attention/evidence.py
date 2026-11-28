@@ -53,6 +53,8 @@ REASON_STREAMING: str = "streaming"
 REASON_TOOL: str = "tool"
 
 
+ACTIVITY_HINT_BACKGROUND: str = "background"
+
 REASON_REGISTRY_ABSENT: str = "registry_absent"
 
 REASON_REGISTRY_STALE: str = "registry_stale"
@@ -195,6 +197,8 @@ class Evidence:
 
     codex_bind_uuid: Optional[str] = None
 
+    agent_bind_uuid: Optional[str] = None
+
     subagents: Optional[SubagentTally] = None
 
     timers: Optional[TimerTally] = None
@@ -232,6 +236,9 @@ class Evidence:
         return facts.last_append_at if self.codex is not None else facts.newest_append_at
 
     def dialog_clear(self) -> bool:
+        manifest = self.manifest
+        if manifest is not None and (manifest.state in ("working", "idle") or manifest.code in ("busy", "idle", "done")):
+            return True
         pane = self.active_pane()
         if self.codex is not None:
             return pane is not None and pane.approval_dialog is False

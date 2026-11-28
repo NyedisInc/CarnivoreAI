@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import sqlite3
 import threading
 import time
 from contextlib import closing
@@ -8,7 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
-from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_DEFAULT_S, connect_readonly
 from src.core.pipeline import contract as C
 from src.core.pipeline import plugin_db
 from src.core.transcript_manifest import constants as TM
@@ -17,6 +18,7 @@ CACHE_SECONDS: float = 30.0
 
 _lock = threading.Lock()
 _cache: Dict[Tuple[str, str, str], Tuple[float, "Lag"]] = {}
+_inflight_locks: Dict[Tuple[str, str, str], threading.Lock] = {}
 
 
 @dataclass(frozen=True)
@@ -31,7 +33,8 @@ def _cursor_offsets(state_dir: Path, plugin: C.Plugin) -> Dict[str, int]:
     path = plugin_db.db_path(state_dir, plugin)
     if not path.exists():
         return {}
-    with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_LONG_S)) as conn:
+    with closing(connect_readonly(path, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
+        conn.execute("PRAGMA cache_size=-16000")
         present = conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
                                (C.CURSORS_TABLE,)).fetchone()
         if not present:
@@ -40,14 +43,16 @@ def _cursor_offsets(state_dir: Path, plugin: C.Plugin) -> Dict[str, int]:
 
 
 def compute(state_dir: Path, db_path: Path, plugin: C.Plugin) -> Lag:
-    from src.core.db import connect
-
     offsets = _cursor_offsets(Path(state_dir), plugin)
     behind: Dict[str, int] = {}
-    with closing(connect(Path(db_path), create=False)) as conn:
+    app_db = Path(db_path)
+    if not app_db.exists():
+        raise sqlite3.OperationalError(f"manifest database missing: {app_db}")
+    with closing(connect_readonly(app_db, timeout=READONLY_TIMEOUT_DEFAULT_S)) as conn:
+        conn.execute("PRAGMA cache_size=-16000")
         rows = conn.execute(
             f"SELECT path, conversation_id, family, kind, dataless, gone_at, complete_bytes FROM {TM.TABLE} "
-            "WHERE conversation_id IS NOT NULL AND conversation_id != ''")
+            "WHERE conversation_id IS NOT NULL AND conversation_id != '' AND gone_at IS NULL AND COALESCE(dataless, 0) = 0")
         for path, conv, family, kind, dataless, gone_at, complete in rows:
             if gone_at is not None or dataless or kind not in (TM.KIND_CONVERSATION, TM.KIND_SUBAGENT):
                 continue
@@ -64,12 +69,19 @@ def lag_of(state_dir: Path, db_path: Path, plugin: C.Plugin, *, now: Optional[fl
     moment = time.monotonic() if now is None else now
     with _lock:
         hit = _cache.get(key)
-    if hit is not None and moment - hit[0] < CACHE_SECONDS:
-        return hit[1]
-    found = compute(state_dir, db_path, plugin)
-    with _lock:
-        _cache[key] = (moment, found)
-    return found
+        if hit is not None and moment - hit[0] < CACHE_SECONDS:
+            return hit[1]
+        key_lock = _inflight_locks.setdefault(key, threading.Lock())
+    with key_lock:
+        check_now = time.monotonic() if now is None else now
+        with _lock:
+            hit = _cache.get(key)
+        if hit is not None and check_now - hit[0] < CACHE_SECONDS:
+            return hit[1]
+        found = compute(state_dir, db_path, plugin)
+        with _lock:
+            _cache[key] = (check_now, found)
+        return found
 
 
 def forget(state_dir: Optional[Path] = None) -> None:

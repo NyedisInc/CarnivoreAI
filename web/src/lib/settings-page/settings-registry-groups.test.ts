@@ -91,6 +91,6 @@ describe('settings groups', () => {
         expect(SETTINGS.map((s) => s.id)).not.toContain('header_quicklinks');
         expect(settingsInGroup('appearance.status_bar').map((s) => s.id)).toEqual(['foot_bar_layout', 'foot_bar_items']);
         expect(settingsInGroup('appearance.control_center').map((s) => s.id)).toEqual(['foot_bar_layout_open']);
-        expect(settingsInGroup('appearance.motion').map((s) => s.id)).toEqual(['animations', 'row_lights']);
+        expect(settingsInGroup('appearance.motion').map((s) => s.id)).toEqual(['animations', 'row_lights', 'comet']);
     });
 });

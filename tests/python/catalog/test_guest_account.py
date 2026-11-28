@@ -116,6 +116,9 @@ def test_the_session_route_names_a_guest_without_calling_it_signed_in(tmp_path):
     assert _report(tmp_path, Host()) == "sent"
 
     class Req:
+        scope: dict = {}
+        headers: dict = {}
+
         class app:  # noqa: N801
             class state:  # noqa: N801
                 class services:  # noqa: N801
@@ -126,7 +129,10 @@ def test_the_session_route_names_a_guest_without_calling_it_signed_in(tmp_path):
                         api_base_url = staticmethod(lambda: "https://h/api/v1")
 
     answer = asyncio.run(inspect.unwrap(catalog_hosted_routes.catalog_auth_session)(Req))
-    assert json.loads(answer.body) == {"signed_in": False, "login": None, "provider": None, "email": None, "kind": "guest"}
+    body = json.loads(answer.body)
+    assert {k: body[k] for k in ("signed_in", "login", "provider", "email", "kind")} == {
+        "signed_in": False, "login": None, "provider": None, "email": None, "kind": "guest"}
+    assert body["client"]["signed_in"] is False and "computer" in body
 
 
 class _GoneHost(Host):

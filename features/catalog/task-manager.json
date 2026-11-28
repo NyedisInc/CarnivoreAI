@@ -101,7 +101,8 @@
     "Claude can flag an item with a color and a short reason (purple, pink, teal or lime): the row's left stripe wears that color and the status icon stays.",
     "Open an item's move key and press move to todo to park it (the row reads todo and agents leave it alone unless you ask); take off todo brings it back.",
     "Send something to the Task Manager and the browser keeps a copy until the server takes it: if the server hiccups the copy is sent again on its own, and the developer widget's sent tab can copy it or download all of them. The same tab lists your recent sends with when the agent was told (told, waiting to tell, held while its session is busy, read by the agent).",
-    "A task with subtasks (its forks) cannot be ticked until every subtask is done, and a task that still waits on its forks cannot be ticked at all: the tick stays empty and the list says why, naming each subtask and what it waits on. An agent cannot set such a task to review until each subtask is in review or done. Unticked review checks only warn."
+    "A task with subtasks (its forks) cannot be ticked until every subtask is done, and a task that still waits on its forks cannot be ticked at all: the tick stays empty and the list says why, naming each subtask and what it waits on. An agent cannot set such a task to review until each subtask is in review or done. Unticked review checks only warn.",
+    "Add the task manager widget (or all task managers) to a dashboard, a terminal page or a widget bar from edit layout: it is the one Task Manager widget (issue #2531). A layout saved with the original task manager, all task managers or the flat tasks list shows it in the same slot at the same size, and every open in task manager key opens it."
   ],
   "id": "task-manager",
   "issues": [
@@ -110,6 +111,7 @@
     1795,
     1805,
     2340,
+    2531,
     2660
   ],
   "keywords": [
@@ -135,11 +137,11 @@
   "summary": "a shared list between you and claude: claude posts what is done and what needs your call, you approve, note, reorder and reply, and the tab surfaces when claude posts.",
   "surfaces": [
     "left sidebar huddle tab",
-    "web/src/plugins/huddle/",
-    "src/plugins/huddle/routes.py",
-    "src/plugins/huddle/mcp.py"
+    "web/src/plugins/taskmanager/",
+    "src/plugins/taskmanager/routes.py",
+    "src/plugins/taskmanager/mcp.py"
   ],
-  "updated": "2026-10-28",
+  "updated": "2026-11-21",
   "where": [
     "The left sidebar's tab strip: the swarm tab (the task manager), a chat bubble icon, beside questions.",
     "The menu tab: the swarm row.",

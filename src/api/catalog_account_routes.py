@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from src.api.auth import require_auth
 from src.api.catalog_hosted_routes import _hosted, _relay, _state_dir
 from src.api.catalog_rating_routes import _bearer
-from src.core.catalog import catalog_auth
+from src.core.catalog import catalog_auth, client_sessions
 from src.models.catalog_account import (
     CatalogDeleteRequest,
     CatalogHandleRequest,
@@ -46,6 +46,11 @@ async def catalog_account_revoke_session(request: Request, sid: str) -> CatalogR
             status_code=400,
             detail={"code": "bad_session_id", "detail": "that is not a session id"},
         )
+    ref = client_sessions.client_ref(request)
+    device = catalog_auth.device_session(_state_dir(request))
+    if device is not None and sid == client_sessions.token_claim(device.access_token, "sid") and (
+            ref.via_link or (ref.key or "").startswith(client_sessions.APIKEY_PREFIX)):
+        raise HTTPException(403, detail={"code": "device_level", "detail": "do this on the computer itself"})
     answer = await _hosted(
         request, "DELETE", f"/auth/sessions/{sid}", bearer=await _bearer(request)
     )
@@ -59,8 +64,10 @@ async def catalog_account_revoke_session(request: Request, sid: str) -> CatalogR
 )
 async def catalog_account_revoke_others(request: Request) -> CatalogRevokeResponse:
     """Sign every OTHER device out of the catalog account; this one stays."""
+    keep = client_sessions.device_keep(_state_dir(request))
     answer = await _hosted(
-        request, "POST", "/auth/sessions/revoke-all", bearer=await _bearer(request)
+        request, "POST", "/auth/sessions/revoke-all", json_body={"keep": keep} if keep else None,
+        bearer=await _bearer(request),
     )
     return CatalogRevokeResponse(**_relay(answer))
 
@@ -70,6 +77,8 @@ async def catalog_account_register(
     request: Request, body: CatalogRegisterRequest
 ) -> Dict[str, Any]:
     """Register the catalog account: terms, the 16-or-older attestation, a handle."""
+    from src.api.catalog_publish_routes import clear_handle_cache  # noqa: PLC0415
+
     answer = await _hosted(
         request,
         "POST",
@@ -77,7 +86,9 @@ async def catalog_account_register(
         json_body=body.model_dump(exclude_none=True),
         bearer=await _bearer(request),
     )
-    return _relay(answer)
+    out = _relay(answer)
+    clear_handle_cache(id(request.app))
+    return out
 
 
 @router.post("/catalog/account/handle", dependencies=[Depends(require_auth)])
@@ -88,19 +99,27 @@ async def catalog_account_handle(request: Request, body: CatalogHandleRequest) -
     lock, one change per 30 days, the 90 day hold of the old handle) and its
     refusal codes pass through unchanged.
     """
+    from src.api.catalog_publish_routes import clear_handle_cache  # noqa: PLC0415
+
     answer = await _hosted(
         request, "POST", "/account/handle", json_body=body.model_dump(), bearer=await _bearer(request)
     )
-    return _relay(answer)
+    out = _relay(answer)
+    clear_handle_cache(id(request.app))
+    return out
 
 
 @router.post("/catalog/account/news", dependencies=[Depends(require_auth)])
 async def catalog_account_news(request: Request, body: CatalogNewsRequest) -> Dict[str, Any]:
     """Turn the news email on or off (host: `POST /v1/account/news`); answers `{"news_opt_in": bool}`."""
+    from src.api.catalog_publish_routes import clear_handle_cache  # noqa: PLC0415
+
     answer = await _hosted(
         request, "POST", "/account/news", json_body=body.model_dump(), bearer=await _bearer(request)
     )
-    return _relay(answer)
+    out = _relay(answer)
+    clear_handle_cache(id(request.app))
+    return out
 
 
 @router.post("/catalog/account/delete", dependencies=[Depends(require_auth)])
@@ -113,10 +132,13 @@ async def catalog_account_delete(request: Request, body: CatalogDeleteRequest) -
     finish it; either way every session is revoked, so this machine forgets its
     stored sign in.
     """
+    from src.api.catalog_publish_routes import clear_handle_cache  # noqa: PLC0415
+
     answer = await _hosted(
         request, "POST", "/account/delete", json_body=body.model_dump(), bearer=await _bearer(request, allow_guest=True)
     )
     result = _relay(answer)
+    clear_handle_cache(id(request.app))
     catalog_auth.forget(_state_dir(request))
     return result
 

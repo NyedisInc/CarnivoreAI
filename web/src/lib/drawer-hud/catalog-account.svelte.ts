@@ -1,7 +1,7 @@
 import { accountIdentity, type CatalogAccountFacts } from './account-identity';
 import { accountChip } from './account-menu.svelte';
 
-export const catalogAccount: { loaded: boolean; facts: CatalogAccountFacts | null; guest: boolean } = $state({ loaded: false, facts: null, guest: false });
+export const catalogAccount: { loaded: boolean; facts: CatalogAccountFacts | null; guest: boolean; viaLink: boolean } = $state({ loaded: false, facts: null, guest: false, viaLink: false });
 
 const changeListeners = new Set<() => void>();
 
@@ -26,11 +26,14 @@ function emailOf(email: string | null | undefined, login: string | null | undefi
 export const CATALOG_SESSION_EVENT = 'cloude:catalog-session';
 
 interface CatalogApi {
-    getCatalogSession?: () => Promise<{ signed_in?: boolean | null; kind?: string | null; login?: string | null; email?: string | null; provider?: string | null }>;
+    getCatalogSession?: () => Promise<{ client?: { via_link?: boolean } | null; signed_in?: boolean | null; kind?: string | null; login?: string | null; email?: string | null; provider?: string | null }>;
     getPublishAccount?: () => Promise<{ handle?: string; login?: string | null; email?: string | null; provider?: string | null }>;
 }
 
 let readGeneration = 0;
+
+const PASSIVE_RELOAD_COOLDOWN_MS = 60_000;
+let lastSignedInOkAt = 0;
 
 export async function loadCatalogAccount(): Promise<void> {
     const api = (globalThis as { API?: CatalogApi }).API;
@@ -38,8 +41,11 @@ export async function loadCatalogAccount(): Promise<void> {
     const mine = ++readGeneration;
     let facts: CatalogAccountFacts | null = null;
     let guest = false;
+    let viaLink = false;
+    let handleOk = false;
     try {
         const session = await api.getCatalogSession();
+        viaLink = session?.client?.via_link === true;
         guest = session?.signed_in !== true && session?.kind === 'guest';
         if (session?.signed_in === true) {
             facts = {
@@ -52,6 +58,7 @@ export async function loadCatalogAccount(): Promise<void> {
             if (typeof api.getPublishAccount === 'function') {
                 try {
                     const account = await api.getPublishAccount();
+                    handleOk = true;
                     facts = {
                         signedIn: true,
                         handle: account?.handle ?? '',
@@ -62,6 +69,8 @@ export async function loadCatalogAccount(): Promise<void> {
                 } catch (err) {
                     console.warn('[catalog-account] handle unavailable', err);
                 }
+            } else {
+                handleOk = true;
             }
         }
     } catch (err) {
@@ -69,7 +78,13 @@ export async function loadCatalogAccount(): Promise<void> {
         return;
     }
     if (mine !== readGeneration) return;
+    if (facts?.signedIn && handleOk) {
+        lastSignedInOkAt = Date.now();
+    } else {
+        lastSignedInOkAt = 0;
+    }
     catalogAccount.guest = guest;
+    catalogAccount.viaLink = viaLink;
     publish(facts);
 }
 
@@ -80,10 +95,18 @@ interface HostEvents {
 }
 
 export function followCatalogAccount(): () => void {
+    lastSignedInOkAt = 0;
     void loadCatalogAccount();
-    const again = () => void loadCatalogAccount();
+    const again = () => {
+        lastSignedInOkAt = 0;
+        void loadCatalogAccount();
+    };
+    const againVisible = () => {
+        if (lastSignedInOkAt > 0 && Date.now() - lastSignedInOkAt < PASSIVE_RELOAD_COOLDOWN_MS) return;
+        void loadCatalogAccount();
+    };
     const onVisible = () => {
-        if (document.visibilityState === 'visible') again();
+        if (document.visibilityState === 'visible') againVisible();
     };
     window.addEventListener(CATALOG_SESSION_EVENT, again);
     window.addEventListener('pageshow', again);
@@ -91,15 +114,11 @@ export function followCatalogAccount(): () => void {
     const events = (globalThis as { AppEvents?: HostEvents }).AppEvents;
     const stopPush = events?.subscribe?.((frame) => {
         if (frame?.type === 'events.hello') {
-            again();
+            againVisible();
             return;
         }
         if (frame?.type !== ACCOUNT_SESSION_FRAME) return;
-        if (frame.signed_in === false) {
-            readGeneration++;
-            publish(null);
-        }
-        else again();
+        again();
     });
     return () => {
         window.removeEventListener(CATALOG_SESSION_EVENT, again);

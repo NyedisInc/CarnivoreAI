@@ -10,7 +10,7 @@ HELPER = Path("src/core/safe_io/readonly_db.py")
 NEEDLE = "mode=ro"
 EXEMPT = {
     Path("src/core/db_steps.py"): "frozen schema rung",
-    Path("src/plugins/huddle/cli/move_files_to_root.py"): "huddle plugin, out of scope",
+    Path("src/plugins/taskmanager/cli/move_files_to_root.py"): "huddle plugin, out of scope",
     Path("scripts/release/public/gates/live.py"): "standalone release gate",
 }
 

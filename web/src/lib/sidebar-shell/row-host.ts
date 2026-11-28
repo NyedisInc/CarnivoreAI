@@ -20,7 +20,7 @@ export interface RowHost {
     layouts?: {
         rowParts(row: SidebarRow, band?: string): LayoutRowParts;
         memberBody?(row: SidebarRow, band?: string): {
-            bodyId: string; uuid: string; band: string; members: SidebarRow[];
+            bodyId: string; uuid: string; band: string; expanded?: boolean; members: SidebarRow[];
         } | null;
     };
 }

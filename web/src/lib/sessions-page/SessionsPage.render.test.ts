@@ -119,6 +119,27 @@ describe('SessionsPage shell', () => {
         expect(root.querySelector('[data-frame-region="body"][data-scroll="self"] .sp-body .sp-hosts')).not.toBeNull();
     });
 
+    test('the lens rail is the frame\'s side region and the session panel its detail region, under the one header (#2775, call B and ruling Q1)', async () => {
+        history.replaceState(null, '', '#sessions/c1');
+        handle = mount(SessionsPage, { target: document.body, props: { api: fakeApi(), readers, embedded: true, now: () => NOW } });
+        flushSync();
+        await vi.waitFor(() => expect(document.querySelector('[data-frame-region="detail"]')).not.toBeNull());
+        const root = document.querySelector('.sp-page') as HTMLElement;
+        await vi.waitFor(() => expect(root.querySelector('[data-frame-region="side"] nav.sp-rail')).not.toBeNull());
+        expect(root.querySelector('[data-frame-region="side"] nav.sp-rail')).not.toBeNull();
+        expect(root.querySelector('.sp-ix .sp-rail')).toBeNull();
+        const region = root.querySelector('.oc-page__frame--detail > [data-frame-region="detail"]') as HTMLElement;
+        expect(region.querySelector('#sp-pn')).not.toBeNull();
+        expect(region.querySelector('.oc-page__detail-title')?.textContent).toBeTruthy();
+        expect(root.querySelector('.sp-pn-bar, [data-pn-back], [data-pn-close]')).toBeNull();
+        expect(root.firstElementChild?.matches('header.oc-titlebar')).toBe(true);
+        expect(root.querySelector('.sp-hosts[data-panel]')).toBeNull();
+        (region.querySelector('.oc-page__detail-head [data-btn]') as HTMLButtonElement).click();
+        flushSync();
+        await vi.waitFor(() => expect(root.querySelector('[data-frame-region="detail"]')).toBeNull());
+        history.replaceState(null, '', '#');
+    });
+
     test('on a phone the icon buttons and the fleet summary ride the tool row, so the header keeps room for the find (S11 review)', async () => {
         const root = await showAt(false, true);
         expect(root.querySelector('header .sp-acts')).toBeNull();

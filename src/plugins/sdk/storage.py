@@ -64,6 +64,7 @@ class CplugStorage:
 
     def __init__(self, folder: Path, spec: Optional[StorageSpec], state_dir: Optional[Path] = None) -> None:
         self.path = Path(folder)
+        self.previous_path: Optional[Path] = None
         self._spec = spec
         self._private = bool(spec and spec.private)
         self._state_dir = Path(state_dir) if state_dir is not None else None

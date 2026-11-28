@@ -47,7 +47,7 @@ def test_the_owner_reads_the_report_and_an_api_key_cannot(served):
     assert (rows["acme/newone"]["word"], rows["acme/newone"]["reason"]) == ("needs_approval", "new_install")
     assert set(body["counts"]) == {"on", "off", "needs_approval", "held"} and body["problems"] == []
     assert {"orphan_data", "removed", "stale_state", "registry_generation", "registry_source"} <= set(body)
-    assert body["registry_source"] == "legacy_files" and isinstance(body["registry_generation"], int)
+    assert body["registry_source"] == "registry.json" and isinstance(body["registry_generation"], int)
 
 
 def test_plugins_list_carries_the_same_report_as_its_health_field(served):

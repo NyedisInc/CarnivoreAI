@@ -105,10 +105,10 @@ def listing_collections(app_state: Any) -> List[Collection]:
         return run
 
     return [
-        Collection("list", bind(build_list), _session_id),
-        Collection("attachable", bind(build_attachable), lambda r: r.get("name")),
-        Collection("records", bind(build_records), lambda r: r.get("session_uuid")),
-        Collection("asleep", bind(build_asleep), lambda r: r.get("session_uuid")),
-        Collection("companions", bind(build_companions), _session_id),
-        Collection("recent", bind(build_recent), lambda r: r.get("session_uuid")),
+        Collection("list", bind(build_list), _session_id, tier=0),
+        Collection("attachable", bind(build_attachable), lambda r: r.get("name"), tier=0),
+        Collection("companions", bind(build_companions), _session_id, tier=0),
+        Collection("recent", bind(build_recent), lambda r: r.get("session_uuid"), tier=0),
+        Collection("records", bind(build_records), lambda r: r.get("session_uuid"), tier=1),
+        Collection("asleep", bind(build_asleep), lambda r: r.get("session_uuid"), tier=2),
     ]

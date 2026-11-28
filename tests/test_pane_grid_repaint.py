@@ -146,9 +146,9 @@ async def test_repaint_without_a_backend_or_stream_sends_nothing():
 
 def test_the_paint_skips_pattern_detection_and_the_module_never_sends():
     drain_src = inspect.getsource(_drain_viewer)
-    paint_at = drain_src.index("FRAME_PAINT")
-    detect_at = drain_src.index("_detect_patterns")
-    assert paint_at < detect_at
+    assert "FRAME_PAINT" in drain_src
+    assert "scan_chunk" not in drain_src
+    assert "_SCAN_POOL" not in drain_src
     assert "websocket.send" not in inspect.getsource(ws_repaint)
 
 

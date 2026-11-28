@@ -9,9 +9,10 @@ import json
 import weakref
 from dataclasses import dataclass, field
 from types import SimpleNamespace
-from typing import Any, Awaitable, Callable, Iterable, Optional
+from typing import Any, Awaitable, Callable, Iterable, Mapping, Optional
 
 from fastapi.encoders import jsonable_encoder
+from starlette.datastructures import QueryParams
 
 from src.core.mcp import federated, session_target
 from src.core.mcp.caller import AgentCaller
@@ -63,6 +64,7 @@ class RouteTool:
     summary: Optional[Callable[[dict, Optional[session_target.SessionTarget]], str]] = None
     precheck: Optional[Callable[[dict, Optional[session_target.SessionTarget]], Awaitable[None]]] = None
     request_check: Optional[Callable[[Any], None]] = None
+    forward_query: bool = False
     redact: bool = False
     example: dict = field(default_factory=dict)
 
@@ -78,10 +80,18 @@ def route_function(spec: RouteTool) -> Callable[..., Any]:
     return getattr(importlib.import_module(module), name)
 
 
-def route_request(manager: Any) -> Any:
+def route_request(manager: Any, query: Optional[Mapping[str, Any]] = None) -> Any:
     from src.core.mcp.write_tools import _request
 
-    return SimpleNamespace(app=_request(manager).app, scope={}, headers={}, query_params={})
+    request = _request(manager)
+    request.query_params = QueryParams(dict(query or {}))
+    return request
+
+
+def query_of(spec: RouteTool, args: dict) -> dict[str, str]:
+    if not spec.forward_query:
+        return {}
+    return {k: (str(v).lower() if isinstance(v, bool) else str(v)) for k, v in args.items() if k in spec.properties and v is not None}
 
 
 def _schema(spec: RouteTool) -> dict:
@@ -148,7 +158,7 @@ def _handler(spec: RouteTool) -> Callable[[Any, AgentCaller, dict], Awaitable[di
             uuid = await resolver.uuid_of(target) if spec.needs_uuid else None
         if spec.precheck is not None:
             await spec.precheck(args, target)
-        request = route_request(manager)
+        request = route_request(manager, query_of(spec, args))
         if spec.request_check is not None:
             spec.request_check(request)
 

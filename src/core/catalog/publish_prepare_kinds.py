@@ -5,18 +5,28 @@ import json
 import os
 import posixpath
 import re
+import tomllib
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
 from src.core import message_model_secrets
-from src.core.catalog import plugin_pack, publish_prepare, submission_preview
+from src.core.catalog import publish_prepare, submission_preview
 from src.core.catalog import submission_rules as rules
 from src.core.skills.plugin_safe_subset import CODE_MANIFEST_KEYS, mcp_problems, plugin_declares_nonmcp_code
 from src.plugins.host import install_gates
+from src.plugins.host.plugin_manifest import SidecarManifestError, validate_v2_files
+from src.plugins.host.preview_check import PreviewError, read_preview
+from src.plugins.host.sideload_copy import DEV_SKIP_DIRS
 from src.plugins.sdk import api_contract
-from src.plugins.sdk.manifest import ID_PATTERN as CPLUG_ID_PATTERN, RESERVED_IDS as CPLUG_RESERVED_IDS
+from src.plugins.sdk.cplug_validate import (
+    ID_PATTERN as CPLUG_ID_PATTERN,
+    OTHER_KIND_MANIFESTS as CPLUG_OTHER_KIND_MANIFESTS,
+    RESERVED_IDS as CPLUG_RESERVED_IDS,
+    validate_v2_folder_files,
+)
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, TIER_CATALOG, TIER_LOCAL, TOML_FILE, has_v2_manifest, load_raw_v2, parse_manifest_v2
 
 logger = structlog.get_logger()
 
@@ -26,7 +36,6 @@ KIND_MOD = "mod"
 KIND_CPLUG = "cplug"
 CPLUG_MANIFEST = "cplug.json"
 CPLUG_SIDECAR = "carnivore.json"
-CPLUG_OTHER_KIND_MANIFESTS = frozenset({"skill.md", "theme.json", ".claude-plugin/plugin.json", "hooks/hooks.json"})
 HOOKS_MANIFEST = "hooks/hooks.json"
 THEME_MANIFEST = "theme.json"
 PLUGIN_MANIFEST = ".claude-plugin/plugin.json"
@@ -34,9 +43,10 @@ PLUGIN_MANIFEST = ".claude-plugin/plugin.json"
 _THEME_SCRIPT_EXT = (".js", ".mjs", ".cjs", ".svg", ".html", ".htm", ".css")
 _THEME_IMAGE_EXT = (".webp", ".png", ".jpg")
 _THEME_KEYS = frozenset(
-    {"id", "name", "description", "author", "version", "cssVars", "xterm", "background"}
+    {"id", "name", "description", "author", "version", "cssVars", "xterm", "background", "characters", "effects", "mascot"}
 )
-_PLUGIN_FORBIDDEN_SEGMENTS = frozenset({"hooks", "bin", "monitors", "scripts", ".claude", "node_modules"})
+_PLUGIN_FORBIDDEN_SEGMENTS = frozenset({".claude", "node_modules"})
+_PLUGIN_ALLOWED_DOT_ROOTS = frozenset({".claude-plugin", ".mcp.json", ".lsp.json"})
 _PLUGIN_FORBIDDEN_NAMES = re.compile(
     r"^(?:\.mcp\.json|\.lsp\.json|settings(?:\.local)?\.json|hooks\.json)$", re.IGNORECASE
 )
@@ -66,6 +76,22 @@ def _walk(folder: Path) -> List[str]:
     for root, dirs, files in os.walk(folder, followlinks=False):
         rel = Path(root).relative_to(folder)
         found.extend((rel / name).as_posix() for name in files + [d for d in dirs if os.path.islink(Path(root) / d)])
+    return sorted(found)
+
+
+def _walk_v2(folder: Path) -> List[str]:
+    found: List[str] = []
+    for root, dirs, files in os.walk(folder, followlinks=False):
+        rel = Path(root).relative_to(folder)
+        skip = DEV_SKIP_DIRS | ({"tests"} if rel == Path(".") else set())
+        for d in dirs:
+            if d not in skip and os.path.islink(Path(root) / d):
+                found.append((rel / d).as_posix())
+        dirs[:] = sorted(d for d in dirs if d not in skip)
+        for name in sorted(files):
+            if name == ".DS_Store" or name.startswith("._") or name.endswith((".pyc", ".pyo")):
+                continue
+            found.append((rel / name).as_posix())
     return sorted(found)
 
 
@@ -103,13 +129,9 @@ def _read_all(folder: Path, paths: List[str], prepared: publish_prepare.Prepared
 
 def _check_theme(paths: List[str], read: Dict[str, bytes], prepared: publish_prepare.Prepared) -> None:
     for path in paths:
-        low = path.lower()
-        if "/" in path or path.startswith("."):
-            _refuse(prepared, rules.SUBMISSION_INVALID, "a theme holds files at its root only, none hidden", path)
-        elif low.endswith(_THEME_SCRIPT_EXT):
-            _refuse(prepared, rules.SCRIPTS_NOT_SUPPORTED, "a theme is data: no script, stylesheet, svg or html", path)
-        elif path != THEME_MANIFEST and not low.endswith(_THEME_IMAGE_EXT):
-            _refuse(prepared, rules.SUBMISSION_INVALID, "only theme.json and webp, png or jpg images are allowed", path)
+        parts = path.split("/")
+        if any(p.startswith(".") for p in parts) or "node_modules" in parts:
+            _refuse(prepared, rules.SUBMISSION_INVALID, "a theme may not carry hidden files or node_modules", path)
     raw = read.get(THEME_MANIFEST)
     if raw is None:
         _refuse(prepared, rules.SUBMISSION_INVALID, "the folder carries no theme.json", None)
@@ -119,46 +141,36 @@ def _check_theme(paths: List[str], read: Dict[str, bytes], prepared: publish_pre
         _refuse(prepared, rules.SUBMISSION_INVALID, "theme.json is not a json object", THEME_MANIFEST)
         return
     for key in sorted(set(manifest) - _THEME_KEYS):
-        code = rules.SCRIPTS_NOT_SUPPORTED if key == "effects" else rules.SUBMISSION_INVALID
-        _refuse(prepared, code, f"theme.json may not carry the key {key!r}", THEME_MANIFEST)
+        _refuse(prepared, rules.SUBMISSION_INVALID, f"theme.json may not carry the key {key!r}", THEME_MANIFEST)
 
 
 def _plugin_path_allowed(path: str) -> bool:
     parts = path.split("/")
-    if path == PLUGIN_MANIFEST or path == ".mcp.json":
-        return True
-    if any(p.lower() in _PLUGIN_FORBIDDEN_SEGMENTS for p in parts) or _PLUGIN_FORBIDDEN_NAMES.match(parts[-1]):
+    if any(p.lower() in _PLUGIN_FORBIDDEN_SEGMENTS for p in parts):
         return False
-    if len(parts) == 1:
-        return bool(_PLUGIN_ROOT_DOC.match(path))
-    lower = path.lower()
-    if parts[0] in ("commands", "agents"):
-        return lower.endswith(".md")
-    if parts[0] == "skills" and len(parts) >= 3:
-        return lower.endswith(_PLUGIN_TEXT_EXT)
-    return False
+    if path == PLUGIN_MANIFEST or path == ".mcp.json" or path == ".lsp.json":
+        return True
+    if parts[0] == ".claude-plugin":
+        return not any(p.startswith(".") for p in parts[1:])
+    if any(p.startswith(".") for p in parts):
+        return False
+    return True
 
 
 def _check_plugin(folder: Path, paths: List[str], read: Dict[str, bytes], prepared: publish_prepare.Prepared) -> None:
-    named = False
+    _ = folder
     for path in paths:
-        if not _plugin_path_allowed(path):
-            _refuse(prepared, "plugin_not_safe", "a plugin may carry only its manifest, markdown commands, agents, skills and a readme", path)
-            named = True
+        if path == HOOKS_MANIFEST and path in read and b'"modules"' in read[path]:
+            _refuse(prepared, "plugin_not_safe", "hook modules make a mod: declare kind mod", path)
+        elif not _plugin_path_allowed(path):
+            _refuse(prepared, "plugin_not_safe", "hidden files and node_modules are not allowed in a plugin", path)
     raw = read.get(PLUGIN_MANIFEST)
     manifest = _json_object(raw) if raw is not None else None
     if manifest is None:
         _refuse(prepared, rules.SUBMISSION_INVALID, "the folder carries no readable .claude-plugin/plugin.json", None)
         return
-    for key in CODE_MANIFEST_KEYS:
-        if key != "mcpServers" and key in manifest:
-            _refuse(prepared, "plugin_not_safe", f"plugin.json may not carry {key!r}", PLUGIN_MANIFEST)
-            named = True
     for problem in mcp_problems(manifest, read.get(".mcp.json")):
         _refuse(prepared, "plugin_not_safe", f"an mcp server declaration is malformed: {problem}", PLUGIN_MANIFEST)
-        named = True
-    if not named and plugin_declares_nonmcp_code(manifest, folder):
-        _refuse(prepared, "plugin_not_safe", "a file carries a shell line or tool-granting front matter", PLUGIN_MANIFEST)
     name = manifest.get("name")
     if isinstance(name, str) and name:
         prepared.name = name
@@ -216,10 +228,6 @@ def _check_mod(paths: List[str], read: Dict[str, bytes], prepared: publish_prepa
             problems.append(f"{path} (path not allowed)")
         elif path != PLUGIN_MANIFEST and any(part.startswith(".") for part in parts):
             problems.append(f"{path} (hidden path not allowed)")
-        elif not path.lower().endswith(_MOD_FILE_EXT):
-            problems.append(f"{path} (extension not allowed)")
-        elif path in read and read[path].lstrip(b"\xef\xbb\xbf").startswith(b"#!"):
-            problems.append(f"{path} (shebang)")
     if problems:
         more = f"; and {len(problems) - _MOD_MAX_LISTED} more" if len(problems) > _MOD_MAX_LISTED else ""
         _refuse(prepared, "mod_not_safe", f"a mod may not carry: {'; '.join(problems[:_MOD_MAX_LISTED])}{more}", None)
@@ -235,82 +243,172 @@ def _mod_module_path_root(ref: Any) -> str:
     return "" if path.startswith("..") or path.startswith("/") else path
 
 
+class TomlEncodeError(Exception):
+    pass
+
+
+_TOML_BARE_KEY = re.compile(r"^[A-Za-z0-9_-]+$")
+
+
 def _json_text(value: Dict[str, Any]) -> bytes:
     return (json.dumps(value, indent=2, ensure_ascii=False) + "\n").encode("utf-8")
 
 
-def _pack_authored(read: Dict[str, bytes], paths: List[str], prepared: publish_prepare.Prepared, handle: str) -> bool:
-    authored = _json_object(read[CPLUG_SIDECAR]) if CPLUG_SIDECAR in read else None
-    if authored is None or not plugin_pack.is_authored(authored):
-        return True
+def _toml_key(key: str) -> str:
+    return key if _TOML_BARE_KEY.match(key) else json.dumps(key, ensure_ascii=False).replace("\x7f", "\\u007f")
+
+
+def _toml_inline(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return repr(value)
+    if isinstance(value, str):
+        return json.dumps(value, ensure_ascii=False).replace("\x7f", "\\u007f")
+    if isinstance(value, list):
+        return "[" + ", ".join(_toml_inline(item) for item in value) + "]"
+    if isinstance(value, dict):
+        items = ", ".join(f"{_toml_key(str(k))} = {_toml_inline(v)}" for k, v in value.items())
+        return "{" + items + "}"
+    raise TomlEncodeError(f"unsupported TOML value type: {type(value).__name__}")
+
+
+def _emit_toml_table(lines: List[str], prefix: Tuple[str, ...], table: Dict[str, Any], *, emit_header: bool = True) -> None:
+    scalars: List[Tuple[str, Any]] = []
+    subtables: List[Tuple[str, Dict[str, Any]]] = []
+    arrays_of_tables: List[Tuple[str, List[Dict[str, Any]]]] = []
+    for key, val in table.items():
+        if isinstance(val, dict) and val:
+            subtables.append((key, val))
+        elif isinstance(val, list) and val and all(isinstance(item, dict) for item in val):
+            arrays_of_tables.append((key, val))
+        else:
+            scalars.append((key, val))
+    if emit_header and prefix and (scalars or (not subtables and not arrays_of_tables)):
+        if lines:
+            lines.append("")
+        lines.append("[" + ".".join(_toml_key(p) for p in prefix) + "]")
+    for key, val in scalars:
+        lines.append(f"{_toml_key(key)} = {_toml_inline(val)}")
+    for key, sub in subtables:
+        _emit_toml_table(lines, (*prefix, key), sub)
+    for key, items in arrays_of_tables:
+        path = (*prefix, key)
+        header = "[[" + ".".join(_toml_key(p) for p in path) + "]]"
+        for item in items:
+            if lines:
+                lines.append("")
+            lines.append(header)
+            _emit_toml_table(lines, path, item, emit_header=False)
+
+
+def _toml_text(value: Dict[str, Any]) -> bytes:
+    lines: List[str] = []
+    _emit_toml_table(lines, (), value)
+    text = ("\n".join(lines) + "\n") if lines else ""
     try:
-        packed_files, _ = plugin_pack.pack_files(read, handle or None)
-    except plugin_pack.PackError as exc:
-        _refuse(prepared, rules.SUBMISSION_INVALID, str(exc), CPLUG_SIDECAR)
-        return False
-    for path in (CPLUG_MANIFEST, CPLUG_SIDECAR):
-        prepared.total_bytes += len(packed_files[path]) - len(read.get(path, b""))
-    prepared.members = [(p, c) for p, c in prepared.members if p not in (CPLUG_MANIFEST, CPLUG_SIDECAR)]
-    prepared.members += [(p, packed_files[p]) for p in (CPLUG_MANIFEST, CPLUG_SIDECAR)]
-    read.update({p: packed_files[p] for p in (CPLUG_MANIFEST, CPLUG_SIDECAR)})
-    if CPLUG_MANIFEST not in paths:
-        paths.append(CPLUG_MANIFEST)
-    return True
+        parsed = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise TomlEncodeError("TOML serialization produced invalid TOML") from exc
+    if parsed != value:
+        raise TomlEncodeError("TOML serialization round-trip mismatch")
+    return text.encode("utf-8")
+
+
+def _check_v2_cplug_files(folder: Path, paths: List[str], prepared: publish_prepare.Prepared) -> None:
+    declared_binary = install_gates._v2_declared_binary(folder)
+    preview = install_gates._declared_preview(folder)
+    view_files = install_gates._declared_view_files(folder)
+
+    def _preview_err(_path: Path, rel: str) -> Optional[str]:
+        try:
+            read_preview(folder, rel)
+        except PreviewError as exc:
+            return str(exc)
+        return None
+
+    _kept, errors = validate_v2_folder_files(
+        folder,
+        skip_dirs=DEV_SKIP_DIRS,
+        skip_root_dirs=frozenset({"tests"}),
+        ignore_junk=True,
+        allowed_suffixes=install_gates.V2_ALLOWED_SUFFIXES,
+        allow_shell_exec=True,
+        declared_binary=declared_binary,
+        preview=preview,
+        view_files=view_files,
+        check_exec=True,
+        check_magic=True,
+        preview_checker=_preview_err,
+        stop_on_first=True,
+    )
+    if errors:
+        code, rel, detail = errors[0]
+        refusal_code = install_gates.TOO_LARGE if code == "cplug_too_large" else install_gates.NOT_SAFE
+        _refuse(prepared, refusal_code, detail, rel or None)
 
 
 def _check_cplug(folder: Path, paths: List[str], read: Dict[str, bytes], prepared: publish_prepare.Prepared, handle: str, version: str = "") -> None:
-    try:
-        install_gates.check_files(folder)
-    except install_gates.CplugGateRefusal as exc:
-        _refuse(prepared, exc.code, exc.detail, None)
     clash = sorted(p for p in paths if p.lower() in CPLUG_OTHER_KIND_MANIFESTS)
     if clash:
         _refuse(prepared, rules.SUBMISSION_INVALID, f"a plugin may not also carry another kind's manifest: {', '.join(clash)}", clash[0])
-    if not _pack_authored(read, paths, prepared, handle):
+    if not has_v2_manifest(folder):
+        _refuse(prepared, rules.SUBMISSION_INVALID, "a plugin must carry carnivore.toml or schema = 2 carnivore.json", None)
         return
-    manifest = _json_object(read[CPLUG_MANIFEST]) if CPLUG_MANIFEST in read else None
-    sidecar = _json_object(read[CPLUG_SIDECAR]) if CPLUG_SIDECAR in read else None
-    if manifest is None:
-        _refuse(prepared, rules.SUBMISSION_INVALID, "the folder carries no readable cplug.json", None)
-    if sidecar is None:
-        _refuse(prepared, rules.SUBMISSION_INVALID, "the folder carries no readable carnivore.json", None)
+    _check_v2_cplug_files(folder, paths, prepared)
+    try:
+        raw_v2, fname = load_raw_v2(folder)
+    except (ManifestV2Error, OSError, ValueError) as exc:
+        _refuse(prepared, rules.SUBMISSION_INVALID, str(exc), None)
+        return
+    try:
+        api_contract.require_served(raw_v2)
+    except api_contract.ApiVersionUnsupported as exc:
+        _refuse(prepared, install_gates.API_VERSION_UNSUPPORTED, str(exc), fname)
+        return
+    try:
+        v2_input = dict(raw_v2)
+        if v2_input.get("tier") == TIER_LOCAL:
+            v2_input.update({"tier": TIER_CATALOG, "default_enabled": False})
+        v2 = parse_manifest_v2(v2_input, tier=TIER_CATALOG, allow_tier_override=False)
+    except (ManifestV2Error, OSError, ValueError) as exc:
+        _refuse(prepared, rules.SUBMISSION_INVALID, str(exc), fname)
+        return
     if not handle:
         _refuse(prepared, rules.SUBMISSION_INVALID, "claim a publisher handle before publishing a plugin", None)
-    if manifest is None or sidecar is None:
-        return
-    if version and (manifest.get("version") != version or sidecar.get("version") != version):
+    if version and v2.version != version:
         _refuse(prepared, rules.SUBMISSION_INVALID,
-                f"cplug.json and carnivore.json must both carry version {version}, the version you are publishing", CPLUG_MANIFEST)
+                f"{fname} must carry version {version}, the version you are publishing", fname)
         return
-    name = manifest.get("id")
-    if not isinstance(name, str) or not CPLUG_ID_PATTERN.match(name):
+    if not CPLUG_ID_PATTERN.match(v2.id):
         _refuse(prepared, rules.SUBMISSION_INVALID,
-                f"the plugin id must match {CPLUG_ID_PATTERN.pattern} (lowercase letters and digits, no hyphen)", CPLUG_MANIFEST)
+                f"the plugin id must match {CPLUG_ID_PATTERN.pattern} (lowercase letters and digits, no hyphen)", fname)
         return
-    if name in CPLUG_RESERVED_IDS:
-        _refuse(prepared, rules.SUBMISSION_INVALID, "that plugin id is reserved", CPLUG_MANIFEST)
-    entry = manifest.get("entry")
-    if not isinstance(entry, str) or entry not in read or not entry.endswith(".py"):
-        _refuse(prepared, rules.SUBMISSION_INVALID, "entry must name a .py file in the folder", CPLUG_MANIFEST)
-    runtime = sidecar.get("runtime")
-    if not isinstance(runtime, dict):
-        _refuse(prepared, rules.SUBMISSION_INVALID, "carnivore.json needs a runtime object", CPLUG_SIDECAR)
-    elif runtime.get("kind") == "process" and not isinstance(sidecar.get("network_hosts"), list):
-        _refuse(prepared, rules.SUBMISSION_INVALID,
-                "carnivore.json needs network_hosts for a process runtime (an empty list is allowed)", CPLUG_SIDECAR)
-    if not isinstance(sidecar.get("data"), list):
-        _refuse(prepared, rules.SUBMISSION_INVALID, "carnivore.json needs a data list (an empty list is allowed)", CPLUG_SIDECAR)
+    if v2.id in CPLUG_RESERVED_IDS:
+        _refuse(prepared, rules.SUBMISSION_INVALID, "that plugin id is reserved", fname)
     try:
-        api_contract.require_served(sidecar)
-    except api_contract.ApiVersionUnsupported as exc:
-        _refuse(prepared, install_gates.API_VERSION_UNSUPPORTED, str(exc), CPLUG_SIDECAR)
-    prepared.name = name
-    manifest["default_enabled"] = False
-    sidecar.update({"kind": "cplug", "id": f"{handle}/{name}", "tier": "catalog", "default_enabled": False})
-    for path, doc in ((CPLUG_MANIFEST, manifest), (CPLUG_SIDECAR, sidecar)):
-        body = _json_text(doc)
-        prepared.total_bytes += len(body) - len(read[path])
-        prepared.members = [(p, body if p == path else c) for p, c in prepared.members]
+        validate_v2_files(folder, v2, v2.id)
+    except SidecarManifestError as exc:
+        _refuse(prepared, rules.SUBMISSION_INVALID, str(exc), fname)
+    prepared.name = v2.id
+    if fname == CPLUG_SIDECAR and CPLUG_SIDECAR in read:
+        normalized = dict(raw_v2)
+        normalized.update({"tier": TIER_CATALOG, "default_enabled": False})
+        body = _json_text(normalized)
+        prepared.total_bytes += len(body) - len(read[CPLUG_SIDECAR])
+        prepared.members = [(p, body if p == CPLUG_SIDECAR else c) for p, c in prepared.members]
+    elif fname == TOML_FILE and TOML_FILE in read and raw_v2.get("tier") == TIER_LOCAL:
+        normalized = dict(raw_v2)
+        normalized.update({"tier": TIER_CATALOG, "default_enabled": False})
+        try:
+            body = _toml_text(normalized)
+        except TomlEncodeError as exc:
+            _refuse(prepared, rules.SUBMISSION_INVALID, str(exc), fname)
+            return
+        prepared.total_bytes += len(body) - len(read[TOML_FILE])
+        prepared.members = [(p, body if p == TOML_FILE else c) for p, c in prepared.members]
     if prepared.total_bytes > install_gates.MAX_TOTAL_BYTES:
         _refuse(prepared, rules.BODY_TOO_LARGE, f"a plugin may total at most {install_gates.MAX_TOTAL_BYTES // 1024} KiB", None)
 
@@ -330,7 +428,7 @@ def prepare_kind(kind: str, folder_path: str, version: str, handle: str = "") ->
         raise submission_preview.FolderUnreadable("that folder is not readable")
     folder = Path(os.path.realpath(folder_path))
     prepared = publish_prepare.Prepared(name=folder.name, version=version, kind=kind)
-    paths = _walk(folder)
+    paths = _walk_v2(folder) if (kind == KIND_CPLUG and has_v2_manifest(folder)) else _walk(folder)
     if kind == KIND_MOD:
         paths = [p for p in paths if not p.startswith(_MOD_GENERATED_DIR)]
     read = _read_all(folder, paths, prepared, kind)
@@ -343,6 +441,11 @@ def prepare_kind(kind: str, folder_path: str, version: str, handle: str = "") ->
     else:
         _check_plugin(folder, paths, read, prepared)
     prepared.members.sort()
+    prepared.script_files = rules.detect_script_files(
+        [p for p, _ in prepared.members], dict(prepared.members)
+    )
+    if prepared.script_files:
+        prepared.warnings.append("contains_scripts")
     prepared.digest = publish_prepare.digest_of(prepared.name, version, prepared.members)
     return prepared
 

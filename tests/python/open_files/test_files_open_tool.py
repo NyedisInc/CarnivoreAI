@@ -31,7 +31,7 @@ def h(tmp_path: Path, monkeypatch):
     (project / "docs" / "plan.md").write_text("# plan\n")
     _add_session(state, SESSION, str(project))
     _add_session(state, OTHER, str(project))
-    live = SimpleNamespace(tmux_session="cloude_a", host_key="local", session_row_id=9, label=None, host_label="here",
+    live = SimpleNamespace(claude_title=None, tmux_session="cloude_a", host_key="local", session_row_id=9, label=None, host_label="here",
                            session=SimpleNamespace(id="ses_cloude_a", working_dir=str(project), tmux_created_epoch=1))
 
     async def infos(_manager):

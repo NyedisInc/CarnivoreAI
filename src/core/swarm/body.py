@@ -13,8 +13,8 @@ import structlog
 
 from src.core import db, session_change_notice
 from src.core.db_reuse import datastore_pool
-from src.core.swarm import admission, alerts, body_create, conflicts, delivery, profiles, push, settings as swarm_settings, promotion_store, store, switch, thread_port, wake_prompt, watch  # noqa: F401
-from src.core.swarm.body_create import BodyIdentity
+from src.core.swarm.types import BodyIdentity, CreateRefused
+from src.core.swarm import admission, alerts, body_create, conflicts, delivery, profiles, push, settings as swarm_settings, promotion_store, store, switch, thread_port, watch
 from src.core.pack.identity import home as project_home
 from src.core.swarm.memory import SwarmFileError
 from src.plugins.sdk.swarm import SwarmError
@@ -22,7 +22,7 @@ from src.plugins.sdk.swarm import SwarmError
 logger = structlog.get_logger()
 T = TypeVar("T")
 
-START_ERRORS = (body_create.CreateRefused, SwarmFileError, fastapi.HTTPException, OSError, RuntimeError, ValueError,
+START_ERRORS = (CreateRefused, SwarmFileError, fastapi.HTTPException, OSError, RuntimeError, ValueError,
                 sqlite3.Error, db.DatastoreUnreadableError, asyncio.TimeoutError)
 END_REASONS = ("sleep", "auto_sleep", "teardown", "failed")
 WAKE_REFUSED_PREFIX = "wake_refused:"
@@ -264,6 +264,8 @@ async def wake(app_state: Any, agent_id: int, reason: str, authority: str, *, mo
         if not done:
             await _unwind(agent_id, wake_id)
     _changed(app_state, "swarm_woken")
+    from src.core.swarm import learning as _learning  # noqa: PLC0415
+    _learning.clear_backoff(agent_id)
     fresh = await run_db(lambda c: store.get_agent(c, agent_id)) or agent
     await _resolve_wake_cards(agent_id)
     await _refresh_index(fresh)
@@ -314,18 +316,18 @@ async def _start(app_state: Any, agent: Dict[str, Any], mode: str) -> BodyIdenti
 
     row = await run_db(read)
     if row is None or not row["session_uuid"]:
-        raise body_create.CreateRefused("the agent's session row is gone")
+        raise CreateRefused("the agent's session row is gone")
     answer = await recreate_by_uuid(str(row["session_uuid"]), row["agent_type"] or profiles.effective_profile(agent) or agent["harness"],
                                     get_manager=lambda: app_state.session_manager, fresh=mode == "fresh")
     if answer.status != "started":
-        raise body_create.CreateRefused(answer.detail or "the recreate was refused")
+        raise CreateRefused(answer.detail or "the recreate was refused")
     from src.core.sessions.name_locks import hold_adopt
 
     async with hold_adopt(app_state.session_manager, answer.tmux_session):
         info = await app_state.session_manager.get_session_info(answer.session_id)
     if info is None or info.session_row_id != agent["session_row_id"]:
         await _kill_minted(app_state, info)
-        raise body_create.CreateRefused("the new body is not on the agent's own session row")
+        raise CreateRefused("the new body is not on the agent's own session row")
     return BodyIdentity(answer.session_id, int(info.session_row_id), str(row["session_uuid"]),
                         str(info.tmux_session), info.session.tmux_created_epoch)
 
@@ -334,10 +336,15 @@ async def _kill_minted(app_state: Any, info: Optional[Any]) -> None:
     if info is None or not info.tmux_session:
         return
     from src.core import session_sleep
+    from src.core.session_ops import close_record
 
     manager = app_state.session_manager
+    socket = manager.tmux_socket_name()
+    name = str(info.tmux_session)
     try:
-        await session_sleep.close_for_sleep(manager, name=str(info.tmux_session), socket=manager.tmux_socket_name())
+        await close_record.stop_and_record(
+            lambda: session_sleep.close_for_sleep(manager, name=name, socket=socket),
+            socket=socket, name=name, epoch=info.session.tmux_created_epoch)
     except RuntimeError as exc:
         logger.error("swarm_minted_body_close_failed", tmux_name=info.tmux_session, error=str(exc)[:200])
 
@@ -352,7 +359,7 @@ async def finish_start(app_state: Any, agent: Dict[str, Any], wake_id: int, iden
     counts = await asyncio.to_thread(crosstalk_store.repin, ident.session_uuid, ident.session_id, ident.tmux_epoch)
     logger.info("swarm_wake_repinned", agent_id=agent["id"], **counts)
     if not await run_db(lambda c: store.cas_state(c, agent["id"], "waking", "awake")):
-        raise body_create.CreateRefused("the agent left the waking state while its body started")
+        raise CreateRefused("the agent left the waking state while its body started")
     push.notify_roster()
     push.notify_agent(agent["id"])
     if agent.get("host_key", "local") == "local":

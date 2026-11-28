@@ -14,7 +14,7 @@ export function createPluginActions(opts: {
     request(id: string, next: boolean): void;
     confirm(): void;
     cancel(): void;
-    grantFromSheet(plugin: CplugItem, ticks: string[]): Promise<void>;
+    grantFromSheet(plugin: CplugItem, ticks: string[], slotTicks?: string[]): Promise<void>;
 } {
     const { ctl, adapter, grant, seenSheet, onAsk } = opts;
     let pendingOff = $state<string | null>(null);
@@ -40,10 +40,18 @@ export function createPluginActions(opts: {
         cancel(): void {
             pendingOff = null;
         },
-        async grantFromSheet(plugin, ticks): Promise<void> {
+        async grantFromSheet(plugin, ticks, slotTicks): Promise<void> {
             if (!plugin.consentRequired) return ctl.toggle(plugin.id, true);
             await ctl.guard(plugin.id, async () => {
-                await grant(plugin.cplugId, ticks, { enable: !plugin.enabled, seen: seenSheet?.(plugin.cplugId) });
+                const seen = seenSheet?.(plugin.cplugId);
+                const sheetSlots = (seen?.ui_slots ?? []).map((s) => s.slot);
+                const itemSlots = plugin.uiContribute ? Object.keys(plugin.uiContribute) : [];
+                const uiSlots = sheetSlots.length > 0 ? sheetSlots : itemSlots;
+                await grant(plugin.cplugId, ticks, {
+                    enable: !plugin.enabled,
+                    seen,
+                    ...(slotTicks !== undefined ? { slotTicks, ...(uiSlots.length > 0 ? { uiSlots } : {}) } : {}),
+                });
                 await ctl.load();
             });
         },

@@ -61,7 +61,14 @@ def _checkout(root: Path) -> Path:
     cell = web / "src" / "opscenter" / "cells" / "notes" / "Cell.svelte"
     cell.parent.mkdir(parents=True)
     cell.write_text("<p>old</p>")
-    for args in (["init", "-q", "-b", "main"], ["add", "."], ["-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "base"]):
+    for args in (
+        ["init", "-q", "-b", "main"],
+        ["config", "user.name", "t"],
+        ["config", "user.email", "t@t"],
+        ["config", "commit.gpgsign", "false"],
+        ["add", "."],
+        ["commit", "-q", "-m", "base"],
+    ):
         subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True)
     return root
 
@@ -195,9 +202,9 @@ def test_there_is_no_route_to_save_a_source_folder_it_is_a_setting(host_app, ins
 
 
 def test_the_plugin_declares_the_widget_lab_source_folder_setting_in_plain_words() -> None:
-    import json  # noqa: PLC0415
+    import tomllib  # noqa: PLC0415
 
-    field = json.loads(Path("src/plugins/devwidgetlab/cplug.json").read_text())["settings_schema"]["fields"][checkout.SETTING]
+    field = tomllib.loads(Path("src/plugins/devwidgetlab/carnivore.toml").read_text())["settings_schema"]["fields"][checkout.SETTING]
     assert field["kind"] == "string" and field["default"] == ""
     catalog = Path("web/src/plugins/devwidgetlab/catalog.en.js").read_text()
     assert "'" + field["labelKey"] + "': 'widget lab source folder'" in catalog
@@ -205,7 +212,7 @@ def test_the_plugin_declares_the_widget_lab_source_folder_setting_in_plain_words
 
 
 
-FRAME = f"{sh.DRAFT_HARNESS_PREFIX}some-ticket/index.html"
+FRAME = "/api/v1/cplugs/devwidgetlab/draft-harness/some-ticket/index.html"
 
 
 def _ancestors(path: str) -> str:
@@ -216,7 +223,7 @@ def test_the_frame_header_is_self_only_while_developer_mode_and_the_plugin_are_o
     app, host = host_app
     assert _ancestors(FRAME) == "'none'"
     turn_on(host, "devwidgetlab")
-    assert _ancestors(FRAME) == "'self'" and _ancestors(f"{sh.DRAFT_HARNESS_PREFIX}t/draft.js") == "'self'"
+    assert _ancestors(FRAME) == "'self'" and _ancestors("/api/v1/cplugs/devwidgetlab/draft-harness/t/draft.js") == "'self'"
     monkeypatch.setattr(developer_mode, "is_on", lambda: False)
     assert _ancestors(FRAME) == "'none'"
     monkeypatch.setattr(developer_mode, "is_on", lambda: True)
@@ -228,7 +235,7 @@ def test_the_frame_check_fails_closed_when_the_state_cannot_be_read(monkeypatch)
     def broken() -> bool:
         raise OSError("config unreadable")
     monkeypatch.setattr(developer_mode, "is_on", broken)
-    assert sh.draft_framing_allowed() is False
+    assert sh.dev_prefix_framing_allowed("devwidgetlab") is False
 
 
 

@@ -83,8 +83,10 @@ async def _start_watcher(ctx: "BootContext", held: _Held) -> None:
     from src.core.session_token_usage import reader_state
 
     app = ctx.app
-    await asyncio.to_thread(reader_state.install, settings.get_state_dir())
-    await approval_runtime.install(app)
+    await asyncio.gather(
+        asyncio.to_thread(reader_state.install, settings.get_state_dir()),
+        approval_runtime.install(app),
+    )
     attention_watcher = build_attention_watcher(
         ctx.session_manager,
         app_state=app.state,
@@ -136,10 +138,18 @@ def _start_listing_push(ctx: "BootContext", held: _Held) -> None:
         PORT_WATCH.tick(listing_publisher.wake)
         PR_WATCH.tick(listing_publisher.wake)
 
+    def on_listing_change(changes: dict) -> None:
+        from src.core.crosstalk.delivery.dispatcher import gate_ready_ids
+        dispatcher = getattr(app.state, 'crosstalk_dispatcher', None)
+        if dispatcher is not None:
+            for session_id in gate_ready_ids(changes):
+                dispatcher.on_startup_ready(session_id)
+
     listing_publisher = ListingPublisher(
         listing_collections(app.state), app.state.event_hub.publish,
         lambda: app.state.event_hub.client_count,
         after_pass=after_pass,
+        on_change=on_listing_change,
         feed=tmux_changes.control_feed(
             ctx.session_manager.tmux_socket_name,
             lambda: not any(is_remote_backend(b) for b in ctx.session_manager._registry.backends.values())),

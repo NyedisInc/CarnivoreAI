@@ -5,7 +5,7 @@ import asyncio
 import sqlite3
 from contextlib import closing
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 
@@ -135,13 +135,14 @@ def wiring() -> Optional[Wiring]:
     return _WIRING
 
 
-def peer_restriction(install_id: str, name: str) -> Optional[bool]:
+def peer_restriction(install_id: str, name: str, *, default: bool = False) -> Optional[bool]:
     wired = _WIRING
     entry = wired.runtime.roster.entries.get(install_id) if wired is not None else None
     snapshot = entry.snapshot if entry is not None else None
     if not isinstance(snapshot, dict) or not isinstance(snapshot.get("restrictions"), dict):
         return None
-    return bool(snapshot["restrictions"].get(name))
+    raw = snapshot["restrictions"].get(name)
+    return default if raw is None else bool(raw)
 
 
 def peer_relay_accepts(install_id: str, account_key: str, self_install_id: str) -> bool:
@@ -202,15 +203,16 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
     runtime = exchange.PackMachines(
         install_id=install_id, label=label, app_version=app_version, state=state, collector=SnapshotCollector(state_dir),
         default_master=default_master, connected=connected, notify=resource_push.notify_coalesced, store=store,
-        agents=lambda: agents_mod.collect(open_db), importer=RollupImporter(open_db, post_for, caps_for),
+        agents=lambda: agents_mod.collect(open_db), importer=RollupImporter(open_db, post_for, caps_for, self_id=install_id),
         signing=signing, paired=lambda: any_live_grant(open_db))
     runtime.pipeline_rev = pipeline_rev
+    runtime.importer.held_list = runtime.held_list
     keeper = CanKeeper(Path(state_dir()), labels=state.labels)
     runtime.collector.add_extra("can", lambda: keeper.current() or None)
     for entry in stored:
         runtime.roster.entries.setdefault(entry.install_id, entry)
     runtime.member_labels = lambda: [{"install_id": install_id, "label": label},
-                                     *({"install_id": p.install_id, "label": p.label}
+                                     *({"install_id": p.install_id, "label": p.label, "state": p.link_state if p.link_state in roster_mod.REPORTED_STATES else "disconnected"}
                                        for p in peer_infos(open_db, links_getter()))]
     runtime.credential_offers = lambda: offers_mod.local_offers(open_db, settings.auth_config_file)
     runtime.offers_changed = lambda: resource_push.notify(topics.PACK_RELAY_OFFER)
@@ -238,7 +240,23 @@ def start(open_db: Callable[[], sqlite3.Connection], links_getter: Callable[[], 
                 logger.warning("pack_can_probe_failed", error=type(exc).__name__)
             await asyncio.sleep(CAN_CHECK_SECONDS)
 
+    mesh_tasks: list = []
+    if caps_mod.mesh_on():
+        from src.core.pack.machines import operating
+        from src.core.federation import mesh_peers
+        from src.core.pack.meshdata import gossip
+        gossip.add_step(operating.step(runtime))
+        from src.core.pack.rollup_import import member_pull
+        gossip.add_step(member_pull.step(runtime.importer, star_ids=lambda: [i for i, _ in (links_getter().connected_clients() if links_getter() else [])]))
+        mesh_tasks.append(member_pull.run(runtime.importer))
+        mesh_peers.add_list_listener(lambda lst: member_pull.on_list(runtime.importer, lst, install_id))
+        mesh_tasks.append(gossip.start(state_dir=state_dir, links_getter=links_getter, signing=signing, held_list=runtime.held_list,
+                                       label=lambda: runtime.label, app_version=app_version, own_iid=install_id))
+        if links is not None:
+            links.add_connect_listener(lambda peer_id: gossip.wake())
+        mesh_peers.add_connect_listener(gossip.wake_on_link)
+
     async def run_all() -> None:
-        await asyncio.gather(runtime.run_tick(), can_loop())
+        await asyncio.gather(runtime.run_tick(), can_loop(), *mesh_tasks)
 
     return asyncio.create_task(run_all(), name="pack-machines-tick")

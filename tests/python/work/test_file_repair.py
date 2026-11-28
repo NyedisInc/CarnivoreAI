@@ -24,7 +24,7 @@ def entry(path: str) -> Dict[str, Any]:
 
 def world(tmp_path: Path) -> Dict[str, Any]:
     state = machine(tmp_path, "s")
-    own = Path(state) / "cplugs" / "huddle" / "files" / "1"
+    own = Path(state) / "cplugs" / "taskmanager" / "files" / "1"
     own.mkdir(parents=True)
     (own / NAME).write_bytes(b"bytes")
     root = tmp_path / "tm"
@@ -52,7 +52,7 @@ def test_a_dry_run_lists_the_copies_and_writes_nothing(tmp_path: Path) -> None:
     w = world(tmp_path)
     before = paths_of(w["state"])
     report = repair(Path(w["state"]), [w["root"]])
-    files = Path(w["state"]) / "cplugs" / "huddle" / "files"
+    files = Path(w["state"]) / "cplugs" / "taskmanager" / "files"
     assert not report.applied and report.messages == 2 and len(report.copies) == 2
     assert {dest for _src, dest in report.copies} == {str(files / "2" / NAME), str(files / "3" / NAME)}
     assert paths_of(w["state"]) == before and not (files / "2").exists() and not (files / "3").exists()
@@ -61,7 +61,7 @@ def test_a_dry_run_lists_the_copies_and_writes_nothing(tmp_path: Path) -> None:
 def test_apply_gives_each_item_its_own_copy_and_leaves_the_sources(tmp_path: Path) -> None:
     w = world(tmp_path)
     report = repair(Path(w["state"]), [w["root"]], apply=True)
-    files = Path(w["state"]) / "cplugs" / "huddle" / "files"
+    files = Path(w["state"]) / "cplugs" / "taskmanager" / "files"
     assert report.applied and report.messages == 2
     assert paths_of(w["state"]) == [f"files/1/{NAME}", f"files/2/{NAME}", f"files/3/{NAME}", f"files/9/{NAME}", w["own_absolute"]], "item 5's own file is not touched"
     assert (files / "2" / NAME).read_bytes() == b"bytes" == (files / "3" / NAME).read_bytes()
@@ -136,6 +136,6 @@ def test_a_failure_part_way_removes_the_copies_and_changes_no_row(tmp_path: Path
     monkeypatch.setattr(file_repair, "_next_seq", lambda conn: (_ for _ in ()).throw(sqlite3.OperationalError("disk full")))
     with pytest.raises(sqlite3.OperationalError):
         repair(Path(w["state"]), [w["root"]], apply=True)
-    files = Path(w["state"]) / "cplugs" / "huddle" / "files"
+    files = Path(w["state"]) / "cplugs" / "taskmanager" / "files"
     assert paths_of(w["state"]) == before and not (files / "2").exists() and not (files / "3").exists()
     assert (files / "1" / NAME).exists(), "the sources are never touched"

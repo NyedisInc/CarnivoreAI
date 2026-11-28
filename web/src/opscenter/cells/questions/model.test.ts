@@ -3,7 +3,7 @@ import { filterRows, mergeQuestions } from './model';
 import { alertRows, taskManagerRows, taskManagerWaitingSince } from '../../../lib/attention-kinds/rows';
 import type { AppAlert } from '../../../lib/app-alerts/alerts-model';
 import type { ApprovalItem } from '../../../lib/approvals/approvals-model';
-import type { TaskManagerGroup } from '../../../plugins/huddle/huddle-model';
+import type { TaskManagerGroup } from '../../../plugins/taskmanager/huddle-model';
 
 const approval = (id: string, createdAt: number | null, extra: Partial<ApprovalItem> = {}): ApprovalItem =>
   ({ id, source: 'dialog', session_id: `ses_${id}`, session_name: `session ${id}`, question: `question ${id}?`, created_at: createdAt, ...extra }) as ApprovalItem;

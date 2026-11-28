@@ -9,6 +9,7 @@ import pytest
 from tests.python.swarm.test_swarm_turn_on_fixes import BASE, _agent, world  # noqa: F401
 from src.core.crosstalk import directory
 from src.core.db import connect, db_path_for
+from src.core.swarm.types import TurnOnError
 from src.core.swarm import naming_rules, project_agent, rename, spawn, store
 
 ARGS = {"job": "repaint the nodes", "goal": "do it", "task_type": "nodes", "rank": "task"}
@@ -75,7 +76,7 @@ def test_rename_works_after_naming_approval_keeps_the_old_name_and_refuses_a_dup
 def test_naming_family_off_posts_no_card_and_turn_on_asks_for_none(world):  # noqa: F811
     assert '"naming_family"' not in world.cfg.read_text()
     before = world.client.get(f"{BASE}/lists/{world.boss['thread_key']}").json()["items"]
-    with pytest.raises(project_agent.TurnOnError, match="naming family is off"):
+    with pytest.raises(TurnOnError, match="naming family is off"):
         asyncio.run(project_agent.propose_naming(_agent(world), "Norse gods", "Odin", "short names"))
     assert world.client.get(f"{BASE}/lists/{world.boss['thread_key']}").json()["items"] == before
     assert "naming family" not in project_agent.PLAIN_ORDERS

@@ -77,9 +77,9 @@ describe('the default layout', () => {
   });
 
   it('opens with the notepad OFF the surface, and named exactly once', () => {
-    expect(LIVE_DEFAULT.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects']);
+    expect(LIVE_DEFAULT.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects']);
     expect(rowOfCell(LIVE_DEFAULT, 'notes')).toBeUndefined();
-    expect(resetLayout(META, 'terminal').hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects']);
+    expect(resetLayout(META, 'terminal').hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects']);
   });
 
   it('places the file browser even for a layout stored before it existed', () => {
@@ -93,7 +93,7 @@ describe('the default layout', () => {
 
   it('puts the notepad in its declared slot the moment it is shown', () => {
     const shown = showCell(resetLayout(META, 'terminal'), 'notes', META);
-    expect(shown.hidden).toEqual(['files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects']);
+    expect(shown.hidden).toEqual(['files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects']);
     expect(rowOfCell(shown, 'notes')?.id).toBe('r1');
     expect(rowOf(shown, 'r1')?.slots.map((slot) => slot.id)).toEqual([
       'terminal:@primary',
@@ -503,11 +503,11 @@ describe('hideCell and showCell', () => {
   it('round trips a cell back to its default slot', () => {
     const before = LIVE_DEFAULT;
     const hidden = hideCell(before, 'skills');
-    expect(hidden.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects', 'skills']);
+    expect(hidden.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects', 'skills']);
     expect(rowOfCell(hidden, 'skills')).toBeUndefined();
     for (const slot of rowOf(hidden, 'r4')?.slots ?? []) expect(slot.fr).toBeCloseTo(0.5, 3);
     const shown = showCell(hidden, 'skills', META);
-    expect(shown.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects']);
+    expect(shown.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects']);
     expect(place(shown, 'skills')).toEqual(['r4', 1]);
     expect(rowOf(shown, 'r4')?.slots.map((s) => Number(s.fr.toFixed(3)))).toEqual(
       rowOf(LIVE_DEFAULT, 'r4')?.slots.map((s) => Number(s.fr.toFixed(3))),
@@ -521,7 +521,7 @@ describe('hideCell and showCell', () => {
     expect(rowOf(layout, 'r5')).toBeUndefined();
     layout = showCell(layout, 'themes', META);
     expect(rowOfCell(layout, 'themes')).toBeDefined();
-    expect(layout.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'ledger', 'activity-log']);
+    expect(layout.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'ledger', 'activity-log']);
   });
 
   it('ignores hiding twice and showing what is not hidden', () => {
@@ -794,11 +794,11 @@ describe('removeCell against hideCell', () => {
     const before = addInstance(OLD_DEFAULT_LAYOUT, 'terminal', 'test-1', '', META).layout;
     const removed = removeCell(before, 'terminal:test-1' as CellId);
     expect(rowOfCell(removed, 'terminal:test-1' as CellId)).toBeUndefined();
-    expect(removed.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom']);
+    expect(removed.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom']);
 
     const hiddenAway = hideCell(OLD_DEFAULT_LAYOUT, 'themes');
     expect(rowOfCell(hiddenAway, 'themes')).toBeUndefined();
-    expect(hiddenAway.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'themes']);
+    expect(hiddenAway.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'themes']);
   });
 
   it('renormalises the row it emptied a slot from', () => {
@@ -845,7 +845,7 @@ describe('the terminal page default', () => {
     expect(layout.rows[0]?.id).toBe('r1');
     expect(layout.rows[0]?.kind).toBe('flex');
     expect(layout.rows[0]?.slots).toEqual([{ id: 'terminal:@primary', fr: 1 }]);
-    expect(layout.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects']);
+    expect(layout.hidden).toEqual(['notes', 'files', 'scheduled-tasks', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects']);
     expect(layout.collapsed).toEqual([]);
   });
 
@@ -933,10 +933,10 @@ describe('offSurfaceIds (issue #893)', () => {
   it('offers a hidden-by-default cell a stored layout predates', () => {
     const old = resetLayout(META, 'home');
     const stored = { ...old, hidden: old.hidden.filter((id) => id !== 'scheduled-tasks') };
-    expect(offSurfaceIds(stored)).toEqual(['notes', 'files', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects', 'scheduled-tasks']);
+    expect(offSurfaceIds(stored)).toEqual(['notes', 'files', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects', 'scheduled-tasks']);
     const shown = showCell(stored, 'scheduled-tasks', META);
     expect(rowOfCell(shown, 'scheduled-tasks')).toBeDefined();
-    expect(offSurfaceIds(shown)).toEqual(['notes', 'files', 'keep-awake', 'machine-stats', 'changes', 'task-manager', 'task-manager-all', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'task-list', 'session-contents', 'warroom', 'projects']);
+    expect(offSurfaceIds(shown)).toEqual(['notes', 'files', 'keep-awake', 'machine-stats', 'changes', 'task-manager-mk2', 'task-manager-mk2-all', 'crosstalk', 'tasks', 'tasks-all', 'bookmarks', 'bookmarks-all', 'pipeline', 'automations', 'automations-all', 'shell', 'timeline', 'questions', 'developer', 'session-contents', 'warroom', 'projects']);
   });
 
   it('never offers a cell that is already placed or listed', () => {

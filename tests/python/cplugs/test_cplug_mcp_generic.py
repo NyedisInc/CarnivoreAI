@@ -37,7 +37,7 @@ def call(manager, name, args, caller=PANE):
 
 def set_state(manager, **changes):
     host = runtime.host_for(manager.app)
-    d = runtime.find("huddle")
+    d = runtime.find("taskmanager")
     owner_state.update(host.state_dir, d.manifest, None, lambda st: owner_state.CplugState(st.id, **{
         "enabled": st.enabled, "grants": st.grants, **changes}))
 
@@ -74,9 +74,9 @@ def test_cplug_update_always_waits_for_the_owner(manager, monkeypatch):
         return {"content": [{"type": "text", "text": json.dumps({"status": "pending", "id": "act_1"})}]}
 
     monkeypatch.setattr(write_tools, "park", park)
-    ok, text = call(manager, "cplug_update", {"cplug_id": "huddle", "revision": 0, "enabled": False})
+    ok, text = call(manager, "cplug_update", {"cplug_id": "taskmanager", "revision": 0, "enabled": False})
     assert ok and json.loads(text)["status"] == "pending" and parked == ["cplug_update"]
-    assert runtime.host_for(manager.app).enabled("huddle")
+    assert runtime.host_for(manager.app).enabled("taskmanager")
 
 
 def test_plugins_list_and_its_old_name_answer_the_same_rows_with_an_installed_catalog_plugin(manager):
@@ -96,6 +96,6 @@ def test_plugins_list_and_its_old_name_answer_the_same_rows_with_an_installed_ca
     old_ok, old = call(manager, "cplugs_list", {})
     assert ok and old_ok and json.loads(new) == json.loads(old)
     rows = json.loads(new)["plugins"]
-    assert {"huddle", "rea/rea"} <= {r["id"] for r in rows}
+    assert {"taskmanager", "rea/rea"} <= {r["id"] for r in rows}
     assert {r["kind"] for r in rows if r["id"] == "rea/rea"} == {"plugin"}
     assert "cplugs_list" in {d["name"] for d in tools.tool_definitions()}

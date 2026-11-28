@@ -28,7 +28,7 @@ describe('the stacking scale', () => {
   });
 
   test.each([
-    '../plugins/huddle/TaskManagerTickConfirm.svelte',
+    '../plugins/taskmanager/TaskManagerTickConfirm.svelte',
   ])('%s is a dialog over every drawer', (path) => {
     const z = resolveZ(zOf(path), rungs);
     expect(z).toBe(resolveZ('var(--oc-z-dialog)', rungs));

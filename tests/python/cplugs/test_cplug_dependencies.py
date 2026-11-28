@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import copy
-import json
+import tomllib
 from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict
@@ -13,11 +13,11 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.plugins.host import dependencies, routes as host_routes, runtime
-from src.plugins.sdk import ManifestError, core_features
-from src.plugins.sdk.manifest import parse_manifest
+from src.plugins.sdk import core_features
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, parse_manifest_v2
 
 ROOT = Path(__file__).resolve().parents[3]
-FLOW = json.loads((ROOT / "src/plugins/flow/cplug.json").read_text())
+FLOW = tomllib.loads((ROOT / "src/plugins/flow/carnivore.toml").read_text())
 
 
 @pytest.fixture
@@ -44,20 +44,20 @@ def grants_of(client: TestClient, cplug_id: str) -> Dict[str, Any]:
     (lambda m: m.update(requires_core=["nope"]), "unknown core feature"),
     (lambda m: m.update(requires_core="crosstalk"), "list of names"),
     (lambda m: m.update(requires_core=["crosstalk", "crosstalk"]), "twice"),
-    (lambda m: m.update(min_app_version="1.16"), "semver"),
-    (lambda m: m.update(min_app_version=None), "semver"),
+    (lambda m: m.update(min_app_version="1.16"), "major.minor.patch"),
+    (lambda m: m.update(min_app_version=None), "major.minor.patch"),
 ])
 def test_a_bad_dependency_declaration_is_refused(mutate, message):
     raw = copy.deepcopy(FLOW)
-    assert parse_manifest(raw).requires_core == ("crosstalk", "activity_read", "transcript_events")
+    assert parse_manifest_v2(raw, tier="builtin").requires_core == ("crosstalk", "activity_read", "transcript_events")
     mutate(raw)
-    with pytest.raises(ManifestError, match=message):
-        parse_manifest(raw)
+    with pytest.raises(ManifestV2Error, match=message):
+        parse_manifest_v2(raw, tier="builtin")
 
 
 def test_flow_declares_its_real_needs():
     flow = runtime.find("flow").manifest
-    assert flow.requires == ("huddle",)
+    assert flow.requires == ("taskmanager",)
     assert set(flow.requires_core) == {"crosstalk", "activity_read", "transcript_events"}
     assert flow.min_app_version == "1.16.0"
     assert all(core_features.available(c) for c in flow.requires_core)
@@ -76,6 +76,7 @@ def test_enable_is_refused_when_the_app_is_too_old(client, monkeypatch):
     detail = refused.json()["detail"]
     assert refused.status_code == 409 and detail["code"] == "requirements_unmet"
     assert detail["unmet"] == {"min_app_version": {"need": "1.16.0", "have": "1.15.9"}}
+    assert "1.16.0" in detail["detail"] and "1.15.9" in detail["detail"]
     assert client.get("/api/v1/cplugs/flow").json()["enabled"] is False
     monkeypatch.setattr(dependencies, "app_version", lambda: "1.16.0")
     assert put(client, "flow", enabled=True, grants=grants_of(client, "flow")).status_code == 200
@@ -97,11 +98,11 @@ def test_an_unknown_app_version_does_not_refuse(client, monkeypatch):
 
 def test_a_plugin_that_requires_one_that_is_off_still_enables_and_the_row_warns(client, monkeypatch):
     monkeypatch.setattr(dependencies, "app_version", lambda: "99.0.0")
-    assert put(client, "huddle", enabled=False).status_code == 200
+    assert put(client, "taskmanager", enabled=False).status_code == 200
     assert client.get("/api/v1/cplugs/huddle").json()["enabled"] is False
     assert put(client, "flow", enabled=True, grants=grants_of(client, "flow")).status_code == 200
     deps = client.get("/api/v1/cplugs/flow").json()["dependencies"]
-    assert deps["plugins"] == [{"id": "huddle", "status": "off"}]
+    assert deps["plugins"] == [{"id": "taskmanager", "status": "off"}]
     assert deps["min_app_version"]["met"] is True
 
 
@@ -111,19 +112,19 @@ def test_disabling_a_plugin_others_need_answers_with_the_dependents_until_confir
     assert put(client, "flow", enabled=True, grants=grants_of(client, "flow")).status_code == 200
     needed = client.get("/api/v1/cplugs/huddle").json()["dependencies"]["needed_by"]
     assert {"id": "flow", "enabled": True} in needed
-    refused = put(client, "huddle", enabled=False)
+    refused = put(client, "taskmanager", enabled=False)
     detail = refused.json()["detail"]
     assert refused.status_code == 409 and detail["code"] == "has_dependents" and "flow" in detail["dependents"]
     assert client.get("/api/v1/cplugs/huddle").json()["enabled"] is True
-    confirmed = put(client, "huddle", enabled=False, confirm_dependents=True)
+    confirmed = put(client, "taskmanager", enabled=False, confirm_dependents=True)
     assert confirmed.status_code == 200 and confirmed.json()["enabled"] is False
     assert confirmed.json()["blocked_by"] == []
     assert client.get("/api/v1/cplugs/flow").json()["state"] == "inert"
 
 
 def test_disabling_with_no_enabled_dependent_needs_no_confirm(client):
-    assert dependencies.enabled_dependents("huddle", client.app.state.cplugs_host.state_dir) == []
-    assert put(client, "huddle", enabled=False).status_code == 200
+    assert dependencies.enabled_dependents("taskmanager", client.app.state.cplugs_host.state_dir) == []
+    assert put(client, "taskmanager", enabled=False).status_code == 200
 
 
 def test_the_dependents_are_transitive(client, monkeypatch):
@@ -135,6 +136,6 @@ def test_the_dependents_are_transitive(client, monkeypatch):
     monkeypatch.setattr(runtime, "definitions", lambda: chained)
     for cid in ("flow", "reviewboard"):
         assert put(client, cid, enabled=True, grants=grants_of(client, cid)).status_code == 200
-    detail = put(client, "huddle", enabled=False).json()["detail"]
+    detail = put(client, "taskmanager", enabled=False).json()["detail"]
     assert set(detail["dependents"]) == {"flow", "reviewboard"}
 

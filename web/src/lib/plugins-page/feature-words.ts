@@ -1,19 +1,25 @@
-import { CATALOGS, DEFAULT_LOCALE } from '../../../../client/js/i18n/catalogs.js';
+import { fallbackCatalogKeys } from '../i18n/fallback';
 import { isFeatureTier } from '../catalog/app-own';
 import type { Translate } from '../sessions/types';
 
 const PLUGIN_PREFIX = 'plugins.page.';
 const FEATURE_PREFIX = 'features.page.';
 
-const TWINS: ReadonlySet<string> = new Set(
-    Object.keys(CATALOGS[DEFAULT_LOCALE]?.messages ?? {}).filter((key) => key.startsWith(FEATURE_PREFIX)),
-);
+let cachedTwins: ReadonlySet<string> | null = null;
+function featureTwins(): ReadonlySet<string> {
+    if (cachedTwins && cachedTwins.size > 0) return cachedTwins;
+    const layer = (globalThis as { CloudeI18n?: { catalogFor?(locale: string): { messages?: Record<string, unknown> } } }).CloudeI18n;
+    const msgs = layer?.catalogFor?.('en')?.messages;
+    const keys = msgs ? Object.keys(msgs) : fallbackCatalogKeys();
+    cachedTwins = new Set(keys.filter((key) => key.startsWith(FEATURE_PREFIX)));
+    return cachedTwins;
+}
 
 export function featureWords(t: Translate): Translate {
     return (key, params) => {
         if (!key.startsWith(PLUGIN_PREFIX)) return t(key, params);
         const twin = `${FEATURE_PREFIX}${key.slice(PLUGIN_PREFIX.length)}`;
-        return t(TWINS.has(twin) ? twin : key, params);
+        return t(featureTwins().has(twin) ? twin : key, params);
     };
 }
 

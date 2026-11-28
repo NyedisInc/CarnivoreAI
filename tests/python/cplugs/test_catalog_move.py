@@ -9,9 +9,10 @@ from types import SimpleNamespace
 from src.core.skills import kinds
 from src.core.skills.consent_via_ddl import CONSENT_ONE_CLICK
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem
-from src.plugins.host import catalog_move, state as owner_state
-from src.plugins.host.adoption import BUILTIN_SOURCE, NAME_PREFIX
-from src.plugins.host.sidecar_manifest import load_sidecar_manifest
+from src.plugins.host import catalog_move, registry_store, state as owner_state
+from src.plugins.host.adoption import BUILTIN_SOURCE
+from src.plugins.host.ledger_names import NAME_PREFIX
+from src.plugins.host.plugin_manifest import load_sidecar_manifest
 
 PACKAGE = Path(__file__).resolve().parents[3] / "packages" / "cplugs" / "mcphealth"
 
@@ -49,11 +50,18 @@ def _services(ledger):
 
 
 def _seed_state(state_dir, enabled, grants=("notify",)):
-    path = owner_state.state_path(state_dir)
+    path = registry_store.registry_path(state_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"version": 1, "cplugs": {"mcphealth": {
-        "enabled": enabled, "grants": list(grants), "settings": {"warnMode": "allow", "servers": "linear", "notify": True},
-        "revision": 3, "digest": ""}}}))
+    doc = registry_store.new_document()
+    doc["items"]["mcphealth"] = {
+        "kind": "feature",
+        "enabled": enabled,
+        "grants": list(grants),
+        "settings": {"warnMode": "allow", "servers": "linear", "notify": True},
+        "revision": 3,
+        "digest": "",
+    }
+    path.write_text(json.dumps(doc))
 
 
 def test_an_owner_who_had_it_on_keeps_settings_loses_consent_and_gets_one_alert(tmp_path):

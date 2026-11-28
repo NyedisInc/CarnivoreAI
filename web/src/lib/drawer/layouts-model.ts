@@ -123,7 +123,7 @@ export function isExpanded(uuid: string): boolean {
     return isCollapsed(PREFIX + uuid);
 }
 
-export interface MemberBody { bodyId: string; uuid: string; band: string; members: MemberRow[] }
+export interface MemberBody { bodyId: string; uuid: string; band: string; expanded: boolean; members: MemberRow[] }
 
 export function memberBody(row: LayoutRow, band?: string): MemberBody | null {
     if (band !== 'layouts') return null;
@@ -132,6 +132,7 @@ export function memberBody(row: LayoutRow, band?: string): MemberBody | null {
         bodyId: `session-sidebar-layout-body-${row.layout_uuid}`,
         uuid: row.layout_uuid,
         band: PREFIX + row.layout_uuid,
+        expanded,
         members: expanded && Array.isArray(row._members) ? row._members : [],
     };
 }

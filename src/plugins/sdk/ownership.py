@@ -5,6 +5,11 @@ import posixpath
 from dataclasses import dataclass
 from typing import Any, Dict, Mapping, Tuple
 
+if __package__:
+    from .renamed_from import string_prefixes
+else:
+    from renamed_from import string_prefixes  # type: ignore[no-redef]
+
 OWNS_KEYS = frozenset({"routes", "strings", "styles", "assets", "tests", "migrations", "style_guide", "contributions", "files"})
 FILES_FORBIDDEN_TOP = frozenset({"cplugs", "config.json", "carnivore.db", "cloude.db", "hook_tokens.json", "mcp_tokens.json"})
 CONTRIBUTION_SEAMS = frozenset({
@@ -43,7 +48,7 @@ def _clean_path(value: str) -> bool:
     return bool(bare) and not bare.startswith("/") and posixpath.normpath(bare) == bare and ".." not in bare.split("/")
 
 
-def parse_ownership(cplug_id: str, raw: Any) -> Ownership:
+def parse_ownership(cplug_id: str, raw: Any, renamed_from: str = "") -> Ownership:
     if raw is None:
         return Ownership()
     where = f"{cplug_id}: owns"
@@ -58,7 +63,7 @@ def parse_ownership(cplug_id: str, raw: Any) -> Ownership:
     web_root, py_tests = f"web/src/cplugs/{cplug_id}/", f"tests/python/cplugs/{cplug_id}/"
     checks: Mapping[str, Any] = {
         "routes": (lambda v: v.startswith("/") and ".." not in v.split("/"), "start with / and stay under the plugin's own router"),
-        "strings": (lambda v: v.startswith(f"cplug.{cplug_id}."), f"start with cplug.{cplug_id}."),
+        "strings": (lambda v: v.startswith(string_prefixes(cplug_id, renamed_from)), f"start with {' or '.join(string_prefixes(cplug_id, renamed_from))}"),
         "styles": (_clean_path, "be a relative path inside the plugin's web folder"),
         "assets": (_clean_path, "be a relative path inside the plugin's web folder"),
         "tests": (lambda v: _clean_path(v) and v.startswith((py_tests, web_root)), f"live under {py_tests} or {web_root}"),

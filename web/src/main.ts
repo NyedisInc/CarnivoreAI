@@ -41,6 +41,7 @@ import { bootListingPush } from './lib/listing-push/boot';
 import { bootResourcePush } from './lib/resource-push/boot';
 import { startOutbox } from './lib/outbox/outbox';
 import { bootNativeShell } from './lib/native-shell/shell';
+import { deliverStatusKey } from './lib/native-shell/status-key';
 import { bootPhoneMic } from './lib/phone-mic/boot';
 import { bootPackKnock } from './lib/pack-knock/boot';
 import { installNotifyScreen } from './lib/notifications/screen-filter';
@@ -52,7 +53,9 @@ import { closeBlueprintsScreen, openBlueprintsScreen, wireBlueprintsDeepLink } f
 import { openBlueprintPicker } from './lib/blueprints/blueprint-picker';
 import { askLeaderConfirm } from './lib/leader-confirm/confirm';
 import { confirmPositional } from './lib/confirm-ok/confirm-ok';
+import { offloadPromptForLegacy } from './lib/offload-prompt/legacy';
 import { closePluginsScreen, openPluginsScreen, wirePluginsDeepLink } from './lib/plugins-page/screen-host';
+import { closePluginStudio, openPluginStudio } from './lib/plugin-studio/screen-host';
 import { closeSkillsManagerScreen } from './lib/skills-page/screen-host';
 import {
     closeChangelogScreen, closeDocsScreen,
@@ -90,12 +93,10 @@ import { themeFavorites } from './lib/themes-page/favorites.svelte';
 import { browserCreateHost, type CreateHost } from './lib/launchpad/create-host';
 import { browserModals } from './lib/launchpad/modals';
 import { createConsoleFlow, createProjectFlow } from './lib/launchpad/create-flow';
-import {
-    cloneFromGithubFlow,
-    startNewClaudeProject as startNewClaudeProjectFlow,
-    startSessionInExistingProject as startSessionInExistingProjectFlow,
-} from './lib/launchpad/entry-flows';
-import { openProjectFromFolderFlow } from './lib/launchpad/open-folder-flow';
+import { openNewAgentWizard, type OpenNewAgentWizardOptions } from './lib/new-agent-wizard/open';
+import { projectToWizardProject } from './lib/new-agent-wizard/model';
+import { isRemoteRoot } from './lib/launchpad/open-project-payload';
+import { prefillFor, sourceOfProject } from './lib/launch-picker/prefill';
 import {
     archiveProjectFlow,
     editProjectFlow,
@@ -221,6 +222,9 @@ import { startHomeSync } from './opscenter/engine/home-sync.svelte';
 import { runLayoutMigration } from './opscenter/layouts/migrate';
 import { beginDrawerTabDrag } from './opscenter/engine/tab-drag';
 import { startContextLinks } from './lib/deepsearch/context-link.svelte';
+import { bootPluginCells } from './plugins/host/cell-boot';
+
+bootPluginCells();
 
 installSharedTooltip();
 mountPanel('toast-container', ToastStack, {});
@@ -322,14 +326,21 @@ function createHost(): CreateHost {
 }
 
 async function startNewClaudeProjectForLegacy(): Promise<void> {
-    await startNewClaudeProjectFlow(createHost(), browserModals(), t);
+    await openNewAgentWizard(createHost(), { entryContext: 'project_start' }, t);
 }
 
 async function startSessionInExistingProjectForLegacy(): Promise<void> {
-    await startSessionInExistingProjectFlow(createHost(), browserModals(), t);
+    await openNewAgentWizard(createHost(), { entryContext: 'existing_project_pick' }, t);
 }
 
-async function createNewSessionForLegacy(agentType: string | null = null): Promise<void> {
+async function createNewSessionForLegacy(
+    agentType: string | null = null,
+    wizardOpts?: OpenNewAgentWizardOptions,
+): Promise<void> {
+    if (!agentType) {
+        await openNewAgentWizard(createHost(), wizardOpts, t);
+        return;
+    }
     await createProjectFlow(createHost(), browserModals(), t, agentType);
 }
 
@@ -340,11 +351,40 @@ async function createConsoleSessionForLegacy(
 }
 
 async function cloneFromGithubForLegacy(): Promise<void> {
-    await cloneFromGithubFlow(createHost(), browserModals(), t);
+    await openNewAgentWizard(createHost(), { entryContext: 'clone_project' }, t);
 }
 
 async function openProjectFromFolderForLegacy(): Promise<void> {
-    await openProjectFromFolderFlow(createHost(), browserModals(), t);
+    await openNewAgentWizard(createHost(), { entryContext: 'open_folder' }, t);
+}
+
+async function selectProjectForLegacy(
+    project: ProjectRow,
+    choice?: Record<string, unknown> | null,
+    host = navHost(),
+): Promise<void> {
+    if (choice !== undefined || isResolvingDeepLink() || isRemoteRoot(project?.path)) {
+        await selectProjectFlow(project, host, t, choice);
+        return;
+    }
+    const initialProject = projectToWizardProject(project as unknown as Record<string, unknown>);
+    const taken = host
+        .runningSessions()
+        .flatMap((r) => [r.name, r.label ?? ''])
+        .filter(Boolean);
+    const prefill = prefillFor(sourceOfProject(project), taken);
+    const session = await openNewAgentWizard(
+        createHost(),
+        {
+            entryContext: 'project_launch',
+            initialProject,
+            initialAgentName: prefill?.name || '',
+        },
+        t,
+    );
+    if (prefill?.pinned && typeof session?.tmux_session === 'string' && session.tmux_session) {
+        host.pinSession?.(session.tmux_session);
+    }
 }
 
 async function archiveProjectForLegacy(projectName: string): Promise<void> {
@@ -391,6 +431,7 @@ async function loadHomeScreen(): Promise<void> {
 
 const CloudeWeb = {
     openForkPicker,
+    offloadPrompt: offloadPromptForLegacy,
     ledHtml: ledHtmlForStatus,
     led,
     labelFor,
@@ -428,6 +469,8 @@ const CloudeWeb = {
     askLeaderConfirm,
     openPluginsScreen,
     closePluginsScreen,
+    openPluginStudioScreen: openPluginStudio,
+    closePluginStudioScreen: closePluginStudio,
     closeSkillsManagerScreen,
     openWidgetsScreen,
     closeWidgetsScreen,
@@ -494,7 +537,7 @@ const CloudeWeb = {
         loadHomeScreen,
         openProjectByName: (name: string) => openProjectByNameFlow(name, navHost(), t),
         selectProject: (project: ProjectRow, choice?: Record<string, unknown> | null) =>
-            selectProjectFlow(project, navHost(), t, choice),
+            selectProjectForLegacy(project, choice, navHost()),
         detachAndOpenProject: (project: ProjectRow) =>
             detachAndOpenProjectFlow(project, navHost(), t),
         detachAndCreateNew: (agentType: string | null) =>
@@ -570,8 +613,9 @@ installRowMenuOpener();
 
 bootListingPush();
 bootResourcePush();
+// the Task Manager
 startOutbox();
-bootNativeShell();
+if (bootNativeShell()) void deliverStatusKey();
 bootPhoneMic();
 bootPackKnock();
 installNotifyScreen();
@@ -591,7 +635,7 @@ publishLaunchpadShim({
     openProjectByName: (name: string) => openProjectByNameFlow(name, browserNavHost(), t),
     showError: (message: string) => showHomeError(message, t),
     selectProject: (project: ProjectRow, choice?: Record<string, unknown> | null) =>
-        selectProjectFlow(project, browserNavHost(), t, choice),
+        selectProjectForLegacy(project, choice, browserNavHost()),
 });
 
 mountTerminalSearch();

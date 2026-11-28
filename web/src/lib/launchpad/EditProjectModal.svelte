@@ -14,9 +14,9 @@
     import { isProjectColor } from '../project-colors/palette';
     import ProjectColorSwatches from '../project-colors/ProjectColorSwatches.svelte';
     import Check from '../../opscenter/ui/Check.svelte';
-    import taskManagerManifest from '../../../../src/plugins/huddle/cplug.json';
+    import taskManagerManifest from '../../../../src/plugins/taskmanager/carnivore.toml';
     import { cplugEnabled } from '../../plugins/host/enablement.svelte';
-    import { getListInbox, getListNudge } from '../../plugins/huddle/task-list-prefs';
+    import { getListInbox, getListNudge } from '../../plugins/taskmanager/task-list-prefs';
     import type { CplugManifest } from '../../plugins/sdk';
 
     interface Props {
@@ -55,6 +55,7 @@
             .then((out) => { profileOptions = visibleProfiles(out.profiles).map((p) => ({ id: p.id, label: p.label || p.id })); })
             .catch((error) => console.warn('CloudeWeb: launch profiles unreadable for the project default', error));
     });
+    // the Task Manager
     const taskManagerOn = $derived(projectId !== null && cplugEnabled(taskManagerManifest as CplugManifest));
     let nudgeStored = $state<boolean | null>(null);
     let nudge = $state(false);

@@ -16,6 +16,7 @@
     var activeSessionName = null;
     var xtermListeners = [];
     var initialized = false;
+    var cachedPalettePaintedSync = false;
     var appliedCssVarValues = {};
     var sessionAppliedVarValues = {};
     var replayInProgress = false;
@@ -90,7 +91,7 @@
     /* could not be read */
     async function fetchManifests() {
         var dedupe = window.BootFetchDedupe;
-        return dedupe ? dedupe.run('themes:/api/v1/themes', {}, readManifests) : readManifests();
+        return dedupe ? dedupe.run('/api/v1/themes', {}, readManifests) : readManifests();
     }
 
     async function readManifests() {
@@ -727,10 +728,22 @@
         });
     }
 
-    async function init() {
+    async function init(waitForPrefs) {
         var generation = ++manifestRetryGeneration;
-        var loaded = await loadManifests();
-        paintStoredGlobal();
+        var loadedPromise = loadManifests();
+        var loaded;
+        if (waitForPrefs && typeof waitForPrefs.then === 'function') {
+            var settled = await Promise.all([loadedPromise, waitForPrefs.catch(function () {})]);
+            loaded = settled[0];
+        } else {
+            loaded = await loadedPromise;
+        }
+        var nav = window.ThemeNavigation;
+        if (activeSessionName && nav && typeof nav.reapply === 'function') {
+            nav.reapply();
+        } else {
+            paintStoredGlobal();
+        }
         followThemesTopic();
         if (!loaded) scheduleManifestRetry(generation, 0);
         initialized = true;
@@ -763,10 +776,13 @@
             var id = getStoredThemeId();
             document.documentElement.dataset.theme = id;
             var cached = readCachedThemeVars(id);
+            var hasCached = Object.keys(cached).length > 0;
+            cachedPalettePaintedSync = hasCached;
             paintCssVars(cached);
-            if (!Object.keys(cached).length) paintPreauthPalette(id);
+            if (!hasCached) paintPreauthPalette(id);
             return id;
         },
+        hasCachedPaletteSync: function () { return cachedPalettePaintedSync; },
         get initialized() { return initialized; }
     };
 })();

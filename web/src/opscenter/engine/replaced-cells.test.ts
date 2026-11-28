@@ -131,7 +131,7 @@ describe('the retired approvals cell (2026-10-12)', () => {
 });
 
 
-describe('the renamed Task Manager cells (S8, issue #1711)', () => {
+describe('the renamed and retired Task Manager cells (S8, issue #1711; one task manager, issue #2531)', () => {
   const stored = (slots: Array<{ id: string; fr: number }>, hidden: string[]): Record<string, unknown> => ({
     v: 6,
     rows: [{ id: 'r3', kind: 'px', size: 198, slots }],
@@ -139,7 +139,7 @@ describe('the renamed Task Manager cells (S8, issue #1711)', () => {
     heroCollapsed: false,
     collapsed: [],
   });
-  const RENAMES: Array<[string, string]> = [['huddle', 'task-manager'], ['huddle-all', 'task-manager-all'], ['huddle-list', 'task-list']];
+  const RENAMES: Array<[string, string]> = [['huddle', 'task-manager-mk2'], ['huddle-all', 'task-manager-mk2-all'], ['huddle-list', 'task-manager-mk2'], ['task-manager', 'task-manager-mk2'], ['task-manager-all', 'task-manager-mk2-all'], ['task-list', 'task-manager-mk2']];
 
   test('the declaration file maps each old cell to its one successor, and the catalog registers only the new ids', () => {
     for (const [old, fresh] of RENAMES) {
@@ -162,12 +162,18 @@ describe('the renamed Task Manager cells (S8, issue #1711)', () => {
 
   test('a hidden old cell becomes a hidden new cell, never a second one, and a second pass changes nothing', () => {
     const once = replaceCells(stored([{ id: 'running-sessions', fr: 1 }], ['huddle', 'huddle-all', 'huddle-list']), 'home');
-    expect((once.raw as { hidden: string[] }).hidden).toEqual(['task-manager', 'task-manager-all', 'task-list']);
+    expect((once.raw as { hidden: string[] }).hidden).toEqual(['task-manager-mk2', 'task-manager-mk2-all']);
     const twice = replaceCells(once.raw, 'home');
     expect(twice.migrated).toBe(false);
     expect(twice.raw).toBe(once.raw);
     const both = replaceCells(stored([{ id: 'running-sessions', fr: 1 }], ['huddle-list', 'task-list']), 'home');
-    expect((both.raw as { hidden: string[] }).hidden).toEqual(['task-list']);
+    expect((both.raw as { hidden: string[] }).hidden).toEqual(['task-manager-mk2']);
+  });
+
+  test('a header turned off on a retired cell is turned off on its successor, once', () => {
+    const blob = { ...stored([{ id: 'task-list', fr: 1 }], ['task-manager-mk2']), headerOff: ['task-list', 'task-manager-mk2', 'running-sessions'] };
+    const { raw } = replaceCells(blob, 'home');
+    expect((raw as { headerOff: string[] }).headerOff).toEqual(['task-manager-mk2', 'running-sessions']);
   });
 
   test('an old cell in a v7 tree becomes the new leaf where it stood', () => {
@@ -186,6 +192,6 @@ describe('the renamed Task Manager cells (S8, issue #1711)', () => {
     const { raw, migrated } = replaceCells({ ...blob, collapsed: [], heroCollapsed: false } as unknown as Record<string, unknown>, 'home');
     expect(migrated).toBe(true);
     const root = (raw as { variants: { wide: { root: { children: Array<{ t: string; id?: string }> } } } }).variants.wide.root;
-    expect(root.children.map((leaf) => leaf.id)).toEqual(['task-list', 'running-sessions']);
+    expect(root.children.map((leaf) => leaf.id)).toEqual(['task-manager-mk2', 'running-sessions']);
   });
 });

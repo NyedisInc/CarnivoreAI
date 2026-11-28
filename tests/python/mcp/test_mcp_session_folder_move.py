@@ -24,7 +24,7 @@ UUID_B = "b0b0b0b0-0000-4000-8000-000000000001"
 
 def _info(name: str, host: str = "local") -> SimpleNamespace:
     return SimpleNamespace(activity_status="idle", status_source="none", subagents_running=None, background_open=None,
-                           tmux_session=name, host_key=host, session_row_id=1, host_label="far",
+                           label=None, claude_title=None, tmux_session=name, host_key=host, session_row_id=1, host_label="far",
                            session=SimpleNamespace(id=f"ses_{name.removeprefix('cloude_')}", tmux_created_epoch=7))
 
 

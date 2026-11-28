@@ -264,7 +264,7 @@ class Printer:
                 if isinstance(cand, dict):
                     print("candidate=" + "|".join(_clean(cand.get(k, "")) for k in ("fid", "fid_short", "name")), flush=True)
         elif state == "joined":
-            print(f"joined {_clean(doc.get('main_label') or 'your main computer')}'s pack. you can close this window.", flush=True)
+            print(f"joined {_clean(doc.get('main_label') or 'your alpha computer')}'s pack. you can close this window.", flush=True)
         elif state == "finding":
             print("found a pack on this network. go back to the carnivore window.", flush=True)
         else:
@@ -292,7 +292,7 @@ async def serve(out: Printer, *, first_request: Optional[Dict[str, Any]]) -> int
 
 
 async def _await_code(out: Printer, job: str) -> bool:
-    out.step("knocked", "your main computer shows a code. type it in the carnivore window.")
+    out.step("knocked", "your alpha computer shows a code. type it in the carnivore window.")
     doc: Dict[str, Any] = {"state": "failed", "error": "door_unreachable"}
     try:
         async for answer in ask_door({"op": "await_code", "job": job}, stream=True):
@@ -361,7 +361,7 @@ async def _relay(out: Printer, job: str, main: Main, address: str, tcp: Tuple[as
                 watch.cancel()
                 out.final(await ask_once({"op": "status"}))
                 return 0
-            out.step("connecting", f"connecting to {_clean(main.get('name') or 'your main computer')}")
+            out.step("connecting", f"connecting to {_clean(main.get('name') or 'your alpha computer')}")
             out.step("join")
             relay = await asyncio.open_connection(sock=conn)
             await pump(tcp, relay)

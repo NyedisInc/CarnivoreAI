@@ -2,17 +2,27 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.agent_auth import require_agent
+from src.core.perf_hooks import executors
 from src.core.mcp.caller import AgentCaller
 from src.core.pack.jobs import boot, precheck
 from src.core.pack.jobs.types import JobError
+from src.core.pack.placement import explain
 
 router = APIRouter(tags=["pack-jobs"])
+
+
+def _answer(verdict: precheck.Verdict) -> Dict[str, Any]:
+    out: Dict[str, Any] = {"decision": verdict.decision, "computer": verdict.computer, "reason": verdict.reason}
+    note = explain.mesh_note()
+    if note is not None:
+        out["note"] = note
+    return out
 
 
 class PrecheckBody(BaseModel):
@@ -45,16 +55,17 @@ async def post_precheck(body: PrecheckBody, caller: AgentCaller = Depends(requir
         engine = boot.engine()
     except JobError:
         return {"decision": "run"}
-    verdict = await asyncio.to_thread(precheck.decide, engine, caller.tmux_name, body.command, body.folder,
-                                    tool_use_id=body.tool_use_id, background=body.background, timeout_ms=body.timeout_ms)
-    return {"decision": verdict.decision, "computer": verdict.computer, "reason": verdict.reason}
+    verdict = await executors.run_in(executors.precheck_executor(), precheck.decide, engine, caller.tmux_name, body.command, body.folder,
+                                     tool_use_id=body.tool_use_id, background=body.background, timeout_ms=body.timeout_ms)
+    return _answer(verdict)
 
 
 class AgentPrecheckBody(BaseModel):
-    """A Claude Code subagent about to start and where. Example: {"folder": "/Users/a/app"}."""
+    """A subagent about to start and where (Claude Code or agy). Example: {"folder": "/Users/a/app", "family": "agy"}."""
 
     model_config = ConfigDict(extra="forbid")
     folder: str = Field(min_length=1, max_length=4096)
+    family: Optional[Literal["claude", "codex", "agy"]] = None
 
 
 @router.post("/pack/jobs/precheck/agent")
@@ -66,8 +77,8 @@ async def post_precheck_agent(body: AgentPrecheckBody, caller: AgentCaller = Dep
         engine = boot.engine()
     except JobError:
         return {"decision": "run"}
-    verdict = await asyncio.to_thread(precheck.decide_agent, engine, caller.tmux_name, body.folder)
-    return {"decision": verdict.decision, "computer": verdict.computer, "reason": verdict.reason}
+    verdict = await executors.run_in(executors.precheck_executor(), precheck.decide_agent, engine, caller.tmux_name, body.folder, family=body.family)
+    return _answer(verdict)
 
 
 @router.post("/pack/jobs/precheck/finished")
@@ -78,5 +89,5 @@ async def post_precheck_finished(body: FinishedBody, caller: AgentCaller = Depen
             engine = boot.engine()
         except JobError:
             return {"ok": True}
-        await asyncio.to_thread(precheck.finished, engine, caller.tmux_name, body.tool_use_id)
+        await executors.run_in(executors.precheck_executor(), precheck.finished, engine, caller.tmux_name, body.tool_use_id)
     return {"ok": True}

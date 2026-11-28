@@ -97,7 +97,7 @@ describe('copyOptionNodes (Joe (ccsliinc), 2026-10-11: the questions widget)', (
   });
 
   test('a widget that names a heading gets one branch of that name; ticks inside it keep the menu open', () => {
-    const branch = copyOptionNodes(input('core.task-list', { placement: { schema, values: {}, write: () => {} } }), 'show in list');
+    const branch = copyOptionNodes(input('core.questions', { placement: { schema, values: {}, write: () => {} } }), 'show in list');
     expect(branch).toHaveLength(1);
     expect(branch[0]!.label).toBe('show in list');
     expect(branch[0]!.children!.every((c) => c.keepOpen)).toBe(true);

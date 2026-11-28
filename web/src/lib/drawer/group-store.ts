@@ -24,6 +24,7 @@ export interface SessionGroup {
     animation: string;
     icon: string | null;
     rule: GroupRule | null;
+    parent_key: string | null;
 }
 
 export interface GroupState {
@@ -72,6 +73,7 @@ export function apply(body: unknown): GroupState {
             animation: typeof g.animation === 'string' ? g.animation : 'none',
             icon: typeof g.icon === 'string' && g.icon ? g.icon : null,
             rule: ruleOf(g.rule),
+            parent_key: typeof g.parent_key === 'string' && g.parent_key ? g.parent_key : null,
         }))
         .sort((x, y) => (x.position - y.position) || (x.group_uuid < y.group_uuid ? -1 : 1));
     M.rebuild(groups);
@@ -130,9 +132,47 @@ export function previewGroupOrder(uuids: readonly string[] | null): void {
     previewGroups = uuids ? [...uuids] : null;
 }
 
+function orderedGroups(): SessionGroup[] {
+    if (!previewGroups) return state.groups;
+    const byId = new Map(state.groups.map((g) => [g.group_uuid, g]));
+    const out: SessionGroup[] = [];
+    const seen = new Set<string>();
+    for (const uuid of previewGroups) {
+        const g = byId.get(uuid);
+        if (g && !seen.has(uuid)) { out.push(g); seen.add(uuid); }
+    }
+    for (const g of state.groups) if (!seen.has(g.group_uuid)) out.push(g);
+    return out;
+}
+
+export function childrenOf(parentKey: string | null): SessionGroup[] {
+    if (!isUsable()) return [];
+    const want = parentKey || null;
+    return orderedGroups().filter((g) => (g.parent_key ?? null) === want);
+}
+
+export function siblingsOf(groupUuid: string): SessionGroup[] {
+    const target = groupByUuid(groupUuid);
+    if (!target) return [];
+    const want = target.parent_key ?? null;
+    return state.groups.filter((g) => (g.parent_key ?? null) === want);
+}
+
+export function isInsidePinned(groupUuid: string): boolean {
+    const seen = new Set<string>();
+    let cur: SessionGroup | null = groupByUuid(groupUuid);
+    while (cur && !seen.has(cur.group_uuid)) {
+        seen.add(cur.group_uuid);
+        if (cur.parent_key === BAND_PINNED) return true;
+        const nextUuid = groupUuidOf(cur.parent_key);
+        cur = nextUuid ? groupByUuid(nextUuid) : null;
+    }
+    return false;
+}
+
 export function bandOrder(): string[] {
     const keys = [BAND_PINNED];
-    if (isUsable()) for (const uuid of previewGroups ?? state.groups.map((g) => g.group_uuid)) keys.push(bandKeyFor(uuid));
+    if (isUsable()) for (const g of childrenOf(null)) keys.push(bandKeyFor(g.group_uuid));
     keys.push(BAND_OTHER);
     return keys;
 }
@@ -147,7 +187,7 @@ export function labelFor(key: string): string {
 export function bandIntent(key: string): BandIntent {
     if (key === BAND_PINNED) return { pinned: true, group: undefined };
     const uuid = groupUuidOf(key);
-    if (uuid) return { pinned: false, group: uuid };
+    if (uuid) return { pinned: isInsidePinned(uuid), group: uuid };
     return { pinned: false, group: null };
 }
 
@@ -220,6 +260,9 @@ export function reset(): void {
 
 export const setIdentities = M.setIdentities;
 export const setRuleContext = M.setRuleContext;
+export const getRuleContext = M.getRuleContext;
+export const handPickedRowsFor = M.handPickedRowsFor;
+export const listedRows = M.listedRows;
 export const countMatching = M.countMatching;
 export const subscribeRows = M.subscribeRows;
 export const uuidOfName = M.uuidOfName;

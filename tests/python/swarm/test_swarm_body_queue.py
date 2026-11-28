@@ -21,9 +21,9 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 from src.core.auto_sleep import swarm_rule
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
+from src.core.swarm.types import BodyIdentity, CreateRefused
 from src.core.swarm import body, delivery, store
-from src.core.swarm.body_create import BodyIdentity
-from src.plugins.huddle import held, swarm_tell, sending
+from src.plugins.taskmanager import held, swarm_tell, sending
 
 
 @pytest.fixture()
@@ -78,7 +78,7 @@ def test_two_wakes_race_into_one_open_wake(env, monkeypatch):
 
 def test_failed_start_unwinds_to_asleep_and_leaves_no_open_wake(env, monkeypatch):
     async def boom(app_state, agent, mode):
-        raise body.body_create.CreateRefused("no folder")
+        raise CreateRefused("no folder")
 
     monkeypatch.setattr(body, "_start", boom)
     with pytest.raises(body.BodyError):

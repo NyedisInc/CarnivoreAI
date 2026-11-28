@@ -11,8 +11,8 @@ from typing import Any, Awaitable, Callable, Dict, List, Optional, Set
 import structlog
 from pydantic import ValidationError
 
-from src.core.pack.jobs import agent_facts
-from src.core.pack.jobs.agent_types import CAP_ACCOUNT_IDENTITY, CAP_AGENT, CAP_REPLY_DIGEST, TASK_MAX, AgentSpec, ReplyBody, digest_of
+from src.core.pack.jobs import agent_facts, member_link
+from src.core.pack.jobs.agent_types import CAP_ACCOUNT_IDENTITY, CAP_AGENT, CAP_AGENT_AGY, CAP_REPLY_DIGEST, TASK_MAX, AgentSpec, ReplyBody, digest_of
 from src.core.pack.jobs.types import HostState, JobError, JobRecord, JobRequest, JobState, StatusAnswer
 from src.core.pack.machines import capabilities
 
@@ -142,16 +142,27 @@ class AgentMixin:
                       "account_identity": facts.account_identity, "definition_json": definition, "definition_file": def_file, "task": task}
 
     @staticmethod
-    def _agent_view(view: Any) -> Any:
-        kept = [p for p in view.peers if capabilities.has(view.caps.get(p.install_id), CAP_AGENT)]
+    def _agent_view(view: Any, family: Optional[str] = None) -> Any:
+        cap = CAP_AGENT_AGY if family == "agy" else CAP_AGENT
+        kept = []
+        for p in view.peers:
+            if not capabilities.has(view.caps.get(p.install_id), cap):
+                continue
+            if family == "agy":
+                tools = ((p.snapshot or {}).get("can") or {}).get("tools")
+                if isinstance(tools, dict) and tools.get("agy") is False:
+                    continue
+            kept.append(p)
         return dataclasses.replace(view, peers=kept)
 
 
-    async def _poll_agent(self, rec: JobRecord) -> bool:
+    async def _poll_agent(self, rec: JobRecord, on_answer: Optional[Callable[[], None]] = None) -> bool:
         began, job_id = self._clock(), rec.id
         while True:
             sampled = self._mono()
             st: StatusAnswer = await self._peer(job_id, rec.peer_install_id or "", lambda t: t.status_full(job_id))
+            if on_answer is not None:
+                on_answer()
             rec = self.store.get_job(job_id) or rec
             extra = {k: v for k, v in status_fields(st).items() if getattr(rec, k) != v}
             if st.state == HostState.EXITED:
@@ -185,7 +196,8 @@ class AgentMixin:
             view = await asyncio.to_thread(self._view_for, root, rec.project_uid)
         except (JobError, KeyError, ValueError):
             return False
-        return capabilities.has(view.caps.get(rec.peer_install_id or ""), cap)
+        caps = view.caps.get(rec.peer_install_id or "") or (member_link.caps_for(rec.peer_install_id or "") if member_link.on() else [])
+        return capabilities.has(caps, cap)
 
     async def reply(self, job_id: str, text: str, caller_session: Optional[str], question_digest: Optional[str] = None) -> JobRecord:
         rec = self.store.get_job(job_id)

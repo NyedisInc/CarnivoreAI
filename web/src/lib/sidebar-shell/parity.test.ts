@@ -148,7 +148,7 @@ describe('the shell and the legacy paint draw the same drawer', () => {
         w.SessionSidebarArrangement.toggleCollapsed('g:g1');
         ({ shellEl } = expectParity(withLayouts(baseRows())));
         const folded = shellEl.querySelector('[data-group="g:g1"] [data-group-icon="flask"]');
-        expect(folded!.previousElementSibling!.className).toBe('session-sidebar-group__project-led');
+        expect(folded!.nextElementSibling!.className).toBe('session-sidebar-group__project-led');
     });
 
     it('folded bands draw no rows and show their summary light', () => {
@@ -169,8 +169,11 @@ describe('the shell and the legacy paint draw the same drawer', () => {
 
     it('a drag in flight draws an empty PINNED as the drop target', () => {
         const rows = baseRows().map((r) => ({ ...r, is_pinned: false }));
-        const { shellEl } = expectParity(rows, { _dragging: true });
+        const { legacyEl, shellEl } = paintBoth(rows, { _dragging: true });
         expect(shellEl.querySelector('[data-group="pinned"]')).not.toBeNull();
+        expect(shellEl.querySelectorAll('[data-newgroup]')).toHaveLength(1);
+        shellEl.querySelector('[data-newgroup]')!.remove();
+        expect(canonicalDom(shellEl)).toBe(canonicalDom(legacyEl));
     });
 
     it('no rows: the empty line when the listing answered, CANNOT DETERMINE when not', () => {

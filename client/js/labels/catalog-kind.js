@@ -1,6 +1,6 @@
 /* the reading pane */
 
-export const CATALOG_KINDS = new Set(['skill', 'theme', 'plugin', 'loadout', 'mod', 'cplug']);
+export const CATALOG_KINDS = new Set(['skill', 'theme', 'plugin', 'loadout', 'mod', 'cplug', 'widget']);
 
 export const KIND_KEYS = {
     kindSkill: 'catalog.kind.skill',
@@ -9,6 +9,7 @@ export const KIND_KEYS = {
     kindLoadout: 'catalog.kind.loadout',
     kindMod: 'catalog.kind.mod',
     kindCplug: 'catalog.kind.cplug',
+    kindWidget: 'catalog.kind.widget',
     kindFilterLegend: 'catalog.kind.filter.legend',
     kindFilterAny: 'catalog.kind.filter.any',
     themeBodyHeading: 'theme.sheet.body.heading',

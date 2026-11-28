@@ -2,6 +2,8 @@ import { mcpServers } from './mcp';
 import type { InstallPreview, PreviewFile } from './types';
 
 export const SCRIPT_PREFIX = 'scripts/';
+const SCRIPT_PREFIXES = ['scripts/', 'hooks/', 'bin/', 'monitors/'] as const;
+const SCRIPT_EXT_RE = /\.(?:sh|bash|zsh|fish|py|js|mjs|cjs|ts|tsx|mts|cts|jsx|rb|pl|php|ps1|bat|cmd|lua|awk|command)$/i;
 
 export function isScriptFile(file: PreviewFile | null | undefined): boolean {
     if (!file) return false;
@@ -9,7 +11,9 @@ export function isScriptFile(file: PreviewFile | null | undefined): boolean {
     const path = typeof file.path === 'string' ? file.path.trim() : '';
     if (!path) return false;
     const normalised = path.startsWith('./') ? path.slice(2) : path;
-    return normalised.startsWith(SCRIPT_PREFIX);
+    const lower = normalised.toLowerCase();
+    if (SCRIPT_PREFIXES.some((prefix) => lower.startsWith(prefix))) return true;
+    return SCRIPT_EXT_RE.test(lower);
 }
 
 export function scriptFiles(preview: InstallPreview | null | undefined): PreviewFile[] {

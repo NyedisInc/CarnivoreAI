@@ -13,6 +13,7 @@ STATUS_NON_OBJECT = "non_object"
 
 FAMILY_CLAUDE = "claude"
 FAMILY_CODEX = "codex"
+FAMILY_AGY = "agy"
 
 
 @dataclass(frozen=True)

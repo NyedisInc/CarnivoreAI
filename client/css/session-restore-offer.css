@@ -115,6 +115,11 @@
     border-top: var(--oc-border) solid var(--oc-line-faint);
 }
 
+.restore-offer__row [data-restore-offloaded] {
+    grid-column: 2 / -1;
+    justify-self: start;
+}
+
 .restore-offer__row.is-blocked {
     opacity: 0.7;
 }

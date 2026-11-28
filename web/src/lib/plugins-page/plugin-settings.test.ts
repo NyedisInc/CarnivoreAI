@@ -3,7 +3,10 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import PluginSettings from './PluginSettings.svelte';
 import { setCplugSetting, toCplugItem, type CplugRow } from './cplugs-adapter';
-import { formIsShown } from './plugin-extras';
+import { formIsShown, visibleSchema } from './plugin-extras';
+import '../plugins/builtin';
+import { saveCplug } from '../../plugins/save';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 const t = (key: string): string => key;
 const ROW: CplugRow = {
@@ -12,7 +15,13 @@ const ROW: CplugRow = {
     settings_schema: { version: 1, fields: { showTab: { kind: 'boolean', labelKey: 'cplug.flow.settings.show_tab', default: false } } },
 };
 let mounted: Record<string, unknown> | null = null;
-afterEach(() => { if (mounted) unmount(mounted); mounted = null; document.body.innerHTML = ''; });
+afterEach(() => {
+    if (mounted) unmount(mounted);
+    mounted = null;
+    document.body.innerHTML = '';
+    cplugEnablement.enabled = {};
+    vi.unstubAllGlobals();
+});
 
 async function draw(write: (id: string, key: string, value: boolean | number | string) => Promise<ReturnType<typeof toCplugItem>>) {
     const target = document.createElement('div');
@@ -68,13 +77,71 @@ describe('PluginSettings', () => {
         expect(root.textContent).not.toContain('about another field');
     });
 
-    test('the form is skipped only when the plugin panel draws every field', () => {
+    test('the form is skipped whenever no visible fields remain', () => {
         const none = { version: 1, fields: {} } as const;
         const one = { version: 1, fields: { showTab: { kind: 'boolean', labelKey: 'k', default: false } } } as never;
         expect(formIsShown(none, true)).toBe(false);
-        expect(formIsShown(none, false)).toBe(true);
+        expect(formIsShown(none, false)).toBe(false);
         expect(formIsShown(one, true)).toBe(true);
         expect(formIsShown(null, true)).toBe(false);
+    });
+
+    test('disabled save with all hidden schema fields renders [data-plugin-settings-none] and no empty form', async () => {
+        cplugEnablement.enabled = { save: false };
+        const saveItem = toCplugItem({
+            id: 'save',
+            name_key: 'cplug.save.name',
+            enabled: false,
+            state: 'disabled',
+            revision: 1,
+            settings: { vaultLocation: '', vaultFolderOptOut: '', offloadEnabled: false },
+            surfaces: { plugins: ['settings-panel'] },
+            settings_schema: saveCplug.manifest.settings_schema as never,
+        }, t);
+        const target = document.createElement('div');
+        document.body.append(target);
+        mounted = mount(PluginSettings, { target, props: { plugin: saveItem, t } });
+        await tick();
+        flushSync();
+        expect(target.querySelector('[data-plugin-settings-none]')).not.toBeNull();
+        expect(target.querySelector('[data-settings-form]')).toBeNull();
+        expect(target.querySelector('[data-save-settings]')).toBeNull();
+    });
+
+    test('enabled save renders [data-save-settings] and no empty form', async () => {
+        vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 500 })));
+        cplugEnablement.enabled = { save: true };
+        const saveItem = toCplugItem({
+            id: 'save',
+            name_key: 'cplug.save.name',
+            enabled: true,
+            state: 'active',
+            revision: 1,
+            settings: { vaultLocation: '', vaultFolderOptOut: '', offloadEnabled: false },
+            surfaces: { plugins: ['settings-panel'] },
+            settings_schema: saveCplug.manifest.settings_schema as never,
+        }, t);
+        const target = document.createElement('div');
+        document.body.append(target);
+        mounted = mount(PluginSettings, { target, props: { plugin: saveItem, t } });
+        await tick();
+        flushSync();
+        expect(target.querySelector('[data-save-settings]')).not.toBeNull();
+        expect(target.querySelector('[data-settings-form]')).toBeNull();
+        expect(target.querySelector('[data-plugin-settings-none]')).toBeNull();
+    });
+
+    test('visibleSchema omits fields marked hidden: true and returns the same object when none are hidden', () => {
+        const plain = { version: 1, fields: { showTab: { kind: 'boolean', labelKey: 'k', default: false } } } as never;
+        expect(visibleSchema(plain)).toBe(plain);
+        const mixed = {
+            version: 1,
+            fields: {
+                keepMe: { kind: 'boolean', labelKey: 'k1', default: false },
+                hideMe: { kind: 'string', labelKey: 'k2', default: '', maxLength: 50, hidden: true },
+            },
+        } as never;
+        expect(Object.keys(visibleSchema(mixed).fields)).toEqual(['keepMe']);
     });
 
     test('no fields means no section, and the route is PUT /cplugs/{id} with the revision and one setting', async () => {

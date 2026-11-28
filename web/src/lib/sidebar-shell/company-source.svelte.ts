@@ -62,7 +62,7 @@ export function watchCompanies(): void {
     let first = true;
     stopWatching = $effect.root(() => {
         const signature = $derived(JSON.stringify([
-            companies.list.map((c) => [c.id, c.name, c.parent_id ?? null]),
+            companies.list.map((c) => [c.id, c.name, c.parent_id ?? null, c.hue ?? null]),
             (projects.data ?? []).map((p) => [p.id, p.name, p.company_id ?? null, p.parent_project_id ?? null, p.pack_state ?? null, p.moved_to_label ?? null, p.color ?? null]),
         ]));
         $effect(() => {

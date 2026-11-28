@@ -4,7 +4,7 @@ import { flushSync, mount, unmount } from 'svelte';
 
 import { cplugEnablement } from '../host/enablement.svelte';
 import { startEnabled } from '../host/readers';
-import TaskManagerBoardCard from '../huddle/TaskManagerBoardCard.svelte';
+import TaskManagerBoardCard from '../taskmanager/TaskManagerBoardCard.svelte';
 import { registerBoardAttachments, resetBoardAttachments } from '../sdk/board-attachments';
 import { reviewboardCplug } from './index';
 

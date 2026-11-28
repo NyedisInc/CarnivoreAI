@@ -4,26 +4,27 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import stat
-import zipfile
-from dataclasses import replace
 from pathlib import Path
-from typing import Any, Dict, List, NamedTuple, Optional
+from typing import Any, Collection, Dict, List, NamedTuple, Optional
 
-from src.plugins.host import identity
-from src.plugins.host.preview_check import PreviewError, read_preview
-from src.plugins.host.sidecar_manifest import (
-    MANIFEST_FILE, SidecarManifest, SidecarManifestError, _views, clean_text, load_sidecar_manifest, sidecar_reasons)
-from src.plugins.sdk import api_contract, sidecar
-from src.plugins.sdk.manifest import RESERVED_IDS
+from src.plugins.host import dependencies, identity
+from src.plugins.host.plugin_manifest import SidecarManifest, SidecarManifestError, load_sidecar_manifest
+from src.plugins.host.preview_check import PreviewError, read_icon, read_preview
+from src.plugins.sdk import api_contract
+from src.plugins.sdk._manifest_v2_sections import _parse_views
+from src.plugins.sdk.cplug_validate import (
+    ALLOWED_SUFFIXES as ALLOWED_SUFFIXES,
+    MAX_FILE_BYTES as MAX_FILE_BYTES,
+    MAX_MEMBERS as MAX_MEMBERS,
+    MAX_TOTAL_BYTES as MAX_TOTAL_BYTES,
+    V2_ALLOWED_SUFFIXES as V2_ALLOWED_SUFFIXES,
+    VIEW_SUFFIXES as VIEW_SUFFIXES,
+    is_allowed_declared_binary_path as is_allowed_declared_binary_path,
+    validate_v2_folder_files,
+)
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, clean_text, has_v2_manifest, load_raw_v2
 from src.plugins.sdk.permission_registry import TIER_CATALOG, risk_of
 
-ALLOWED_SUFFIXES = frozenset({".py", ".json", ".md", ".txt"})
-VIEW_SUFFIXES = frozenset({".html", ".css", ".js", ".svg", ".png", ".woff2"})
-_NATIVE_MAGIC = (b"\x7fELF", b"MZ", b"\xfe\xed\xfa\xce", b"\xce\xfa\xed\xfe", b"\xfe\xed\xfa\xcf", b"\xcf\xfa\xed\xfe", b"\xca\xfe\xba\xbe")
-MAX_MEMBERS = 500
-MAX_FILE_BYTES = 2 * 1024 * 1024
-MAX_TOTAL_BYTES = 3 * 1024 * 1024
 _RISK_ORDER = {"high": 0, "medium": 1, "low": 2}
 
 NOT_SAFE = "cplug_not_safe"
@@ -50,71 +51,96 @@ class CplugFacts(NamedTuple):
     sha: str
 
 
-def _walk(root: Path) -> List[Path]:
-    found: List[Path] = []
-    for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
-        for name in list(dirnames) + filenames:
-            mode = os.lstat(os.path.join(dirpath, name)).st_mode
-            if stat.S_ISLNK(mode):
-                raise CplugGateRefusal(NOT_SAFE, "a plugin may not contain a symbolic link")
-        for name in filenames:
-            path = Path(dirpath) / name
-            if not stat.S_ISREG(os.lstat(path).st_mode):
-                raise CplugGateRefusal(NOT_SAFE, "a plugin may carry regular files only")
-            found.append(path)
-    return found
-
-
 def _declared_preview(root: Path) -> str:
+    if not has_v2_manifest(root):
+        return ""
     try:
-        value = json.loads((root / MANIFEST_FILE).read_text(encoding="utf-8")).get("preview")
-    except (OSError, ValueError, AttributeError):
+        raw, _ = load_raw_v2(root)
+        value = raw.get("preview")
+    except (OSError, ValueError, AttributeError, ManifestV2Error):
         return ""
     return value if isinstance(value, str) else ""
 
 
 def _declared_view_files(root: Path) -> frozenset[str]:
+    if not has_v2_manifest(root):
+        return frozenset()
     try:
-        raw = json.loads((root / MANIFEST_FILE).read_text(encoding="utf-8"))
-        views = _views(raw.get("views"), MANIFEST_FILE)
-    except (OSError, ValueError, AttributeError, SidecarManifestError):
+        raw, fname = load_raw_v2(root)
+        ui = raw.get("ui")
+        views = _parse_views(ui.get("views") if isinstance(ui, dict) else None, fname)
+    except (OSError, ValueError, AttributeError, ManifestV2Error):
         return frozenset()
     return frozenset(f"views/{view['name']}/{path}" for view in views for path in view["files"])
 
 
+def _v2_declared_binary(root: Path) -> str:
+    try:
+        raw, _fname = load_raw_v2(root)
+    except (OSError, ValueError, AttributeError, ManifestV2Error):
+        return ""
+    run = raw.get("run")
+    if not isinstance(run, dict):
+        return ""
+    cmd = run.get("cmd")
+    if not isinstance(cmd, list) or not cmd or not isinstance(cmd[0], str):
+        return ""
+    preview = raw.get("preview") if isinstance(raw.get("preview"), str) else ""
+    return is_allowed_declared_binary_path(cmd[0], preview=preview)
+
+
+def _declared_icon_file(root: Path) -> str:
+    if not has_v2_manifest(root):
+        return ""
+    try:
+        raw, _ = load_raw_v2(root)
+        value = raw.get("icon_file")
+    except (OSError, ValueError, AttributeError, ManifestV2Error):
+        return ""
+    return value if isinstance(value, str) else ""
+
+
 def check_files(root: Path) -> List[Path]:
-    members = _walk(root)
-    if len(members) > MAX_MEMBERS:
-        raise CplugGateRefusal(TOO_LARGE, f"a plugin may carry at most {MAX_MEMBERS} files")
-    total = 0
+    is_v2 = has_v2_manifest(root)
+    allowed_suffixes = V2_ALLOWED_SUFFIXES if is_v2 else ALLOWED_SUFFIXES
+    declared_binary = _v2_declared_binary(root) if is_v2 else ""
     preview = _declared_preview(root)
+    icon_file = _declared_icon_file(root)
     view_files = _declared_view_files(root)
-    for path in members:
-        rel = path.relative_to(root).as_posix()
-        is_preview = rel == preview
-        if is_preview:
-            try:
-                read_preview(root, rel)
-            except PreviewError as exc:
-                raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]}: {exc}") from exc
-        elif path.suffix.lower() not in ALLOWED_SUFFIXES and not (rel in view_files and path.suffix.lower() in VIEW_SUFFIXES):
-            raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} is not a file type a plugin may carry")
-        info = os.lstat(path)
-        if info.st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
-            raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} is executable; a plugin ships plain files")
-        if info.st_size > MAX_FILE_BYTES and not is_preview:
-            raise CplugGateRefusal(TOO_LARGE, f"{rel[:120]} is over {MAX_FILE_BYTES // 1024} KiB")
-        with path.open("rb") as fh:
-            header = fh.read(8)
-        if header.startswith(_NATIVE_MAGIC) or zipfile.is_zipfile(path):
-            raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} is an executable or archive")
-        if rel in view_files and path.suffix.lower() in {".png", ".woff2"}:
-            magic = b"\x89PNG\r\n\x1a\n" if path.suffix.lower() == ".png" else b"wOF2"
-            if not header.startswith(magic):
-                raise CplugGateRefusal(NOT_SAFE, f"{rel[:120]} does not match its declared file type")
-        total += info.st_size
-    if total > MAX_TOTAL_BYTES:
-        raise CplugGateRefusal(TOO_LARGE, f"a plugin may total at most {MAX_TOTAL_BYTES // (1024 * 1024)} MiB")
+
+    def _preview_err(_path: Path, rel: str) -> Optional[str]:
+        try:
+            read_preview(root, rel)
+        except PreviewError as exc:
+            return str(exc)
+        return None
+
+    def _icon_err(_path: Path, rel: str) -> Optional[str]:
+        try:
+            read_icon(root, rel)
+        except PreviewError as exc:
+            return str(exc)
+        return None
+
+    members, errors = validate_v2_folder_files(
+        root,
+        allowed_suffixes=allowed_suffixes,
+        allow_shell_exec=is_v2,
+        declared_binary=declared_binary,
+        preview=preview,
+        icon_file=icon_file,
+        view_files=view_files,
+        check_exec=True,
+        check_magic=True,
+        forbid_node_pkg=not is_v2,
+        preview_checker=_preview_err,
+        icon_checker=_icon_err,
+        stop_on_first=True,
+    )
+    if errors:
+        code, _rel, detail = errors[0]
+        refusal_code = TOO_LARGE if code == "cplug_too_large" else NOT_SAFE
+        raise CplugGateRefusal(refusal_code, detail)
     return members
 
 
@@ -122,7 +148,7 @@ def _facts(manifest: SidecarManifest, members: List[Path], root: Path, reasons: 
     permissions = [{"name": p, "risk": risk_of(p, TIER_CATALOG), "reason": clean_text(reasons.get(p, ""), 300)} for p in manifest.permissions]
     permissions.sort(key=lambda row: (_RISK_ORDER.get(row["risk"], 3), row["name"]))
     net = manifest.network
-    return {
+    out: Dict[str, Any] = {
         "id": manifest.id, "name": manifest.name, "description": manifest.description, "version": manifest.version,
         "entry": manifest.entry, "files": len(members), "bytes": sum(os.lstat(p).st_size for p in members),
         "permissions": permissions,
@@ -134,44 +160,45 @@ def _facts(manifest: SidecarManifest, members: List[Path], root: Path, reasons: 
                       for h in net.lan_hosts],
         "secrets": [{"name": s.name, "label": clean_text(s.label, 120), "hosts": list(net.secret_hosts(s.name))} for s in net.secrets],
     }
+    blockers = dependencies.enable_blockers(manifest)
+    if blockers:
+        out["unmet_requirements"] = blockers
+    return out
 
 
 def evaluate(item_id: str, staged_path: Path, publisher_key_id: str = "", pinned_key_id: str = "") -> CplugFacts:
     root = Path(staged_path)
     name = item_id.partition("/")[2]
     members = check_files(root)
+    if not has_v2_manifest(root):
+        raise CplugGateRefusal(MANIFEST_INVALID, "plugin must carry carnivore.toml or schema = 2 carnivore.json")
     try:
-        raw = json.loads((root / MANIFEST_FILE).read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        raise CplugGateRefusal(MANIFEST_INVALID, f"cplug.json cannot be read ({type(exc).__name__})") from exc
-    if not isinstance(raw, dict) or raw.get("id") != name:
-        raise CplugGateRefusal(NAME_MISMATCH, "the id in cplug.json is not the catalog name of this item")
+        raw, _fname = load_raw_v2(root)
+    except (ManifestV2Error, FileNotFoundError, OSError, ValueError) as exc:
+        raise CplugGateRefusal(MANIFEST_INVALID, str(exc)[:300]) from exc
+    if raw.get("id") != name:
+        raise CplugGateRefusal(NAME_MISMATCH, "the id in the manifest is not the catalog name of this item")
+    if "tier" in raw and raw.get("tier") != TIER_CATALOG:
+        raise CplugGateRefusal(MANIFEST_INVALID, "catalog plugins may not declare a non-catalog tier")
+    if raw.get("default_enabled") is True:
+        raise CplugGateRefusal(MANIFEST_INVALID, "catalog plugins may not declare default_enabled = true")
+    try:
+        api_contract.require_served(raw)
+    except api_contract.ApiVersionUnsupported as exc:
+        raise CplugGateRefusal(API_VERSION_UNSUPPORTED, str(exc)) from exc
     try:
         manifest = load_sidecar_manifest(root, name)
     except SidecarManifestError as exc:
         raise CplugGateRefusal(MANIFEST_INVALID, str(exc)[:300]) from exc
-    try:
-        side = json.loads((root / sidecar.SIDECAR_NAME).read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        side = None
-    if isinstance(side, dict):
-        try:
-            api_contract.require_served(side)
-        except api_contract.ApiVersionUnsupported as exc:
-            raise CplugGateRefusal(API_VERSION_UNSUPPORTED, str(exc)) from exc
-    reasons = sidecar_reasons(side)
-    envelope = replace(manifest, id=item_id, author=side.get("author", "") if isinstance(side, dict) else "",
-                       min_app_version=side.get("min_app_version", "") if isinstance(side, dict) else "",
-                       icon=side.get("icon", "") if isinstance(side, dict) else "", permission_reasons=reasons)
-    report = sidecar.check_plugin(envelope, root)
-    if report.status != sidecar.VALID:
-        raise CplugGateRefusal(SIDECAR_INVALID, f"carnivore.json is {report.status}: " + "; ".join(report.problems)[:300])
+    if manifest.tier != TIER_CATALOG or manifest.default_enabled:
+        raise CplugGateRefusal(MANIFEST_INVALID, "catalog plugins must have catalog tier and default_enabled = false")
+    reasons = dict(manifest.permission_reasons)
     facts = _facts(manifest, members, root, reasons)
     sha = hashlib.sha256(json.dumps(facts, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
     return CplugFacts(facts, sha)
 
 
-def name_problem(state_dir: Path, name: str, catalog_id: str, shipped_ids: Any) -> Optional[CplugGateRefusal]:
+def name_problem(state_dir: Path, name: str, catalog_id: str, shipped_ids: Any, *, renamed_ids: Collection[str] = ()) -> Optional[CplugGateRefusal]:
     if not identity.INSTALL_NAME.match(name):
         return CplugGateRefusal("name_invalid", f"an install name must match {identity.INSTALL_NAME.pattern}")
     try:
@@ -179,7 +206,7 @@ def name_problem(state_dir: Path, name: str, catalog_id: str, shipped_ids: Any) 
     except identity.InstallRefused as exc:
         return CplugGateRefusal(exc.code, str(exc))
     owner = catalog_id == f"{identity.OWNER_PUBLISHER}/{name}"
-    reserved = (frozenset(RESERVED_IDS) | identity.HOST_WORDS) if owner else identity.reserved_names(shipped_ids)
+    reserved = identity.owner_refused(renamed_ids) if owner else identity.reserved_names(shipped_ids)
     if name in reserved:
         return CplugGateRefusal("name_reserved", f"{name} is reserved")
     held = identity.lookup(state_dir, name)

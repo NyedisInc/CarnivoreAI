@@ -11,8 +11,41 @@ const MAX_WINDOWS = 24;
 const BLUR_DELAY_MS = 1000;
 const SAVED_KEY = /^popout:[\x20-\x7e]{1,160}$/;
 const ROW_ID = /^\d{1,15}$/;
-const WIDGET_ID = /^(?:core\.[a-z0-9][a-z0-9-]*|[a-z][a-z0-9]{1,23}\.[a-z][a-z0-9-]{0,31}:[a-z0-9][a-z0-9:_-]{0,63})$/;
-const TEAR_SIZE = Object.freeze({ terminal: { width: 960, height: 640 }, widget: { width: 800, height: 600 } });
+const WIDGET_ID = /^(?:core\.[a-z0-9][a-z0-9-]*|(?!core\.)[a-z][a-z0-9-]{1,23}\.[a-z][a-z0-9-]{0,31}:[a-z0-9][a-z0-9:_-]{0,63})$/;
+const TAB_ID = /^[a-z][a-z0-9-]{0,95}$/;
+const ALLOWED_ABOUT = /^about:(?:blank|srcdoc)(?:$|[#?])/i;
+const TEAR_SIZE = Object.freeze({
+  terminal: { width: 960, height: 640 },
+  widget: { width: 800, height: 600 },
+  tab: { width: 440, height: 760 },
+});
+
+function viewPrefixOf(url, origin) {
+  if (typeof url !== 'string' || !url.startsWith(`${origin}/api/v1/cplugs/`)) return null;
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch (_err) {
+    return null;
+  }
+  if (parsed.origin !== origin) return null;
+  const m = /^(\/api\/v1\/cplugs\/[a-z][a-z0-9-]*\/view\/[a-z][a-z0-9_-]*\/[^/]+\/)/.exec(parsed.pathname);
+  return m ? `${origin}${m[1]}` : null;
+}
+
+function enclosingViewPrefix(frame, origin) {
+  let cur = frame;
+  const seen = new Set();
+  while (cur && typeof cur === 'object' && !seen.has(cur)) {
+    seen.add(cur);
+    if (typeof cur.url === 'string') {
+      const prefix = viewPrefixOf(cur.url, origin);
+      if (prefix) return prefix;
+    }
+    cur = cur.parent;
+  }
+  return null;
+}
 
 function createWindow(kind, origin, bounds) {
   const options = {
@@ -39,6 +72,12 @@ function createWindowHost({ getUrl, windowState, guard }) {
   let quitting = false;
   let restoring = false;
   let restored = false;
+  const restoreTimers = new Set();
+
+  function clearRestoreTimers() {
+    for (const id of restoreTimers) clearTimeout(id);
+    restoreTimers.clear();
+  }
 
   function live(key) {
     const entry = entries.get(key);
@@ -77,8 +116,23 @@ function createWindowHost({ getUrl, windowState, guard }) {
     wc.on('will-navigate', route);
     wc.on('will-redirect', route);
     wc.on('will-frame-navigate', (details) => {
-      if (details.isMainFrame || /^about:/i.test(details.url)) return;
-      if (policy.decideNavigation(details.url, origin) !== 'allow') details.preventDefault();
+      if (details.isMainFrame || ALLOWED_ABOUT.test(details.url)) return;
+      if (policy.decideNavigation(details.url, origin) !== 'allow') {
+        details.preventDefault();
+        return;
+      }
+      const prefix = enclosingViewPrefix(details.frame, origin);
+      if (prefix) {
+        let target;
+        try {
+          target = new URL(details.url);
+        } catch (_err) {
+          details.preventDefault();
+          return;
+        }
+        const dest = `${target.origin}${target.pathname}`;
+        if (dest !== prefix.slice(0, -1) && !dest.startsWith(prefix)) details.preventDefault();
+      }
     });
     wc.setWindowOpenHandler(({ url, disposition, frameName, features }) => {
       const verdict = policy.decideWindowOpen(url, origin, disposition);
@@ -189,6 +243,9 @@ function createWindowHost({ getUrl, windowState, guard }) {
     else if (kind === 'widget' && WIDGET_ID.test(id)) {
       url = `${origin}/static/popout.html?widget=${encodeURIComponent(id)}`;
       frameName = `carnivore-widget-${id}`;
+    } else if (kind === 'tab' && TAB_ID.test(id)) {
+      url = `${origin}/static/popout.html?tab=${encodeURIComponent(id)}`;
+      frameName = `carnivore-tab-${id}`;
     } else return false;
     const size = TEAR_SIZE[kind];
     const features = `left=${screenX - 80},top=${screenY - 18},width=${size.width},height=${size.height}`;
@@ -203,24 +260,99 @@ function createWindowHost({ getUrl, windowState, guard }) {
     return true;
   }
 
-  function restore() {
+  function restore(options = {}) {
     const origin = policy.originOf(getUrl());
     if (restored || !windowState || origin === null) return 0;
     restored = true;
-    let count = 0;
-    restoring = true;
-    try {
-      for (const saved of windowState.readOpen()) {
-        if (typeof saved.path !== 'string' || !saved.path.startsWith('/') || saved.path.startsWith('//')) continue;
-        const before = entries.size;
-        openNative({ url: `${origin}${saved.path}`, origin, key: saved.key });
-        if (entries.size > before) count += 1;
-      }
-    } finally {
-      restoring = false;
-      persist();
+    const staggerMs = typeof options.staggerMs === 'number' && options.staggerMs > 0 ? options.staggerMs : 0;
+    const afterMainLoad = options.afterMainLoad === true;
+    const mainLoadFallbackMs = typeof options.mainLoadFallbackMs === 'number' ? options.mainLoadFallbackMs : 2000;
+
+    const valid = [];
+    const seenKeys = new Set();
+    for (const saved of windowState.readOpen()) {
+      if (!saved || typeof saved.path !== 'string' || !saved.path.startsWith('/') || saved.path.startsWith('//')) continue;
+      const url = `${origin}${saved.path}`;
+      const target = policy.nativeTarget(url, origin);
+      if (!target) continue;
+      const key = target.kind === 'popout' && saved.key && SAVED_KEY.test(saved.key)
+        ? saved.key : policy.popoutWindowKey(url, '');
+      if (seenKeys.has(key) || live(key)) continue;
+      if (entries.size + valid.length >= MAX_WINDOWS) break;
+      seenKeys.add(key);
+      valid.push({ url, key: saved.key });
     }
-    return count;
+
+    if (valid.length === 0) {
+      persist();
+      return 0;
+    }
+
+    if (!staggerMs && !afterMainLoad) {
+      let count = 0;
+      restoring = true;
+      try {
+        for (const item of valid) {
+          const before = entries.size;
+          openNative({ url: item.url, origin, key: item.key });
+          if (entries.size > before) count += 1;
+        }
+      } finally {
+        restoring = false;
+        persist();
+      }
+      return count;
+    }
+
+    restoring = true;
+    let index = 0;
+    const openNext = () => {
+      if (quitting || index >= valid.length) {
+        restoring = false;
+        if (!quitting) persist();
+        return;
+      }
+      const item = valid[index++];
+      const currentOrigin = policy.originOf(getUrl());
+      if (currentOrigin === origin) {
+        openNative({ url: item.url, origin, key: item.key });
+      }
+      if (index < valid.length && !quitting) {
+        const id = setTimeout(() => { restoreTimers.delete(id); openNext(); }, staggerMs);
+        if (id.unref) id.unref();
+        restoreTimers.add(id);
+      } else {
+        restoring = false;
+        if (!quitting) persist();
+      }
+    };
+
+    const startQueue = () => {
+      if (quitting) { restoring = false; return; }
+      const id = setTimeout(() => { restoreTimers.delete(id); openNext(); }, staggerMs);
+      if (id.unref) id.unref();
+      restoreTimers.add(id);
+    };
+
+    const mainEntry = main();
+    const wc = mainEntry && mainEntry.win && !mainEntry.win.isDestroyed() ? mainEntry.win.webContents : null;
+    if (afterMainLoad && wc && typeof wc.once === 'function') {
+      let started = false;
+      const trigger = () => {
+        if (started) return;
+        started = true;
+        clearTimeout(fallbackId);
+        restoreTimers.delete(fallbackId);
+        startQueue();
+      };
+      const fallbackId = setTimeout(trigger, mainLoadFallbackMs);
+      if (fallbackId.unref) fallbackId.unref();
+      restoreTimers.add(fallbackId);
+      wc.once('did-finish-load', trigger);
+    } else {
+      startQueue();
+    }
+    return valid.length;
   }
 
   function reload() {
@@ -270,7 +402,13 @@ function createWindowHost({ getUrl, windowState, guard }) {
       return e ? e.origin : null;
     },
     list: () => [...entries].filter(([, e]) => !e.win.isDestroyed()).map(([key, e]) => ({ key, kind: e.kind, title: e.win.getTitle() })),
-    setQuitting: (value) => { quitting = value === true; },
+    setQuitting: (value) => {
+      quitting = value === true;
+      if (quitting) {
+        clearRestoreTimers();
+        restoring = false;
+      }
+    },
   };
 }
 

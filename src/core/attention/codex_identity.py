@@ -23,22 +23,24 @@ def codex_bind_conversation(
     thread_uuid: Optional[str],
     epoch: Optional[int] = None,
     pane_owned: bool = False,
+    source: str = SESSION_CLAUDE_UUID_SOURCE_CODEX_THREAD_MAP,
 ) -> Any:
     if not tmux_name or not thread_uuid:
         return
     if pane_owned and epoch is not None:
-        return _bind_owned_conversation(manager, tmux_name, epoch, thread_uuid)
+        return _bind_owned_conversation(manager, tmux_name, epoch, thread_uuid, source)
     return manager.record_claude_lifecycle_event(
         session_id,
         _LIFECYCLE_SESSION_START,
         {"session_id": thread_uuid, "source": _PAYLOAD_SOURCE_REGISTRY},
-        uuid_source=SESSION_CLAUDE_UUID_SOURCE_CODEX_THREAD_MAP,
+        uuid_source=source,
         tmux_name=tmux_name,
     )
 
 
 def _bind_owned_conversation(
     manager: Any, tmux_name: str, epoch: int, thread_uuid: str,
+    source: str = SESSION_CLAUDE_UUID_SOURCE_CODEX_THREAD_MAP,
 ) -> Any:
     from src.core.db import transaction
     from src.core.session_claude_correlate_bind import (
@@ -57,7 +59,7 @@ def _bind_owned_conversation(
                 return BindResult(outcome=BIND_UNRESOLVED, detail="instance row unavailable")
             return bind_correlated_uuid(
                 conn, socket=socket, name=tmux_name, epoch=epoch,
-                claude_uuid=thread_uuid, source=SESSION_CLAUDE_UUID_SOURCE_CODEX_THREAD_MAP,
+                claude_uuid=thread_uuid, source=source,
                 replaces_uuid=row.get("claude_session_uuid"),
             )
     except (sqlite3.Error, OSError, ValueError) as exc:

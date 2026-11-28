@@ -8,6 +8,7 @@ from typing import Any
 import structlog
 from fastapi import FastAPI
 
+from src.api.link_status_routes import router as link_status_router
 from src.api.phone_link_routes import pair_router, router
 from src.core.phone_link.manager import PhoneLinkManager
 
@@ -17,6 +18,7 @@ logger = structlog.get_logger()
 def include_routers(app: FastAPI) -> None:
     app.include_router(router, prefix="/api/v1")
     app.include_router(pair_router)
+    app.include_router(link_status_router, prefix="/api/v1")
 
 
 def start(app: FastAPI, relay_config: Any, state_dir: Path, db_path: Path, version: str,

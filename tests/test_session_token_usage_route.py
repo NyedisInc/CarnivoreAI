@@ -204,17 +204,19 @@ def test_totals_never_fabricate_a_negative_or_a_float():
 
 class _StubSession:
 
-    def __init__(self, working_dir: Optional[str]) -> None:
+    def __init__(self, session_id: str, working_dir: Optional[str]) -> None:
+        self.id = session_id
         self.working_dir = working_dir
+        self.tmux_created_epoch: Optional[int] = None
 
 
 class _StubInfo:
 
     def __init__(self, family: Optional[str], tmux_name: Optional[str],
-                 working_dir: Optional[str]) -> None:
+                 working_dir: Optional[str], session_id: str = "ses_1") -> None:
         self.agent_family = family
         self.tmux_session = tmux_name
-        self.session = _StubSession(working_dir)
+        self.session = _StubSession(session_id, working_dir)
         self.session_uuid: Optional[str] = None
 
 
@@ -293,7 +295,7 @@ def test_route_resolves_an_adopted_session_id(tmp_path, monkeypatch):
         lambda subject: real(subject, projects_dir=tmp_path / "empty"),
     )
 
-    rows = {"adopted:cloude_x": _StubInfo("claude", "cloude_x", None)}
+    rows = {"adopted:cloude_x": _StubInfo("claude", "cloude_x", None, "adopted:cloude_x")}
     response = _client(rows, UUID).get(
         "/api/v1/sessions/adopted:cloude_x/token-usage"
     )

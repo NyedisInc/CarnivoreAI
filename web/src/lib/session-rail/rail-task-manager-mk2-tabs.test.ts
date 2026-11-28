@@ -49,10 +49,14 @@ vi.mock('../../lib/listing-push/boot', async (importOriginal) => ({
 
 import { RAIL_FIELD } from './rail-model';
 import { follow, keyIn, mountRails, unmountRails } from './rail-test-harness';
-import { huddle } from '../../plugins/huddle/huddle.svelte';
-import { taskManagerPrefs } from '../../plugins/huddle/task-manager-prefs.svelte';
+import { huddle } from '../../plugins/taskmanager/huddle.svelte';
+import { taskManagerPrefs } from '../../plugins/taskmanager/task-manager-prefs.svelte';
 import { setLocale } from '../i18n/index.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
+import { registerCplugCells } from '../../plugins/host/cells';
+import { taskManagerCells } from '../../plugins/taskmanager/cells';
+
+registerCplugCells({ cells: taskManagerCells });
 
 setLocale('en');
 installPopoverPolyfill();

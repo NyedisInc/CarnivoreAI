@@ -1,5 +1,7 @@
 
-import { resource, listingRows, type Resource } from './poll.svelte';
+import { resource, listingRows, pushedRows, type Resource } from './poll.svelte';
+import { authFetch } from './auth.svelte';
+import { mergeWoken, reachWoken, WOKEN_HOLD_MS, type WokenKey } from './woken-rows';
 import type { SessionInfo } from './types';
 import { running as demoRunning } from '../data/sessions';
 import { parseServerTime } from '../lib/format';
@@ -50,6 +52,7 @@ export function statusLabel(
   if (unread === true && (key === 'idle' || key === 'unknown')) {
     return t(STATUS_KEYS[STATUS.finished_unread] as string);
   }
+  if (key === 'working_subagent' && activityHint === 'background') return t('session.status.background');
   return t(STATUS_KEYS[key] as string);
 }
 
@@ -60,6 +63,7 @@ export function statusHue(
   unread: boolean | null = null,
   hostOffline: string | null = null,
   usageLimit: string | null = null,
+  activityHint: string | null = null,
 ): StatusHue {
   if (hostOffline || usageLimit) return 'red';
   if (startupGate === 'awaiting_startup_prompt') return 'yellow';
@@ -67,6 +71,7 @@ export function statusHue(
   if (key === 'dead' || key === 'stopped') return 'red';
   if (key === 'question') return 'yellow';
   if (key === 'notice') return 'blue';
+  if (key === 'working_subagent' && activityHint === 'background') return 'grey';
   if (key === 'working' || key === 'working_subagent' || key === 'running') return 'green';
   if (key === STATUS.finished_unread || unread === true) return 'green';
   return 'grey';
@@ -113,7 +118,21 @@ function demoSessions(): SessionInfo[] {
 }
 
 async function readSessions(): Promise<SessionInfo[]> {
-  return listingRows<SessionInfo>('list', '/sessions/list');
+  return mergeWoken(await listingRows<SessionInfo>('list', '/sessions/list'));
+}
+
+export async function reachWokenSession(rowId: WokenKey): Promise<SessionInfo | null> {
+  const row = await reachWoken(rowId, {
+    pushed: () => pushedRows<SessionInfo>('list'),
+    readList: () => authFetch<SessionInfo[]>('/sessions/list'),
+    sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+    now: Date.now,
+  });
+  if (row) {
+    await sessions.refresh(true);
+    setTimeout(() => void sessions.refresh(true), WOKEN_HOLD_MS + 50);
+  }
+  return row;
 }
 
 export const sessions: Resource<SessionInfo[]> = resource<SessionInfo[]>(readSessions, {

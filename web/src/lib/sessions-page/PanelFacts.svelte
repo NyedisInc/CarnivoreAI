@@ -38,6 +38,7 @@
         <dd data-facts-transcript>
             {#if path}<span class="sp-pn-mono" title={path}>{path}</span>
             {:else if s.has_transcript}{t('projects.page.disk.on')}
+            {:else if s.offloaded}<Tag data-tag="offloaded">{t('projects.page.disk.offloaded')}</Tag> <span class="sp-pn-dim">{t('projects.page.resume.why_offloaded')}</span>
             {:else if s.claude_session_uuid}<Tag tone="danger">{t('projects.page.disk.gone')}</Tag> <span class="sp-pn-dim">{t('projects.page.d.gone_why')}</span>
             {:else}<span class="sp-pn-dim">{t('projects.page.d.none_yet')}</span>{/if}
         </dd>

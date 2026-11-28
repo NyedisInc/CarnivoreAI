@@ -81,7 +81,8 @@ describe('native iPhone dictation engine', () => {
         const j = utteranceJoiner();
         expect(j.feed('so the plan is to ship')).toBe('so the plan is to ship');
         expect(j.feed('So the plan is to ship it.')).toBe('So the plan is to ship it.');
-        expect(j.feed('x b')).toBe('x b');
+        expect(j.feed('So the plan is to ship it right now.')).toBe('So the plan is to ship it right now.');
+        expect(j.feed('x b')).toBe('So the plan is to ship it right now. x b');
         const k = utteranceJoiner();
         k.feed('one two');
         expect(k.feed('')).toBe('one two');
@@ -94,5 +95,30 @@ describe('native iPhone dictation engine', () => {
         m.feed('');
         expect(m.feed('one two three')).toBe('one two three');
         expect(utteranceJoiner().feed('')).toBe('');
+    });
+
+    it('a reset that arrives as new words with no empty result and no metadata keeps the old words', () => {
+        const { fromNative } = fakeShell();
+        const mic = createMic({ claim: () => 't1', deliver: vi.fn(), speech: nativeStarter(), record: null, transcribeReady: async () => true });
+        mic.start();
+        for (const text of ['so the plan is to ship', 'friday at noon']) fromNative({ type: 'speech', kind: 'text', text });
+        expect(mic.state.transcript).toBe('so the plan is to ship friday at noon');
+        mic.cancel();
+    });
+
+    it('a native end mid-capture restarts the engine and keeps the words; send still pastes', () => {
+        const { posted, fromNative } = fakeShell();
+        const deliver = vi.fn();
+        const mic = createMic({ claim: () => 't1', deliver, speech: nativeStarter(), record: null, transcribeReady: async () => true });
+        mic.start();
+        fromNative({ type: 'speech', kind: 'text', text: 'one two' });
+        fromNative({ type: 'speech', kind: 'end', text: 'one two' });
+        expect(mic.state.phase).toBe('listening');
+        expect(posted).toEqual(['speechStart', 'speechStart']);
+        fromNative({ type: 'speech', kind: 'text', text: 'three' });
+        expect(mic.state.transcript).toBe('one two three');
+        mic.done();
+        fromNative({ type: 'speech', kind: 'end', text: 'three' });
+        expect(deliver).toHaveBeenCalledWith('one two three', 't1');
     });
 });

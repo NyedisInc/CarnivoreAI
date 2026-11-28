@@ -1,14 +1,23 @@
 
 <script lang="ts">
     import type { Translate } from '../sessions/types';
+    import PermissionDiffPanel from './PermissionDiffPanel.svelte';
+    import { hasPermissionDiffChanges, parsePermissionDiff, type PermissionDiffData } from './permission-diff';
     import type { UpdateDiff } from './types';
 
     interface Props {
         diff: UpdateDiff;
+        permissionDiff?: PermissionDiffData | null;
         t: Translate;
     }
 
-    const { diff, t }: Props = $props();
+    const { diff, permissionDiff = undefined, t }: Props = $props();
+    const resolvedPermissionDiff = $derived(
+        permissionDiff !== undefined
+            ? permissionDiff
+            : parsePermissionDiff((diff as UpdateDiff & { readonly permission_diff?: unknown }).permission_diff),
+    );
+    const showPermissionDiff = $derived(hasPermissionDiffChanges(resolvedPermissionDiff));
 
     function lineClass(line: string): string {
         if (line.startsWith('+++') || line.startsWith('---') || line.startsWith('@@')) return 'udiff__line--meta';
@@ -52,6 +61,9 @@
     {/each}
     {#if diff.unchanged > 0}
         <p class="udiff__note">{t('skill.diff.unchanged', { count: diff.unchanged })}</p>
+    {/if}
+    {#if showPermissionDiff && resolvedPermissionDiff}
+        <PermissionDiffPanel diff={resolvedPermissionDiff} showAck={false} {t} />
     {/if}
 </section>
 

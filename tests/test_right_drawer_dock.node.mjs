@@ -12,7 +12,7 @@ const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf
 function drawerMarkup() {
     const html = read('client/index.html');
     const start = html.indexOf('<div class="modal-overlay config-editor-picker-overlay"');
-    const end = html.indexOf('<!-- Auth Screen -->', start);
+    const end = html.indexOf('<div id="auth-screen"', start);
     assert.ok(start > 0 && end > start, 'the drawer markup is in client/index.html');
     return html.slice(start, end);
 }

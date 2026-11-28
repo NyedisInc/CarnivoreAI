@@ -309,6 +309,39 @@ def test_a_rejected_push_rebuilds_on_the_new_tip(world: World) -> None:
     assert "attempt 2/3" in proc.stdout
     assert world.master_file("client/dist/app.js") == "base\nd\nr\n"
     assert world.master_mode() == 0
+    assert "skipped the check on the pushed commit" in proc.stdout
+
+
+def test_a_moved_master_touching_only_docs_is_rebased_with_no_rebuild(world: World) -> None:
+    worker, racer = world.clone("worker"), world.clone("racer")
+    world.branch(worker, "feat/9-e", "e")
+    world.merge("feat/9-e")
+    race = world.root / "race.sh"
+    race.write_text(
+        f"cd '{racer}' && git pull --quiet origin master && mkdir -p docs && printf 'x\\n' > docs/x.md"
+        " && git add docs/x.md && git commit --quiet -m race && git push --quiet origin HEAD:master\n"
+    )
+    proc = world.dist_at_merge(worker, FAKE_NPM_RACE=str(race))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "touching only non-input paths" in proc.stderr
+    assert "attempt 2/3" not in proc.stdout
+    assert world.master_file("docs/x.md") == "x\n"
+    assert world.master_file("client/dist/app.js") == "base\ne\n"
+    assert world.master_mode() == 0
+
+
+def test_a_moved_master_touching_a_docs_plugins_file_rebuilds(world: World) -> None:
+    worker, racer = world.clone("worker"), world.clone("racer")
+    world.branch(worker, "feat/10-f", "f")
+    world.merge("feat/10-f")
+    race = world.root / "race.sh"
+    race.write_text(
+        f"cd '{racer}' && git pull --quiet origin master && mkdir -p docs/plugins && printf 's\\n' > docs/plugins/sections.md"
+        " && git add docs/plugins/sections.md && git commit --quiet -m race && git push --quiet origin HEAD:master\n"
+    )
+    proc = world.dist_at_merge(worker, FAKE_NPM_RACE=str(race))
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "attempt 2/3" in proc.stdout
 
 
 def test_a_failed_build_is_cannot_evaluate_and_pushes_nothing(world: World) -> None:
@@ -454,3 +487,33 @@ def test_warn_mode_prints_the_findings_and_exits_as_the_build_check_would(world:
     assert "building web/" in out
     assert proc.returncode in (0, 1), out
     assert proc.returncode != 3
+
+
+_PACK_GUARD_LIB = Path(__file__).resolve().parent.parent / "scripts" / "lib" / "refuse-in-pack-job.sh"
+_PACK_GUARDED = ("dist-at-merge.sh", "refresh-local-install.sh")
+_PACK_SIDE_EFFECT = __import__("re").compile(r"\b(git|rsync|npm|launchctl|python3|mkdir)\b")
+
+
+def test_landing_scripts_refuse_inside_a_pack_job(tmp_path: Path) -> None:
+    scripts = _PACK_GUARD_LIB.parent.parent
+    base = {k: v for k, v in os.environ.items() if k != "CARNIVORE_JOB_ID"}
+    cmd = f'. "{_PACK_GUARD_LIB}"; refuse_in_pack_job x.sh; echo passed'
+    refused = subprocess.run(["bash", "-c", cmd], env={**base, "CARNIVORE_JOB_ID": "job_test"}, capture_output=True, text=True)
+    assert refused.returncode == 64 and "job_test" in refused.stderr and "passed" not in refused.stdout
+    for env in (base, {**base, "CARNIVORE_JOB_ID": ""}):
+        ok = subprocess.run(["bash", "-c", cmd], env=env, capture_output=True, text=True)
+        assert ok.returncode == 0 and ok.stdout.strip() == "passed"
+
+    for name in _PACK_GUARDED:
+        lines = [ln for ln in (scripts / name).read_text().splitlines() if not ln.lstrip().startswith("#")]
+        call = next((i for i, ln in enumerate(lines) if "refuse_in_pack_job" in ln and "lib/refuse-in-pack-job.sh" in ln), None)
+        assert call is not None, f"{name} never sources and calls refuse_in_pack_job"
+        first = next((i for i, ln in enumerate(lines) if _PACK_SIDE_EFFECT.search(ln)), len(lines))
+        assert call < first, f"{name}: the guard comes after a line that can act: {lines[first]!r}"
+
+    for name in _PACK_GUARDED:
+        home = tmp_path / name
+        home.mkdir()
+        res = subprocess.run(["bash", str(scripts / name)], env={**base, "CARNIVORE_JOB_ID": "job_test", "HOME": str(home), "HOTSYNC_SERVER_DIR": str(home)}, capture_output=True, text=True, cwd=home)
+        assert res.returncode == 64 and "job_test" in res.stderr, res.stderr
+        assert list(home.iterdir()) == []

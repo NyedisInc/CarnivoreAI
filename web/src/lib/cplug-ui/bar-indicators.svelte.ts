@@ -1,18 +1,16 @@
-import { auth, authFetch } from '../../opscenter/api/auth.svelte';
-import { resourcePush } from '../resource-push/boot';
+import { auth } from '../../opscenter/api/auth.svelte';
 import type { BarIndicator } from '../../plugins/sdk';
 import { t } from '../i18n/index.svelte';
 import type { CplugRow } from '../plugins-page/cplugs-adapter';
+import { pluginsStore } from '../plugins/store.svelte';
 import { canDrawGlance, glanceBadge, wantsBar, type GlanceBadge } from './glance';
 import { watchSurface } from './surface.svelte';
-
-const CPLUGS_TOPIC = 'cplugs';
-const POLL_MS = 60_000;
-
 
 const watched = $state<Record<string, { name: string; unverified: boolean; badge: GlanceBadge | null }>>({});
 const watchers = new Map<string, { stop: () => void; signature: string }>();
 let following = false;
+let stopRows: (() => void) | null = null;
+let stopAcquire: (() => void) | null = null;
 
 function openPlugin(cplugId: string): void {
     globalThis.location.hash = `#warez/installed/plugin/${cplugId}/overview`;
@@ -22,15 +20,7 @@ function signatureOf(row: CplugRow): string {
     return JSON.stringify([row.install_key ?? null, row.version ?? '', row.name ?? '', row.unverified === true, row.routes ?? [], row.declared_tools ?? []]);
 }
 
-export async function syncBarIndicators(): Promise<void> {
-    if (auth.state === 'signed-out') return;
-    let rows: CplugRow[];
-    try {
-        const body = await authFetch<{ cplugs: CplugRow[] }>('/cplugs');
-        rows = Array.isArray(body.cplugs) ? body.cplugs : [];
-    } catch {
-        return;
-    }
+function applyBarRows(rows: readonly CplugRow[]): void {
     const live = rows.filter((r) => r.runtime === 'sidecar' && r.enabled && r.state === 'active' && canDrawGlance(r.unrendered_surfaces));
     for (const id of [...watchers.keys()]) {
         if (!live.some((r) => r.id === id)) {
@@ -54,15 +44,36 @@ export async function syncBarIndicators(): Promise<void> {
     }
 }
 
+let resetWired = false;
+function ensureResetHook(): void {
+    if (resetWired) return;
+    resetWired = true;
+    pluginsStore.onReset(() => {
+        following = false;
+        stopRows?.();
+        stopRows = null;
+        stopAcquire?.();
+        stopAcquire = null;
+        for (const watcher of watchers.values()) watcher.stop();
+        watchers.clear();
+        for (const id of Object.keys(watched)) delete watched[id];
+    });
+}
+
+export async function syncBarIndicators(): Promise<void> {
+    if (auth.state === 'signed-out') return;
+    ensureResetHook();
+    const ok = await pluginsStore.refresh({ force: true });
+    if (ok) applyBarRows(pluginsStore.rows);
+}
+
 function follow(): void {
     if (following || auth.state === 'signed-out') return;
+    ensureResetHook();
     following = true;
-    const push = resourcePush();
-    push.onChange((topics) => {
-        if (topics.includes(CPLUGS_TOPIC)) void syncBarIndicators();
-    });
-    push.pushOrPoll(() => void syncBarIndicators(), POLL_MS, [CPLUGS_TOPIC]);
-    void syncBarIndicators();
+    stopRows = pluginsStore.onRows(applyBarRows);
+    stopAcquire = pluginsStore.acquire();
+    if (pluginsStore.read) applyBarRows(pluginsStore.rows);
 }
 
 export function thirdPartyBarIndicators(): (BarIndicator & { cplugId: string })[] {

@@ -1,11 +1,12 @@
 import { announce } from './interaction-globals';
-import { commitAssignment } from './group-assign';
+import { commitAssignment, createGroupThenAssign } from './group-assign';
 import { bandNames, ownsOrder, repaintKeepingFocus, rowEls, visibleNames } from './row-focus';
 import { closestTo, drawer, listElement, rg } from './row-globals';
 import { movedSentence } from './row-reorder';
 import * as Arrangement from '../drawer/arrangement';
 import * as G from '../drawer/group-store';
-import { isPinned } from '../drawer/store';
+import { NEW_GROUP_SELECTOR } from './new-group-target';
+import { isPinned, current as arrangementNow, save as saveArrangement } from '../drawer/store';
 
 export const DRAG_SLOP_PX = 4;
 
@@ -23,8 +24,17 @@ interface Drag {
     crossed: boolean | undefined;
     group: string | null | undefined;
     groupChanged: boolean;
+    startGroup: string | null;
+    overNewGroup: boolean;
+    startArrangement: ArrangementSnapshot;
     pointerId: number;
     pointerType: string;
+}
+
+interface ArrangementSnapshot {
+    pinned: string[];
+    order: string[];
+    bands: Record<string, string[]>;
 }
 
 let drag: Drag | null = null;
@@ -48,12 +58,34 @@ export function tookClick(): boolean {
 export function bandKeyAt(clientY: number): string | null {
     const list = listElement();
     if (!list) return null;
+    const all = Array.from(list.querySelectorAll('.session-sidebar-group[data-group]'));
+    let containing: Element | null = null;
+    let firstBelow: Element | null = null;
     let last: Element | null = null;
-    for (const g of Array.from(list.querySelectorAll('.session-sidebar-group[data-group]'))) {
+    for (const g of all) {
         last = g;
-        if (clientY < g.getBoundingClientRect().bottom) return g.getAttribute('data-group');
+        const box = g.getBoundingClientRect();
+        if (clientY >= box.top && clientY < box.bottom) containing = g;
+        if (!firstBelow && clientY < box.bottom) firstBelow = g;
     }
-    return last ? last.getAttribute('data-group') : null;
+    const hit = containing ?? firstBelow ?? last;
+    return hit ? hit.getAttribute('data-group') : null;
+}
+
+function snapshotArrangement(): ArrangementSnapshot {
+    const now = arrangementNow();
+    const bands: Record<string, string[]> = {};
+    for (const [key, names] of Object.entries(now.bands ?? {})) bands[key] = [...names];
+    return { pinned: [...now.pinned], order: [...now.order], bands };
+}
+
+function pointerOverNewGroup(clientX: number, clientY: number): boolean {
+    const el = listElement()?.querySelector<HTMLElement>(NEW_GROUP_SELECTOR);
+    if (!el) return false;
+    const box = el.getBoundingClientRect();
+    const over = clientX >= box.left && clientX <= box.right && clientY >= box.top && clientY <= box.bottom;
+    el.dataset['over'] = over ? '1' : '0';
+    return over;
 }
 
 function beforeNameAt(rows: HTMLElement[], clientY: number, name: string): string | null {
@@ -83,7 +115,7 @@ export function onRowPointerDown(e: PointerEvent): void {
     drag = {
         name: row.dataset.name, sessionUuid: row.dataset.sessionUuid || null, band: row.dataset.band || null, bandMoved: false,
         startX: e.clientX, startY: e.clientY, claimedClick: false, active: false,
-        crossed: undefined, group: undefined, groupChanged: false,
+        crossed: undefined, group: undefined, groupChanged: false, startGroup: G.groupOf(row.dataset.name), overNewGroup: false, startArrangement: snapshotArrangement(),
         pointerId: e.pointerId, pointerType: e.pointerType,
     };
     const handle = grip || row;
@@ -93,7 +125,7 @@ export function onRowPointerDown(e: PointerEvent): void {
     }
     document.addEventListener('pointermove', onPointerMove);
     document.addEventListener('pointerup', onPointerUp);
-    document.addEventListener('pointercancel', onPointerUp);
+    document.addEventListener('pointercancel', onPointerCancel);
 }
 
 function reorderInBand(d: Drag, clientY: number): boolean {
@@ -122,6 +154,7 @@ function handOff(d: Drag, e: PointerEvent): boolean {
     });
     if (!taken) return false;
     d.claimedClick = true;
+    d.overNewGroup = false;
     onPointerUp();
     return true;
 }
@@ -139,6 +172,8 @@ function onPointerMove(e: PointerEvent): void {
         listElement()?.classList.add('session-sidebar-list--dragging');
         drawer()?.setDragging?.(true);
     }
+    d.overNewGroup = pointerOverNewGroup(e.clientX, e.clientY);
+    if (d.overNewGroup) return;
     const overKey = bandKeyAt(e.clientY);
     if (overKey !== null && overKey === d.band && reorderInBand(d, e.clientY)) return;
     if (overKey !== null && !G.isFilingBand(overKey)) return;
@@ -160,18 +195,27 @@ function onPointerMove(e: PointerEvent): void {
     repaintKeepingFocus(d.name);
 }
 
+function onPointerCancel(): void {
+    if (drag) drag.overNewGroup = false;
+    onPointerUp();
+}
+
 function onPointerUp(): void {
     const d = drag;
     if (!d) return;
     drag = null;
     document.removeEventListener('pointermove', onPointerMove);
     document.removeEventListener('pointerup', onPointerUp);
-    document.removeEventListener('pointercancel', onPointerUp);
+    document.removeEventListener('pointercancel', onPointerCancel);
     claimedClick = d.claimedClick;
     listElement()?.classList.remove('session-sidebar-list--dragging');
     drawer()?.setDragging?.(false);
     if (!d.active) return;
     const g = rg();
+    if (d.overNewGroup) {
+        dropOnNewGroup(d);
+        return;
+    }
     if (d.bandMoved && !d.groupChanged && d.crossed === undefined && d.band) {
         announce(movedSentence(d.name, bandNames(d.band)));
         return;
@@ -182,4 +226,17 @@ function onPointerUp(): void {
     }
     announce(movedSentence(d.name, visibleNames(), d.crossed));
     if (d.crossed === undefined) void g.SessionSidebarGroupOrder?.commitMemberOrder?.(d.name);
+}
+
+function dropOnNewGroup(d: Drag): void {
+    if (d.groupChanged) G.setOptimistic(d.name, d.startGroup);
+    const start = d.startArrangement;
+    if (JSON.stringify(start) !== JSON.stringify(snapshotArrangement())) saveArrangement(start.pinned, start.order, undefined, undefined, start.bands);
+    repaintKeepingFocus(d.name);
+    void createGroupThenAssign(d.name, () => {
+        const now = arrangementNow();
+        if (!now.pinned.includes(d.name)) return;
+        saveArrangement(now.pinned.filter((n) => n !== d.name), now.order);
+        repaintKeepingFocus(d.name);
+    });
 }

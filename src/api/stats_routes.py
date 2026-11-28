@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import asyncio
 import sqlite3
-from datetime import datetime, timezone
-from typing import Any, Awaitable, Callable, NoReturn, ParamSpec, TypeVar
+from datetime import datetime
+from typing import Any, Awaitable, Callable, Literal, NoReturn, ParamSpec, TypeVar
 from uuid import UUID
 
 import structlog
@@ -29,9 +29,19 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
+def _wake_mesh_workspace() -> None:
+    from src.core.pack.machines import capabilities
+
+    if capabilities.mesh_on():
+        from src.core.pack.meshdata import gossip
+
+        gossip.wake()
+
+
 async def _chart_changed(request: Request) -> None:
     revision = await asyncio.to_thread(_store(request).revision)
     publish(request.app.state, {"type": "stats.changed", "revision": revision, "source_health": "ok"})
+    _wake_mesh_workspace()
 
 
 class _BoundedBodyRoute(APIRoute):
@@ -102,21 +112,28 @@ async def get_catalog() -> dict[str, Any]:
 
 @router.get("/coverage", response_model=None)
 async def get_coverage(request: Request) -> dict[str, Any]:
-    """How much of the history the stats store covers, plus the collector's status and progress."""
-    value = await _run(queries.coverage, _store(request))
+    """How much of the history the stats store covers, plus the collector's status and progress (1 threadpool hop, #3289)."""
+    store = _store(request)
     scheduler = getattr(request.app.state, "stats_scheduler", None)
+    status = None
     if scheduler is not None:
         status = scheduler.status()
         if asyncio.iscoroutine(status):
             status = await status
-        from src.core.stats.plugin.progress import cached_progress
-        value["collector"] = {**status, "collector": await asyncio.to_thread(cached_progress, _store(request).state_dir)}
-    return value
+
+    def _read() -> dict[str, Any]:
+        value = queries.coverage(store)
+        if status is not None:
+            from src.core.stats.plugin.progress import cached_progress
+            value["collector"] = {**status, "collector": cached_progress(store.state_dir)}
+        return value
+
+    return await _run(_read)
 
 
 @router.get("/live", response_model=None)
-async def get_live(request: Request) -> dict[str, Any]:
-    """The live snapshot: scheduler metrics, plus the cached v2 view when stats are on."""
+async def get_live(request: Request, scope: Literal["local", "pack"] = Query("pack")) -> dict[str, Any]:
+    """The live snapshot: scheduler metrics, plus the cached v2 view (with Pack mesh telemetry when ``scope='pack'``) when stats are on."""
     scheduler = getattr(request.app.state, "stats_scheduler", None)
     if scheduler is None:
         value = {"available": False, "observed_at": None, "metrics": {}}
@@ -125,11 +142,19 @@ async def get_live(request: Request) -> dict[str, Any]:
         if asyncio.iscoroutine(value):
             value = await value
     store = getattr(request.app.state, "stats_store", None)
-    if store is not None and (await _run(config.get_settings, store))["enabled"]:
-        try:
-            value = {**value, **await asyncio.to_thread(live_view.live_v2_cached, store)}
-        except sqlite3.Error as exc:
-            logger.warning("stats_live_v2_failed", error=type(exc).__name__)
+    if store is not None:
+        def _read_live() -> dict[str, Any]:
+            if not config.get_settings(store)["enabled"]:
+                return {}
+            try:
+                return live_view.live_v2_cached(store, scope=scope)
+            except sqlite3.Error as exc:
+                logger.warning("stats_live_v2_failed", error=type(exc).__name__)
+                return {}
+
+        extra = await _run(_read_live)
+        if extra:
+            value = {**value, **extra}
     return value
 
 
@@ -149,6 +174,7 @@ async def patch_settings(request: Request, value: SettingsPatch) -> dict[str, An
         changed = scheduler.settings_changed(result)
         if asyncio.iscoroutine(changed):
             await changed
+    _wake_mesh_workspace()
     return result
 
 
@@ -160,17 +186,21 @@ async def post_query(request: Request, value: QueryRequest) -> dict[str, Any]:
 
 @router.post("/query-batch", response_model=None)
 async def post_query_batch(request: Request, value: QueryBatchRequest) -> dict[str, Any]:
-    """Run several stats queries in one call; each item answers on its own (all report `stats_off` while stats are off)."""
+    """Run several stats queries in one call (1 threadpool hop, #3289); each item answers on its own (all report `stats_off` while stats are off)."""
     store = _store(request)
-    if not (await _run(config.get_settings, store))["enabled"]:
-        off = {"ok": False, "error": {"code": "stats_off", "message": "stats off"}}
-        return {"results": [off for _ in value.items], "revision": await asyncio.to_thread(store.revision)}
-    answer = await _run(queries.execute_batch, store, value.items)
-    if any(item.get("scope") == "pack" for item in value.items):
-        self_label, online = await asyncio.to_thread(pack_scope.roster_view)
-        answer = {**answer, "results": await asyncio.to_thread(
-            pack_scope.annotate, store, answer["results"], online, self_label)}
-    return answer
+    has_pack = any(item.get("scope") == "pack" for item in value.items)
+
+    def _run_all() -> dict[str, Any]:
+        if not config.get_settings(store)["enabled"]:
+            off = {"ok": False, "error": {"code": "stats_off", "message": "stats off"}}
+            return {"results": [off for _ in value.items], "revision": store.revision()}
+        answer = queries.execute_batch(store, value.items)
+        if has_pack:
+            self_label, online = pack_scope.roster_view()
+            answer = {**answer, "results": pack_scope.annotate(store, answer["results"], online, self_label)}
+        return answer
+
+    return await _run(_run_all)
 
 
 @router.get("/contributions", response_model=None)
@@ -187,6 +217,7 @@ async def get_contributions(
     model: str | None = None,
     agent_kind: str | None = None,
     conversation_id: str | None = None,
+    scope: Literal["local", "pack"] = Query("pack"),
     limit: int = Query(50, ge=1, le=200),
     cursor: int = Query(0, ge=0, le=100000),
 ) -> dict[str, Any]:
@@ -194,7 +225,7 @@ async def get_contributions(
     try:
         value = QueryRequest.model_validate({
             "metric": metric, "from": from_, "to": to, "timezone": timezone_name,
-            "resolution": resolution, "operation": "summary",
+            "resolution": resolution, "operation": "summary", "scope": scope,
             "filters": {key: val for key, val in {
                 "provider": provider, "host": host, "project": project, "model": model,
                 "agent_kind": agent_kind, "conversation_id": conversation_id,
@@ -213,6 +244,7 @@ async def get_dimensions(
     project: str | None = None, model: str | None = None,
     agent_kind: str | None = None, conversation_id: str | None = None,
     account_id: str | None = None, window: str | None = None,
+    scope: Literal["local", "pack"] = Query("pack"),
     limit: int = Query(50, ge=1, le=200), cursor: int = Query(0, ge=0, le=100000),
 ) -> dict[str, Any]:
     """Distinct values of one dimension (or the Pack's computers for `host`) under optional filters and a range, paged. 422 on a bad range or filter."""
@@ -233,7 +265,7 @@ async def get_dimensions(
         return await _run(pack_scope.host_dimension, await _on(request), self_label, online)
     return await _run(queries.dimensions, await _on(request), dimension=dimension, filters=filters,
                       start=int(from_.timestamp()) if from_ else None,
-                      end=int(to.timestamp()) if to else None, limit=limit, cursor=cursor)
+                      end=int(to.timestamp()) if to else None, limit=limit, cursor=cursor, scope=scope)
 
 
 @router.get("/events", response_model=None)
@@ -301,14 +333,18 @@ async def delete_chart(request: Request, chart_id: UUID, revision: int = Query(g
 @router.post("/annotations", response_model=None, status_code=201)
 async def post_annotation(request: Request, value: AnnotationWrite) -> dict[str, Any]:
     """Create an annotation."""
-    return await _run(config.create_annotation, _store(request), value)
+    created = await _run(config.create_annotation, _store(request), value)
+    _wake_mesh_workspace()
+    return created
 
 
 @router.patch("/annotations/{annotation_id}", response_model=None)
 async def patch_annotation(request: Request, annotation_id: UUID, value: AnnotationPatch) -> dict[str, Any]:
     """Update an annotation (revision-checked)."""
-    return await _run(config.update_annotation, _store(request), str(annotation_id),
-                      value, value.revision)
+    updated = await _run(config.update_annotation, _store(request), str(annotation_id),
+                         value, value.revision)
+    _wake_mesh_workspace()
+    return updated
 
 
 @router.delete("/annotations/{annotation_id}", response_model=None, status_code=204)
@@ -316,6 +352,7 @@ async def delete_annotation(request: Request, annotation_id: UUID,
                             revision: int = Query(ge=1)) -> None:
     """Delete an annotation (revision-checked); answers 204."""
     await _run(config.delete_annotation, _store(request), str(annotation_id), revision)
+    _wake_mesh_workspace()
 
 
 @router.post("/backfill", response_model=None, status_code=202)

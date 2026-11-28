@@ -1,0 +1,13 @@
+export { default as WidgetHead } from '../../opscenter/shell/WidgetHead.svelte';
+export { default as WidgetShell } from '../../opscenter/widgets/shell/WidgetShell.svelte';
+export { provideFrameHeader } from '../../opscenter/shell/frame-header.svelte';
+export { defineWidget, useWidget } from '../../opscenter/widgets/shell/define-widget.svelte';
+export type { ActionBinding, ActionBindings, WidgetDefinition, WidgetHandle } from '../../opscenter/widgets/shell/define-widget.svelte';
+export type { LocalStateField } from '../../opscenter/widgets/shell/widget-state.svelte';
+export type { CellProps } from '../../opscenter/lib/cell';
+export { sessionScopeFor } from '../../opscenter/widgets/session-scope';
+export { activeTerminalSessionId } from '../../opscenter/lib/active-terminal';
+export { clock, startClock } from '../../opscenter/lib/frozen-clock.svelte';
+export { TaskAgeClock } from '../../lib/task-status-list/task-clock.svelte';
+export { openSession as openSessionInHost } from '../../opscenter/api';
+export { sessions as sessionsResource } from '../../opscenter/api';

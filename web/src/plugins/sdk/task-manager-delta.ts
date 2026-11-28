@@ -1,10 +1,11 @@
+/* the Task Manager */
 import { resourcePush } from '../../lib/resource-push/boot';
 import { LIVENESS } from '../../lib/resource-push/store';
 import { onEventFrame } from './terminal';
 
 export const DATA_FRAME = 'cplug.data';
-export const DELTA_TOPIC = 'cplug.huddle.delta';
-export const TASK_MANAGER_LIST_FAMILY = 'cplug.huddle.list';
+export const DELTA_TOPIC = 'cplug.taskmanager.delta';
+export const TASK_MANAGER_LIST_FAMILY = 'cplug.taskmanager.list';
 export const KEEP_FRAMES = 32;
 export const RESYNC_JITTER_MS = 4_000;
 
@@ -23,6 +24,7 @@ export interface TaskManagerListDeltaOf<Item extends { id: number }, Group, Inbo
   inbox: Inbox[] | null;
   order: number[];
   numbers: Record<string, number | null>;
+  /* the Task Manager */
   swarm?: number[];
   items: Item[];
   deleted: number[];
@@ -38,6 +40,7 @@ export interface TaskManagerDeltaOf<List, Row> {
   list_rows?: Row[];
 }
 
+/* the Task Manager */
 export type TaskManagerDeltaWire = TaskManagerDeltaOf<TaskManagerListDeltaOf<TaskManagerDeltaItem, unknown, unknown>, unknown>;
 
 export interface DeltaHead {

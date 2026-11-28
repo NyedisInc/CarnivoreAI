@@ -3,6 +3,7 @@ import { authFetch } from './auth.svelte';
 import { resource, type Resource } from './poll.svelte';
 import type { SessionTokenUsage } from './types';
 import { t } from '../../lib/i18n/index.svelte';
+import { resourcePush } from '../../lib/resource-push/boot';
 import { contextUsedPct } from '../../lib/session-stats/context-gauge';
 import { isRowTail } from '../engine/slot-identity';
 import {
@@ -60,9 +61,67 @@ export type UsagePanelModel =
       windows: UsageWindowView[];
     };
 
-function readSessionUsage(sessionId: string): Promise<SessionTokenUsage> {
+interface HydrateWaiter {
+  sessionId: string;
+  resolve: (value: SessionTokenUsage) => void;
+  reject: (err: unknown) => void;
+}
+let pendingHydrate: HydrateWaiter[] = [];
+let hydrateScheduled = false;
+
+function readSingleSessionUsage(sessionId: string): Promise<SessionTokenUsage> {
   const id = encodeURIComponent(sessionId);
   return authFetch<SessionTokenUsage>(`/sessions/${id}/token-usage`);
+}
+
+function flushHydrateBatch(): void {
+  hydrateScheduled = false;
+  const batch = pendingHydrate;
+  pendingHydrate = [];
+  if (batch.length === 0) return;
+  const uniqueIds = [...new Set(batch.map((w) => w.sessionId))];
+  if (uniqueIds.length === 1) {
+    const onlyId = uniqueIds[0]!;
+    readSingleSessionUsage(onlyId).then(
+      (res) => { for (const w of batch) w.resolve(res); },
+      (err) => { for (const w of batch) w.reject(err); },
+    );
+    return;
+  }
+  authFetch<{ token_usage?: Record<string, SessionTokenUsage> }>('/sessions/hydrate', {
+    method: 'POST',
+    body: JSON.stringify({ session_ids: uniqueIds }),
+  }).then(
+    (res) => {
+      const map = res?.token_usage ?? {};
+      for (const w of batch) {
+        const hit = map[w.sessionId];
+        if (hit) {
+          w.resolve(hit);
+        } else {
+          readSingleSessionUsage(w.sessionId).then(w.resolve, w.reject);
+        }
+      }
+    },
+    () => {
+      for (const w of batch) {
+        readSingleSessionUsage(w.sessionId).then(w.resolve, w.reject);
+      }
+    },
+  );
+}
+
+function readSessionUsage(sessionId: string): Promise<SessionTokenUsage> {
+  if (sessionId.startsWith('remote:')) {
+    return readSingleSessionUsage(sessionId);
+  }
+  return new Promise<SessionTokenUsage>((resolve, reject) => {
+    pendingHydrate.push({ sessionId, resolve, reject });
+    if (!hydrateScheduled) {
+      hydrateScheduled = true;
+      queueMicrotask(flushHydrateBatch);
+    }
+  });
 }
 
 const NO_SESSION: Resource<SessionTokenUsage> = {
@@ -116,10 +175,11 @@ export function sessionUsage(sessionId: string): Resource<SessionTokenUsage> {
   if (isRowTail(sessionId)) return NO_SESSION;
   let entry = cache.get(sessionId);
   if (!entry) {
+    const topics = usageTopics(sessionId);
     entry = {
       resource: resource<SessionTokenUsage>(() => readSessionUsage(sessionId), {
         intervalMs: SESSION_USAGE_POLL_MS,
-        topics: usageTopics(sessionId),
+        topics,
         name: `session-usage:${sessionId}`,
         haltOnUnavailable: true,
         pollWhile: () => {
@@ -130,7 +190,17 @@ export function sessionUsage(sessionId: string): Resource<SessionTokenUsage> {
       refs: 0,
       off: () => {},
     };
-    entry.off = followStatus(sessionId, entry.resource);
+    const offStatus = followStatus(sessionId, entry.resource);
+    const usageTopic = `session_usage:${sessionId}`;
+    const offPush = !topics && !sessionId.startsWith('remote:')
+      ? resourcePush().onChange((changed) => {
+          if (changed.includes(usageTopic)) void entry!.resource.refresh(true);
+        })
+      : () => {};
+    entry.off = () => {
+      offStatus();
+      offPush();
+    };
     cache.set(sessionId, entry);
   }
   entry.refs += 1;

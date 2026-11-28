@@ -111,7 +111,7 @@ describe('the sent tab', () => {
   });
 
   test('the Task Manager off keeps the local copies and says why the list is missing', async () => {
-    cplugEnablement.enabled = { huddle: false } as never;
+    cplugEnablement.enabled = { taskmanager: false } as never;
     putEntry(kept('wait-0002-cccc'));
     const target = await render();
     expect(target.querySelector('[data-outbox-row]')).not.toBeNull();

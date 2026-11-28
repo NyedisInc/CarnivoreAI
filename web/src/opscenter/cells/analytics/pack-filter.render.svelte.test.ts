@@ -20,10 +20,10 @@ const range = { from: '2026-10-11T12:00:00Z', to: '2026-10-12T12:00:00Z' };
 afterEach(() => { document.body.innerHTML = ''; hoisted.authFetch.mockReset(); analytics.dimensions = {}; analytics.filters = {}; });
 
 describe('the Pack scope on the wire', () => {
-  test('a usage series asks for the whole Pack and a quota series does not', () => {
+  test('usage, activity and quota series all ask for the whole Pack', () => {
     expect(seriesBody(config, config.series[0]!, range, ctx).scope).toBe('pack');
     const quota = { metric: 'quota_utilization', operation: 'timeline' as const, group_by: 'account_id' };
-    expect(seriesBody(config, quota, range, ctx).scope).toBeUndefined();
+    expect(seriesBody(config, quota, range, ctx).scope).toBe('pack');
   });
 
   test('the computer filter rides along on a usage series and is dropped from a quota series', () => {

@@ -17,7 +17,7 @@ export interface AutoSleepState {
   mac_awake: boolean;
 }
 
-export const SLEEPABLE_FAMILIES: readonly string[] = ['claude', 'codex'];
+export const SLEEPABLE_FAMILIES: readonly string[] = ['claude', 'codex', 'custom'];
 
 export const AUTO_SLEEP_POLL_MS = 30000;
 

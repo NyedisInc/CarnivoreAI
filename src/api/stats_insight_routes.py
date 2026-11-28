@@ -20,7 +20,8 @@ router = APIRouter(prefix="/stats", tags=["stats"], route_class=_BoundedBodyRout
 async def get_conversations(
     request: Request, from_: datetime = Query(alias="from"), to: datetime = Query(),
     provider: Literal["claude", "codex"] | None = None, project: str | None = None,
-    model: str | None = None,
+    model: str | None = None, host: str | None = None,
+    scope: Literal["local", "pack"] = Query("pack"),
     limit: int = Query(insights.CONVERSATION_CAP, ge=1, le=insights.CONVERSATION_CAP),
 ) -> dict:
     """The costliest conversations of a range, at most 500: duration, cost, tokens, project and model."""
@@ -28,15 +29,17 @@ async def get_conversations(
         raise HTTPException(422, detail={"code": "invalid_range"})
     try:
         filters = StatsFilters.model_validate({key: val for key, val in {
-            "provider": provider, "project": project, "model": model}.items() if val is not None})
+            "provider": provider, "project": project, "model": model, "host": host}.items() if val is not None})
     except ValidationError as exc:
         raise HTTPException(422, detail={"code": "invalid_stats_filter"}) from exc
     return await _run(insights.conversations, await _on(request), start=int(from_.timestamp()),
-                      end=int(to.timestamp()), filters=filters, limit=limit)
+                      end=int(to.timestamp()), filters=filters, limit=limit, scope=scope)
 
 
 @router.get("/impact", response_model=None)
 async def get_impact(request: Request, annotation_id: UUID, metric: ImpactMetric = "estimated_cost_nano_usd",
-                     days: int = Query(7, ge=1, le=30)) -> dict:
+                     days: int = Query(7, ge=1, le=30),
+                     scope: Literal["local", "pack"] = Query("pack")) -> dict:
     """A per-conversation metric `days` before against `days` after one marker, with a seeded bootstrap interval."""
-    return await _run(insights.impact, await _on(request), annotation_id=str(annotation_id), metric=metric, days=days)
+    return await _run(insights.impact, await _on(request), annotation_id=str(annotation_id),
+                      metric=metric, days=days, scope=scope)

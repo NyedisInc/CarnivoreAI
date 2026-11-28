@@ -1,0 +1,52 @@
+{
+  "api_routes": [
+    "GET /api/v1/preferences",
+    "PATCH /api/v1/preferences"
+  ],
+  "area": "settings",
+  "docs": [
+    "docs/ui-preferences-inventory.md"
+  ],
+  "examples": [
+    "Leave a terminal in the background: when its agent finishes, the tab gets a neon comet until you open it.",
+    "Slow the lap to 10 seconds on a quiet screen, or turn the comet off."
+  ],
+  "how_to": [
+    "When a terminal window's session is done and unread (the green outline light), or asleep and flagged for follow-up (the green moon), is asking you something, or wants your attention, a comet laps the window's border. A session in a background tab gets the comet on its tab instead.",
+    "It stops the moment the state clears: viewing, focusing or marking read; the question answered; the notice dealt with.",
+    "Open settings, appearance, motion, comet on attention: the switch (on by default), the lap time in seconds (0.5 to 30, default 3) and the unread comet color (celestial, unread green, theme accent).",
+    "Shared with your other devices; an agent can set it with the preferences_update tool (fields comet_on, comet_lap_seconds, comet_unread_color).",
+    "The animations switch, a blurred window, low power and Reduce Motion hold it; with Reduce Motion it is a still glow."
+  ],
+  "id": "attention-comet",
+  "issues": [
+    3076
+  ],
+  "keywords": [
+    "comet",
+    "unread",
+    "attention",
+    "glow",
+    "border",
+    "motion",
+    "terminal",
+    "tab"
+  ],
+  "name": "Attention comet",
+  "since": "2026-11-20",
+  "status": "beta",
+  "summary": "a neon comet laps the border of a terminal window or background tab whose session is done and unread, asking or noticing; on by default.",
+  "surfaces": [
+    "web/src/lib/comet/comet.ts",
+    "web/src/lib/comet/comet.css",
+    "web/src/lib/comet/comet-pref.svelte.ts",
+    "web/src/lib/comet/CometPanel.svelte",
+    "web/src/opscenter/cells/terminal-group/Cell.svelte",
+    "web/src/opscenter/shell/TabStrip.svelte"
+  ],
+  "updated": "2026-11-20",
+  "where": [
+    "A terminal window's border, or a background terminal tab; Settings, appearance, motion, comet on attention."
+  ],
+  "media_exempt": "recapture pending at the next version bump (3076)"
+}

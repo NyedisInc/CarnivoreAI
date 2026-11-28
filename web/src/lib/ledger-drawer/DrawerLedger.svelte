@@ -177,9 +177,15 @@
       const key = (w as { provider?: string | null }).provider ?? '';
       byProvider.set(key, [...(byProvider.get(key) ?? []), w]);
     }
-    return [...byProvider].flatMap(([provider, windows]) =>
-      shortLongBars({ windows } as unknown as AccountUsage).map((b) => ({ ...b, provider: provider || null })),
-    );
+    const out: Array<Bar & { provider: string | null }> = [];
+    for (const [provider, windows] of byProvider) {
+      const fake = { windows } as unknown as AccountUsage;
+      const w = longWindow(fake);
+      if (!w) continue;
+      const found = bars(fake).find((b) => b.key === `window:${w.kind}`);
+      if (found) out.push({ ...found, provider: provider || null });
+    }
+    return out;
   });
 
   function isStale(account: AccountUsage): boolean {
@@ -242,7 +248,11 @@
       id="ldp-title"
       onclick={openProviders}
     >{t('ledger.drawer.title')}</a>
-    {#if fold !== 'hidden' && updated}
+    {#if fold === 'hidden' || fold === 'glance'}
+      {#if snapshot?.total}
+        <span class="ldp-dim ldp-accounts-count">{t('ledger.total.accounts', { count: snapshot.total.accounts })}</span>
+      {/if}
+    {:else if updated}
       <span class="ldp-dim">{updated}</span>
     {/if}
     <span class="ldp-auto"><AutoSwitchIcon /></span>
@@ -262,19 +272,15 @@
   {#if notice}<p class="ldp-notice">{notice}</p>{/if}
   {#if fold === 'hidden' && totalBars.length}
     <div class="ldp-total" data-ledger-total>
-      <div class="ldp-total-head">
-        <span class="ldp-total-label">{t('ledger.total.label')}</span>
-        <span class="ldp-dim">{t('ledger.total.accounts', { count: snapshot?.total?.accounts ?? 0 })}</span>
-      </div>
-      <div class="ldp-mini">
-        {#each totalBars as b (b.key)}
+      <div class="ldp-mini ldp-mini--stacked">
+        {#each totalBars as b (`${b.provider ?? ''}:${b.key}`)}
           <span class="ldp-meter">
             {#if b.provider}
-              {@const mark = providerMark(b.provider, 12)}
+              {@const mark = providerMark(b.provider, 14)}
               <span class="ldp-provider-mark" role="img" aria-label={mark.label} title={mark.label}>{@html mark.svg}</span>
             {/if}
-            <span class="ldp-dim">{b.label}</span>
-            {@render bar(b, 7, staleRead)}
+            <span class="ldp-dim ldp-window-key">{b.label}</span>
+            {@render bar(b, 8, staleRead)}
             <span class="ldp-pct">{b.percentText}</span>
           </span>
         {/each}
@@ -377,11 +383,14 @@
   @layer components {
     .ldp {
       --ldp-step: calc(var(--oc-gutter) / 3);
-      margin: 0 var(--oc-space-2);
-      padding: var(--oc-space-1) var(--oc-space-2) var(--oc-space-2);
-      border: var(--oc-border) solid var(--oc-line-frame);
-      border-radius: var(--oc-radius-sm);
+      margin: 0;
+      padding: var(--oc-space-2) var(--oc-space-3);
+      border: 0;
+      border-top: var(--oc-border) solid var(--oc-line-panel);
+      border-radius: 0;
+      background: var(--oc-ground-chrome);
       color: var(--oc-text-secondary);
+      font-family: var(--font-mono);
       font-size: var(--oc-fs-label);
       line-height: 1.35;
     }
@@ -389,6 +398,8 @@
     .ldp[data-embedded] {
       margin: 0;
       border: 0;
+      background: transparent;
+      padding: var(--oc-space-1) var(--oc-space-2) var(--oc-space-2);
       height: 100%;
       overflow-y: auto;
       box-sizing: border-box;
@@ -483,31 +494,46 @@
       transform: rotate(180deg);
     }
 
+    .ldp-accounts-count {
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .ldp-accounts-count + .ldp-auto {
+      margin-left: var(--oc-space-1);
+    }
+
     .ldp-total {
-      margin-top: var(--oc-space-1);
-      padding-top: calc(var(--ldp-step) * 2);
-      border-top: var(--oc-border) solid var(--oc-line-faint);
+      margin-top: var(--oc-space-1-5);
+      padding-top: 0;
+      border-top: 0;
     }
 
-    .ldp-total-head {
+    .ldp-total .ldp-mini--stacked {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--oc-space-2);
-      min-width: 0;
+      flex-direction: column;
+      gap: var(--oc-space-1-5);
+      margin-top: 0;
     }
 
-    .ldp-total-label {
-      color: var(--oc-text-primary);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    .ldp-total .ldp-mini--stacked .ldp-meter {
+      flex: 0 0 auto;
+      gap: var(--oc-space-2);
+    }
+
+    .ldp-window-key {
+      flex: 0 0 auto;
+      min-width: 2ch;
     }
 
     .ldp-empty {
       margin: 0;
-      padding: var(--oc-space-1) var(--oc-space-2);
-      border: var(--oc-border) solid var(--oc-line-frame);
-      border-radius: var(--oc-radius-sm);
+      padding: var(--oc-space-2) var(--oc-space-3);
+      border: 0;
+      border-top: var(--oc-border) solid var(--oc-line-panel);
+      border-radius: 0;
+      background: var(--oc-ground-chrome);
       color: var(--oc-text-secondary);
       font-family: var(--font-mono);
       font-size: var(--oc-fs-label);
@@ -563,6 +589,7 @@
       font-weight: bold;
     }
 
+    /* the Task Manager */
     .ldp-open-count {
       display: inline-flex;
       flex: 0 0 auto;
@@ -663,8 +690,8 @@
 
     @media (max-width: 640px) {
       .ldp {
-        margin: var(--oc-space-1) var(--oc-space-1-5);
-        padding: var(--oc-space-1-5);
+        margin: 0;
+        padding: var(--oc-space-2);
       }
     }
   }

@@ -60,12 +60,9 @@
         flex-direction: column;
         gap: 14px;
         box-sizing: border-box;
-        width: 168px;
+        width: 100%;
         min-height: 0;
-        overflow-y: auto;
         padding: 12px 0;
-        background: var(--oc-ground-panel);
-        box-shadow: inset -1px 0 0 0 var(--oc-line-rule);
         font-family: var(--font-mono);
     }
 

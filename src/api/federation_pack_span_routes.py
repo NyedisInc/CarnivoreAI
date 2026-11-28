@@ -21,6 +21,7 @@ from src.core.mcp.caller import AgentCaller
 from src.core.pack.machines import capabilities as pack_capabilities
 from src.core.pack.machines import restrictions
 from src.core.pack.span import body_host, proxy_client, proxy_server, refresh_fanout, remote_body
+from src.core.work import folders as work_folders
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/federation", tags=["federation"])
@@ -148,8 +149,8 @@ async def board_verb(verb: str, body: BoardBody, request: Request, principal: Pr
     from src.plugins.host import runtime
 
     install = _peer(principal)
-    huddle = runtime.find("huddle")
-    if huddle is None or verb not in huddle.manifest.surfaces.mcp_tools or verb not in tools._TOOLS:
+    task_manager = runtime.find(work_folders.CURRENT_ID)
+    if task_manager is None or verb not in task_manager.manifest.surfaces.mcp_tools or verb not in tools._TOOLS:
         raise proxy_server.refused("tool_not_proxied", 409)
     if proxy_server._names_remote(body.args):
         raise proxy_server.refused("not_local", 409)

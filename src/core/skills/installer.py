@@ -10,6 +10,7 @@ import structlog
 
 from src.core.sessions.ports import Clock, InstallRoots
 from src.core.skill_manager.root_create import RootCreateRefused, create_leaf_root
+from src.core.skills import kinds
 from src.core.skills.consent_via_ddl import CONSENT_VIA_VALUES
 from src.core.skills.install_types import InstallPlan
 from src.core.skills.ledger import InstallLedger, InstallTarget, InstalledItem
@@ -96,7 +97,12 @@ def apply_install(
     consent_via: str,
 ) -> InstalledItem:
     manifest = roots.required_manifest(plan.kind)
-    if not (plan.staged / manifest).is_file():
+    manifest_path = (
+        kinds.resolve_manifest_path(plan.kind, plan.staged)
+        if plan.kind == kinds.KIND_CPLUG
+        else (plan.staged / manifest)
+    )
+    if not manifest_path.is_file():
         raise FileNotFoundError(
             f"{plan.staged} carries no {manifest}; a folder without it is "
             "not something either harness would load"
@@ -164,6 +170,9 @@ def apply_install(
                 installed_at=stamp,
                 updated_at=stamp,
                 consent_via=consent_via,
+                provenance_repo=plan.provenance_repo,
+                provenance_tag=plan.provenance_tag,
+                commit_sha=plan.commit_sha,
             ),
             [
                 InstallTarget(

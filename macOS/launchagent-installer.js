@@ -3,9 +3,11 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execFileSync, spawn } = require('child_process');
+const { execFile, execFileSync, spawn } = require('child_process');
 const os = require('os');
 const { BUNDLE_ID } = require('./product-identity');
+
+const ENABLED_CACHE_TTL_MS = 10000;
 
 const LEGACY_LABEL = 'com.cloudecode.menubar';
 
@@ -33,11 +35,60 @@ class LaunchAgentInstaller {
     this.legacyLabel = LEGACY_LABEL;
     this.legacyPlistName = `${this.legacyLabel}.plist`;
     this.legacyPlistPath = path.join(this.launchAgentDir, this.legacyPlistName);
+
+    this._enabledCache = null;
   }
 
-  isEnabled() {
-    if (!fs.existsSync(this.plistPath)) return false;
-    return this._isLabelLoaded(this.label) || this._plistIsValid();
+  invalidateCache() {
+    this._enabledCache = null;
+  }
+
+  _plistStatSig() {
+    try {
+      const st = fs.statSync(this.plistPath);
+      return `${this.plistPath}|${this.label}|${st.ino}|${st.size}|${st.mtimeMs}|${st.ctimeMs}`;
+    } catch (err) {
+      return null;
+    }
+  }
+
+  isEnabled(options = {}) {
+    const sig = this._plistStatSig();
+    if (sig === null) {
+      this._enabledCache = null;
+      return false;
+    }
+    const now = Date.now();
+    if (
+      !options.fresh
+      && this._enabledCache
+      && this._enabledCache.sig === sig
+      && (now - this._enabledCache.at) < ENABLED_CACHE_TTL_MS
+    ) {
+      return this._enabledCache.value;
+    }
+    const value = this._isLabelLoaded(this.label) || this._plistIsValid();
+    this._enabledCache = { sig, value, at: now };
+    return value;
+  }
+
+  async refreshEnabledAsync() {
+    const sig = this._plistStatSig();
+    if (sig === null) {
+      this._enabledCache = null;
+      return false;
+    }
+    const loaded = await new Promise((resolve) => {
+      execFile('launchctl', ['list', this.label], { timeout: 3000 }, (err) => resolve(!err));
+    });
+    const value = loaded || await new Promise((resolve) => {
+      execFile('/usr/bin/plutil', ['-lint', this.plistPath], { timeout: 3000 }, (err) => {
+        if (!err) { resolve(true); return; }
+        resolve(typeof err.code !== 'number');
+      });
+    });
+    this._enabledCache = { sig, value, at: Date.now() };
+    return value;
   }
 
   _plistIsValid() {
@@ -86,6 +137,7 @@ ${argXml}
   }
 
   dropPlistFile() {
+    this.invalidateCache();
     try {
       fs.unlinkSync(this.plistPath);
     } catch (err) {
@@ -114,6 +166,7 @@ ${argXml}
   }
 
   enable(appPath) {
+    this.invalidateCache();
     console.log('Enabling auto-launch...');
     console.log(`App path: ${appPath}`);
 
@@ -131,9 +184,11 @@ ${argXml}
     } catch (err) {
       console.error('Failed to load LaunchAgent:', err.message);
     }
+    this.invalidateCache();
   }
 
   disable() {
+    this.invalidateCache();
     console.log('Disabling auto-launch...');
 
     if (!fs.existsSync(this.plistPath)) {
@@ -163,10 +218,11 @@ ${argXml}
     } catch (err) {
       console.error('Failed to remove plist:', err.message);
     }
+    this.invalidateCache();
   }
 
   toggle(appPath) {
-    if (this.isEnabled()) {
+    if (this.isEnabled({ fresh: true })) {
       this.disable();
     } else {
       this.enable(appPath);
@@ -222,6 +278,7 @@ ${argXml}
       }
     }
 
+    this.invalidateCache();
     return this._finishLegacyCleanup();
   }
 
@@ -268,6 +325,7 @@ ${argXml}
       };
     }
 
+    this.invalidateCache();
     return {
       ran: true,
       upgraded: true,

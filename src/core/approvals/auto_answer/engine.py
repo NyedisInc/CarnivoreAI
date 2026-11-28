@@ -116,7 +116,7 @@ class AutoAnswerEngine:
             return None
         scope = trust_scope(policy)
         self._inflight.add(key)
-        ctx = rules.Ctx(session_id, dialog, instance[3], scope, self._info, self._seams)
+        ctx = rules.Ctx(session_id, dialog, instance[3], scope, self._info, self._seams, socket=instance[0])
         task = asyncio.get_running_loop().create_task(self._run(key, entry, rule, ctx))
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)

@@ -10,6 +10,20 @@
     scrollbar-width: thin;
   }
 
+  .oc-segmented__caption {
+    display: flex;
+    flex: none;
+    align-items: center;
+    padding-inline: var(--oc-space-2);
+    background: var(--oc-ground-titlerow);
+    box-shadow: inset calc(-1 * var(--oc-border)) 0 0 var(--oc-line-control);
+    color: var(--oc-text-muted);
+    font-size: var(--oc-fs-micro);
+    letter-spacing: var(--oc-tracking-label);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
   .oc-segmented[data-fill] {
     display: flex;
   }
@@ -25,6 +39,16 @@
 
   .oc-segmented[data-fill] > [data-btn] {
     flex: 1 0 auto;
+  }
+
+  :where([data-btn-density='frame']) .oc-segmented > [data-btn] {
+    --_btn-h: calc(var(--oc-frame-btn-h) - 2 * var(--oc-border));
+  }
+
+  @media (pointer: coarse) {
+    :where([data-btn-density='frame']) .oc-segmented > [data-btn] {
+      --_btn-h: calc(var(--oc-tap) - 2 * var(--oc-border));
+    }
   }
 
   .oc-segmented > [data-btn] + [data-btn] {

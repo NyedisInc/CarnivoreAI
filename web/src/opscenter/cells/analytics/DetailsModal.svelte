@@ -8,7 +8,8 @@
   import { annotations, contributions, createAnnotation, deleteAnnotation, updateAnnotation } from './api';
   import { setHidden, setPreset, setResolution, setWidgetFilter, setZoom, zoomStep } from './chart-view';
   import { formatValue, localValue } from './value-format';
-  import { PRESET_MS, allowedFilters, mergeFilters } from '../../viz/plan';
+  import { PRESET_MS, allowedFilters, displayHostFilterValue, mergeFilters, resolveQueryHostFilters } from '../../viz/plan';
+  import { selfHostInstallId } from './host-id.svelte';
   import { t } from '../../../lib/i18n/index.svelte';
   import type { Annotation, DetailsView, RangePreset, Resolution, StatsFilters } from './types';
 
@@ -76,7 +77,10 @@
   async function openContributors(seriesIndex = 0, extra: Record<string, string> = {}, cursor = 0): Promise<void> {
     const series = view.activeSeries[seriesIndex];
     if (!series) return;
-    const filters = allowedFilters(series.metric, mergeFilters(scope, series.filters, extra), view.quotaWindow);
+    const filters = resolveQueryHostFilters(
+      allowedFilters(series.metric, mergeFilters(scope, series.filters, extra), view.quotaWindow),
+      selfHostInstallId(),
+    );
     const params = new URLSearchParams({ metric: series.metric, from: view.range.from, to: view.range.to,
       timezone: analytics.timezone, resolution: config.resolution ?? 'auto', limit: '200', cursor: String(cursor) });
     for (const [key, value] of Object.entries(filters)) if (value) params.set(key, value);
@@ -130,7 +134,7 @@
         {/snippet}</Select></label>
       {#each DIMENSIONS as dimension (dimension)}
         <label class="oc-select-row"><span class="oc-sub">{t(`analytics.${dimension}`)}</span>
-          <Select size="sm" value={config.filters[dimension as keyof StatsFilters] || ''} onchange={(event) => setWidgetFilter(view.id, dimension, event.currentTarget.value)}>{#snippet children()}
+          <Select size="sm" value={dimension === 'host' ? displayHostFilterValue(config.filters.host, analytics.dimensions.host ?? [], selfHostInstallId()) : (config.filters[dimension as keyof StatsFilters] || '')} onchange={(event) => setWidgetFilter(view.id, dimension, event.currentTarget.value)}>{#snippet children()}
             <option value="">{t('analytics.all')}</option>
             {#each analytics.dimensions[dimension] || [] as item (item.key)}{#if item.filter_value}<option value={item.filter_value}>{item.label}</option>{/if}{/each}
           {/snippet}</Select></label>

@@ -43,6 +43,7 @@
   const cost = $derived(cardCostView(argentCost().data, holder?.session_row_id));
   const summary = $derived(card.summary && card.summary.trim() !== card.title.trim() ? card.summary : '');
 
+  /* cannot be read */
   function dragStart(event: DragEvent): void {
     dragging.card = card;
     event.dataTransfer?.setData('text/plain', `#${card.id}`);

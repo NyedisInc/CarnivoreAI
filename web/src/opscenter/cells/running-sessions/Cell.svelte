@@ -18,7 +18,7 @@
   import SubagentBadge from '../../../lib/subagents/SubagentBadge.svelte';
   import TimerBadge from '../../../lib/timers/TimerBadge.svelte';
   import { runningTotal } from '../../../lib/subagents/subagents';
-  import { showsStatusLight } from '../../../lib/sessions/agent-marks';
+  import { sessionMark, showsStatusLight } from '../../../lib/sessions/agent-marks';
   import {
     sessions,
     asleep,
@@ -267,7 +267,7 @@
           <span class="oc-agent-name">{agentFor(row)}</span>
         {:else}
           <span class="oc-agent-icon">
-            <Icon name="bot" size={14} />
+            {#if row.agent_family === 'custom' && row.agent_wrapper_icon}{@html sessionMark(row.agent_family, row.agent_wrapper_icon, 14).svg}{:else}<Icon name="bot" size={14} />{/if}
             <span class="oc-visually-hidden">{agentFor(row)}</span>
           </span>
         {/if}
@@ -303,7 +303,7 @@
           {/if}
         </span>
       {:else if column.key === 'status'}
-        {@const hue = statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row))}
+        {@const hue = statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row), row.activity_hint)}
         {@const hollow = isHollow(row)}
         {@const text = statusLabel(row.activity_status, row.startup_gate, row.unread, hostOffline(row), row.activity_hint, usageLimitLabel(row))}
         {#if phone}

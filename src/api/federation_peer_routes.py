@@ -205,6 +205,9 @@ async def unpair(key: str) -> Dict[str, bool]:
             peer_hosts.delete(conn, row.peer_install_id)
 
     await run_in_threadpool(drop)
+    from src.core.federation import mesh_peers
+
+    await mesh_peers.star_row_gone(row.peer_install_id)
     peer_listing.forget(row.peer_install_id)
     if grant is not None:
         await federation_routes.peer_sockets.close_grant(grant.grant_id)

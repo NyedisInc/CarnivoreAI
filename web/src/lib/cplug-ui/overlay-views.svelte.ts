@@ -1,14 +1,9 @@
-/* the bar indicators */
-import { authFetch } from '../../opscenter/api/auth.svelte';
-import { resourcePush } from '../resource-push/boot';
 import { t } from '../i18n/index.svelte';
 import { toCplugItem, type CplugItem, type CplugRow } from '../plugins-page/cplugs-adapter';
+import { pluginsStore } from '../plugins/store.svelte';
 import { setPages } from './page-views.svelte';
 import { setPanels } from './panel-views.svelte';
 import { shareRelay } from './share-relay';
-
-const CPLUGS_TOPIC = 'cplugs';
-const POLL_MS = 60_000;
 
 export interface OverlayEntry {
     readonly key: string;
@@ -18,11 +13,15 @@ export interface OverlayEntry {
 
 export const overlays = $state<{ list: OverlayEntry[] }>({ list: [] });
 let following = false;
+let stopRows: (() => void) | null = null;
+let stopAcquire: (() => void) | null = null;
 
 export function overlayEntries(rows: readonly CplugRow[]): OverlayEntry[] {
     const out: OverlayEntry[] = [];
     for (const row of rows) {
-        if (row.runtime !== 'sidecar' || !row.enabled || row.state !== 'active') continue;
+        const isSidecar = row.runtime === 'sidecar';
+        const hasCompiledViews = row.runtime === 'compiled' && (row.views?.length ?? 0) > 0;
+        if ((!isSidecar && !hasCompiledViews) || !row.enabled || row.state !== 'active') continue;
         for (const view of row.views ?? []) {
             if (view.surfaces.includes('overlay')) out.push({ key: `${row.id}:${row.install_key ?? ''}:${view.name}`, plugin: toCplugItem(row, t), view: view.name });
         }
@@ -30,25 +29,32 @@ export function overlayEntries(rows: readonly CplugRow[]): OverlayEntry[] {
     return out;
 }
 
-async function sync(): Promise<void> {
-    try {
-        const body = await authFetch<{ cplugs: CplugRow[] }>('/cplugs');
-        const rows = Array.isArray(body.cplugs) ? body.cplugs : [];
-        overlays.list = overlayEntries(rows);
-        setPanels(rows);
-        shareRelay.retain(new Set(rows.flatMap((row) => (row.runtime === 'sidecar' && row.enabled && row.state === 'active' && row.install_key ? [row.install_key] : []))));
-        setPages(rows);
-    } catch {
-    }
+function applyRows(rows: readonly CplugRow[]): void {
+    overlays.list = overlayEntries(rows);
+    setPanels(rows);
+    shareRelay.retain(new Set(rows.flatMap((row) => (row.runtime === 'sidecar' && row.enabled && row.state === 'active' && row.install_key ? [row.install_key] : []))));
+    setPages(rows);
+}
+
+let resetWired = false;
+function ensureResetHook(): void {
+    if (resetWired) return;
+    resetWired = true;
+    pluginsStore.onReset(() => {
+        following = false;
+        stopRows?.();
+        stopRows = null;
+        stopAcquire?.();
+        stopAcquire = null;
+        overlays.list = [];
+    });
 }
 
 export function startOverlays(): void {
+    ensureResetHook();
     if (following) return;
     following = true;
-    const push = resourcePush();
-    push.onChange((topics) => {
-        if (topics.includes(CPLUGS_TOPIC)) void sync();
-    });
-    push.pushOrPoll(() => void sync(), POLL_MS, [CPLUGS_TOPIC]);
-    void sync();
+    stopRows = pluginsStore.onRows(applyRows);
+    stopAcquire = pluginsStore.acquire();
+    if (pluginsStore.read) applyRows(pluginsStore.rows);
 }

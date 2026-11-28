@@ -11,9 +11,9 @@ import pytest
 
 from src.core.swarm import body
 from src.core.swarm.cards import board as card_board, effects, ops, permits, port as card_port
-from src.plugins.huddle import service
-from src.plugins.huddle.cards import policy
-from src.plugins.huddle.public import CLAUDE, JOE, TaskManagerCardPort
+from src.plugins.taskmanager import service
+from src.plugins.taskmanager.cards import policy
+from src.plugins.taskmanager.public import CLAUDE, JOE, TaskManagerCardPort
 from src.plugins.sdk.cards import CardRefused
 from src.core.work.storage import WorkStorage
 

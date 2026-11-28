@@ -1,14 +1,24 @@
 import SwiftUI
+import UIKit
 
+@MainActor
 final class ThemeStore: ObservableObject {
     static let key = "themeId"
+    static let terminalFontSizeKey = "terminalFontSize"
     static let shared = ThemeStore()
 
     @Published private(set) var palette: Palette
+    @Published var terminalFontSize: CGFloat {
+        didSet {
+            defaults.set(Double(terminalFontSize), forKey: Self.terminalFontSizeKey)
+        }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         palette = Palettes.palette(id: defaults.string(forKey: Self.key))
+        let savedSize = defaults.double(forKey: Self.terminalFontSizeKey)
+        terminalFontSize = savedSize >= 10 && savedSize <= 24 ? CGFloat(savedSize) : 13.5
     }
 
     private let defaults: UserDefaults
@@ -16,5 +26,10 @@ final class ThemeStore: ObservableObject {
     func report(id: String) {
         defaults.set(id, forKey: Self.key)
         palette = Palettes.palette(id: id)
+    }
+
+    static func monoUIFont(size: CGFloat, bold: Bool = false) -> UIFont {
+        let name = bold ? "JetBrainsMono-Bold" : "JetBrainsMono-Regular"
+        return UIFont(name: name, size: size) ?? .monospacedSystemFont(ofSize: size, weight: bold ? .bold : .regular)
     }
 }

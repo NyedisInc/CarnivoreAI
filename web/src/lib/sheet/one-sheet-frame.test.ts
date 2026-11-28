@@ -9,8 +9,6 @@ const REPO = new URL('../../../../', import.meta.url).pathname;
 const FRAME = 'web/src/lib/sheet/Sheet.svelte';
 
 const KNOWN_OWN_SHEETS: Record<string, number> = {
-    'web/src/lib/automations/drawer/drawer.css': 1,
-    'web/src/lib/automations/pane/pane.css': 1,
     'web/src/lib/session-rail/rail-layer.css': 1,
     'web/src/lib/session-skills/session-skills.css': 1,
 };
@@ -83,9 +81,8 @@ test('no stylesheet places a side sheet of its own outside the known list, and t
     expect(counts()).toEqual(KNOWN_OWN_SHEETS);
 });
 
-test('the sessions panel, the automations reader and the layout editor drawer are on the frame', () => {
+test('the automations reader and the layout editor drawer are on the frame', () => {
     for (const [file, place] of [
-        ['web/src/lib/sessions-page/SessionPanel.svelte', 'page'],
         ['web/src/lib/automations/feed/ReaderSheet.svelte', 'column'],
         ['web/src/opscenter/layout-editor/WidgetDrawer.svelte', 'float'],
     ] as const) {

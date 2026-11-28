@@ -21,14 +21,14 @@ const KEY_KNOWN: readonly string[] = [
 const KEY_KNOWN_CEILING = 2;
 
 const TAB_KNOWN: readonly string[] = [
-  'plugins/huddle/agents/AgentChatFrame.svelte:page-tabs',
+  'plugins/taskmanager/agents/AgentChatFrame.svelte:page-tabs',
 ];
 
 const TAB_KNOWN_CEILING = 1;
 
 const DIALOG_KNOWN: readonly string[] = [
-  'plugins/huddle/TaskManagerSend.svelte:dialog-frame',
-  'plugins/huddle/TaskManagerTickConfirm.svelte:dialog-frame',
+  'plugins/taskmanager/TaskManagerSend.svelte:dialog-frame',
+  'plugins/taskmanager/TaskManagerTickConfirm.svelte:dialog-frame',
   'lib/catalog/ItemNotePopup.svelte:dialog-frame',
 ];
 

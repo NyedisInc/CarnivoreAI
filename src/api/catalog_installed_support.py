@@ -330,6 +330,7 @@ def apply_update_with(
                 ),
             )
 
+        prov = getattr(version, "provenance", None)
         try:
             updated = ledger.update(
                 row.install_id,
@@ -339,6 +340,9 @@ def apply_update_with(
                 digest=staged.digest,
                 consented_digest=staged.digest,
                 consented_body_sha=body_sha,
+                provenance_repo=str(getattr(prov, "repo", "") or ""),
+                provenance_tag=str(getattr(prov, "tag", "") or ""),
+                commit_sha=str(getattr(prov, "commit_sha", "") or ""),
             )
         except StaleRevision as exc:
             logger.warning(

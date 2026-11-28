@@ -250,13 +250,23 @@ class AttentionWatcher:
     async def _read_and_apply(
         self, targets: List[WatchTarget], now: datetime, *, complete_cycle: bool
     ) -> int:
-        semaphore = asyncio.Semaphore(MAX_READ_CONCURRENCY)
+        from src.core.perf_hooks import executors  # noqa: PLC0415
 
-        async def read(target: WatchTarget) -> Tuple[WatchTarget, Optional[Evidence]]:
-            async with semaphore:
-                return (await asyncio.to_thread(self._read_all, [target], now))[0]
-
-        readings = await asyncio.gather(*(read(target) for target in targets))
+        pool = executors.attention_executor()
+        if targets:
+            prepare = getattr(self._read_evidence, "prepare_pass", None)
+            if callable(prepare):
+                await executors.run_in(pool, prepare, now, allow_reuse=not complete_cycle)
+        workers = min(MAX_READ_CONCURRENCY, len(targets))
+        if workers <= 1:
+            readings = await executors.run_in(pool, self._read_all, targets, now) if targets else []
+        else:
+            chunks: List[List[WatchTarget]] = [[] for _ in range(workers)]
+            for idx, target in enumerate(targets):
+                chunks[idx % workers].append(target)
+            chunk_results = await asyncio.gather(*(executors.run_in(pool, self._read_all, chunk, now) for chunk in chunks))
+            by_id = {t.session_id: (t, ev) for batch in chunk_results for (t, ev) in batch}
+            readings = [by_id[t.session_id] for t in targets]
         if complete_cycle:
             self._complete_cycle()
         try:

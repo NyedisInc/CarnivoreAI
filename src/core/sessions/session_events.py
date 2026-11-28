@@ -29,6 +29,7 @@ class SessionEvent:
     display_name: str = ""
     project: str = ""
     agent_family: str = ""
+    agent_type: str = ""
     ts: float = 0.0
 
 
@@ -70,7 +71,7 @@ def _identity(manager: Any, name: str) -> dict:
         if not found:
             return {}
         return {"id": int(found["id"]), "uuid": uuid_for_row(conn, int(found["id"])),
-                "project": found.get("project_name") or "", "family": found.get("agent_family") or ""}
+                "project": found.get("project_name") or "", "family": found.get("agent_family") or "", "agent_type": found.get("agent_type") or ""}
     except (sqlite3.Error, KeyError, TypeError, ValueError) as exc:
         logger.debug("session_event_identity_read_failed", error_type=type(exc).__name__)
         return {}
@@ -86,7 +87,7 @@ async def announce(manager: Any, kind: str, name: str, *, reason: str = "", old_
         return
     found = await asyncio.to_thread(_identity, manager, name)
     await emit(SessionEvent(kind=kind, tmux_name=name, reason=reason, session_row_id=found.get("id"), session_uuid=found.get("uuid"), old_name=old_name,
-                            display_name=display_name or name, project=found.get("project", ""), agent_family=found.get("family", ""), ts=time.time()))
+                            display_name=display_name or name, project=found.get("project", ""), agent_family=found.get("family", ""), agent_type=found.get("agent_type", ""), ts=time.time()))
 
 
 def schedule(manager: Any, kind: str, name: str, **kwargs: str) -> None:

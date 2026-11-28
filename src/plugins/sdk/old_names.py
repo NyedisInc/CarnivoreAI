@@ -34,6 +34,13 @@ def declared() -> Dict[str, list]:
     return {kind: sorted(names) for kind, names in _declared.items()}
 
 
+def clear(kind: Optional[str] = None) -> None:
+    if kind is None:
+        _declared.clear()
+    else:
+        _declared.pop(kind, None)
+
+
 @contextlib.contextmanager
 def using(via: str, caller: str = "") -> Iterator[None]:
     token = _context.set((via, caller))

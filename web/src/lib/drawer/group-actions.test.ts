@@ -10,6 +10,9 @@ import * as GroupStore from './group-store';
 import { commitAssignment } from '../sidebar-shell/group-assign';
 import { init, openPickerFor } from './group-actions';
 
+const modalAnswer = vi.hoisted(() => ({ current: null as { name: string; parentKey: string | null } | null }));
+vi.mock('../modal', () => ({ openModal: vi.fn(async () => modalAnswer.current) }));
+
 installPopoverPolyfill();
 
 type Win = Record<string, any>;
@@ -110,21 +113,22 @@ describe('every pick is one assign call', () => {
 
 describe('new group', () => {
     it('asks for a name, creates the group and files the session into it', async () => {
-        win.TextPromptModal = { open: async () => 'infra' };
+        modalAnswer.current = { name: 'infra', parentKey: null };
         await createGroupThenAssign('cloude_a');
         expect(calls.filter((c) => c[0] === 'create' || c[0] === 'assign')).toEqual([['create', 'infra'], ['assign', 'cloude_a', 'g3']]);
     });
 
     it('cancelling writes nothing; with no session it only creates; a refusal is said in words', async () => {
-        win.TextPromptModal = { open: async () => null };
+        modalAnswer.current = null;
         await createGroupThenAssign('cloude_a');
         expect(calls.filter((c) => c[0] === 'create')).toEqual([]);
-        win.TextPromptModal = { open: async () => 'infra' };
+        modalAnswer.current = { name: 'infra2', parentKey: null };
         await createGroupThenAssign(null);
-        expect(live.textContent).toBe('group infra created');
-        win.API.createSessionGroup = async () => { throw new Error('duplicate'); };
+        expect(live.textContent).toBe('group infra2 created');
+        win.API.createSessionGroup = async () => { throw new Error('server said no'); };
+        modalAnswer.current = { name: 'infra3', parentKey: null };
         await createGroupThenAssign(null);
-        expect(reports).toEqual(['could not create the group: duplicate']);
+        expect(reports).toEqual(['could not create the group: server said no']);
     });
 });
 

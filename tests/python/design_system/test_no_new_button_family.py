@@ -27,7 +27,7 @@ SCAN_ROOTS = (*OLD_ROOTS, "src/plugins", "hosted", "macOS")
 
 KNOWN_WIDENED = frozenset({
     "ap-hc", "d-ev__btn", "d-vl__row", "hd-slot-key", "row-badge",
-    "session-sidebar-row-wake-icon", "sp-pic", "sw-btn", "themes-now",
+    "session-sidebar-row-wake-icon", "sp-pic", "sw-btn",
     "toast__session", "tool-zoom-armed", "uw-btn",
 })
 

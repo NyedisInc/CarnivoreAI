@@ -13,6 +13,7 @@ import { onArrangementChange } from './arrangement-events';
 import { terminalLayout } from './layout.svelte';
 import { activeTabsFor, adoptGroups, groupsFor, replaceTabs, storedTabKeys } from './tab-groups.svelte';
 import { rekeyArrangement, rekeyEntry, type SlotRow } from './slot-identity';
+import { retireArrangement, retireEntry } from './retired-stores';
 import { sessions } from '../api';
 import { untrack } from 'svelte';
 import { surfaceBusy } from './surface-busy';
@@ -47,6 +48,7 @@ export function preferencesApi(): PreferencesApi | null {
 
 let synced: Arrangement | null = null;
 const pending = new Map<string, ArrangementEntry>();
+const migrating = new Set<string>();
 let held: Arrangement | null = null;
 let applying = false;
 let inflight = false;
@@ -114,32 +116,38 @@ export function applyArrangement(next: Arrangement): void {
     return;
   }
   held = null;
+  const retired = retireArrangement(next);
   const before = synced;
-  synced = next;
+  synced = retired.map;
   applying = true;
   try {
-    for (const [key, entry] of Object.entries(next.sessions)) {
+    for (const [key, entry] of Object.entries(retired.map.sessions)) {
       if (pending.has(key) || sameEntry(entry, before?.sessions[key])) continue;
       applyEntry(key, entry);
     }
   } finally {
     applying = false;
   }
+  for (const key of retired.changed) migrating.add(key);
+  if (retired.changed.length) scheduleWrite();
 }
 
 async function flush(): Promise<void> {
   const api = prefs();
-  if (pending.size === 0 || !api) return;
+  if ((pending.size === 0 && migrating.size === 0) || !api) return;
   if (inflight || surfaceBusy() || api.status() !== api.HYDRATED || synced === null) {
     scheduleWrite(RETRY_DELAY * 4);
     return;
   }
   const ops = [...pending];
+  const migrated = [...migrating];
   pending.clear();
+  migrating.clear();
   const requeue = (): void => {
     for (const [key, entry] of ops) if (!pending.has(key)) pending.set(key, entry);
+    for (const key of migrated) migrating.add(key);
   };
-  const replay = (base: Arrangement): Arrangement => ops.reduce((map, [key, entry]) => upsertEntry(map, key, entry), base);
+  const replay = (base: Arrangement): Arrangement => ops.reduce((map, [key, entry]) => upsertEntry(map, key, retireEntry(entry)), retireArrangement(base).map);
   const next = replay(synced);
   inflight = true;
   try {
@@ -166,12 +174,16 @@ async function flush(): Promise<void> {
   } finally {
     inflight = false;
   }
-  if (pending.size > 0) scheduleWrite();
+  if (pending.size > 0 || migrating.size > 0) scheduleWrite();
 }
 
 async function resolveConflict(api: PreferencesApi, replay: (base: Arrangement) => Arrangement): Promise<void> {
   const theirs = parseArrangement(api.committedValue(FIELD)) ?? emptyArrangement();
   const merged = replay(theirs);
+  if (JSON.stringify(merged) === JSON.stringify(theirs)) {
+    applyArrangement(theirs);
+    return;
+  }
   applyArrangement(merged);
   const again = await api.set(FIELD, merged);
   if (again.status === 'committed' || again.status === 'unchanged') {
@@ -341,6 +353,7 @@ export function resetArrangementSync(): void {
   held = null;
   droppedOnce = false;
   pending.clear();
+  migrating.clear();
   applying = false;
   inflight = false;
   refusedAttempts = 0;

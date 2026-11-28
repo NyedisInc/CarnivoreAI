@@ -3,6 +3,7 @@
     import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
     import { SKILL_KEYS, refusalMessage } from '../../../../client/js/labels/skill.js';
     import { openModal, openModalCount } from '../modal';
+    import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';
     import AutoUpdateSwitch from './AutoUpdateSwitch.svelte';
     import DriftFacts from './DriftFacts.svelte';
@@ -188,7 +189,20 @@
 
 <div class="acts">
     <div class="acts__row">
-        {#if card.untrusted}
+        {#if card.revoked}
+            {#if rowState.kind === 'installed' || rowState.kind === 'update-available'}
+                <Button
+                    variant="danger"
+                    data-act="uninstall"
+                    disabled={!writable || busy}
+                    onclick={() => void uninstall()}
+                >{working === 'uninstall'
+                    ? t(SKILL_KEYS.uninstallWorking)
+                    : t(SKILL_KEYS.actionUninstall)}</Button>
+            {:else}
+                <span class="acts__state">{t(SKILL_KEYS.revokedBadge)}</span>
+            {/if}
+        {:else if card.untrusted}
             
             <span class="acts__state">{t(SKILL_KEYS.cardUntrusted)}</span>
         {:else}
@@ -204,7 +218,7 @@
                         ? t(SKILL_KEYS.updateWorking)
                         : t(SKILL_KEYS.actionUpdate)}</button>
                 {/if}
-                {#if card.kind !== 'theme' && card.kind !== 'mod'}
+                {#if card.kind !== 'theme' && card.kind !== 'mod' && !card.isCplug}
                     
                     <button
                         type="button"
@@ -243,7 +257,7 @@
                     {onAdd}
                     {t}
                     act="install"
-                    caret={card.kind !== 'theme' && card.kind !== 'mod'}
+                    caret={card.kind !== 'theme' && card.kind !== 'mod' && !card.isCplug}
                 />
             {:else}
                 <button

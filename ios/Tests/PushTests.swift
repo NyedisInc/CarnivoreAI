@@ -96,17 +96,19 @@ final class PushTests: XCTestCase {
         XCTAssertEqual(PushKeyStore.candidates(from: list).map(\.rowId), ["d_aaaaaaaaaaaa", "d_bbbbbbbbbbbb"])
         let again = PushKeyStore.preparing(list, origin: a)
         XCTAssertNotEqual(b64(again.key), b64(pa.key))
-        XCTAssertEqual(PushKeyStore.candidates(from: again.list).map(\.origin), [b])
+        XCTAssertEqual(PushKeyStore.candidates(from: again.list).map(\.origin), [a, b])
     }
 
     func testKeyIsDeviceOnlyAndLostKeyTriggersReregistration() {
         XCTAssertEqual(PushKeyStore.accessibility as String,
                        kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly as String)
         let a = "https://a.example:443"
-        let entry = PushKeyStore.preparing([], origin: a).list
+        let uncommitted = PushKeyStore.preparing([], origin: a).list
+        let committed = PushKeyStore.setting(rowId: "d_aaaaaaaaaaaa", origin: a, in: uncommitted)
         XCTAssertTrue(PushKeyStore.needsReregistration(origin: a, registered: [a], entries: []))
-        XCTAssertFalse(PushKeyStore.needsReregistration(origin: a, registered: [a], entries: entry))
-        XCTAssertFalse(PushKeyStore.needsReregistration(origin: a, registered: [], entries: []))
+        XCTAssertTrue(PushKeyStore.needsReregistration(origin: a, registered: [a], entries: uncommitted))
+        XCTAssertFalse(PushKeyStore.needsReregistration(origin: a, registered: [a], entries: committed))
+        XCTAssertFalse(PushKeyStore.needsReregistration(origin: a, registered: [], entries: uncommitted))
     }
 
     func testBridgeTrustComparesPort() throws {
@@ -117,6 +119,7 @@ final class PushTests: XCTestCase {
         XCTAssertFalse(ShellBridge.sameOrigin(scheme: "http", host: "example.com", port: 0, as: o))
     }
 
+    @MainActor
     func testBridgeHonorsPushOnlyForRelayLinks() throws {
         func computer(_ kind: ComputerKind, _ text: String) throws -> Computer {
             Computer(name: "x", kind: kind, origin: try AddressParser.parse(text, kind: kind).get())
@@ -130,6 +133,7 @@ final class PushTests: XCTestCase {
         XCTAssertFalse(ShellBridge(computer: plain).canPush)
     }
 
+    @MainActor
     func testTapRoutesOnlyToTheSendingComputer() {
         let router = TapRouter()
         router.tapped(userInfo: ["path": "/session/x"])

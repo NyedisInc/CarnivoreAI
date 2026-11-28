@@ -14,6 +14,7 @@ import structlog
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.pack.globalsync import collect, rules
 from src.core.pack.globalsync.store import Status
+from src.core.pack.machines import capabilities
 from src.core.pack.transport import blobs
 
 logger = structlog.get_logger()
@@ -40,6 +41,16 @@ class PeerView:
     capabilities: Sequence[str]
 
 
+def _mesh_peer(view: Optional[PeerView]) -> bool:
+    return view is not None and capabilities.mesh_on() and capabilities.has(view.capabilities, capabilities.CAP_MESH)
+
+
+def _records_carry(iid: Optional[str]) -> bool:
+    from src.core.pack.globalsync import panel_apply
+
+    return panel_apply.records_carry(iid)
+
+
 RequestFor = Callable[[str, float], Optional[blobs.Request]]
 
 
@@ -50,12 +61,14 @@ class GlobalSync:
                  accounts: Callable[[], Sequence[Any]], request_for: RequestFor, status: Status, outbox: Path, home: Path,
                  notify: Callable[[], None], installs: Optional[Status] = None,
                  panel_doc: Optional[Callable[[], Dict[str, Any]]] = None, panel_status: Optional[Status] = None,
+                 panel_allows: Optional[Callable[[str], Optional[bool]]] = None,
                  main_id: Callable[[], Optional[str]] = lambda: None, one_way_toward: Callable[[str], bool] = lambda _iid: False,
                  panel_pending: Callable[[], bool] = lambda: False, panel_sent: Callable[[], None] = lambda: None) -> None:
         self.settings, self.is_main, self.peers, self._approved, self._allows = settings, is_main, peers, approved, allows
         self._contained, self.accounts, self._request_for, self.status = contained, accounts, request_for, status
         self._outbox, self._home, self._notify, self._installs = outbox, home, notify, installs
         self._panel_doc, self.panel_status = panel_doc, panel_status
+        self._panel_allows = panel_allows if panel_allows is not None else (lambda _iid: True)
         self._main_id, self._one_way_toward, self._panel_pending, self._panel_sent = main_id, one_way_toward, panel_pending, panel_sent
         self._lock = asyncio.Lock()
 
@@ -72,6 +85,17 @@ class GlobalSync:
             return OFFLINE
         return None if CAP in peer.capabilities else OLD_VERSION
 
+    def panel_gate(self, peer: PeerView) -> Optional[str]:
+        if not self.is_main():
+            return NOT_MAIN
+        if self._contained(peer.install_id):
+            return ONE_WAY
+        if self._panel_allows(peer.install_id) is False:
+            return RECEIVER_OFF
+        if not peer.connected:
+            return OFFLINE
+        return None if PANEL_CAP in peer.capabilities else OLD_VERSION
+
     def harnesses(self) -> List[str]:
         chosen = self.settings()
         return [h for h in rules.HARNESSES if chosen.get(h)]
@@ -84,23 +108,27 @@ class GlobalSync:
                 return {}
             views = [p for p in self.peers() if install_ids is None or p.install_id in install_ids]
             outcome: Dict[str, str] = {}
-            eligible: List[PeerView] = []
-            reasons = await asyncio.to_thread(lambda: {v.install_id: self.gate(v) for v in views})
-            for view in views:
-                reason = reasons[view.install_id]
-                if reason is None:
-                    eligible.append(view)
-                else:
-                    outcome[view.install_id] = reason
-                    if files_on:
+            if files_on:
+                file_reasons = await asyncio.to_thread(lambda: {v.install_id: self.gate(v) for v in views})
+                file_eligible: List[PeerView] = []
+                for view in views:
+                    reason = file_reasons[view.install_id]
+                    if reason is None:
+                        file_eligible.append(view)
+                    else:
+                        outcome[view.install_id] = reason
                         self.status.record(view.install_id, "refused", reason=reason)
-            if eligible:
-                if files_on:
-                    outcome.update(await self._deliver_all(eligible, force))
-                if panel_on:
-                    for view in eligible:
+                if file_eligible:
+                    outcome.update(await self._deliver_all(file_eligible, force))
+            if panel_on:
+                panel_reasons = await asyncio.to_thread(lambda: {v.install_id: self.panel_gate(v) for v in views})
+                for view in views:
+                    reason = panel_reasons[view.install_id]
+                    if reason is None:
                         result = await self._deliver_panel(view, force)
                         outcome.setdefault(view.install_id, result)
+                    else:
+                        outcome.setdefault(view.install_id, reason)
             self._notify()
             return outcome
 
@@ -147,6 +175,8 @@ class GlobalSync:
         return state
 
     async def _deliver_panel(self, view: PeerView, force: bool) -> str:
+        if _mesh_peer(view) and await asyncio.to_thread(_records_carry, view.install_id):
+            return "mesh"
         if PANEL_CAP not in view.capabilities:
             self.panel_status.record(view.install_id, "refused", reason=OLD_VERSION)
             return OLD_VERSION
@@ -175,6 +205,8 @@ class GlobalSync:
     async def send_changes(self, *, force: bool = False) -> str:
         main = self._main_id()
         if not self.settings().get("panel") or self._panel_doc is None or self.panel_status is None or self.is_main() or not main:
+            return ""
+        if capabilities.mesh_on() and _mesh_peer(next((p for p in self.peers() if p.install_id == main), None)) and await asyncio.to_thread(_records_carry, None):
             return ""
         async with self._lock:
             if self._one_way_toward(main):

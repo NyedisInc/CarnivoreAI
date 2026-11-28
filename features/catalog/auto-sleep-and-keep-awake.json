@@ -15,7 +15,8 @@
     "In settings, sessions section, turn on auto-sleep and pick how long a session may sit idle before it sleeps.",
     "To exempt one session, open it and click the coffee cup in its terminal bar. The cup lights up with steam, and the same cup appears on its drawer row, always visible in every density.",
     "Click the cup again to let it sleep on schedule again.",
-    "A session with a live timer, a running subagent or an open background shell is never slept, even with the cup off. With the cup off, hover the cup to see why (for example, 2 live timers and when the next fires)."
+    "A session with a live timer, a running subagent or an open background shell is never slept, even with the cup off. With the cup off, hover the cup to see why (for example, 2 live timers and when the next fires).",
+    "A session is kept awake only by a dev server it started: the agent's own listening port does not count, and the hover names the process that does."
   ],
   "id": "auto-sleep-and-keep-awake",
   "issues": [
@@ -63,7 +64,7 @@
     "web/src/lib/settings-page/SettingControl.svelte",
     "web/src/lib/auto-sleep/KeepAwakeIcon.svelte"
   ],
-  "updated": "2026-09-27",
+  "updated": "2026-11-21",
   "where": [
     "Keep awake: the coffee cup at the right end of a claude or codex session's terminal bar.",
     "Auto sleep: settings (gear at the bottom of the drawer), sessions section, the auto-sleep group.",

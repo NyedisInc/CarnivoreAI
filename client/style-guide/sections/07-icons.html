@@ -169,6 +169,8 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
         box, 1.2 stroke, the faceted shelf's glyphs; every other page keeps <code>grid</code> and <code>list</code>.</dd>
     <dt>mod, skill</dt>
     <dd>The drawer menu rows, the catalog kind tiles and the mod card's art for mods and skills (Alex (example-owner), 2026-10-13, "M02 + S01"): <code>mod</code> is a small block held inside curly braces, <code>skill</code> an academy cap (24 box, 1.5 stroke, outline only). Plugins keep <code>plug</code>, so a mod never wears the plug; <code>rail-items.ts</code> and <code>KIND_ICONS</code> in <code>card.ts</code> are the two mappings.</dd>
+    <dt>argent</dt>
+    <dd>The argent mark in the top bar (<code>argent</code> in <code>icons.ts</code>: a plain capital A of two strokes and a bar, 24 box, 1.5 stroke), left of the account door, drawn only while logged in to argent, normal while tethering is on and in <code>--oc-text-dim</code> while it is off; a press opens the feature's settings pane.</dd>
     <dt>swarm</dt>
     <dd>The Swarm's tab in the drawer strip (<code>swarm</code> in <code>icons.ts</code>: one node with two dot eyes over two smaller nodes, 24 box, 1.5
         stroke, drawn at 14px like the agents robot; also the Swarm row of the menu tab). Dim like every other tab until selected; the Swarm tab carries no
@@ -194,7 +196,7 @@ pass <code>transform</code> through, so ONE outline draws the Pack everywhere). 
         spinner, since a looping animation costs CPU on every open list), <code>status-review</code> (a solid circle with a
         tick: waiting on his tick), <code>status-install</code> (an arrow down into a tray: built and committed, waiting to install), <code>status-scheduled</code> (an alarm clock: a todo waiting for its set time), <code>status-back-burner</code> (a clock face: wanted but not today), <code>check</code> (ticked), <code>status-idle</code> (a quiet dot, open) and
         <code>status-info</code> (an unseen Claude info or attention post), drawn at 12px with a 1.75 stroke in the status
-        token. <code>STATUS_ICON</code> in <code>web/src/plugins/huddle/huddle-status.ts</code> is the one mapping; every mark
+        token. <code>STATUS_ICON</code> in <code>web/src/plugins/taskmanager/huddle-status.ts</code> is the one mapping; every mark
         carries the status as its aria-label and tooltip (<code>.tkm-status</code>, the chrome section). The Task Manager's list density keys (section 24) draw <code>density-compact</code> (four tight lines), <code>density-normal</code> (a title over one indented sub-line, twice) and <code>density-full</code> (a title over an indented paragraph), at 12px on the list bar.</dd>
 </dl>
 

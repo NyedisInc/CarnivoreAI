@@ -366,13 +366,12 @@ await test('no sidebar row paints an inline-start rail, in any stylesheet', () =
     }
 });
 
-await test('a sidebar row carries the home screen ONE border, four sides', () => {
+await test('a sidebar row carries a reserved borderless ring, never a border-left override', () => {
     const css = repoFile('client', 'css', 'session-sidebar-rows.css');
     const m = css.match(/\.session-sidebar-row\s*\{([^}]*)\}/);
     assert.ok(m, 'no .session-sidebar-row rule');
-    assert.match(m[1], /border:\s*1px solid var\(--oc-line-panel\)/,
-        'a transparent border here would leave the dense list with no separation '
-        + 'at all once the rails are gone');
+    assert.match(m[1], /border:\s*1px solid transparent/,
+        'a resting sidebar row must reserve its 1px transparent border (#3387)');
     assert.ok(!/border-left/.test(m[1]),
         'a border-left override is the same left-side bar wearing a different property');
 });

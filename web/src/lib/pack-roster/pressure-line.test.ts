@@ -16,6 +16,11 @@ describe('pressureLine', () => {
     expect(line).toContain('roster.can.peg.cores_line(busy=7,cores=8,line=6)');
     expect(line).toContain('; roster.can.peg.queue(n=2.1); roster.can.peg.mem_warn');
   });
+  test('busy cores at or under the line never claim to be over it', () => {
+    const line = pressureLine(block({ busy_cores: 6.3, cores: 10, line: 9, run_queue_per_core: 2.1 }), t);
+    expect(line).toContain('roster.can.peg.cores(busy=6.3,cores=10)');
+    expect(line).not.toContain('cores_line');
+  });
   test('no line figure uses the shorter key, critical memory its own key', () => {
     const line = pressureLine(block({ busy_cores: 7.25, cores: 8, mem: 'critical' }), t);
     expect(line).toContain('roster.can.peg.cores(busy=7.3,cores=8)');

@@ -26,6 +26,7 @@ console.log('[SessionStatusSummary Module] Loading...');
             activity_status: status,
             unread: !!r.unread,
             startup_gate: r.startup_gate,
+            activity_hint: r.activity_hint,
         };
     }
 
@@ -34,6 +35,7 @@ console.log('[SessionStatusSummary Module] Loading...');
         if (l.inner === 'waiting-permission') return 'permission';
         if (l.inner === 'waiting-input' || l.inner === 'notice') return 'input';
         if (l.inner === 'working') return 'working';
+        if (l.inner === 'background') return 'working';
         // without.
         if (l.outer === 'unread') return 'unread';
         if (l.inner === 'idle' || l.inner === 'done') return 'done';
@@ -58,6 +60,7 @@ console.log('[SessionStatusSummary Module] Loading...');
         let unreadCount = 0;
         let total = 0;
         let inputIsStopped = false;
+        let generating = false;
 
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
@@ -66,6 +69,7 @@ console.log('[SessionStatusSummary Module] Loading...');
             const led = globalThis.StatusLed.ledStateFor(signalsFor(row));
             const bucket = bucketFor(led);
             present[bucket] = true;
+            if (led.inner === 'working') generating = true;
             if (bucket === 'input' && led.inner === 'waiting-input') {
                 inputIsStopped = true;
             }
@@ -85,13 +89,14 @@ console.log('[SessionStatusSummary Module] Loading...');
         for (let i = 0; i < SUMMARY_PRIORITY.length; i++) {
             const entry = SUMMARY_PRIORITY[i];
             if (present[entry.key]) {
+                const backgroundOnly = entry.key === 'working' && !generating;
                 const inner =
                     entry.key === 'input' && !inputIsStopped
                         ? 'notice'
-                        : entry.inner;
+                        : (backgroundOnly ? 'background' : entry.inner);
                 return {
                     inner: inner,
-                    outer: outerFor(present, entry.key),
+                    outer: backgroundOnly ? 'steady' : outerFor(present, entry.key),
                     bucket: entry.key,
                     unreadCount: unreadCount,
                     total: total,

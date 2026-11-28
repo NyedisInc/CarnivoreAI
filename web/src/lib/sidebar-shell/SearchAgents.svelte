@@ -1,7 +1,6 @@
 
 <script lang="ts">
     import Band from './Band.svelte';
-    import SearchAgentRow from './SearchAgentRow.svelte';
     import SearchHead from './SearchHead.svelte';
     import SidebarRow from './SidebarRow.svelte';
     import { bandEvents } from './row-events';
@@ -25,4 +24,4 @@
     });
 </script>
 
-<Band kind="session-sidebar-search sd-scope" bind:body={bandEl} attrs={{ 'data-group': s.key, 'data-count': String(s.count), 'data-search-section': 'agents' }} gestures={bandEvents()}><SearchHead label={t('drawer.search.agents')} count={s.count} {folded} onfold={() => (searchD.folded.agents = !searchD.folded.agents)} />{#if !folded}{#each s.rows as r (r.key)}{#if r.type === 'session' && r.search}<SearchAgentRow p={r} />{:else}<SidebarRow {r} />{/if}{/each}{/if}</Band>
+<Band kind="session-sidebar-search sd-scope" bind:body={bandEl} attrs={{ 'data-group': s.key, 'data-count': String(s.count), 'data-search-section': 'agents' }} gestures={bandEvents()}><SearchHead label={t('drawer.search.agents')} count={s.count} {folded} onfold={() => (searchD.folded.agents = !searchD.folded.agents)} />{#if !folded}{#each s.rows as r (r.key)}<SidebarRow {r} />{/each}{#if s.hidden > 0}<p class="ssr-line" data-search-more>{t('drawer.search.agents.more', { count: s.hidden })}</p>{/if}{/if}</Band>

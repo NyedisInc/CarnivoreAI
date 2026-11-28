@@ -29,6 +29,7 @@ function cardRow(row: Record<string, unknown> | null | undefined): SessionCardRo
         sessionUuid: ((r.sessionUuid ?? r.session_uuid) as string) || null,
         sessionId: (r.sessionId as string) || null,
         projectId: projectId as number | null,
+        kind: (r.kind as string) || null,
     } as SessionCardRow;
 }
 

@@ -13,6 +13,8 @@ REMOVABLE_PARENT: str = "/Volumes"
 BLOBS_DIR: str = BLOBS_PREFIX
 STATE_FILE: str = "vault-state.json"
 GONE_FILE: str = "vault-gone.json"
+OFFLOAD_FILE: str = "vault-offload.json"
+FREEZE_FILE: str = "vault-frozen.json"
 MASS_GONE_THRESHOLD: int = 10
 MASS_GONE_WINDOW_SECONDS: float = 3600.0
 MASS_GONE_SAMPLES: int = 5
@@ -76,6 +78,8 @@ PINNED_SUFFIX: str = ".pinned"
 KEPT_SUFFIX: str = ".keep"
 TAGS_SUFFIX: str = ".tags"
 REASON_IMPORT: str = "import"
+REASON_ADOPT: str = "adopt"
+REASONS_NOT_FROM_DISK: Tuple[str, ...] = (REASON_IMPORT, REASON_ADOPT)
 EXPORTED_MARKER: str = "EXPORTED"
 
 FOLLOW_SECONDS: int = 10 * 60

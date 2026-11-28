@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from src.api.error_response import api_error
 from src.api.auth import require_auth
 from src.core.crosstalk import spawn
+from src.core.crosstalk.spawn_peer_folder import SpawnReason
+from src.core.crosstalk.spawn_remote import CreatedUnconfirmed
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError
 from src.core.mcp.protocol import BatchView
@@ -18,6 +20,10 @@ async def spawn_for_caller(request: Request, body: spawn.SpawnRequest,
     view = BatchView(request.app.state.session_manager, request.app)
     try:
         return await spawn.spawn(view, caller, body, owner_approved=owner_approved)
+    except CreatedUnconfirmed as exc:
+        raise api_error(409, 'spawn_created_unconfirmed', exc, extra={'created_session': exc.session_id}, session=caller.session_id) from exc
+    except SpawnReason as exc:
+        raise api_error(409, 'spawn_refused', exc, extra={'reason': str(exc)}, session=caller.session_id) from exc
     except ToolError as exc:
         raise api_error(409, 'spawn_refused', exc, session=caller.session_id) from exc
 

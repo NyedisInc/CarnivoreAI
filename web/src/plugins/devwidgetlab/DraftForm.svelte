@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the Task Manager */
   import { t } from '../sdk';
   import { Button, Checkbox, Field, Select } from '../sdk/ui';
   import { NEW_CATEGORIES, NEW_HOSTS, NEW_HOSTS_DEFAULT, NEW_SIZES, type DraftRequest } from './drafts-model';

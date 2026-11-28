@@ -130,7 +130,10 @@ def _cmd_check_tag(args: argparse.Namespace) -> int:
     tags, rc = _tags_or_exit3(args)
     if tags is None:
         return rc
-    if args.tag not in tags:
+    _install_src_on_path(Path(args.install_dir))
+    from src.core.version import normalize_tag  # noqa: E402
+
+    if normalize_tag(args.tag) not in tags:
         print(
             f"{args.tag} is not a published release tag on {args.remote}. "
             f"Known tags: {', '.join(tags) if tags else '(none)'}",

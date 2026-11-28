@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.catalog import grade_lint, publish_digest, publish_prepare
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, has_v2_manifest, load_raw_v2
 
 MAX_MANIFEST_BYTES = 64 * 1024
 MAX_FILES_LISTED = 500
@@ -22,6 +23,12 @@ def _manifest(kind: str, folder_path: str) -> Dict[str, Any]:
     folder = Path(folder_path)
     if kind == "skill":
         return grade_lint.read_manifest(folder)
+    if kind == "cplug" and has_v2_manifest(folder):
+        try:
+            raw, _fname = load_raw_v2(folder)
+            return raw
+        except (ManifestV2Error, OSError, ValueError):
+            return {}
     rel = _MANIFESTS.get(kind)
     target = folder / rel if rel else None
     try:

@@ -7,7 +7,9 @@ import { registerTabFlyouts } from '../sidebar-widgets/tab-flyouts';
 import PageMain from './PageMain.svelte';
 import PageMenu from './PageMenu.svelte';
 import PageSwitch from './PageSwitch.svelte';
-import { titleKeyOf, word } from './panel-views.svelte';
+import PluginTabBody from './PluginTabBody.svelte';
+import { isPopoutEnabled, titleKeyOf, word } from './panel-views.svelte';
+import { pluginTabEntries, pluginTabOf, setPluginTabs, type PluginTabEntry } from './plugin-tabs.svelte';
 
 export const PAGE_TAB_PREFIX = 'cplug-';
 export const PAGE_ORDER_FROM = 900;
@@ -25,6 +27,8 @@ export interface PageEntry {
     readonly main: string;
     readonly title: string;
     readonly icon: string;
+    readonly popout: boolean;
+    readonly popoutMulti: boolean;
 }
 
 export const pages = $state<{ list: PageEntry[] }>({ list: [] });
@@ -40,6 +44,8 @@ export function pageEntries(rows: readonly CplugRow[]): PageEntry[] {
         if (!panels.has(page.menu) || !panels.has(page.main)) continue;
         const plugin = toCplugItem(row, t);
         const mark = t(plugin.unverified ? 'cplug_ui.mark.unverified' : 'cplug_ui.mark.third_party');
+        const popout = isPopoutEnabled(page.popout) ?? isPopoutEnabled(row.popout) ?? false;
+        const popoutMulti = typeof page.popout === 'object' && page.popout !== null && page.popout.multi === true;
         out.push({
             tabId: `${PAGE_TAB_PREFIX}${word(row.id)}`,
             key: `${row.id}:${row.install_key ?? ''}`,
@@ -48,6 +54,8 @@ export function pageEntries(rows: readonly CplugRow[]): PageEntry[] {
             main: page.main,
             title: t('cplug_ui.page.title', { mark, name: plugin.name }),
             icon: !plugin.icon || CORE_RAIL_ICONS.has(plugin.icon) ? 'plug' : plugin.icon,
+            popout,
+            popoutMulti,
         });
     }
     return out;
@@ -75,6 +83,8 @@ function tabDefOf(entry: PageEntry, order: number): DynamicTabDef {
         persist: false,
         focusOnAppear: false,
         widgetArea: 'closed',
+        popout: entry.popout,
+        popoutMulti: entry.popoutMulti,
         present: () => pageOf(entry.tabId) !== undefined,
         mainView: PageMain,
         mainViewOnPhone: false,
@@ -82,13 +92,37 @@ function tabDefOf(entry: PageEntry, order: number): DynamicTabDef {
     };
 }
 
+function sidebarTabDefOf(entry: PluginTabEntry, order: number): DynamicTabDef {
+    return {
+        id: entry.tabId,
+        labelKey: entry.titleKey,
+        nameKey: entry.titleKey,
+        icon: entry.icon,
+        order,
+        persist: false,
+        focusOnAppear: false,
+        widgetArea: 'closed',
+        popout: entry.popout,
+        popoutMulti: entry.popoutMulti,
+        present: () => pluginTabOf(entry.tabId) !== undefined,
+        body: { component: PluginTabBody, titleKey: entry.titleKey },
+    };
+}
+
 export function setPages(rows: readonly CplugRow[]): void {
     const list = pageEntries(rows);
+    setPluginTabs(rows);
     let added = false;
     for (const entry of list) {
         if (tabRegistry.get(entry.tabId)) continue;
         const order = nextOrder();
         if (order === null || registerTab(tabDefOf(entry, order)) !== null) continue;
+        added = true;
+    }
+    for (const st of pluginTabEntries(rows)) {
+        if (st.kind !== 'sidebar_tab' || tabRegistry.get(st.tabId)) continue;
+        const order = nextOrder();
+        if (order === null || registerTab(sidebarTabDefOf(st, order)) !== null) continue;
         added = true;
     }
     pages.list = list;

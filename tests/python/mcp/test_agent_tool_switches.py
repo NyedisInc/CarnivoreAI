@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import pytest
 
 from src.config.mcp import McpConfig
-from src.plugins.huddle.public import CPLUG
+from src.plugins.taskmanager.public import CPLUG
 from src.core.mcp import agent_tool_switches, deprecated_tools, instructions, protocol, tool_families, tools
 from src.core.mcp.caller import AgentCaller
 from tests.python.mcp.test_mcp_endpoint import _call, _hdr, _rpc, env  # noqa: F401

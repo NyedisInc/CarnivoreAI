@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, List, Optional, Tuple
 
-from src.core.attention.evidence import FAMILY_CODEX
+from src.core.attention.evidence import FAMILY_CLAUDE
 from src.core.background_work.measured import STATE_RUNNING, STATE_UNKNOWN
 
 REASON_TIMERS = "timers"
@@ -97,7 +97,7 @@ def _parked_part(evidence: Any, found: dict) -> Optional[str]:
 
 
 def hold_for(evidence: Any, *, require_measured: bool) -> Optional[SleepHold]:
-    if evidence is None or getattr(evidence, "agent_family", None) == FAMILY_CODEX:
+    if evidence is None or getattr(evidence, "agent_family", None) not in (None, FAMILY_CLAUDE):
         return None
     found = {"reasons": [], "unmeasured": False, "timers_live": None, "next_fire_at": None,
              "subagents_running": None, "background_count": None}

@@ -57,9 +57,10 @@ def test_pane_and_list_share_a_narrow_main_area_with_no_gap() -> None:
             )
             assert pane["width"] <= PANE_MAX + SLACK, f"{at} the docked pane is {pane['width']:.0f} px, wider than {PANE_MAX}"
             assert title["height"] <= TITLE_ONE_ROW_MAX, f"{at} the title strip wraps to {title['height']:.0f} px"
+            assert r["tree"] is not None, f"{at} the scheduled table is not drawn"
+            assert r["treeName"] is not None and r["treeName"]["width"] >= TREE_NAME_MIN, (
+                f"{at} the scheduled table's item column is squeezed to {r['treeName'] and round(r['treeName']['width'])} px"
+            )
         else:
             assert pane["width"] >= page["width"] - 2 - SLACK, f"{at} the pane is {pane['width']:.0f} px instead of covering the page"
-        assert r["tree"] is not None, f"{at} the scheduled table is not drawn"
-        assert r["treeName"] is not None and r["treeName"]["width"] >= TREE_NAME_MIN, (
-            f"{at} the scheduled table's item column is squeezed to {r['treeName'] and round(r['treeName']['width'])} px"
-        )
+            assert lst is not None and lst["width"] == 0, f"{at} the list still takes {lst and round(lst['width'])} px beside a pane that replaces it"

@@ -14,7 +14,7 @@ def _plugin(root: Path, pid: str, body: str, manifest: bool = True) -> Path:
     folder = root / pid
     folder.mkdir(parents=True)
     if manifest:
-        (folder / "cplug.json").write_text("{}", encoding="utf-8")
+        (folder / "carnivore.toml").write_text("", encoding="utf-8")
     path = folder / catalog_lines.PLUGIN_SLICE_NAME
     path.write_text("export default {\n" + body + "};\n", encoding="utf-8")
     return path

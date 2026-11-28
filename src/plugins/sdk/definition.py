@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, Mapping, Optional, Sequence, Tuple, Union
 
 from fastapi import APIRouter
@@ -69,6 +70,7 @@ class SettingsVerdict:
 
     refusal: str = ""
     warnings: Tuple[Union[str, SettingsWarning], ...] = ()
+    after_store: Optional[Callable[[], Sequence[Union[str, SettingsWarning]]]] = None
 
 
 SettingsCheck = Callable[[Mapping[str, Any]], SettingsVerdict]
@@ -87,6 +89,7 @@ class CplugDefinition:
     before_purge: Optional[LifecycleHook] = None
     settings_check: Optional[SettingsCheck] = None
     filled_roots: Tuple[str, ...] = ()
+    code_root: Optional[Path] = None
 
     @property
     def id(self) -> str:

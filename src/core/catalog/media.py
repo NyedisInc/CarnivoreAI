@@ -34,6 +34,8 @@ def referenced_shas(verified: Optional[VerifiedIndex]) -> Set[str]:
         media = item.card.media
         if media is not None:
             found.add(media.sha256)
+        for shot in (getattr(item.card, "screenshots", None) or ()):
+            found.add(shot.sha256)
     return found
 
 

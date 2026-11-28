@@ -3,7 +3,9 @@
     import { failureReason } from '../errors/failure-reason';
     import { captureOpener, restoreOpenerFocus } from '../dialog-frame/opener-focus';
     import { onMount, tick } from 'svelte';
+    import { auth } from '../../opscenter/api/auth.svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
+    import { pluginsStore } from '../plugins/store.svelte';
     import Page from '../../opscenter/ui/Page.svelte';
     import SearchField from '../../opscenter/ui/SearchField.svelte';
     import State from '../base/State.svelte';
@@ -15,7 +17,10 @@
     import type { Translate } from '../sessions/types';
     import FilterBar from './FilterBar.svelte';
     import FleetSummary from './FleetSummary.svelte';
+    import LensRail from './LensRail.svelte';
     import ListView from './ListView.svelte';
+    import { restoreOffloadedSession } from './restore-offloaded';
+    import type { RailState } from './rail-state';
     import PivotView from './PivotView.svelte';
     import SessionPanel from './SessionPanel.svelte';
     import TimelineView from './TimelineView.svelte';
@@ -54,6 +59,7 @@
     let filters = $state<Filters>({ ...NO_FILTERS });
     let selected = $state<string | null>(null);
     let list = $state<ReturnType<typeof ListView> | undefined>();
+    let rail = $state<RailState | undefined>();
     let timeline = $state<ReturnType<typeof TimelineView> | undefined>();
     let showHidden = $state(readShowHidden());
     let projectSort = $state<ProjectSortKey>(readProjectSort());
@@ -116,6 +122,8 @@
         notice = '';
         if (kind === 'resume' || kind === 'restart' || kind === 'put-back' || kind === 'remove') {
             if (r.computer === null) projectCtl.act(kind, r.s);
+        } else if (kind === 'restore') {
+            if (r.computer === null) void restoreOffloadedSession(r.s, () => void data.refresh());
         } else if (kind === 'open') {
             if (api.open(r.s)) close();
             else notice = t('sessions.page.notice.open_failed');
@@ -192,7 +200,11 @@
     $effect(() => {
         if (!open) return;
         data.start();
-        return () => data.stop();
+        const stopSlots = auth.state === 'signed-out' ? () => {} : pluginsStore.acquire({ includeSlots: true });
+        return () => {
+            stopSlots();
+            data.stop();
+        };
     });
 
     // list, so the
@@ -240,6 +252,14 @@
     {#if narrow}{@render pageActions()}{/if}
 {/snippet}
 
+{#snippet lensSide()}
+    {#if rail}<LensRail {...rail} {t} />{/if}
+{/snippet}
+
+{#snippet panelDetail()}
+    <SessionPanel row={panelRow} ready={data.status === 'ready'} busyIds={projectCtl.busy} {data} {t} {now} onClose={closePanel} onAct={act} />
+{/snippet}
+
 {#snippet filterBar()}
     <FilterBar {view} onView={setView} bind:filters {companies} {projects} {computers} {providers} {projectSort} onProjectSort={setProjectSort} shown={shown.length} total={rows.length} {t} />
 {/snippet}
@@ -260,6 +280,12 @@
         actions={narrow ? undefined : pageActions}
         bar={summaryInBar || narrow ? toolRow : undefined}
         notes={shownNotice || data.listingDown || historyFailed ? pageNotes : undefined}
+        side={view === 'list' && rail ? lensSide : undefined}
+        sideLabel={rail ? t(`sessions.page.lens.${rail.lens}`) : undefined}
+        detail={route.session ? panelDetail : undefined}
+        detailTitle={t('sessions.page.panel.title')}
+        detailFill
+        onDetailClose={closePanel}
         data-view={view}
         data-session={route.session ?? undefined}
     >
@@ -275,12 +301,12 @@
                 </Toolbar>
                 <div class="sp-sepbar" aria-hidden="true"></div>
             {/if}
-            <div class="sp-hosts" data-panel={route.session ? '' : undefined}>
+            <div class="sp-hosts">
                 <div class="sp-host" data-host="list" role="region" aria-label={t('sessions.page.host.list')} hidden={view !== 'list'}>
                     {#if data.status === 'loading'}<State class="sp-empty" kind="loading" title={t('sessions.page.loading')} />
                     {:else if data.status === 'ready' && rows.length === 0 && data.emptyProjects.length === 0 && data.archivedProjects.length === 0}<State class="sp-empty" title={t('sessions.page.empty')} />
                     {:else if data.status === 'ready'}
-                        <ListView bind:this={list} rows={shown} closedRows={closedShownRows} busyIds={projectCtl.busy} {data} {t} {now} searching={filters.q.trim() !== ''} emptyProjects={data.emptyProjects} find={filters.q} {withEmpties} showArchived={filters.on.includes('archived')} {projectSort} onProjectAction={projectAction} onCompanyAction={(id, company) => projectCtl.companyAction(id, company)} projectBusy={projectCtl.projectBusy} active={view === 'list'} bar={filterBar} bind:selected previewing={route.session !== null} onPreview={preview} onAct={act} />
+                        <ListView bind:this={list} bind:rail rows={shown} closedRows={closedShownRows} busyIds={projectCtl.busy} {data} {t} {now} searching={filters.q.trim() !== ''} emptyProjects={data.emptyProjects} find={filters.q} {withEmpties} showArchived={filters.on.includes('archived')} {projectSort} onProjectAction={projectAction} onCompanyAction={(id, company) => projectCtl.companyAction(id, company)} projectBusy={projectCtl.projectBusy} active={view === 'list'} bar={filterBar} bind:selected previewing={route.session !== null} onPreview={preview} onAct={act} />
                     {/if}
                 </div>
                 <div class="sp-host" data-host="pivot" role="region" aria-label={t('sessions.page.host.pivot')} hidden={view !== 'pivot'}>
@@ -297,9 +323,6 @@
                     {:else if view === 'timeline' && data.status === 'ready'}<State class="sp-empty" title={t('sessions.page.empty')} />
                     {/if}
                 </div>
-                {#if route.session}
-                    <SessionPanel row={panelRow} ready={data.status === 'ready'} busyIds={projectCtl.busy} {data} {t} {now} onClose={closePanel} onAct={act} />
-                {/if}
             </div>
         </div>
     </Page>

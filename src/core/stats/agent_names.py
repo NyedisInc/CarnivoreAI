@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlite3
 import threading
 import time
-from typing import Dict, Optional, Tuple
+from typing import Dict, Mapping, Optional, Tuple
 
 import structlog
 
@@ -18,10 +18,53 @@ UNNAMED = "unnamed agent"
 
 _lock = threading.Lock()
 _cache: Dict[str, Tuple[float, Dict[str, str]]] = {}
+_parent_cache: Dict[str, Tuple[float, Dict[str, str]]] = {}
 
 
-def root_of(conversation_id: str) -> str:
-    return conversation_id.split(":", 1)[0]
+def root_of(conversation_id: str, parents: Optional[Mapping[str, str]] = None) -> str:
+    cur = conversation_id.split(":", 1)[0]
+    if not parents:
+        return cur
+    seen = {cur}
+    while cur in parents:
+        nxt = parents[cur].split(":", 1)[0]
+        if not nxt or nxt in seen:
+            break
+        seen.add(nxt)
+        cur = nxt
+    return cur
+
+
+def resolve_parents(store: StatsStoreLike) -> Dict[str, str]:
+    try:
+        conn = store.connect(readonly=True)
+    except (OSError, sqlite3.Error) as exc:
+        logger.debug("stats_parent_map_unreadable", error=str(exc))
+        return {}
+    try:
+        rows = conn.execute(
+            "SELECT conversation_id, parent_conversation_id FROM dim_source "
+            "WHERE parent_conversation_id IS NOT NULL AND parent_conversation_id != ''"
+        ).fetchall()
+    except sqlite3.Error as exc:
+        logger.debug("stats_parent_map_failed", error=str(exc))
+        return {}
+    finally:
+        conn.close()
+    return {cid.split(":", 1)[0]: parent.split(":", 1)[0] for cid, parent in rows if cid and parent}
+
+
+def parent_map_for(store: StatsStoreLike, *, now: Optional[float] = None) -> Dict[str, str]:
+    clock = time.monotonic() if now is None else now
+    key = str(store.state_dir)
+    with _lock:
+        hit = _parent_cache.get(key)
+        if hit is not None and clock - hit[0] < CACHE_SECONDS:
+            return hit[1]
+    fresh = resolve_parents(store)
+    with _lock:
+        _parent_cache[key] = (clock, fresh)
+    return fresh
 
 
 def _name_of(title: Optional[str], tmux_name: Optional[str]) -> Optional[str]:
@@ -87,3 +130,4 @@ def names_for(store: StatsStoreLike, *, now: Optional[float] = None) -> Dict[str
 def forget() -> None:
     with _lock:
         _cache.clear()
+        _parent_cache.clear()

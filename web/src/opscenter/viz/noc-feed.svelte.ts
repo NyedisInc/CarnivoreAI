@@ -3,6 +3,7 @@ import { subscribe } from '../api/events.svelte';
 import { annotations } from '../cells/analytics/api';
 import type { Annotation } from '../cells/analytics/types';
 import { t } from '../../lib/i18n/index.svelte';
+import { readColdCache, shareFetch, writeColdCache } from './stats-bus';
 import type { LivePayload, LogEvent } from './noc';
 import type { EventFrame } from '../api/types';
 
@@ -11,7 +12,7 @@ const TICKER_WINDOW_MS = 24 * 3600_000;
 
 export interface Feed<T> { readonly data: T | null; readonly failure: string; readonly fetchedAt: number | null }
 
-function makeFeed<T>(read: () => Promise<T>, frames: Record<string, (frame: EventFrame) => boolean>): { feed: Feed<T>; watch: () => () => void } {
+function makeFeed<T>(read: () => Promise<T>, frames: Record<string, (frame: EventFrame) => boolean>, coldCacheKey?: string): { feed: Feed<T>; watch: () => () => void } {
   const held = $state<{ data: T | null; failure: string; fetchedAt: number | null }>({ data: null, failure: '', fetchedAt: null });
   let watchers = 0;
   let last = 0;
@@ -19,6 +20,11 @@ function makeFeed<T>(read: () => Promise<T>, frames: Record<string, (frame: Even
   let missed = false;
   let floorTimer: ReturnType<typeof setTimeout> | null = null;
   let stops: (() => void)[] = [];
+  if (coldCacheKey) {
+    void readColdCache<T>(coldCacheKey).then((cached) => {
+      if (cached && held.data === null) held.data = cached;
+    });
+  }
 
   async function refresh(force = false): Promise<void> {
     if (inFlight || document.visibilityState === 'hidden') { missed = true; return; }
@@ -72,8 +78,11 @@ function changedOf(frame: EventFrame): { live?: boolean; events?: boolean } | un
   return (frame as { changed?: { live?: boolean; events?: boolean } }).changed;
 }
 
-const liveFeed = makeFeed<LivePayload>(() => authFetch<LivePayload>('/stats/live'),
-  { 'stats.changed': (frame) => changedOf(frame)?.live ?? true });
+const liveFeed = makeFeed<LivePayload>(async () => {
+  const data = await shareFetch('stats:live', 8_000, () => authFetch<LivePayload>('/stats/live'));
+  writeColdCache('stats:live', data);
+  return data;
+}, { 'stats.changed': (frame) => changedOf(frame)?.live ?? true }, 'stats:live');
 export const live: Feed<LivePayload> = liveFeed.feed;
 export const watchLive: () => () => void = liveFeed.watch;
 

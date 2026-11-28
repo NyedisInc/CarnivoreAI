@@ -6,6 +6,9 @@
     import {
         ApiRefusal, isLegacyPending, type SubmissionDetail, type SubmissionFile, type SubmissionRow,
     } from './admin.js';
+    import {
+        asSubmissionM5, canRevokeStatus, gitSourceLabel, reviewVerdictBadge, warningReasonsOf,
+    } from './admin-m5-types.js';
     import type { AdminHost } from './admin-host.svelte.js';
     import ReportView from './ReportView.svelte';
     import FileView from './FileView.svelte';
@@ -20,7 +23,11 @@
     const decidable = $derived(!isLegacyPending(row) && (row.status === 'pending' || row.status === 'gate_failed'));
     const regatable = $derived(row.gate_state === 'stuck' || row.gate_state === 'failed' || row.status === 'gate_failed');
     const canOverride = $derived(row.status === 'gate_failed' && row.overridable === true);
-    const canRevoke = $derived(row.status === 'published');
+    const rowM5 = $derived(asSubmissionM5(row));
+    const verdictPill = $derived(reviewVerdictBadge(rowM5));
+    const warnings = $derived(warningReasonsOf(rowM5));
+    const gitMeta = $derived(gitSourceLabel(rowM5));
+    const canRevoke = $derived(canRevokeStatus(row.status));
     const revokeOpen = $derived(host.revoking === row.submission_id);
     const overrideOpen = $derived(host.overriding === row.submission_id);
 
@@ -124,6 +131,32 @@
 
     {#if row.status === 'revoked'}
         <p class="admin-note">{t(ADMIN_KEYS.detailRevoked, { at: row.revoked_at || '', reason: row.revocation_reason || '' })}</p>
+    {/if}
+
+    {#if verdictPill || rowM5.review_summary || warnings.length > 0 || gitMeta.source || gitMeta.commit}
+        <div class="admin-m5-meta">
+            {#if verdictPill}
+                <p class="admin-list__meta">
+                    {t(ADMIN_KEYS.detailReviewVerdict)}:
+                    <span class="admin-badge admin-badge--{verdictPill.tone}">{t(verdictPill.key)}</span>
+                </p>
+            {/if}
+            {#if rowM5.requires_warning_ack}
+                <p class="admin-list__meta">{t(ADMIN_KEYS.detailFlaggedAck)}</p>
+            {/if}
+            {#if rowM5.review_summary}
+                <p class="admin-list__meta">{t(ADMIN_KEYS.detailReviewSummary)}: {rowM5.review_summary}</p>
+            {/if}
+            {#if warnings.length > 0}
+                <p class="admin-list__meta">{t(ADMIN_KEYS.detailWarningReasons)}: {warnings.join('; ')}</p>
+            {/if}
+            {#if gitMeta.source}
+                <p class="admin-list__meta">{t(ADMIN_KEYS.detailGitSource)}: {gitMeta.source}</p>
+            {/if}
+            {#if gitMeta.commit}
+                <p class="admin-list__meta">{t(ADMIN_KEYS.detailGitCommit)}: <code>{gitMeta.commit}</code></p>
+            {/if}
+        </div>
     {/if}
 
     {#if canRevoke}

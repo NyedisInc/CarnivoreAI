@@ -26,6 +26,7 @@
 
         var pendingRows = 0;
 
+        /* cannot be read */
         function isPinnedToBottom(term) {
             if (!term) return true;
             try {

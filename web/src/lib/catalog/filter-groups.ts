@@ -43,6 +43,7 @@ const KIND_CHIPS: readonly (readonly [string, string])[] = [
     ['theme', BROWSE_KEYS.kindChipTheme],
     ['mod', BROWSE_KEYS.kindChipMod],
     ['plugin', BROWSE_KEYS.kindChipPlugin],
+    ['widget', BROWSE_KEYS.kindChipWidget],
     ['loadout', BROWSE_KEYS.kindChipLoadout],
 ];
 

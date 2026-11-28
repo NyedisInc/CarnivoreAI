@@ -41,11 +41,13 @@ export interface SkillLocationRow {
     readonly managed: ManagedInfo | null;
     readonly shadowed_by: string | null;
     readonly shadows: readonly string[];
+    /* the Task Manager */
     readonly extends?: string | null;
     readonly guide_rev?: number | null;
     readonly behind_rules?: BehindRules | null;
 }
 
+/* the Task Manager */
 export interface BehindRules {
     readonly written_for: number;
     readonly current: number;

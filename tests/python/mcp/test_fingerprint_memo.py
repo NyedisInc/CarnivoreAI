@@ -5,7 +5,7 @@ import pytest
 
 from src.core.mcp import agent_tool_switches, fingerprint_memo, protocol, tools
 from src.core.mcp.caller import AgentCaller
-from src.plugins.host import registry_files
+from src.plugins.host import registry_store
 
 PANE = AgentCaller(session_id="ses_a", tmux_name="carnivore_a", current_session_id="ses_a")
 
@@ -48,7 +48,7 @@ def test_a_registry_write_makes_an_old_session_id_stale_at_once(world, tmp_path)
     old = f"{protocol.tool_fingerprint(PANE)}.abc"
     assert protocol.session_is_current(old, PANE)
     world["defs"] = [{"name": "one"}, {"name": "plugin_tool"}]
-    registry_files.write_registry(tmp_path / "plugins.json", {"version": 1})
+    registry_store.write_registry(tmp_path / "plugins" / "registry.json", registry_store.new_document())
     assert not protocol.session_is_current(old, PANE)
 
 

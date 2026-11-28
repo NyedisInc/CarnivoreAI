@@ -25,6 +25,17 @@ export function loadPercent(load1: number | null | undefined, cores: number | nu
   return Math.min(100, (load1 / cores) * 100);
 }
 
+export function cpuPercent(load: { busy_cores?: number | null; load_1: number | null; cores: number | null }): number | null {
+  if (load.busy_cores != null && load.cores) return Math.min(100, (load.busy_cores / load.cores) * 100);
+  return loadPercent(load.load_1, load.cores);
+}
+
+export function cpuFigure(load: { busy_cores?: number | null; load_1: number | null; cores: number | null }): string {
+  const v = load.busy_cores ?? load.load_1;
+  const f = (x: number | null): string => (x == null ? '-' : Number.isInteger(x) ? String(x) : x.toFixed(1));
+  return `${f(v)}/${f(load.cores)}`;
+}
+
 export function linkStateOf(state: string): LinkState {
   if (state === 'connected') return 'linked';
   if (state === 'connecting' || state === 'waiting' || state === 'waiting_first_link') return 'connecting';

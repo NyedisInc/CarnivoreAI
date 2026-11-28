@@ -175,3 +175,143 @@ def test_the_startup_look_is_bounded_and_matches_only_the_dialog():
     assert got == {"t": True, "n": False, "u": None}
     assert calls.count("t") == 1, "a matched pane is not read again"
     assert calls.count("n") <= 4 and clock["t"] <= 3.0, "the window bounds the look"
+
+
+
+def _clocked(tmp_path, monkeypatch, rows):
+    j = _journal_live(rows, T0)
+    j["boot"] = {"epoch": BOOT, "source": "sysctl", "recorded_at": T0}
+    store.save_journal(tmp_path, j)
+    state = {"m": _m([_pane(r) for r in rows]), "now": "2026-09-24T07:01:00Z"}
+    monkeypatch.setattr(task, "measure", lambda *a, **k: state["m"])
+    monkeypatch.setattr(task.store, "now_iso", lambda: state["now"])
+    return state
+
+
+def _tick(tmp_path, state, now, panes, rows=ROWS):
+    state["now"] = now
+    m = _m([_pane(r) for r in panes])
+    m.rows = rows
+    state["m"] = m
+    return _pass(tmp_path)
+
+
+def _row_state(uuid, source):
+    return [dict(r, lifecycle="stopped", lifecycle_source=source) if r["session_uuid"] == uuid else r for r in ROWS]
+
+
+def test_sessions_killed_with_the_server_up_raise_one_folded_offer(tmp_path, monkeypatch):
+    state = _clocked(tmp_path, monkeypatch, LIVE)
+    first = _tick(tmp_path, state, "2026-09-24T07:02:00Z", [LIVE[1], LIVE[2]])["offer"]
+    assert first["state"] == OFFER_OPEN and first["reason"] == REASON_SESSIONS_GONE
+    assert [c["session_uuid"] for c in first["candidates"]] == ["A"]
+    folded = _tick(tmp_path, state, "2026-09-24T07:03:00Z", [LIVE[2]])["offer"]
+    assert folded["folded_from"] == first["id"] and folded["reason"] == REASON_SESSIONS_GONE
+    assert sorted(c["session_uuid"] for c in folded["candidates"]) == ["A", "B"]
+    assert _tick(tmp_path, state, "2026-09-24T07:04:00Z", [LIVE[2]])["offer"]["id"] == folded["id"]
+
+
+def test_a_settled_earlier_offer_is_never_raised_again(tmp_path, monkeypatch):
+    state = _clocked(tmp_path, monkeypatch, LIVE)
+    one = _tick(tmp_path, state, "2026-09-24T07:02:00Z", [LIVE[1], LIVE[2]])["offer"]
+    j = store.load_journal(tmp_path).journal
+    j["offer"] = dict(one, state="declined")
+    store.save_journal(tmp_path, j)
+    after = _tick(tmp_path, state, "2026-09-24T07:03:00Z", [LIVE[1], LIVE[2]])["offer"]
+    assert after["id"] == one["id"] and after["state"] != OFFER_OPEN
+
+
+def test_a_user_close_raises_no_offer_when_the_row_is_still_stale(tmp_path, monkeypatch):
+    from src.core.session_ops import close_intent
+
+    state = _clocked(tmp_path, monkeypatch, LIVE)
+    a = LIVE[0]
+    with close_intent.stopping("local", "cloude", a["tmux_name"], a["tmux_created_epoch"]) as mark:
+        j = _tick(tmp_path, state, "2026-09-24T07:02:00Z", [LIVE[1], LIVE[2]], rows=_row_state("A", "tmux_missing"))
+        assert not j.get("offer")
+        mark.settled = True
+    j = _tick(tmp_path, state, "2026-09-24T07:03:00Z", [LIVE[1], LIVE[2]], rows=_row_state("A", "closed_by_user"))
+    assert not j.get("offer")
+
+
+def test_a_close_that_commits_between_the_measurement_and_the_check_is_not_offered(tmp_path, monkeypatch):
+    from src.core.session_ops import close_intent
+
+    state = _clocked(tmp_path, monkeypatch, LIVE)
+    a = LIVE[0]
+    gone = [LIVE[1], LIVE[2]]
+    with close_intent.stopping("local", "cloude", a["tmux_name"], a["tmux_created_epoch"]):
+        _tick(tmp_path, state, "2026-09-24T07:02:00Z", gone, rows=_row_state("A", "tmux_missing"))
+    stale = _m([_pane(r) for r in gone])
+    stale.rows = _row_state("A", "tmux_missing")
+
+    def measure_then_the_close_lands(*args, **kwargs):
+        with close_intent.stopping("local", "cloude", a["tmux_name"], a["tmux_created_epoch"]) as mark:
+            mark.settled = True
+        return stale
+
+    monkeypatch.setattr(task, "measure", measure_then_the_close_lands)
+    state["now"] = "2026-09-24T07:03:00Z"
+    assert not _pass(tmp_path).get("offer")
+
+
+def test_a_stop_whose_row_write_never_landed_lingers_then_is_released(tmp_path, monkeypatch):
+    from src.core.session_ops import close_intent
+
+    state = _clocked(tmp_path, monkeypatch, LIVE)
+    a = LIVE[0]
+    with close_intent.stopping("local", "cloude", a["tmux_name"], a["tmux_created_epoch"]):
+        pass
+    stale = _row_state("A", "tmux_missing")
+    assert not _tick(tmp_path, state, "2026-09-24T07:02:00Z", [LIVE[1], LIVE[2]], rows=stale).get("offer")
+    assert not close_intent.touched_since(close_intent.stamp()).instances
+    assert not _tick(tmp_path, state, "2026-09-24T07:03:00Z", [LIVE[1], LIVE[2]], rows=stale).get("offer")
+
+
+def test_a_sleep_in_flight_or_killed_but_unmarked_is_never_offered(tmp_path, monkeypatch):
+    from src.core import restart_inflight
+    from src.core.session_ops import close_intent
+
+    state = _clocked(tmp_path, monkeypatch, LIVE)
+    with restart_inflight.claim("A"):
+        j = _tick(tmp_path, state, "2026-09-24T07:02:00Z", [LIVE[1], LIVE[2]], rows=_row_state("A", "tmux_missing"))
+    assert not j.get("offer")
+    b = LIVE[1]
+    close_intent.keep_stopped("local", "cloude", b["tmux_name"], b["tmux_created_epoch"])
+    assert not _tick(tmp_path, state, "2026-09-24T07:03:00Z", [LIVE[2]], rows=_row_state("B", "running")).get("offer")
+
+
+def test_the_last_session_closed_stops_the_server_and_is_still_not_offered(tmp_path, monkeypatch):
+    from src.core.session_ops import close_intent
+
+    state = _clocked(tmp_path, monkeypatch, [LIVE[0]])
+    a = LIVE[0]
+    with close_intent.stopping("local", "cloude", a["tmux_name"], a["tmux_created_epoch"]) as mark:
+        state["now"] = "2026-09-24T07:02:00Z"
+        state["m"] = _m([], server=False)
+        state["m"].rows = _row_state("A", "tmux_missing")
+        assert not _pass(tmp_path).get("offer")
+        mark.settled = True
+
+
+def test_close_intent_counts_per_instance_and_clears_on_error():
+    from src.core.session_ops import close_intent as ci
+
+    t0 = ci.stamp()
+    with ci.stopping("local", "s", "n1", 5) as outer:
+        with ci.stopping("local", "s", "n1", 5) as inner:
+            inner.settled = True
+        assert ci.touched_since(ci.stamp()).covers("local", "s", "n1", 5, None)
+        outer.settled = True
+    assert not ci.touched_since(ci.stamp()).covers("local", "s", "n1", 5, None)
+    try:
+        with ci.stopping("local", "s", "n2", 6):
+            raise RuntimeError("kill failed")
+    except RuntimeError:
+        pass
+    got = ci.touched_since(ci.stamp())
+    assert got.covers("local", "s", "n2", 6, None) and got.covers("local", "s", "n2", None, None)
+    assert not got.covers("local", "s", "n2", 7, None) and not got.covers("remote", "s", "n2", 6, None)
+    ci.release_recorded("local", "s", "n2", 6)
+    assert not ci.touched_since(ci.stamp()).covers("local", "s", "n2", 6, None)
+    assert t0 <= ci.stamp()

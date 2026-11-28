@@ -111,11 +111,12 @@ async def init(
 
 
 async def shutdown() -> None:
-    global _client, _client_options
+    global _client, _client_options, _idle
 
     if _client is None:
         return
     if _in_flight:
+        _idle = asyncio.Event()
         try:
             await asyncio.wait_for(_idle.wait(), timeout=_SHUTDOWN_GRACE_SECONDS)
         except asyncio.TimeoutError:

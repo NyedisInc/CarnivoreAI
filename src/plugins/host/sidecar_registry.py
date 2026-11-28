@@ -11,7 +11,8 @@ import structlog
 from src.core.plugin_registry import plugin_layout
 from src.core.skills import kinds
 from src.plugins.host import identity, sideload
-from src.plugins.host.sidecar_manifest import SidecarManifest, SidecarManifestError, load_sidecar_manifest, with_sidecar_facts
+from src.plugins.host.plugin_manifest import SidecarManifest, SidecarManifestError, load_sidecar_manifest
+from src.plugins.sdk.permission_registry import TIER_CATALOG
 
 logger = structlog.get_logger()
 
@@ -67,13 +68,22 @@ class SidecarRegistry:
         except sideload.SideloadRefused:
             logger.warning("cplug_sidecar_skipped", cplug=name, reason="code_root_outside")
             return None
+        local = sideload.is_local(row.item_id)
+        github = identity.is_unverified_github(row.item_id)
         try:
-            manifest = with_sidecar_facts(load_sidecar_manifest(root, name), root)
+            manifest = load_sidecar_manifest(root, name, allow_local=local or github)
         except SidecarManifestError as exc:
             logger.warning("cplug_sidecar_skipped", cplug=name, reason="manifest", detail=str(exc)[:200])
             return None
-        if sideload.is_local(row.item_id):
+        if local:
             manifest = sideload.as_local(manifest)
+        elif github:
+            from dataclasses import replace  # noqa: PLC0415
+
+            manifest = replace(manifest, tier=identity.TIER_UNVERIFIED_GITHUB, default_enabled=False)
+        elif manifest.tier != TIER_CATALOG or manifest.default_enabled:
+            logger.warning("cplug_sidecar_skipped", cplug=name, reason="invalid_tier")
+            return None
         return SidecarDefinition(manifest, row.item_id, record.uuid, root, identity.data_dir(self.state_dir, record.uuid), str(row.publisher_key_id))
 
     def reload(self) -> int:
@@ -87,6 +97,25 @@ class SidecarRegistry:
         with self._lock:
             self._entries = found
         return len(found)
+
+    def reload_one(self, item_id: str) -> Optional[SidecarDefinition]:
+        _, _, name = item_id.partition("/")
+        target_row = None
+        for row in self._rows():
+            if row.kind == kinds.KIND_CPLUG and row.source_index_url != _BUILTIN_SOURCE and row.item_id == item_id:
+                target_row = row
+                break
+        if target_row is None:
+            with self._lock:
+                self._entries.pop(name, None)
+            return None
+        definition = self._load_one(target_row)
+        with self._lock:
+            if definition is None:
+                self._entries.pop(name, None)
+            else:
+                self._entries[definition.id] = definition
+        return definition
 
     def _visible(self, d: SidecarDefinition) -> bool:
         return not sideload.is_local(d.item_id) or sideload.allowed(self.state_dir)

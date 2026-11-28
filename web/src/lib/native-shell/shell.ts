@@ -11,6 +11,7 @@ export type ToNative =
     | { type: 'pushRegistered'; id: string }
     | { type: 'theme'; id: string }
     | { type: 'viewing'; session: string }
+    | { type: 'statusKey'; token: string }
     | { type: 'speechStart' }
     | { type: 'speechStop' }
     | { type: 'speechCancel' };

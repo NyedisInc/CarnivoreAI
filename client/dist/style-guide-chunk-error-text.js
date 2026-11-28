@@ -1,0 +1,1 @@
+import{$t as e}from"./style-guide-chunk-InfoTip.js";function t(t){return e(t)}export{t};

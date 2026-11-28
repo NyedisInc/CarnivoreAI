@@ -40,6 +40,11 @@
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    function modalButtonHtml(attrs, label) {
+        var text = Object.keys(attrs).map(function (key) { return key + '="' + esc(attrs[key]) + '"'; }).join(' ');
+        return '<button type="button" ' + text + '>' + esc(label) + '</button>';
+    }
+
     function plural(n, one, many) {
         return n === 1 ? one : many;
     }
@@ -121,6 +126,11 @@
         return !!(item && item.selectable);
     }
 
+    function tickedAtStart(item, kept) {
+        if (kept && Object.prototype.hasOwnProperty.call(kept, item.session_uuid)) return !!kept[item.session_uuid];
+        return initialChecked(item);
+    }
+
     function headlineTime(offer, fmt) {
         var epoch = offer && offer.reason === 'reboot' && offer.boot_epoch
             ? offer.boot_epoch * 1000
@@ -160,7 +170,21 @@
 
     function blockedWords(item) {
         if (!item || item.selectable) return '';
+        if (item.blocked === 'offloaded') return tr('restore_offer.block.offloaded');
         return BLOCK_WORDS[item.blocked] || 'cannot be reopened';
+    }
+
+    function restoreButtonHtml(item) {
+        if (!item || item.selectable || item.blocked !== 'offloaded') return '';
+        var name = item.title || item.tmux_name || '';
+        var attrs = {
+            hidden: 'hidden',
+            class: ['modal-btn', 'modal-btn-secondary'].join(' '),
+            'data-restore-offloaded': item.session_uuid,
+            'data-restore-name': name,
+            'aria-label': tr('restore_offer.restore.aria', { name: name }),
+        };
+        return modalButtonHtml(attrs, tr('restore_offer.restore'));
     }
 
     function trustWords(item) {
@@ -192,14 +216,14 @@
         });
     }
 
-    function rowHtml(item, nowMs) {
+    function rowHtml(item, nowMs, kept) {
         var id = 'restore-offer-' + esc(item.session_uuid);
         var chosen = (item.wrapper_options || []).filter(function (o) { return o.id === item.wrapper_default; })[0];
         var chosenLabel = chosen ? (chosen.label || chosen.id) : (item.wrapper_default || 'choose');
         var blocked = blockedWords(item);
         var trust = item.selectable ? trustWords(item) : '';
         var how = item.kind === 'husk' ? 'restarts in its old pane' : '';
-        var box = item.selectable ? (initialChecked(item) ? ' checked' : '') : ' disabled';
+        var box = item.selectable ? (tickedAtStart(item, kept) ? ' checked' : '') : ' disabled';
         return '<li class="restore-offer__row' + (item.selectable ? '' : ' is-blocked') + '" '
             + 'data-session-uuid="' + esc(item.session_uuid) + '">'
             + '<input type="checkbox" class="restore-offer__check" id="' + id + '"' + box + '>'
@@ -219,10 +243,11 @@
             + ' value="' + esc(item.wrapper_default || '') + '"'
             + ' data-allowed="' + esc((item.wrapper_options || []).map(function (o) { return o.id; }).join(',')) + '"'
             + (item.selectable ? '' : ' disabled') + '>' + esc(chosenLabel) + '</button>'
+            + restoreButtonHtml(item)
             + '</li>';
     }
 
-    function panelHtml(offer, items, nowMs, fmt) {
+    function panelHtml(offer, items, nowMs, fmt, kept) {
         var selectable = items.filter(function (i) { return i.selectable; }).length;
         var counts = headlineCounts(offer.reason, items);
         return '<div class="modal-content restore-offer__content" role="dialog" aria-modal="true" '
@@ -240,7 +265,7 @@
             + '</div>'
             + '<div class="restore-offer__scroll">'
             + '<ul class="restore-offer__rows">'
-            + items.map(function (it) { return rowHtml(it, nowMs); }).join('')
+            + items.map(function (it) { return rowHtml(it, nowMs, kept); }).join('')
             + '</ul>'
             + '</div>'
             + '<div class="restore-offer__status" aria-live="polite"></div>'
@@ -260,12 +285,12 @@
         releaseTrap = function () {};
     }
 
-    function render(api, offer, items) {
+    function render(api, offer, items, kept) {
         close();
         shownIds[offer.id] = true;
         var overlay = document.createElement('div');
         overlay.className = 'modal-overlay restore-offer';
-        overlay.innerHTML = panelHtml(offer, items, Date.now());
+        overlay.innerHTML = panelHtml(offer, items, Date.now(), undefined, kept);
         document.body.appendChild(overlay);
         overlayEl = overlay;
         var byUuid = {};
@@ -289,6 +314,13 @@
             var map = {};
             checks.forEach(function (c) {
                 map[c.closest('.restore-offer__row').dataset.sessionUuid] = c.checked && !c.disabled;
+            });
+            return map;
+        }
+        function keptTicks() {
+            var map = {};
+            checks.forEach(function (c) {
+                if (!c.disabled) map[c.closest('.restore-offer__row').dataset.sessionUuid] = c.checked;
             });
             return map;
         }
@@ -332,6 +364,22 @@
             });
             update();
         });
+        overlay.querySelectorAll('[data-restore-offloaded]').forEach(function (btn) {
+            var prompt = window.CloudeWeb && window.CloudeWeb.offloadPrompt;
+            if (!prompt || typeof prompt.canRestore !== 'function' || typeof prompt.prompt !== 'function') return;
+            prompt.canRestore({ sessionUuid: btn.dataset.restoreOffloaded }).then(function (allowed) {
+                if (allowed && overlay.isConnected) btn.hidden = false;
+            }, function (err) { console.warn('restore offer: could not ask whether a restore is offered', err); });
+            btn.addEventListener('click', function () {
+                if (btn.disabled) return;
+                btn.disabled = true;
+                prompt.prompt({ sessionUuid: btn.dataset.restoreOffloaded, label: btn.dataset.restoreName || '' }).then(function (done) {
+                    if (!done) return null;
+                    return refresh(api, keptTicks()).catch(function (err) { console.warn('restore offer: the files are back but the offer could not be read again', err); });
+                }, function (err) { console.warn('restore offer: the restore prompt failed', err); })
+                    .finally(function () { btn.disabled = false; });
+            });
+        });
         no.addEventListener('click', function () {
             no.disabled = true;
             api.call(ENDPOINT + '/decline', { method: 'POST', body: { offer_id: offer.id } })
@@ -343,7 +391,7 @@
             if (!chosen.length) return;
             go.disabled = true;
             no.disabled = true;
-            overlay.querySelectorAll('input, select, button.restore-offer__wrapper').forEach(function (el) { el.disabled = true; });
+            overlay.querySelectorAll('input, select, button.restore-offer__wrapper, [data-restore-offloaded]').forEach(function (el) { el.disabled = true; });
             var progress = progressStart(chosen);
             var paint = function () {
                 status.textContent = progressHeader(progress);
@@ -410,10 +458,18 @@
         scroll.scrollTop = 0;
         overlay.querySelector('.restore-offer__status').textContent = '';
         var footer = overlay.querySelector('.modal-footer');
-        footer.innerHTML = '<button type="button" class="modal-btn modal-btn-primary" id="restore-offer-done">done</button>';
+        footer.innerHTML = modalButtonHtml({ class: ['modal-btn', 'modal-btn-primary'].join(' '), id: 'restore-offer-done' }, 'done');
         var done = footer.querySelector('#restore-offer-done');
         done.addEventListener('click', close);
         done.focus();
+    }
+
+    function refresh(api, kept) {
+        return api.call(ENDPOINT).then(function (res) {
+            var items = (res && res.sessions) || [];
+            if (res && res.offer && items.length) render(api, res.offer, items, kept);
+            else close();
+        });
     }
 
     function check(api) {
@@ -455,6 +511,7 @@
         ago: ago,
         shortFolder: shortFolder,
         blockedWords: blockedWords,
+        restoreButtonHtml: restoreButtonHtml,
         trustWords: trustWords,
         conversationWords: conversationWords,
         dropWords: dropWords,

@@ -21,7 +21,7 @@ from src.core.attention.codex_pane_home import pane_codex_home
 from src.core.attention.toast_detail import detail_for
 from src.core.attention.watcher import AttentionWatcher, Observation, WatchTarget
 from src.core.auto_sleep.idle_seed import SeedResult, pick_idle_seed
-from src.core.auto_sleep.idle_seed_paths import resolve_claude_seed, resolve_codex_seed
+from src.core.auto_sleep.idle_seed_paths import resolve_agy_seed, resolve_claude_seed, resolve_codex_seed
 from src.core.approvals.inbox import ApprovalsInbox, DialogProvider
 from src.core.approvals.startup_prompt_provider import StartupPromptProvider, journal_writer
 from src.core.hook_event_presentation import hook_event_presentation, question_toast_title
@@ -128,6 +128,21 @@ def idle_seed_thunk(manager: AttentionManager, target: WatchTarget, observation:
                 session_started_epoch=session_started_epoch,
                 codex_home=pane_codex_home(identity.socket, tmux_name),
             )
+        elif evidence.agent_family == "custom":
+            session = manager._registry.sessions.get(target.session_id)
+            from src.core.agy.identity import row_is_agy
+
+            is_agy = (
+                getattr(getattr(evidence, "manifest", None), "cli", None) == "agy"
+                or row_is_agy({"agent_family": "custom", "agent_type": getattr(session, "agent_type", None)})
+            )
+            if is_agy:
+                candidates, floor = resolve_agy_seed(
+                    conversation_uuid=uuid,
+                    session_started_epoch=session_started_epoch,
+                )
+            else:
+                candidates, floor = [], None
         else:
             session = manager._registry.sessions.get(target.session_id)
             cwd = getattr(session, "working_dir", None)
@@ -140,6 +155,7 @@ def idle_seed_thunk(manager: AttentionManager, target: WatchTarget, observation:
                 tmux_name=tmux_name,
                 session_started_epoch=session_started_epoch,
                 config_path=Path(settings.auth_config_file).expanduser(),
+                activity_at=getattr(evidence.transcript, "newest_activity_at", None),
             )
         return pick_idle_seed(
             now=observation.observed_at, process_started_at=floor, candidates=candidates

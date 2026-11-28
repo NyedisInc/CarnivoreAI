@@ -59,7 +59,7 @@
   const missing = $derived(sessions.status === 'ok' && sessionId !== '' && row === null);
 
   const hue = $derived<StatusHue>(
-    row ? statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row)) : 'grey',
+    row ? statusHue(row.activity_status, row.startup_gate, row.unread, hostOffline(row), usageLimitLabel(row), row.activity_hint) : 'grey',
   );
   const statusWord = $derived(
     row ? statusLabel(row.activity_status, row.startup_gate, row.unread, hostOffline(row), row.activity_hint, usageLimitLabel(row)) : '',

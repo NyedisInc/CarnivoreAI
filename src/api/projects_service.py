@@ -94,13 +94,41 @@ def _delegate_marks() -> Tuple[Optional[Set[str]], Dict[str, int]]:
         return None, {}
 
 
+def _peer_project_parents(view: ProjectsView) -> Dict[str, str]:
+    import sqlite3
+    from contextlib import closing
+
+    from src.config import settings
+    from src.core.db import db_path_for
+    from src.core.db_reuse.change_cache import HOT_READS
+    from src.core.project_lineage.parents import PEER_SCHEME
+    from src.core.project_lineage.peer_parents import read_peer_project_parents
+
+    if view.degraded or not any(str(item.get("root") or "").startswith(PEER_SCHEME) for item in view.projects):
+        return {}
+
+    def read_map() -> Dict[str, str]:
+        with closing(open_db_or_503(settings)) as conn:
+            return read_peer_project_parents(conn)
+
+    try:
+        return HOT_READS.fetch(db_path_for(settings.get_state_dir()), ("peer_project_parents",), read_map)
+    except (HTTPException, sqlite3.Error) as exc:
+        logger.warning("peer_project_parents_unreadable", error=str(exc))
+        return {}
+
+
 def views_to_responses(view: ProjectsView, response_cls: Any) -> List[Any]:
     from src.core.companies import hero_images
     from src.core.project_lineage.parents import parent_project_ids
     from src.core.worktrees import store as worktree_store
 
     revs = hero_images.index(hero_images.PROJECT)
-    parents = parent_project_ids(view.projects, worktree_store.default_store().repo_by_path())
+    parents = parent_project_ids(
+        view.projects,
+        worktree_store.default_store().repo_by_path(),
+        uid_parents=_peer_project_parents(view),
+    )
     storage = _storage_by_project(view)
     marked, made = _delegate_marks()
     return [

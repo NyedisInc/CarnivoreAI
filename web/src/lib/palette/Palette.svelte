@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onDestroy, onMount } from 'svelte';
+    import { auth } from '../../opscenter/api/auth.svelte';
     import Icon from '../../opscenter/ui/Icon.svelte';
     import Field from '../base/Field.svelte';
     import List from '../base/List.svelte';
@@ -8,6 +9,7 @@
     import { t } from '../i18n/index.svelte';
     import type { DeepGroup } from '../deepsearch/deepsearch-api';
     import { goTo } from '../nav-items/nav-items';
+    import { pluginsStore } from '../plugins/store.svelte';
     import { commitChip, parseQuery, passesChips, rankText, type Chip } from './palette-query';
     import { createRanker, notePick, prunePicks, readPicks, writePicks } from './palette-rank';
     import { buildCorpus, drawerRows, emptyGroups, type PaletteItem, type PaletteKind } from './palette-sources';
@@ -21,10 +23,20 @@
     };
     const CHIP_SIGIL: Record<Chip['kind'], string> = { host: '@', project: '#', state: ':' };
 
-    const corpus = buildCorpus();
-    let picks = prunePicks(readPicks(), new Set([...corpus.items, ...corpus.actions].map((i) => i.id)));
+    const initialCorpus = buildCorpus();
+    const corpus = $derived.by(() => {
+        void pluginsStore.rows;
+        void pluginsStore.slots;
+        return buildCorpus();
+    });
+    let picks = prunePicks(readPicks(), new Set([...initialCorpus.items, ...initialCorpus.actions].map((i) => i.id)));
     const ranker = createRanker<PaletteItem>(() => picks);
     const actionRanker = createRanker<PaletteItem>(() => picks);
+
+    $effect(() => {
+        if (auth.state === 'signed-out') return;
+        return pluginsStore.acquire({ includeSlots: true });
+    });
 
     // svelte-ignore state_referenced_locally
     let value = $state(initial);

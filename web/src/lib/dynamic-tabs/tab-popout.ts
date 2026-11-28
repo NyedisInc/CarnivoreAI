@@ -1,3 +1,4 @@
+/* the Task Manager */
 import { readMigrating } from '../browser-storage-migrate';
 import { POPOUT_PATH, featuresFor, parseGeometry, type PopoutGeometry } from '../../popout/popout';
 
@@ -5,7 +6,7 @@ export const TAB_PARAM = 'tab';
 
 export const TAB_WINDOW_DEFAULT: Readonly<PopoutGeometry> = Object.freeze({ width: 440, height: 760 });
 
-const TAB_ID = /^[a-z][a-z0-9-]*$/;
+const TAB_ID = /^[a-z][a-z0-9-]{0,95}$/;
 
 export function tabFromSearch(search: string): string | null {
   const id = new URLSearchParams(search).get(TAB_PARAM);

@@ -151,6 +151,10 @@ def set_registered(path: str, enabled: bool, *, home: Path, account_files: Seque
         status = _write_group(group, path, enabled)
         results.append({"real": str(group.real), "members": [str(m) for m in group.members], "status": status,
                         "_changed": status == OK and before != read_group(group)})
+    if any(r["status"] == OK for r in results):
+        from src.core.mods import owner_state
+
+        owner_state.record(path, enabled)
     if any(r["_changed"] for r in results):
         notifier.notify(MODS)
     for r in results:

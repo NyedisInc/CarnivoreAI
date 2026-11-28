@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
+import { tomlPlugin } from './vite.toml-plugin';
 
 const svelteConfig = fileURLToPath(new URL('./svelte.config.js', import.meta.url));
 
@@ -13,7 +14,7 @@ const outDir = fileURLToPath(
 export default defineConfig({
     root,
     base: './',
-    plugins: [svelte({ configFile: svelteConfig })],
+    plugins: [tomlPlugin(), svelte({ configFile: svelteConfig })],
     build: {
         outDir,
         emptyOutDir: true,

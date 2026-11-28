@@ -1,11 +1,10 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import WidgetsScreen from './WidgetsScreen.svelte';
 
 export const WIDGETS_SCREEN_CONTAINER = 'widgets-screen';
 
 export const WIDGETS_HASH = '#widgets';
 
-const host = createOverlayHost(WIDGETS_SCREEN_CONTAINER, WidgetsScreen, WIDGETS_HASH);
+const host = createOverlayHost(WIDGETS_SCREEN_CONTAINER, { load: () => import('./WidgetsScreen.svelte') }, WIDGETS_HASH);
 
 export const openWidgetsScreen = (): boolean => host.open();
 

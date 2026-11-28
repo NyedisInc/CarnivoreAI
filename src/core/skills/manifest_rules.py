@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from pathlib import Path
 from typing import Mapping, Optional
 
@@ -73,8 +74,53 @@ def script_key(kind: str) -> Optional[str]:
     return SCRIPT_KEY_FOR[kind]
 
 
+def _is_schema_two(value: object) -> bool:
+    return type(value) is int and value == 2
+
+
+def _cplug_manifest_conflict(folder: Path) -> Optional[str]:
+    cplug_name = kinds.MANIFEST_FOR[kinds.KIND_CPLUG]
+    has_cplug = (folder / cplug_name).is_file()
+    has_toml = (folder / kinds.CPLUG_TOML_MANIFEST).is_file()
+    json_path = folder / kinds.CPLUG_JSON_MANIFEST
+    has_json = json_path.is_file()
+
+    if has_toml and has_cplug:
+        return f"{kinds.CPLUG_TOML_MANIFEST} cannot coexist with {cplug_name}"
+    if has_toml and has_json:
+        return f"both {kinds.CPLUG_TOML_MANIFEST} and {kinds.CPLUG_JSON_MANIFEST} exist; keep one"
+    if has_json:
+        try:
+            if json_path.stat().st_size > MAX_MANIFEST_BYTES:
+                return f"{kinds.CPLUG_JSON_MANIFEST} is larger than {MAX_MANIFEST_BYTES} bytes"
+            raw = json.loads(json_path.read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError) as exc:
+            if not has_cplug and not has_toml:
+                return f"{kinds.CPLUG_JSON_MANIFEST} could not be read: {exc}"
+            return None
+        except json.JSONDecodeError as exc:
+            if not has_cplug and not has_toml:
+                return f"{cplug_name} is missing from the folder ({kinds.CPLUG_JSON_MANIFEST} is not valid JSON: {exc})"
+            return None
+        if not isinstance(raw, dict):
+            if not has_cplug and not has_toml:
+                return f"{kinds.CPLUG_JSON_MANIFEST} is not a JSON object"
+            return None
+        is_v2 = _is_schema_two(raw.get("schema"))
+        if has_cplug and is_v2:
+            return f"v2 {kinds.CPLUG_JSON_MANIFEST} cannot coexist with {cplug_name}"
+        if not has_cplug and not has_toml and not is_v2:
+            return f"{cplug_name} is missing from the folder (and {kinds.CPLUG_JSON_MANIFEST} is not schema = 2)"
+    return None
+
+
 def _read_manifest_object(kind: str, folder: Path) -> tuple[Optional[dict], Optional[str]]:
-    name = kinds.manifest_name(kind)
+    if kind == kinds.KIND_CPLUG:
+        conflict = _cplug_manifest_conflict(folder)
+        if conflict is not None:
+            return None, conflict
+
+    name = kinds.resolve_manifest_name(kind, folder)
     path = folder / name
     try:
         if not path.is_file():
@@ -82,9 +128,23 @@ def _read_manifest_object(kind: str, folder: Path) -> tuple[Optional[dict], Opti
         size = path.stat().st_size
         if size > MAX_MANIFEST_BYTES:
             return None, f"{name} is larger than {MAX_MANIFEST_BYTES} bytes"
-        raw = json.loads(path.read_text(encoding="utf-8"))
+        text = path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError) as exc:
         return None, f"{name} could not be read: {exc}"
+
+    if name.endswith(".toml"):
+        try:
+            raw = tomllib.loads(text)
+        except tomllib.TOMLDecodeError as exc:
+            return None, f"{name} is not valid TOML: {exc}"
+        if not isinstance(raw, dict):
+            return None, f"{name} is not a TOML table"
+        if kind == kinds.KIND_CPLUG and not _is_schema_two(raw.get("schema")):
+            return None, f"{name} must declare schema = 2"
+        return raw, None
+
+    try:
+        raw = json.loads(text)
     except json.JSONDecodeError as exc:
         return None, f"{name} is not valid JSON: {exc}"
     if not isinstance(raw, dict):

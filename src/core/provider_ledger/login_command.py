@@ -36,6 +36,8 @@ def _variable_for(account: ProviderAccount) -> str:
 
 
 def login_profile_dir(account: ProviderAccount) -> str:
+    if account.provider == "antigravity":
+        return ""
     profile = profile_dir_for(account)
     if account.managed:
         return profile

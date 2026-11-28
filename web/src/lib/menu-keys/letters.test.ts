@@ -37,13 +37,13 @@ const COMPONENT_MENUS: Record<string, { files: string[]; ids: string[] }> = {
     files: ['../session-list/view-choices.ts'],
     ids: ['density-compact', 'density-cozy', 'density-detailed', 'show-leaders', 'show-archived', 'show-stats'],
   },
-  'new (+) menu': { files: ['../drawer-tabs/NewSessionButton.svelte'], ids: ['company', 'agent', 'terminal', 'browser', 'project', 'group'] },
+  'new (+) menu': { files: ['../drawer-tabs/NewSessionButton.svelte'], ids: ['agent', 'project', 'terminal', 'browser', 'group', 'company'] },
   'account menu': {
     files: ['../drawer-hud/AccountMenu.svelte'],
     ids: ['account_page', 'layout', 'master_all', 'signout', 'logout'],
   },
   'row menu plus its plugins': {
-    files: ['../item-menu/menus/row-items.ts', '../../plugins/huddle/session-roles-action.ts', '../../plugins/unread/index.ts', '../../plugins/share/index.ts'],
+    files: ['../item-menu/menus/row-items.ts', '../../plugins/taskmanager/session-roles-action.ts', '../../plugins/unread/index.ts', '../../plugins/share/index.ts'],
     ids: ['rename', 'add-to', 'pin', 'mark-unread', 'huddle-project-lead', 'share-read-only', 'send-to', 'close', 'fork', 'sleep'],
   },
 };

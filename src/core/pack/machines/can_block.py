@@ -17,7 +17,7 @@ MAX_LABELS = 16
 MAX_GPUS = 4
 MAX_BLOCK_BYTES = 3 * 1024
 TOOL_NAMES = ("python3.12", "python3", "node", "npm", "git", "gh", "docker", "tmux", "claude", "playwright",
-              "ffmpeg", "ffprobe", "codex", "blender", "brew")
+              "ffmpeg", "ffprobe", "codex", "agy", "blender", "brew")
 VOCAB = frozenset(TOOL_NAMES) | {"playwright_browsers"}
 LABEL_RE = re.compile(r"[a-z0-9][a-z0-9 ._-]{0,31}")
 _VERSION_RE = r"^[0-9][0-9A-Za-z.+_-]{0,63}$"

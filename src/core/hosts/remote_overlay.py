@@ -5,6 +5,7 @@ from typing import Any, Dict, Optional, Tuple
 
 import structlog
 
+from src.core.argent import codex_words
 from src.core.hosts.remote_host import RemoteHost
 from src.core.hosts.ssh_exec import posix_quote
 from src.core.sessions import launch_overlay
@@ -44,7 +45,7 @@ async def apply(host: RemoteHost, *, family: Optional[str], command: Optional[st
     key = delivery.secrets.get(plan.secret_name, "")
     if not plan.preamble or not key or key == plan.direct_value:
         return command, {}, ref
-    flags = "".join(" " + posix_quote(word) for word in plan.flags)
+    flags = "".join(" " + codex_words.quote_word(word) for word in plan.flags)
     return f"{plan.preamble}; exec {command}{flags}", {plan.secret_name: key}, ref
 
 

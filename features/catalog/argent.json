@@ -5,7 +5,9 @@
     "PUT /api/v1/argent/settings",
     "POST /api/v1/argent/login/start",
     "GET /api/v1/argent/login",
-    "DELETE /api/v1/argent/login"
+    "DELETE /api/v1/argent/login",
+    "GET /api/v1/argent/budget/requests",
+    "POST /api/v1/argent/budget/requests"
   ],
   "area": "settings",
   "docs": [
@@ -15,22 +17,27 @@
     "Turn the feature on with a test tenant, arm the rollout and watch two idle sessions restart as resumes and read tethered.",
     "Stop the gateway and read the outage banner and the direct fallback warning, then start it and watch the rows re-tether.",
     "Declare a story from a sub-agent and read the per sub-agent cost split on its Swarm card.",
-    "Commit in a test repo with beast mode off and approve the tracker comment from the review list."
+    "Commit in a test repo with beast mode off and approve the tracker comment from the review list.",
+    "Drag a story card to done and read its tracker card move to done; with argent unreachable the move waits in the queue and goes through when it is back."
   ],
   "how_to": [
     "Open settings, features, and switch the argent feature on; its pane opens under features.",
     "Type the argent server address and the gateway address, then save addresses. Press log in, open the page it shows, enter the code and approve.",
+    "While you are logged in, a small argent mark shows in the top bar left of your account icon (hover it to read who you are connected as); press it to open this pane. Logged out or expired, it is not drawn.",
     "Flip the tether switch. It only turns on while the gateway is ready, the body cap is raised and you are logged in; otherwise it says why.",
     "Read the rollout modal: it counts the sessions that will restart as resumes and lists every session that cannot be routed, by reason. Arm it and watch the rows turn tethered after their first traffic.",
     "Pick the work a new session serves in the launch picker, or let the classifier suggest it; read cost and budget in the grown status bar and on Swarm cards.",
-    "When an item reaches its budget the next prompt is held. Only the budget owner lifts it, from argent or from the notice here.",
-    "Flip the tether switch off to reverse the rollout; every session restarts direct and its key is revoked."
+    "When an item reaches its budget the next prompt is held. Only the budget owner lifts it, in argent. Press ask for more, type the extra amount (what argent adds to your allotment, not a new cap; a held item over its cap starts at the overage, anything else starts empty) and a reason and send: the row then reads asked, more, and waiting, and a note tells you when argent approves, denies or lets it expire. It says not available yet until argent's CLI budget routes are live.",
+    "Flip the tether switch off to reverse the rollout; every session restarts direct and its key is revoked.",
+    "Move a story card in Swarm to in progress and it moves to in progress in the tracker (jira, github, gitlab, linear or notion); move it to done, by hand or by the agent, and it moves to done there. If the tracker already holds a newer state it keeps it and a notice names that state."
   ],
   "id": "argent",
   "issues": [
     2817,
     2819,
-    2847
+    2847,
+    3316,
+    3311
   ],
   "keywords": [
     "argent",
@@ -46,6 +53,7 @@
   "summary": "the argent gateway feature end to end: every claude and codex session on every computer can be routed through the argent gateway under one switch, with a per-session key kept off argv, a rollout that restarts idle sessions as resumes, work items and stories, per item cost and budgets with a prompt hold, write-back to the tracker, outage fallback and an ssh carry for computers that cannot reach the gateway. off means nothing runs and nothing changes.",
   "surfaces": [
     "src/api/argent/status.py",
+    "src/core/argent/budget_requests.py",
     "src/core/argent/client.py",
     "src/core/argent/device_login.py",
     "src/core/argent/gateway_reach.py",
@@ -55,10 +63,12 @@
     "src/core/budget_hold/gate.py",
     "src/core/mcp/argent_tools.py",
     "src/plugins/argent/__init__.py",
+    "web/src/lib/argent-cost/BudgetAskForm.svelte",
     "web/src/plugins/argent/ArgentSettings.svelte"
   ],
   "updated": "2026-11-05",
   "where": [
-    "Settings, features, argent."
+    "Settings, features, argent.",
+    "The top bar, left of the account icon, while logged in to argent."
   ]
 }

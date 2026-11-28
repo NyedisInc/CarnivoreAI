@@ -25,12 +25,24 @@
   let rootEl = $state<HTMLElement | null>(null);
 
   const EXPORTS_TOPIC = 'exports';
+  const OFFLOAD_TOPIC_SUFFIX = '.offload';
+
+  const OFFLOAD_DEBOUNCE_MS = 400;
 
   $effect(() => {
     const live = controller;
-    return resourcePush().onChange((topics) => {
+    let pending: ReturnType<typeof setTimeout> | null = null;
+    const off = resourcePush().onChange((topics) => {
       if (topics.includes(EXPORTS_TOPIC)) void live.refreshExports();
+      if (topics.some((t) => t.endsWith(OFFLOAD_TOPIC_SUFFIX))) {
+        if (pending !== null) clearTimeout(pending);
+        pending = setTimeout(() => { pending = null; void live.refreshExports(); }, OFFLOAD_DEBOUNCE_MS);
+      }
     });
+    return () => {
+      if (pending !== null) clearTimeout(pending);
+      off();
+    };
   });
 
   $effect(() => {

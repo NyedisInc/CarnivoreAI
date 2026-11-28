@@ -115,7 +115,7 @@ per option, the footer's buttons, nothing else.</p>
         <code>.modal-titlerow.text-prompt-modal__head</code> itself, the tracked accent label <code>&raquo; label</code> and the 14px
         close X), <code>label</code> (the strip's words when they differ from the accessible <code>title</code>),
         <code>closable</code> (false: no X), <code>closeLabel</code> (the X's name), <code>headExtra</code> (a snippet after the
-        label inside the strip: a pager, a period, a subject). THE SHELL DRAWS THE HEAD (top-down cleanup M15): no dialog writes
+        label inside the strip: a pager, a period, a subject). THE PANEL IS CAPPED AT THE WINDOW (#3379, <code>.modal-content--capped</code>): a flex column no taller than the overlay, the head (<code>.modal-titlerow</code>) and footer (<code>.modal-footer</code>) keep their size and only <code>.modal-body</code> scrolls, so a tall body never pushes its buttons off screen. THE SHELL DRAWS THE HEAD (top-down cleanup M15): no dialog writes
         <code>text-prompt-modal__head</code> or picks the strip by <code>overlayClass</code>
         (<code>web/src/lib/dialog-frame/one-dialog-head.test.ts</code>, a list that only goes down); the X is disabled while
         <code>dismissable</code> is false. For a head that is not a title strip, <code>head</code> (a replacement), an optional <code>footer</code> (absent: no footer row), <code>contentClass</code> (extra classes on the panel) and any other attribute, which lands on the overlay (the send-to and move-folder dialogs are built this way). It carries no style of its own and borrows the chassis classes by name, so it changes with the
@@ -362,6 +362,32 @@ per option, the footer's buttons, nothing else.</p>
     </tbody>
 </table>
 </div>
+
+<h3 class="sg-h3" id="dialogs-offload-prompt">the restore prompt</h3>
+<div class="sg-specimen">
+    <div class="sg-specimen__label"><span>an offloaded conversation, backups on</span><code>web/src/lib/offload-prompt/OffloadPrompt.svelte</code><span>styles live; <code>text-prompt-modal.css</code> supplies the title strip</span></div>
+    <div class="sg-specimen__body sg-specimen__body--flush">
+        <div class="sg-stage">
+            <div class="modal-overlay text-prompt-modal">
+                <div class="modal-content">
+                    <div class="text-prompt-modal__head">
+                        <span class="text-prompt-modal__verb">restore conversation</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-message">2 conversations of "build" are in the backup vault, not on this computer.</div>
+                        <div class="modal-description">1.5 mb, offloaded 24 oct.</div>
+                        <div class="modal-description">restoring copies it back and then carries on with what you asked. it can take a while.</div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="modal-btn modal-btn-secondary">cancel</button>
+                        <button type="button" class="modal-btn modal-btn-confirm">restore</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<p class="sg-caption">shown when an open, resume or wake is refused with the code <code>offloaded</code> (the legacy tree reaches it through <code>CloudeWeb.offloadPrompt</code>). The one <code>.modal-btn-confirm</code> restore runs the restore route and stays open, busy, until it answers; the original action then runs once more. With conversation backups off the restore button is not drawn, the note reads "turn backups on to restore" and cancel reads "close". It never offers a fresh start: the conversation is not missing.</p>
 
 <h3 class="sg-h3" id="dialogs-confirm-ok">the ok-first confirm</h3>
 <dl class="sg-facts">

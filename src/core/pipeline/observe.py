@@ -265,6 +265,9 @@ def classify(path: str) -> Optional[FileTarget]:
         return FileTarget(path, parts[index - 1], C.FAMILY_CLAUDE, C.FILE_SUBAGENT) if index > 0 else None
     if name.startswith("rollout-"):
         return FileTarget(path, name[:-len(".jsonl")][-_UUID_CHARS:], C.FAMILY_CODEX, C.FILE_CONVERSATION)
+    if (name == "transcript.jsonl" and len(parts) >= 5
+            and parts[-3:-1] == (".system_generated", "logs") and parts[-5] == "brain"):
+        return FileTarget(path, parts[-4], C.FAMILY_AGY, C.FILE_CONVERSATION)
     return FileTarget(path, name[:-len(".jsonl")], C.FAMILY_CLAUDE, C.FILE_CONVERSATION)
 
 

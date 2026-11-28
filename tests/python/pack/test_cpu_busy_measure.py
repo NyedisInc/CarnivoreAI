@@ -48,7 +48,9 @@ def test_a_fully_busy_cpu_is_pegged_and_no_tick_delta_falls_back_to_the_load_ave
     said = admission.refusal(machine, 3)
     assert said and said.startswith(admission.PEGGED) and "98% busy" in said
     assert admission.refusal(admission.Machine(184.0, 184.0, 10, 60.0), 0) is not None
-    assert cpu_busy.CpuMeter(read=lambda: None).busy_cores(10) == {"busy_1": None, "busy_5": None, "source": cpu_busy.SOURCE_LOAD}
+    assert cpu_busy.CpuMeter(read=lambda: None).busy_cores(10) == {
+        "busy_15s": None, "busy_1": None, "busy_5": None, "source": cpu_busy.SOURCE_LOAD,
+    }
 
 
 def test_a_detached_home_head_still_carries_a_branch(tmp_path):

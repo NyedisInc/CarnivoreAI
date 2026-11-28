@@ -90,6 +90,12 @@
             try {
                 var remap = window.TerminalPromptRemap;
                 var shown = remap ? remap.withLightPromptRemap(rawTheme) : rawTheme;
+                var needsAlpha = normaliseImageAlpha(imageAlpha) !== null || isThemeEffectVisible();
+                if (term.options && typeof term.options === 'object' && 'allowTransparency' in term.options) {
+                    if (term.options.allowTransparency !== needsAlpha) {
+                        term.options.allowTransparency = needsAlpha;
+                    }
+                }
                 term.options.theme = withTerminalBackgroundOpacity(shown, imageAlpha);
                 term.options.minimumContrastRatio = minimumContrastRatioForXtermTheme(rawTheme);
             } catch (e) {

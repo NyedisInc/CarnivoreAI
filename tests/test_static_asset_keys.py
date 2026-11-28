@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import posixpath
 import re
 from pathlib import Path
 
@@ -153,7 +154,11 @@ def test_the_rewrite_is_stable_for_an_unchanged_tree(tree: Path) -> None:
 def test_the_real_shell_keys_every_static_url_it_references() -> None:
     html = (CLIENT_DIR / "index.html").read_text(encoding="utf-8")
     out = keys.render(html, CLIENT_DIR)
-    unkeyed = [u for u in keys.iter_static_urls(out) if "?v=" not in u]
+    unkeyed = [
+        u
+        for u in keys.iter_static_urls(out)
+        if "?v=" not in u and u not in keys.UNKEYED_MODULE_ENTRIES
+    ]
     assert unkeyed == [], f"unkeyed static URLs survived the rewrite: {unkeyed}"
 
 
@@ -166,6 +171,58 @@ def test_the_real_shell_still_loads_exactly_the_same_assets() -> None:
     ]
     assert before == after
     assert len(before) > 100, "the shell should reference many assets; did the scan break?"
+
+
+_MODULE_TAG = re.compile(r'<script[^>]*type="module"[^>]*src="([^"]+)"')
+_REL_IMPORT = re.compile(r"""(?:from|import)\s*\(?\s*["'](\.{1,2}/[^"']+)["']""")
+
+
+def module_entry_mismatches(client_dir: Path) -> list[str]:
+    imported: dict[str, int] = {}
+    for js in (client_dir / "dist").rglob("*.js"):
+        url = "/static/" + js.relative_to(client_dir).as_posix()
+        for rel in _REL_IMPORT.findall(js.read_text(encoding="utf-8", errors="ignore")):
+            target = posixpath.normpath(posixpath.join(posixpath.dirname(url), rel))
+            imported[target] = imported.get(target, 0) + 1
+    problems: list[str] = []
+    for name in ("index.html", *keys.KEYED_PAGE_NAMES):
+        page = client_dir / name
+        if not page.is_file():
+            continue
+        out = keys.render(page.read_text(encoding="utf-8"), client_dir)
+        for tag_url in _MODULE_TAG.findall(out):
+            if tag_url.split("?", 1)[0] in imported and "?" in tag_url:
+                problems.append(f"{name}: {tag_url} is imported as {tag_url.split('?', 1)[0]}")
+    return problems
+
+
+def test_every_page_loads_each_module_entry_at_the_url_its_chunks_import() -> None:
+    assert (CLIENT_DIR / "dist" / "app.js").is_file()
+    importers = [
+        j
+        for j in (CLIENT_DIR / "dist").glob("chunk-*.js")
+        if 'from"./app.js"' in j.read_text(encoding="utf-8", errors="ignore")
+    ]
+    assert importers, "no chunk imports app.js, so this test would look at nothing"
+    assert module_entry_mismatches(CLIENT_DIR) == []
+
+
+def test_the_module_entry_check_goes_red_on_a_keyed_entry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "dist").mkdir()
+    (tmp_path / "dist" / "entry.js").write_text("export const a=1;")
+    (tmp_path / "dist" / "chunk-a.js").write_text('import"./entry.js";')
+    (tmp_path / "index.html").write_text(
+        '<script type="module" src="/static/dist/entry.js"></script>'
+    )
+    monkeypatch.setattr(keys, "UNKEYED_MODULE_ENTRIES", frozenset(), raising=False)
+    assert module_entry_mismatches(tmp_path) != []
+    keys.reset_for_tests()
+    monkeypatch.setattr(
+        keys, "UNKEYED_MODULE_ENTRIES", frozenset({"/static/dist/entry.js"}), raising=False
+    )
+    assert module_entry_mismatches(tmp_path) == []
 
 
 def _client() -> TestClient:
@@ -247,7 +304,11 @@ def test_hand_written_pages_get_keyed_links_and_never_immutable(page: str) -> No
     assert "immutable" not in html.headers["cache-control"]
     stamped = [u for u in keys.iter_static_urls(html.text) if "?v=" in u]
     assert stamped, f"{page} references no keyed /static/ url"
-    unkeyed = [u for u in keys.iter_static_urls(html.text) if "?v=" not in u]
+    unkeyed = [
+        u
+        for u in keys.iter_static_urls(html.text)
+        if "?v=" not in u and u not in keys.UNKEYED_MODULE_ENTRIES
+    ]
     assert not unkeyed, unkeyed[:3]
     raw = _client().get("/static/css/layers.css")
     assert raw.text == (CLIENT_DIR / "css" / "layers.css").read_text(encoding="utf-8")

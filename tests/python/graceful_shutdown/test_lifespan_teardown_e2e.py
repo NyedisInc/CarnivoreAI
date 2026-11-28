@@ -30,6 +30,8 @@ def _boot_and_stop_with_failing_beast_stop(monkeypatch, tmp_path) -> list[str]:
     monkeypatch.setattr(settings, "auth_config_file", str(config))
     monkeypatch.setattr(settings, "_auth_config_cache", None)
     monkeypatch.setenv("CLOUDE_STATE_DIR", str(tmp_path / "state"))
+    (tmp_path / "home").mkdir()
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
     from src.core.approvals import beast_lifecycle
     from src.core.catalog import client as catalog_client
 

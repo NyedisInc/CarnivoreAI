@@ -1,4 +1,4 @@
-import manifest from '../../../../src/plugins/reviewboard/cplug.json';
+import manifest from '../../../../src/plugins/reviewboard/carnivore.toml';
 import type { CplugManifest, CplugPopout } from '../sdk';
 import { reviewboardTab } from './board-tab';
 import { registerBoardKeys } from './public/board-keys';

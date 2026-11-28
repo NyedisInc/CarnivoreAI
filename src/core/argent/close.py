@@ -81,7 +81,12 @@ async def close_item(item_id: str, reason: str = "") -> Dict[str, Any]:
     if item is None:
         raise Refused(404, "unknown_work_item", "that work item is not one argent has told this computer about")
     target = str(item["id"])
-    reply = await post(f"/v1/my/work-items/{quote(target, safe='')}/close", {"reason": text, "comment": False})
+    try:
+        reply = await post(f"/v1/my/work-items/{quote(target, safe='')}/close", {"reason": text, "comment": False})
+    except Refused as exc:
+        if exc.code in _TRANSIENT:
+            await asyncio.to_thread(_queue_mirror, tenant, target, text)
+        raise
     await _queue_done(tenant, target, text)
     work_items.poke()
     state = tracker_state(reply)
@@ -89,6 +94,25 @@ async def close_item(item_id: str, reason: str = "") -> Dict[str, Any]:
     if state:
         out["tracker_state"], out["message"] = state, f"the tracker already holds a newer state ({state}), so the item was not moved"
     return out
+
+
+_TRANSIENT = frozenset({"argent_unreachable", "rate_limited", "login_expired", "login_required"})
+
+
+def _queue_mirror(tenant: str, item_id: str, reason: str) -> None:
+    writeback.enqueue_move(tenant, item_id, writeback.MOVE_CLOSE, reason=reason)
+
+
+async def queue_close(tenant: str, item_id: str, reason: str) -> None:
+    try:
+        text = clean_reason(reason, minimum=0)
+    except Refused:
+        text = ""
+    try:
+        await asyncio.to_thread(_queue_mirror, tenant, item_id, text)
+        await _queue_done(tenant, item_id, text)
+    except (sqlite3.Error, OSError, ValueError) as exc:
+        logger.warning("argent_card_close_failed", error_type=type(exc).__name__)
 
 
 async def _queue_done(tenant: str, item_id: str, reason: str) -> None:
@@ -104,34 +128,3 @@ def item_of_origin(origin: Optional[Mapping[str, Any]]) -> str:
         return ""
     _tracker, _, item = str(origin.get("ref") or "").partition(":")
     return item
-
-
-RETRY_CAP_SECONDS = 60.0
-_retries: set = set()
-
-
-async def _close_again(item: str, reason: str, wait: float) -> None:
-    await asyncio.sleep(wait)
-    try:
-        await close_item(item, reason)
-    except Refused as exc:
-        logger.info("argent_card_close_not_posted", code=exc.code, retried=True)
-    except (sqlite3.Error, OSError) as exc:
-        logger.warning("argent_card_close_failed", error_type=type(exc).__name__, retried=True)
-
-
-async def on_card_closed(card: Mapping[str, Any], reason: str) -> None:
-    item = item_of_origin(card.get("origin"))
-    if not item or not writeback.is_running():
-        return
-    text = " ".join(reason.split())[:MAX_REASON]
-    try:
-        await close_item(item, text)
-    except Refused as exc:
-        logger.info("argent_card_close_not_posted", code=exc.code)
-        if exc.status == 429:
-            task = asyncio.get_running_loop().create_task(_close_again(item, text, min(exc.retry_after or RETRY_CAP_SECONDS, RETRY_CAP_SECONDS)))
-            _retries.add(task)
-            task.add_done_callback(_retries.discard)
-    except (sqlite3.Error, OSError) as exc:
-        logger.warning("argent_card_close_failed", error_type=type(exc).__name__)

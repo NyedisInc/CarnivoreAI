@@ -7,8 +7,7 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.plugins.sdk.schema_check import SchemaError, SchemaSet
-from src.plugins.sdk.sidecar import SCHEMA_DIR, schemas, validate_document
+from src.plugins.sdk.schema_check import SCHEMA_DIR, SchemaError, SchemaSet, schemas, validate_document
 
 ROOT = Path(__file__).resolve().parents[3]
 KINDS = ("cplug", "widget", "theme", "skill", "claude-code-plugin", "mod", "loadout")
@@ -124,8 +123,8 @@ NATIVE_GAPS = {
 
 
 def _front_matter(text: str) -> Dict[str, str]:
-    lines = text.split("\n")
-    if lines[0] != "---":
+    lines = text.splitlines()
+    if not lines or lines[0] != "---":
         return {}
     out: Dict[str, str] = {}
     for line in lines[1:]:

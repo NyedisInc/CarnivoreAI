@@ -22,4 +22,5 @@ export interface PluginsScreenProps {
     loadActivity?: (cplugId: string) => Promise<ActivityRow[]>;
     purge?: (cplugId: string, confirmToken?: string) => Promise<PurgePrice>;
     catalog?: CatalogPlugins | null;
+    onInspectLogs?: (cplugId: string) => void;
 }

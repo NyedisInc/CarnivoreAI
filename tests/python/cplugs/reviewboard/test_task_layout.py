@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.plugins.huddle import board_port
+from src.plugins.taskmanager import board_port
 from src.plugins.reviewboard import layout, root_port, scan
 from src.plugins.sdk import task_folders
 from tests.python.cplugs.reviewboard.boards import SIDECAR, make_board, sidecar

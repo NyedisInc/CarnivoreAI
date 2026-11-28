@@ -4,7 +4,6 @@
 const os = require('os');
 const path = require('path');
 const childProcess = require('child_process');
-const confirmWindow = require('../../nuke-confirm');
 const { UNREGISTER_ARG } = require('../../engine-host/constants');
 const { resolvePayload } = require('../../engine/payload-select');
 
@@ -44,6 +43,7 @@ async function askStopSessions(ctx, copyDir) {
 }
 
 async function uninstallApp(ctx) {
+  const confirmWindow = require('../../nuke-confirm');
   if (!(await confirmWindow.promptForUninstallConfirmation())) return;
   const source = uninstallScriptSource(ctx);
   if (!ctx.fs.existsSync(source)) {
@@ -82,6 +82,7 @@ async function uninstallApp(ctx) {
 }
 
 async function nuke(ctx) {
+  const confirmWindow = require('../../nuke-confirm');
   const confirmed = await confirmWindow.promptForNukeConfirmation('');
   if (!confirmed) return;
   console.log('Nuking system...');

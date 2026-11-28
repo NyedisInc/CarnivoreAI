@@ -3,13 +3,16 @@ from __future__ import annotations
 
 import asyncio
 import json
+import random
 import secrets
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Set, Tuple
 
 import structlog
 
 from src.core.bounded_stream import BoundedStream
+from src.core.federation import shadow_rows
 from src.core.listing_push.diff import KeyedRows, diff, keyed
+from src.core.pack.machines import capabilities
 from src.models import WSMessageType
 
 logger = structlog.get_logger()
@@ -18,8 +21,32 @@ FRAME_TYPE = WSMessageType.PEER_LISTING.value
 COALESCE_SECONDS = 0.25
 RESYNC_SECONDS = 60.0
 MAX_FRAME_BYTES = 512 * 1024
+RESYNC_JITTER = 0.5
+MESH_FRAME_BYTES = 2 * 1024 * 1024
+MESH_QUEUE_BYTES = 2 * MESH_FRAME_BYTES
 
 View = Callable[[], Awaitable[Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]]]
+
+
+def jittered_resync() -> float:
+    return random.uniform(RESYNC_SECONDS * RESYNC_JITTER, RESYNC_SECONDS)
+
+
+def resync_wait(member_attached: bool) -> float:
+    return jittered_resync() if capabilities.mesh_on() and member_attached else RESYNC_SECONDS
+
+
+def frame_cap(mesh: bool) -> int:
+    return MESH_FRAME_BYTES if mesh else MAX_FRAME_BYTES
+
+
+def member_caps(peer: bool, grant: Any) -> Optional[Tuple[int, int]]:
+    if not peer or not capabilities.mesh_on():
+        return None
+    from src.core.federation.mesh_grants import MeshGrant
+    if isinstance(grant, MeshGrant):
+        return MESH_QUEUE_BYTES, MESH_FRAME_BYTES
+    return None
 
 
 def row_key(row: Dict[str, Any]) -> Optional[str]:
@@ -37,9 +64,19 @@ class PeerListingFeed:
         self.seq = 0
         self._list: Optional[KeyedRows] = None
         self._asleep: Optional[KeyedRows] = None
-        self._streams: Set[BoundedStream] = set()
+        self._streams: Dict[BoundedStream, Optional[int]] = {}
         self._wake = asyncio.Event()
         self._task: Optional["asyncio.Task[None]"] = None
+        self._owners: Set[str] = set()
+
+    def claim(self, owner: str) -> bool:
+        if owner in self._owners:
+            return False
+        self._owners.add(owner)
+        return True
+
+    def release(self, owner: str) -> None:
+        self._owners.discard(owner)
 
     def on_hub_publish(self, frame_type: Optional[str]) -> None:
         if frame_type == WSMessageType.LISTING_DELTA.value and self._streams:
@@ -75,31 +112,61 @@ class PeerListingFeed:
             if seq == at == self.seq:
                 return seq, text
 
+    def _member_attached(self) -> bool:
+        return any(cap is not None for cap in self._streams.values())
+
     def _offer_all(self, text: str, targets: Optional[List[BoundedStream]] = None) -> None:
         for stream in (list(self._streams) if targets is None else [s for s in targets if s in self._streams]):
             stream.offer(text, len(text))
 
+    def _resync_frame(self) -> str:
+        return json.dumps({"type": FRAME_TYPE, "stream": self.stream, "seq": self.seq, "resync": True})
+
     def _drop_all(self) -> None:
         logger.warning("peer_listing_feed_oversize", sockets=len(self._streams))
-        self._offer_all(json.dumps({"type": FRAME_TYPE, "stream": self.stream, "seq": self.seq, "resync": True}))
+        self._offer_all(self._resync_frame())
         self._streams.clear()
         self._list = self._asleep = None
 
-    async def attach(self, stream: BoundedStream) -> None:
+    def _over_cap(self, stream: BoundedStream, size: int) -> bool:
+        cap = self._streams.get(stream)
+        if cap is None:
+            return size > frame_cap(False)
+        return size > cap or max(len(self._list or ()), len(self._asleep or ())) > shadow_rows.MAX_ROWS
+
+    def _send_sized(self, text: str, targets: List[BoundedStream]) -> None:
+        if not self._member_attached():
+            if len(text) > frame_cap(False):
+                self._drop_all()
+                return
+            self._offer_all(text, targets)
+            return
+        fits = [s for s in targets if s in self._streams and not self._over_cap(s, len(text))]
+        for stream in [s for s in targets if s in self._streams and s not in fits]:
+            logger.warning("peer_listing_feed_oversize", sockets=len(self._streams), member=True)
+            self._offer_all(self._resync_frame(), [stream])
+            self._streams.pop(stream, None)
+        if not self._streams:
+            self._list = self._asleep = None
+            return
+        self._offer_all(text, fits)
+
+    async def attach(self, stream: BoundedStream, cap: Optional[int] = None) -> None:
         if self._list is None or not self._streams:
             self._list = self._asleep = None
             await self._refresh()
         _, text = await self._full()
-        if len(text) > MAX_FRAME_BYTES:
+        too_many = cap is not None and max(len(self._list or ()), len(self._asleep or ())) > shadow_rows.MAX_ROWS
+        if len(text) > (frame_cap(False) if cap is None else cap) or too_many:
             logger.warning("peer_listing_feed_oversize", sockets=len(self._streams) + 1, attached=False)
             return
         stream.offer(text, len(text))
-        self._streams.add(stream)
+        self._streams[stream] = cap
         if self._task is None or self._task.done():
             self._task = asyncio.create_task(self._run(), name="peer-listing-feed")
 
     def detach(self, stream: BoundedStream) -> None:
-        self._streams.discard(stream)
+        self._streams.pop(stream, None)
         if not self._streams and self._task is not None:
             self._task.cancel()
             self._task = None
@@ -108,7 +175,7 @@ class PeerListingFeed:
     async def _run(self) -> None:
         while True:
             try:
-                await asyncio.wait_for(self._wake.wait(), RESYNC_SECONDS)
+                await asyncio.wait_for(self._wake.wait(), resync_wait(self._member_attached()))
                 resync = False
             except asyncio.TimeoutError:
                 resync = True
@@ -131,7 +198,4 @@ class PeerListingFeed:
             except Exception:  # noqa: BLE001
                 logger.exception("peer_listing_feed_failed")
                 continue
-            if len(text) > MAX_FRAME_BYTES:
-                self._drop_all()
-                continue
-            self._offer_all(text, targets)
+            self._send_sized(text, targets)

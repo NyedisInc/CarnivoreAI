@@ -8,6 +8,7 @@
   import SparkLine from './SparkLine.svelte';
   import VizSettings from './VizSettings.svelte';
   import { analytics, chartTick } from '../cells/analytics/state.svelte';
+  import { selfHostInstallId } from '../cells/analytics/host-id.svelte';
   import type { ChartConfig } from '../cells/analytics/types';
   import { layoutEditor, changeAnalyticsConfig } from '../layout-editor/editor.svelte';
   import { t } from '../../lib/i18n/index.svelte';
@@ -28,7 +29,7 @@
   const topN = $derived(leaderboardTopN(config));
   const preset = $derived(config.range.preset ?? VIZ_SPECS.leaderboard.preset);
   const read = planQuery(
-    () => ({ on: config.enabled, items: leaderboardPlan(config, { now: chartTick(config), timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions) }) }),
+    () => ({ on: config.enabled, items: leaderboardPlan(config, { now: chartTick(config), timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions), selfInstallId: selfHostInstallId() }) }),
     () => visible,
   );
   onMount(() => (root ? watchVisible(root, (value) => { visible = value; }) : undefined));

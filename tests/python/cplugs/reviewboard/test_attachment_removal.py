@@ -8,7 +8,7 @@ import json
 import pytest
 
 from src.core.mcp.caller import AgentCaller
-from src.plugins.huddle import board_port
+from src.plugins.taskmanager import board_port
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_on, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachments import MD, PDF, b64, board, client, env, sidecar  # noqa: F401
 
@@ -149,7 +149,7 @@ def test_a_tombstone_still_counts_toward_the_index_cap(env, client, board, two, 
 
 
 def _bytes_on_disk(env, item_id: int) -> list:
-    folder = env.host.storage("huddle").path / "files" / str(item_id)
+    folder = env.host.storage("taskmanager").path / "files" / str(item_id)
     return sorted(p.name for p in folder.glob("*")) if folder.is_dir() else []
 
 
@@ -158,7 +158,7 @@ def _message(env, item_id: int, message_id: int) -> dict:
 
 
 def _other_message_parts(entry: dict) -> dict:
-    from src.plugins.huddle import files as task_manager_files  # noqa: PLC0415
+    from src.plugins.taskmanager import files as task_manager_files  # noqa: PLC0415
 
     own = {k: entry[k] for k in ("id", "name", "mime", "size", "path")}
     return {"plain": task_manager_files.parts_of([own]),
@@ -188,7 +188,7 @@ def test_bytes_another_message_still_carries_survive_the_removal(env, client, bo
     r = client.delete(f"{BASE}/boards/{board['slug']}/attachments/{two[0]['file_id']}")
     assert r.status_code == 200, r.text
     assert r.json()["bytes"]["deleted"] is False and r.json()["bytes"]["shared"] is True and r.json()["bytes"]["redacted"] is True
-    on_disk = env.host.storage("huddle").path / entry["path"]
+    on_disk = env.host.storage("taskmanager").path / entry["path"]
     assert hashlib.sha256(on_disk.read_bytes()).hexdigest() == two[0]["sha256"]
     assert _message(env, board["item"], posted["id"]) == other_before, "the other message is untouched"
     board_msg = _message(env, board["item"], two[0]["message_id"])
@@ -198,10 +198,10 @@ def test_bytes_another_message_still_carries_survive_the_removal(env, client, bo
 
 def test_another_task_recording_the_same_path_keeps_the_bytes(env, client, board, two):
     store = task_manager_store(env)
-    from src.plugins.huddle import files as task_manager_files  # noqa: PLC0415
+    from src.plugins.taskmanager import files as task_manager_files  # noqa: PLC0415
 
     entry = _message(env, board["item"], two[0]["message_id"])["files"][0]
-    absolute = str((env.host.storage("huddle").path / entry["path"]).resolve())
+    absolute = str((env.host.storage("taskmanager").path / entry["path"]).resolve())
     other = store.add(store.item(board["item"])["list"], "other task", actor="joe")["id"]
     store.post(other, "imported", actor="joe", parts=task_manager_files.parts_of([{**{k: entry[k] for k in ("id", "name", "mime", "size")}, "path": absolute}]))
     r = client.delete(f"{BASE}/boards/{board['slug']}/attachments/{two[0]['file_id']}")
@@ -241,10 +241,10 @@ def test_two_removals_from_one_message_both_land(env, client, board, two):
 
 
 def test_a_file_the_message_never_carried_survives(env, client, board, two):
-    from src.plugins.huddle import files as task_manager_files  # noqa: PLC0415
+    from src.plugins.taskmanager import files as task_manager_files  # noqa: PLC0415
     from src.plugins.reviewboard.ports import get as port  # noqa: PLC0415
 
-    saved = task_manager_files.save(env.host.storage("huddle"), board["item"], "owner-paste.png", b"\x89PNG fake")
+    saved = task_manager_files.save(env.host.storage("taskmanager"), board["item"], "owner-paste.png", b"\x89PNG fake")
     record = two[1]
     out = asyncio.run(port().delete_file(board["item"], two[0]["message_id"], saved["id"], name=record["name"], size=record["bytes"], sha256=record["sha256"]))
     assert out["deleted"] is False and out["redacted"] is False and "not the one the board recorded" in out["reason"]
@@ -252,7 +252,7 @@ def test_a_file_the_message_never_carried_survives(env, client, board, two):
 
 
 def test_a_stored_file_that_is_not_the_boards_record_is_kept(env, client, board, two):
-    store_path = env.host.storage("huddle").path / "files" / str(board["item"])
+    store_path = env.host.storage("taskmanager").path / "files" / str(board["item"])
     victim = next(store_path.glob(f"{two[0]['file_id']}-*"))
     victim.write_bytes(b"# changed after it was attached\n")
     r = client.delete(f"{BASE}/boards/{board['slug']}/attachments/{two[0]['file_id']}")
@@ -262,7 +262,7 @@ def test_a_stored_file_that_is_not_the_boards_record_is_kept(env, client, board,
 
 
 def test_files_sharing_an_id_prefix_are_told_apart(env, client, board, two):
-    folder = env.host.storage("huddle").path / "files" / str(board["item"])
+    folder = env.host.storage("taskmanager").path / "files" / str(board["item"])
     decoy = folder / f"{two[0]['file_id']}-A-decoy.md"
     decoy.write_bytes(b"decoy")
     r = client.delete(f"{BASE}/boards/{board['slug']}/attachments/{two[0]['file_id']}")
@@ -271,7 +271,7 @@ def test_files_sharing_an_id_prefix_are_told_apart(env, client, board, two):
 
 
 def test_missing_bytes_still_redact_the_thread(env, client, board, two):
-    folder = env.host.storage("huddle").path / "files" / str(board["item"])
+    folder = env.host.storage("taskmanager").path / "files" / str(board["item"])
     next(folder.glob(f"{two[0]['file_id']}-*")).unlink()
     r = client.delete(f"{BASE}/boards/{board['slug']}/attachments/{two[0]['file_id']}")
     assert r.status_code == 200, r.text
@@ -349,7 +349,7 @@ def test_a_failed_unlink_answers_503_records_nothing_and_a_retry_deletes(env, cl
 def test_a_locked_thread_write_answers_503_and_records_nothing(env, client, board, two, monkeypatch):
     import sqlite3  # noqa: PLC0415
 
-    from src.plugins.huddle.public import TaskManagerStore  # noqa: PLC0415
+    from src.plugins.taskmanager.public import TaskManagerStore  # noqa: PLC0415
 
     real = TaskManagerStore.forget_file
 

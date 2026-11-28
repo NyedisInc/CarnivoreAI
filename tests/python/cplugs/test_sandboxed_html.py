@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from src.plugins.huddle import artifacts
+from src.plugins.taskmanager import artifacts
 from src.plugins.sdk import sandboxed_html
 
 ROOT = Path(__file__).resolve().parents[3]

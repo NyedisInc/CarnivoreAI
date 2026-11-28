@@ -142,6 +142,7 @@ else if (argv.includes('developer-id-key')) process.stdout.write(fs.readFileSync
 const NPM = PRELUDE + String.raw`
 const argv = process.argv.slice(2);
 // The Electron policy asks the registry and then reads the manifest the build wrote (macOS/scripts/electron-policy.js).
+if (argv[0] === 'ci' || argv[0] === 'install') process.exit(0); // the release preflight's clean install
 if (argv[0] === 'view') { process.stdout.write(fs.readFileSync(process.env.FAKE_REGISTRY)); process.exit(0); }
 log('npm ' + argv.join(' '));
 const out = (argv.map((x) => (x.match(/^-c\.directories\.output=(.*)$/) || [])[1]).find(Boolean)) || 'dist';

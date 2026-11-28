@@ -13,12 +13,14 @@ from src.core.argent import settings as settings_module
 from src.core.argent.client import ArgentClient, ArgentError, NotFound, Unauthorized, Unreachable
 from src.core.argent.store import ArgentStore
 from src.core.argent.token_store import TokenStore
+from src.core.pack.machines import capabilities
 
 logger = structlog.get_logger()
 
 MINT_PATH = "/v1/my/cli/delegate"
 DELEGATES_PATH = "/v1/my/cli/delegates"
 REMINT_FRACTION = 0.8
+MAX_LIFE_SECONDS = 24 * 3600
 LABEL_MAX = 64
 
 
@@ -50,7 +52,7 @@ class Delegates:
         token = await asyncio.to_thread(self._tokens.read, str(login["tenant_id"])) if login else None
         if not (token and cfg.server_url):
             return None
-        return ArgentClient(cfg.server_url, lambda: token, ca_path=cfg.ca_path, transport=self._transport)
+        return ArgentClient(cfg.server_url, lambda: token, transport=self._transport)
 
     async def mint(self, label: str) -> Minted:
         client = await self._client()
@@ -89,26 +91,45 @@ class Delegates:
             return False
         return reply.status == 204
 
-    async def retire(self, entries: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def retire(self, entries: List[Dict[str, Any]], killed: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         now = self._clock()
         keep: List[Dict[str, Any]] = []
         for entry in entries:
             if float(entry["expires_at"]) / 1000 <= now:
                 continue
-            if not await self.revoke_id(str(entry["id"])):
+            if await self.revoke_id(str(entry["id"])):
+                if killed is not None:
+                    killed.append(str(entry["id"]))
+            else:
                 keep.append(entry)
         return keep
 
-    async def revoke(self, install_id: str) -> None:
+    async def revoke(self, install_id: str, killed: Optional[List[str]] = None) -> Optional[List[Dict[str, Any]]]:
         rec = await asyncio.to_thread(self._store.delegate_get, install_id)
         if rec is None:
-            return
+            return None
         entries = ([{"id": rec["id"], "expires_at": rec["expires_at"]}] if rec.get("id") else []) + list(rec.get("stale", []))
-        keep = await self.retire(entries)
+        got: List[str] = []
+        keep = await self.retire(entries, got)
+        if killed is not None:
+            killed.extend(got)
+        if got and capabilities.mesh_on():
+            await asyncio.to_thread(self._store.delegate_killed_add, install_id, got, int(self._clock() * 1000))
         if keep:
             await asyncio.to_thread(self._store.delegate_put, install_id, {"id": "", "expires_at": 0, "remint_at": 0, "stale": keep})
         else:
             await asyncio.to_thread(self._store.delegate_drop, install_id)
+        return keep
+
+    def copies_of(self, install_id: str, since_ms: int) -> List[Dict[str, Any]]:
+        killed = self._store.delegate_killed(install_id)
+        dead = {str(e["id"]) for e in killed}
+        out: List[Dict[str, Any]] = [{"expires_at": None, "killed_at": int(e["killed_at"])} for e in killed if int(e["killed_at"]) >= since_ms]
+        rec = self._store.delegate_get(install_id)
+        if rec is not None:
+            pending = ([{"id": rec["id"], "expires_at": rec["expires_at"]}] if rec.get("id") else []) + list(rec.get("stale", []))
+            out += [{"expires_at": int(e["expires_at"]), "killed_at": None} for e in pending if str(e["id"]) not in dead]
+        return out
 
     async def revoke_all(self) -> None:
         for install_id in await asyncio.to_thread(self._store.delegate_installs):

@@ -29,11 +29,19 @@ _LISTING = "listing"
 
 
 @dataclass(frozen=True)
+class CodexHome:
+
+    key: str
+    path: Path
+
+
+@dataclass(frozen=True)
 class Sources:
 
     claude_roots: Tuple[Path, ...]
     codex_home: Path
     state_dir: Path
+    extra_codex_homes: Tuple[CodexHome, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -266,11 +274,13 @@ class Scanner:
         return _tree_files(_TreeSpec(base, f"file-history/{conv}", HOME_CLAUDE, K.ROLE_FILE_HISTORY), self._memo)
 
     def _rollouts(self) -> Iterator[PlannedFile]:
-        for sub in ("sessions", "archived_sessions"):
-            base = self.sources.codex_home / sub
-            if base.is_dir():
-                spec = _TreeSpec(base, sub, HOME_CODEX, K.ROLE_CODEX_ROLLOUT)
-                yield from (f for f in _tree_files(spec, self._memo) if f.path.name.startswith("rollout-") and f.path.suffix == ".jsonl")
+        homes = [(HOME_CODEX, self.sources.codex_home)] + [(h.key, h.path) for h in self.sources.extra_codex_homes]
+        for key, home in homes:
+            for sub in ("sessions", "archived_sessions"):
+                base = home / sub
+                if base.is_dir():
+                    spec = _TreeSpec(base, sub, key, K.ROLE_CODEX_ROLLOUT)
+                    yield from (f for f in _tree_files(spec, self._memo) if f.path.name.startswith("rollout-") and f.path.suffix == ".jsonl")
 
     def scan_memory(self) -> Dict[str, UnitPlan]:
         plans: Dict[str, UnitPlan] = {}

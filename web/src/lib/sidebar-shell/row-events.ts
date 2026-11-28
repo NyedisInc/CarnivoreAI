@@ -3,6 +3,7 @@ import type { Attachment } from 'svelte/attachments';
 import { activateRow, armAsleepRow, runRowAction, wakeFromArm } from './row-activate';
 import { openSessionAutomationsFor, openShare, openSubagents, openTimers, toggleKeepAwake } from './row-controls';
 import { onRowPointerDown, tookClick } from './row-drag';
+import { restoreOffloadedRow } from './row-restore';
 import { cascadeBandFold, toggleBandFold } from './heading-fold';
 import { closestTo, drawer, rg } from './row-globals';
 import { onKeyClick as onBrowserKeyClick } from '../drawer/browser-rows';
@@ -48,6 +49,17 @@ function onClick(e: MouseEvent): void {
         if (e.shiftKey) cascadeBandFold(key);
         else toggleBandFold(key);
         return;
+    }
+    if (row.getAttribute('data-kind') === 'layout' && row.getAttribute('data-band') === 'layouts') {
+        const iconOrCount = closestTo(e.target, '.session-sidebar-row-provider, .session-sidebar-row-subtitle');
+        const uuid = row.getAttribute('data-layout-uuid');
+        if (iconOrCount && uuid) {
+            e.stopPropagation();
+            const key = `layout:${uuid}`;
+            if (e.shiftKey) cascadeBandFold(key);
+            else toggleBandFold(key);
+            return;
+        }
     }
     if (closestTo(e.target, '[data-wake-arm]')) {
         e.stopPropagation();
@@ -98,6 +110,12 @@ function onClick(e: MouseEvent): void {
     if (automations) {
         e.stopPropagation();
         openSessionAutomationsFor(automations);
+        return;
+    }
+    const restore = closestTo(e.target, '[data-restore-offloaded]');
+    if (restore) {
+        e.stopPropagation();
+        void restoreOffloadedRow(ctrl, restore, row);
         return;
     }
     const actions = rg().SessionRowActions;

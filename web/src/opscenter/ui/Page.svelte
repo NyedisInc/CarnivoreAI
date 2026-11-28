@@ -20,6 +20,7 @@
     import { closeMenuPageFromX, closeMenuPageGuarded, menuPageState, openMenuPages } from '../../lib/menu-page/menu-page-shell.svelte';
     import { MENU_PAGES } from '../../lib/menu-page/menu-pages';
     import { drawerResize } from '../../lib/menu-page/menu-page-resize';
+    import { detailFocus } from './page-detail-focus';
     import Self from './Page.svelte';
 
     interface Props {
@@ -30,7 +31,6 @@
         onClose?: () => void;
         closeLabel?: string;
         embedded?: boolean;
-        bare?: boolean;
         ariaLabel?: string;
         class?: string;
         root?: HTMLDivElement | undefined;
@@ -50,11 +50,17 @@
         frame: PageFrame;
         scroll?: 'frame' | 'self';
         stack?: boolean;
+        toolRow?: 'wrap' | 'line';
+        toolAlign?: 'end' | 'center';
+        omnibar?: 'frame' | 'kit';
+        omniGap?: boolean;
+        detailAccent?: boolean;
         side?: Snippet;
         sideLabel?: string;
         detail?: Snippet;
         detailTitle?: string;
         detailActions?: Snippet;
+        detailFill?: boolean;
         onDetailClose?: () => void;
         find?: Snippet;
         pair?: boolean;
@@ -74,7 +80,6 @@
         onClose,
         closeLabel = 'close',
         embedded = false,
-        bare = false,
         ariaLabel,
         class: extra = '',
         root = $bindable(),
@@ -94,11 +99,17 @@
         frame,
         scroll,
         stack = false,
+        toolRow = 'wrap',
+        toolAlign = 'end',
+        omnibar = 'frame',
+        omniGap = false,
+        detailAccent = false,
         side,
         sideLabel,
         detail,
         detailTitle,
         detailActions,
+        detailFill = false,
         onDetailClose,
         find,
         pair = false,
@@ -169,11 +180,12 @@
         return () => node.removeEventListener('keydown', frameKeydown);
     }
     function sidePicked(event: MouseEvent): void {
-        if ((event.target as HTMLElement).closest(PICK_TARGETS)) closeSide(false);
+        const target = event.target as HTMLElement;
+        if (target.closest(PICK_TARGETS) && !target.closest('button[aria-expanded]')) closeSide(false);
     }
     const isMenuPage = $derived(!!root && MENU_PAGES.some((p) => p.containerId === root?.parentElement?.id));
-    const drawer = $derived(!inset && !embedded && !bare && !viewport.narrow && menuPageState.surface && isMenuPage);
-    const pairDrawers = $derived(pair && !pairPart && frame === 'nav' && !inset && !embedded && !bare && !viewport.narrow && menuPageState.surface);
+    const drawer = $derived(!inset && !embedded && !viewport.narrow && menuPageState.surface && isMenuPage);
+    const pairDrawers = $derived(pair && !pairPart && frame === 'nav' && !inset && !embedded && !viewport.narrow && menuPageState.surface);
     let pairListW = $state(0);
     $effect(() => {
         const el = root;
@@ -215,11 +227,11 @@
 {/snippet}
 
 {#if pairDrawers}
-    <Self {title} {icon} {label} {count} {onClose} {closeLabel} {ariaLabel} class={extra} {onkeydown} {sub} {actions} {controls} {find} {search} {backIcon}
+    <Self {title} {icon} {label} {count} {onClose} {closeLabel} {ariaLabel} class={extra} {onkeydown} {sub} {actions} {controls} {find} {search} {backIcon} {omnibar}
         frame="nav" {scroll} {side} {sideLabel} pair pairPart="list" bind:root bind:titleEl {...rest} />
     {#if pairOpen}
-        <Self title={pairTitle ?? title} class={extra} {onkeydown} onDrawerClose={onPairClose} {tabs} {bar} {notes} {foot} {children}
-            frame="nav" {scroll} {stack} {detail} {detailTitle} {detailActions} {onDetailClose} pair pairPart="page"
+        <Self title={pairTitle ?? title} class={extra} {onkeydown} onDrawerClose={onPairClose} {tabs} {bar} {toolRow} {toolAlign} {omniGap} {notes} {foot} {children}
+            frame="nav" {scroll} {stack} {detail} {detailTitle} {detailActions} {detailFill} {detailAccent} {onDetailClose} pair pairPart="page"
             {...rest} style={`--oc-drawer-offset: ${pairListW}px`} />
     {/if}
 {:else}
@@ -236,12 +248,13 @@
     class:oc-page--away={away}
     data-oc-base
     data-frame={frame}
+    data-omni-gap={omniGap ? '' : undefined}
     role="region"
     aria-label={ariaLabel ?? title}
     {onkeydown}
 >
-    {#if !inset && !bare}
-        <header class="oc-titlebar" class:oc-titlebar--search={!!omniSearch} class:oc-titlebar--find={headerFind} class:oc-titlebar--back={showBack} class:oc-titlebar--drawer={drawer} data-frame-region="header" data-btn-density="frame">
+    {#if !inset}
+        <header class="oc-titlebar" class:oc-titlebar--search={!!omniSearch} class:oc-titlebar--find={headerFind} class:oc-titlebar--back={showBack} class:oc-titlebar--drawer={drawer} data-frame-region="header" data-btn-density="frame" data-omni={omnibar === 'kit' ? 'kit' : undefined}>
             {#if drawer}
                 <IconButton label={t('sidebar.flyout.close', { name: title })} variant="close" icon="close" iconSize={14}
                     data-drawer-close onclick={() => (onDrawerClose ? onDrawerClose() : void closeMenuPageFromX())} />
@@ -316,7 +329,7 @@
         {/if}
 
         {#if bar || showPicker || (inset && (hasSub || hasActions))}
-            <div class="oc-page__bar" class:oc-page__bar--picker={showPicker && !bar} data-frame-region="tools" data-btn-density="frame">
+            <div class="oc-page__bar" class:oc-page__bar--picker={showPicker && !bar} data-frame-region="tools" data-tool-row={toolRow} data-tool-align={toolAlign === 'center' ? 'center' : undefined} data-btn-density="frame">
                 {#if showPicker}
                     <span class="oc-page__picker">
                         <Button bind:element={pickerEl} variant="secondary" aria-controls={sideId} aria-expanded={sideOpen} onclick={toggleSide}>{sideLabel ?? title}</Button>
@@ -356,9 +369,9 @@
 
 {#snippet detailRegion()}
     {#if detail}
-        <aside class="oc-page__detail oc-page__detail--frame" data-frame-region="detail" aria-label={detailTitle ?? title}>
+        <aside class="oc-page__detail oc-page__detail--frame" class:oc-page__detail--fill={detailFill} data-frame-region="detail" aria-label={detailTitle ?? title} {@attach detailFocus()}>
             <div class="oc-page__detail-head" data-btn-density="frame">
-                <h2 class="oc-page__detail-title">{detailTitle ?? ''}</h2>
+                <h2 class="oc-page__detail-title" tabindex="-1" data-detail-focus data-tone={detailAccent ? 'accent' : undefined}>{detailTitle ?? ''}</h2>
                 {#if detailActions}<div class="oc-page__detail-actions">{@render detailActions()}</div>{/if}
                 {#if onDetailClose}<IconButton label={t('opscenter.page.detail_close')} icon="close" variant="close" onclick={onDetailClose} />{/if}
             </div>

@@ -52,6 +52,7 @@ def repair(state: Path, roots: Sequence[Path] = (), apply: bool = False) -> Repa
         return report
     home = file_refs.FileHome(Path(state), roots=roots, local_files=None, keep_unresolved=True, dry_run=not apply)
     home.local_files = home.files_root
+    home.previous_local_files = storage.previous_path / file_refs.REL_PREFIX if storage.previous_path is not None else None
     committed = False
     try:
         with closing(storage.connect(apply)) as conn:

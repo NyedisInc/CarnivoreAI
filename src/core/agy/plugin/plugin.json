@@ -1,0 +1,5 @@
+{
+  "name": "carnivore-agy",
+  "version": "1.0.0",
+  "description": "Carnivore's rules and launch line for Antigravity CLI sessions running inside Carnivore. Installed and refreshed by Carnivore; no-op outside it."
+}

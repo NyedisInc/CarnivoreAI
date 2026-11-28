@@ -222,15 +222,19 @@ test('a long-press arms the skull and runs nothing until the skull is tapped', a
 
 test('a hidden tab withdraws its size vote; showing it rejoins', () => {
   const root = draw();
-  const clientB = clients.made.find((c) => c.id === B);
   const clientA = clients.made.find((c) => c.id === A);
-  expect(clientB?._tabHidden).toBe(true);
+  expect(clients.made.find((c) => c.id === B)).toBeUndefined();
   expect(clientA?._tabHidden ?? false).toBe(false);
   (root.querySelector(`[data-tab="${B}"]`) as HTMLButtonElement).click();
   flushSync();
-  expect(clientB?._tabHidden).toBe(false);
+  const clientB = clients.made.find((c) => c.id === B);
+  expect(clientB?._tabHidden ?? false).toBe(false);
   expect(clientA?._tabHidden).toBe(true);
   expect(inputFocus.owner).toBe(B);
+  (root.querySelector(`[data-tab="${A}"]`) as HTMLButtonElement).click();
+  flushSync();
+  expect(clientB?._tabHidden).toBe(true);
+  expect(clientA?._tabHidden).toBe(false);
 });
 
 test('an inactive tab is tinted with its session theme accent; the showing tab is not', () => {

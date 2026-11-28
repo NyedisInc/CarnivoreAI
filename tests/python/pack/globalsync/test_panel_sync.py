@@ -50,12 +50,12 @@ def test_receiver_ends_with_the_alphas_panel_and_keeps_its_own_view(tmp_path):
         shadow = shadows["carnivore_api"]
         assert recv.execute("SELECT uid, display_name FROM projects WHERE id = ?", (shadow.project_id,)).fetchone()[0] == puid
 
-        arrangement = {"pinned": ["sess-1"], "order": ["sess-1"], "bands": {f"p:{pid}": ["sess-1"]}, "sections": ["pinned", "companies"],
+        arrangement = {"pinned": ["sess-1", "layout:abc"], "order": ["sess-1"], "bands": {f"p:{pid}": ["sess-1"]}, "sections": ["pinned", "companies"],
                        "collapsed": ["rogue"]}
         doc = panel.collect(alpha, arrangement, ALPHA)
-        assert doc["arrangement"]["pinned"] == [[ALPHA, "sess-1"]] and f"p:{puid}" in doc["arrangement"]["bands"]
+        assert doc["arrangement"]["pinned"] == [[ALPHA, "sess-1"], ["layout", "abc"]] and f"p:{puid}" in doc["arrangement"]["bands"]
 
-        own_view = {"v": 1, "pinned": ["layout:abc"], "collapsed": ["terminals"], "mobile": {"collapsed": ["groups"]}, "bands": {}, "order": []}
+        own_view = {"v": 1, "pinned": ["layout:stale"], "collapsed": ["terminals"], "mobile": {"collapsed": ["groups"]}, "bands": {}, "order": []}
         report, new = panel.apply(recv, doc, RECEIVER, own_view)
         recv.commit()
 
@@ -185,7 +185,7 @@ def test_applying_a_received_document_is_not_an_edit(trio):
         assert ledger.stamp(f"c:{cuid}:name") == (1000, A)
     before = panel_merge.Ledger(main.ledger).fields
     clock[0] += 500
-    assert main.take(b.doc(), False) == {"companies_created": 0, "companies_updated": 0, "projects_updated": 0, "groups_changed": 0, "skipped": []}
+    assert main.take(b.doc(), False) == {"companies_created": 0, "companies_updated": 0, "projects_updated": 0, "groups_changed": 0, "layouts_changed": 0, "skipped": []}
     assert panel_merge.Ledger(main.ledger).fields == before
 
 

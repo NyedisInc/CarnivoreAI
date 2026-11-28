@@ -42,3 +42,22 @@ def transcript_uuid_index(root: Optional[Path] = None) -> FrozenSet[str]:
     for base in roots:
         found |= _uuids_under(base)
     return frozenset(found)
+
+
+class OnDiskProbe:
+
+    def __init__(self, roots: Optional[tuple] = None) -> None:
+        self._roots = roots
+        self._seen: dict = {}
+
+    def __contains__(self, conversation: object) -> bool:
+        if not isinstance(conversation, str) or not conversation or "/" in conversation:
+            return False
+        if conversation not in self._seen:
+            roots = self._roots if self._roots is not None else tuple(claude_transcript_roots())
+            try:
+                self._seen[conversation] = any(True for base in roots for _ in base.glob(f"*/{conversation}{_SUFFIX}"))
+            except OSError as exc:
+                logger.warning("project_history_transcript_probe_unreadable", error=str(exc))
+                self._seen[conversation] = False
+        return self._seen[conversation]

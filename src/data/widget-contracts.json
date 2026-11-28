@@ -972,67 +972,8 @@
     },
     {
       "kind": "widget",
-      "id": "core.task-manager",
-      "name": "task manager",
-      "version": "1.0.0",
-      "api_version": 1,
-      "min_app_version": "1.16.1",
-      "author": "Carnivore",
-      "tier": "builtin",
-      "scope": [
-        "global",
-        "project"
-      ],
-      "source": "builtin",
-      "declarative": false,
-      "instancing": "singleton",
-      "sizes": [
-        "tall",
-        "medium",
-        "large",
-        "full"
-      ],
-      "any_size": true,
-      "hosts": [
-        "home",
-        "terminal",
-        "drawer",
-        "popout"
-      ],
-      "reads": [
-        {
-          "kind": "route",
-          "ref": "GET /cplugs/huddle/lists"
-        },
-        {
-          "kind": "route",
-          "ref": "GET /cplugs/huddle/lists/{id}"
-        },
-        {
-          "kind": "route",
-          "ref": "GET /sessions/list"
-        }
-      ],
-      "fixtures": [
-        "data",
-        "empty"
-      ],
-      "fixture": "core.task-manager",
-      "max_per_surface": 1,
-      "remembers": [
-        "status-folds",
-        "open-project",
-        "hidden-sections",
-        "counts-hidden",
-        "swarm-view",
-        "swarm-inactive",
-        "schedule-project"
-      ]
-    },
-    {
-      "kind": "widget",
       "id": "core.task-manager-mk2",
-      "name": "tm mark ii",
+      "name": "task manager",
       "version": "1.0.0",
       "api_version": 1,
       "min_app_version": "1.16.1",
@@ -1091,60 +1032,6 @@
     {
       "kind": "widget",
       "id": "core.task-manager-mk2-all",
-      "name": "tm mark ii all",
-      "version": "1.0.0",
-      "api_version": 1,
-      "min_app_version": "1.16.1",
-      "author": "Carnivore",
-      "tier": "builtin",
-      "scope": [
-        "global"
-      ],
-      "source": "builtin",
-      "declarative": false,
-      "instancing": "singleton",
-      "sizes": [
-        "tall",
-        "medium",
-        "large",
-        "full"
-      ],
-      "any_size": true,
-      "hosts": [
-        "home",
-        "terminal",
-        "drawer",
-        "popout"
-      ],
-      "reads": [
-        {
-          "kind": "route",
-          "ref": "GET /cplugs/huddle/aggregate"
-        },
-        {
-          "kind": "route",
-          "ref": "GET /cplugs/huddle/lists"
-        }
-      ],
-      "fixtures": [
-        "data",
-        "empty"
-      ],
-      "fixture": "core.task-manager-mk2-all",
-      "max_per_surface": 1,
-      "remembers": [
-        "status-folds",
-        "open-project",
-        "hidden-sections",
-        "counts-hidden",
-        "swarm-view",
-        "swarm-inactive",
-        "schedule-project"
-      ]
-    },
-    {
-      "kind": "widget",
-      "id": "core.task-manager-all",
       "name": "all task managers",
       "version": "1.0.0",
       "api_version": 1,
@@ -1184,7 +1071,7 @@
         "data",
         "empty"
       ],
-      "fixture": "core.task-manager-all",
+      "fixture": "core.task-manager-mk2-all",
       "max_per_surface": 1,
       "remembers": [
         "status-folds",
@@ -1779,51 +1666,6 @@
         "empty"
       ],
       "fixture": "core.developer",
-      "max_per_surface": 1
-    },
-    {
-      "kind": "widget",
-      "id": "core.task-list",
-      "name": "tasks",
-      "version": "1.0.0",
-      "api_version": 1,
-      "min_app_version": "1.16.1",
-      "author": "Carnivore",
-      "tier": "builtin",
-      "scope": [
-        "global"
-      ],
-      "source": "builtin",
-      "declarative": false,
-      "instancing": "singleton",
-      "sizes": [
-        "tall",
-        "medium",
-        "large",
-        "full"
-      ],
-      "any_size": true,
-      "hosts": [
-        "home",
-        "terminal",
-        "drawer",
-        "popout"
-      ],
-      "reads": [
-        {
-          "kind": "route",
-          "ref": "GET /cplugs/huddle/aggregate"
-        },
-        {
-          "kind": "route",
-          "ref": "GET /cplugs/huddle/lists"
-        }
-      ],
-      "fixtures": [
-        "data",
-        "empty"
-      ],
-      "fixture": "core.task-list",
       "max_per_surface": 1
     },
     {

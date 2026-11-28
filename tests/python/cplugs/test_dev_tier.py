@@ -37,12 +37,12 @@ def test_tmdevtools_is_the_dev_tier_plugin() -> None:
 
 def test_dev_plugin_is_off_hidden_and_not_started_until_developer_mode_is_on(client: TestClient, dev_switch: dict) -> None:
     host = runtime.host_for(client.app)
-    turn_on(host, "huddle")
+    turn_on(host, "taskmanager")
     turn_on(host, "tmdevtools")
     definition = runtime.find("tmdevtools")
 
     ids = [row["id"] for row in client.get("/api/v1/cplugs").json()["cplugs"]]
-    assert "tmdevtools" not in ids and "huddle" in ids, "off: hidden from the list, ordinary plugins untouched"
+    assert "tmdevtools" not in ids and "taskmanager" in ids, "off: hidden from the list, ordinary plugins untouched"
     assert host.enabled("tmdevtools") is False
     assert client.get("/api/v1/cplugs/tmdevtools").status_code == 404
     assert client.put("/api/v1/cplugs/tmdevtools", json={"enabled": True, "revision": 0}).status_code == 404
@@ -59,9 +59,9 @@ def test_dev_plugin_is_off_hidden_and_not_started_until_developer_mode_is_on(cli
 
 def test_a_hidden_dev_plugin_is_not_a_dependent_of_the_task_manager(client: TestClient, dev_switch: dict) -> None:
     host = runtime.host_for(client.app)
-    turn_on(host, "huddle")
+    turn_on(host, "taskmanager")
     turn_on(host, "tmdevtools")
-    needed_by = lambda: {n["id"] for n in client.get("/api/v1/cplugs/huddle").json()["dependencies"]["needed_by"]}
+    needed_by = lambda: {n["id"] for n in client.get("/api/v1/cplugs/taskmanager").json()["dependencies"]["needed_by"]}
     assert "tmdevtools" not in needed_by()
     dev_switch["on"] = True
     assert "tmdevtools" in needed_by()

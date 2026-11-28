@@ -3,16 +3,17 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 const calls: string[] = [];
+let mockResponse: Record<string, unknown> = {
+  cpu_percent: 23.4, cpu_count: 10, memory_percent: 92, memory_used_bytes: 21_400_000_000, memory_total_bytes: 34_400_000_000,
+  disk_percent: null, disk_free_bytes: null, disk_total_bytes: null, load_1: 2.41, load_5: 1.87, load_15: 1.52, uptime_seconds: 273600,
+};
 vi.mock('../../api/auth.svelte', () => ({
   auth: { state: 'signed-in' },
   initAuth: async () => {},
   ApiError: class ApiError extends Error {},
   authFetch: async (path: string) => {
     calls.push(path);
-    return {
-      cpu_percent: 23.4, cpu_count: 10, memory_percent: 92, memory_used_bytes: 21_400_000_000, memory_total_bytes: 34_400_000_000,
-      disk_percent: null, disk_free_bytes: null, disk_total_bytes: null, load_1: 2.41, load_5: 1.87, load_15: 1.52, uptime_seconds: 273600,
-    };
+    return mockResponse;
   },
 }));
 
@@ -24,7 +25,14 @@ import { setLocale } from '../../../lib/i18n/index.svelte';
 
 setLocale('en');
 const apps: ReturnType<typeof mount>[] = [];
-afterEach(() => { for (const app of apps.splice(0)) unmount(app); calls.length = 0; });
+afterEach(() => {
+  for (const app of apps.splice(0)) unmount(app);
+  calls.length = 0;
+  mockResponse = {
+    cpu_percent: 23.4, cpu_count: 10, memory_percent: 92, memory_used_bytes: 21_400_000_000, memory_total_bytes: 34_400_000_000,
+    disk_percent: null, disk_free_bytes: null, disk_total_bytes: null, load_1: 2.41, load_5: 1.87, load_15: 1.52, uptime_seconds: 273600,
+  };
+});
 
 async function draw(width: number, height = 95): Promise<HTMLElement> {
   const target = document.createElement('div');
@@ -65,5 +73,40 @@ describe('machine stats cell', () => {
     }
     const short = await draw(190, 95);
     expect(short.querySelector('.oc-ms-sub--below')).toBeNull();
+  });
+
+  test('pack mode renders aggregate meters and deterministic per-machine rows in server order', async () => {
+    mockResponse = {
+      cpu_percent: 20, cpu_count: 8, memory_percent: 40, memory_used_bytes: 8_000_000_000, memory_total_bytes: 20_000_000_000,
+      disk_percent: 50, disk_free_bytes: 100_000_000_000, disk_total_bytes: 200_000_000_000, load_1: 1.5, load_5: 1.2, load_15: 1.0, uptime_seconds: 10000,
+      machines: [
+        {
+          install_id: 'iid-alpha', label: 'alpha', is_self: true,
+          cpu_percent: 20, cpu_count: 8, memory_percent: 40, memory_used_bytes: 8_000_000_000, memory_total_bytes: 20_000_000_000,
+          disk_percent: 50, disk_free_bytes: 100_000_000_000, disk_total_bytes: 200_000_000_000,
+          load_1: 1.5, load_5: 1.2, load_15: 1.0, uptime_seconds: 10000, live_agents: 2,
+        },
+        {
+          install_id: 'iid-beta', label: 'beta', is_self: false,
+          cpu_percent: 60, cpu_count: 12, memory_percent: 80, memory_used_bytes: 24_000_000_000, memory_total_bytes: 30_000_000_000,
+          disk_percent: 70, disk_free_bytes: 90_000_000_000, disk_total_bytes: 300_000_000_000,
+          load_1: 3.5, load_5: 2.8, load_15: 2.0, uptime_seconds: 86400, live_agents: 5,
+        },
+      ],
+      pack_aggregate: {
+        machine_count: 2,
+        cpu_percent: 40, cpu_count: 20, memory_percent: 64, memory_used_bytes: 32_000_000_000, memory_total_bytes: 50_000_000_000,
+        disk_percent: 62, disk_free_bytes: 190_000_000_000, disk_total_bytes: 500_000_000_000,
+        load_1: 5.0, load_5: 4.0, load_15: 3.0, uptime_seconds: 86400, live_agents: 7,
+      },
+    };
+    const el = await draw(766, 220);
+    expect(el.querySelector('[data-pack-mode="true"]')).not.toBeNull();
+    expect(el.querySelector('[data-meter="cpu"] .oc-ms-figure')?.textContent).toBe('40%');
+    expect(el.querySelector('[data-meter="memory"] .oc-ms-figure')?.textContent).toBe('64%');
+    const rows = Array.from(el.querySelectorAll('[data-pack-machine]'));
+    expect(rows.map((r) => r.getAttribute('data-pack-machine'))).toEqual(['iid-alpha', 'iid-beta']);
+    expect(rows[0]!.querySelector('.oc-ms-pack-label')?.textContent).toBe('alpha');
+    expect(rows[1]!.querySelector('[data-pack-cpu]')?.textContent).toContain('60%');
   });
 });

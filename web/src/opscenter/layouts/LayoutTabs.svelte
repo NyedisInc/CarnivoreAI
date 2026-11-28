@@ -1,5 +1,6 @@
 
 <script lang="ts">
+    import { onMount, untrack } from 'svelte';
     import TabStrip, { type TabItem, type TabStripWords } from '../shell/TabStrip.svelte';
     import CascadeMenu from '../../lib/drawer-tabs/CascadeMenu.svelte';
     import type { MenuNode } from '../../lib/drawer-tabs/add-component-menu';
@@ -7,7 +8,7 @@
     import { t } from '../../lib/i18n/index.svelte';
     import { layoutByUuid, layouts } from '../../lib/layouts-bridge/api.svelte';
     import { layoutMode } from './mode.svelte';
-    import { addable, closeTab, layoutTabs, noteOpen, setTabs, visibleTabs } from './layout-tabs.svelte';
+    import { addable, closeTab, layoutTabs, noteOpen, setTabs, startLayoutTabsSync, visibleTabs } from './layout-tabs.svelte';
 
     const HUES = new Set(['cyan', 'violet', 'yellow', 'green', 'coral', 'orange', 'teal', 'rose', 'gold']);
     const GRADIENTS: Record<string, [string, string]> = {
@@ -16,7 +17,12 @@
 
     let anchor = $state<HTMLElement | null>(null);
 
-    $effect(() => noteOpen(layoutMode.uuid));
+    onMount(() => startLayoutTabsSync());
+
+    $effect(() => {
+        const uuid = layoutMode.uuid;
+        untrack(() => noteOpen(uuid));
+    });
 
     const known = $derived(layouts.data ? layouts.data.map((one) => one.layout_uuid) : null);
     const shown = $derived(visibleTabs(layoutTabs.uuids, known, layoutMode.uuid));

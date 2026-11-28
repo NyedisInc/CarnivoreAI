@@ -39,6 +39,15 @@ export interface AddJob {
   computer: string | null;
 }
 
+export interface MeshLink {
+  install_id: string;
+  state: string;
+  since: number | null;
+  dialed_by: 'this' | 'peer' | null;
+  standing: boolean;
+  on_demand: boolean;
+}
+
 export interface ComputersView {
   self: {
     install_id: string;
@@ -57,6 +66,8 @@ export interface ComputersView {
   computers: ComputerEntry[];
   invites: InviteEntry[];
   add_jobs: AddJob[];
+  mesh?: { switch: 'no_list' | 'alpha' | 'off' | 'on'; links: MeshLink[] } | null;
+  heard?: Record<string, { age_s: number; at_ms: number; via: 'direct' | 'passed'; app_version?: string }>;
 }
 
 export interface MintedInvite {

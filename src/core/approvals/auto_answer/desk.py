@@ -29,9 +29,10 @@ def is_add_directory_dialog(dialog: Any) -> bool:
 
 def shown_folder(dialog: Any) -> Optional[str]:
     text = _compact(dialog)
-    if not text.startswith(_HEAD) or not text.endswith(_TAIL):
+    at = text.rfind(_HEAD)
+    if at < 0 or not text.endswith(_TAIL):
         return None
-    shown = text[len(_HEAD):len(text) - len(_TAIL)]
+    shown = text[at + len(_HEAD):len(text) - len(_TAIL)]
     return shown if shown.startswith("/") and "…" not in shown else None
 
 

@@ -75,6 +75,14 @@
             color: var(--oc-green);
         }
 
+        .row-badge[data-tone='info'] {
+            color: var(--oc-cyan);
+        }
+
+        .row-badge[data-tone='accent'] {
+            color: var(--oc-orange);
+        }
+
         .row-badge[data-tone='warn'] {
             color: var(--oc-yellow);
         }

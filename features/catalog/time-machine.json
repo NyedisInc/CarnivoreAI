@@ -20,7 +20,8 @@
     "The vault never deletes a conversation's last copy, never deletes to get under the size limit, and tells you in the backup health alerts when it is over the limit, cannot be reached, has fallen behind, or holds conversations with no copy.",
     "Choose where the vault lives in the plugin's settings pane (vault location, the setting vaultLocation; blank is the app data folder). A folder that is a symlink, inside iCloud, CloudStorage or Dropbox, or cannot be used now is refused and nothing is stored; a folder on the same disk as your transcripts is allowed with a warning. A new location starts a new vault; nothing is moved and the old folder stays.",
     "Plugin folders marked for the vault (the review boards and their drafts first) are backed up hourly into the same vault, git history included. GET /api/v1/cplugs/save/folders lists them with their size; POST /api/v1/cplugs/save/folders/{unit}/restore puts a copy in a new folder beside the original and never touches the original.",
-    "Old archive databases, recovered transcripts and the retired save store come in through POST /api/v1/cplugs/save/imports/preview (counts and a fingerprint, writes nothing) and POST /imports/apply (add only; undo with POST /imports/{run_id}/undo); an imported point shows an imported chip and its labels in the restore points table, and a junk, trash or review labeled import stays out of deep search until the once-over records a keep verdict."
+    "Old archive databases, recovered transcripts and the retired save store come in through POST /api/v1/cplugs/save/imports/preview (counts and a fingerprint, writes nothing) and POST /imports/apply (add only; undo with POST /imports/{run_id}/undo); an imported point shows an imported chip and its labels in the restore points table, and a junk, trash or review labeled import stays out of deep search until the once-over records a keep verdict.",
+    "Offload (off by default): in the plugin's settings pane, the offloaded list has an offload switch (the setting offloadEnabled, changed through PUT /api/v1/cplugs/save). While it is off, POST /api/v1/cplugs/save/offload/sessions/{session_uuid} refuses with the code offload_disabled and nothing is moved. The list below the switch, GET /api/v1/cplugs/save/offload, shows one row per offloaded session (name, project, conversations, size, day, state, and the reason for a conflict or failed row) with a restore button on every row; it and restore work whether the switch is on or off. The list updates by push, and the MCP tools save_offload_list and save_offload_restore (the restore waits for your approval) do the same. Bulk offload (slice 6): POST /api/v1/cplugs/save/offload/batch with max_sessions and idle_days offloads the oldest idle closed sessions one at a time, in stages of 10, then 50, then the rest, and stops at the first failure; GET /offload/batch/{id} shows progress and POST /offload/batch/{id}/stop ends it (the offloaded list shows the same with a stop button). Held files are deleted after 7 days and only after the vault copy is read back whole; if it is not, the files stay and a backup health alert names the chunks and scripts/vault/repair-chunks-from-restic.sh. A weekly scrub re-reads every chunk behind an offloaded conversation."
   ],
   "id": "time-machine",
   "issues": [
@@ -47,11 +48,10 @@
   "status": "beta",
   "summary": "with the save plugin on (it ships off), every killed or removed session leaves a compressed conversation backup of its conversation, sleep or restart keep one rotating emergency copy, and a conversation still being written gets a fresh copy every 30 minutes.",
   "surfaces": [
-    "web/src/plugins/save/SessionTab.svelte",
     "web/src/plugins/save/SaveSettings.svelte",
     "web/src/plugins/save/RestorePoints.svelte"
   ],
-  "updated": "2026-10-21",
+  "updated": "2026-11-25",
   "where": [
     "Plugins > conversation backups (settings pane), a session's conversation backups tab on the projects page, and /api/v1/cplugs/save/*. The vault lives in the folder set as vault location (the app data folder's vault/ by default); old restore points stay under time-machine/."
   ]

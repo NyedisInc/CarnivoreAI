@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from contextlib import closing
 from dataclasses import replace
@@ -15,7 +16,7 @@ from src.core.pipeline.engine import Engine
 from src.core.pipeline.plugin_db import PluginUnavailable
 from src.core.pipeline.rebuild import PluginSwitchedOff, rebuild_plugin
 from src.core.timeline.plugin import TIMELINE
-from src.plugins.host import gate, runtime, state as owner_state
+from src.plugins.host import gate, registry_store, runtime, state as owner_state
 from tests.pipeline import corpus as K
 from tests.s7_helpers import migrated_connection
 from tests.pipeline.test_engine import Counting, Fake, drain
@@ -173,19 +174,21 @@ def test_a_same_id_non_compiled_in_plugin_does_not_resolve_as_the_switch(tmp_pat
 
 
 def test_a_corrupt_and_an_unreadable_state_file_both_read_off(tmp_path: Path) -> None:
-    path = owner_state.state_path(tmp_path)
+    path = registry_store.registry_path(tmp_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     manifest = runtime.find(FEATURE_ID).manifest
     owner_state.update(tmp_path, manifest, None, lambda s: replace(s, enabled=True))
     assert switch.is_on(TIMELINE, tmp_path) is True
     path.write_text("{ not json", encoding="utf-8")
     assert switch.is_on(TIMELINE, tmp_path) is False
-    path.write_text('{"cplugs": {"sessionchat": {"enabled": true}}}', encoding="utf-8")
+    doc = registry_store.new_document()
+    doc["items"]["sessionchat"] = {"kind": "feature", "enabled": True}
+    path.write_text(json.dumps(doc), encoding="utf-8")
     path.chmod(0)
     try:
         assert switch.is_on(TIMELINE, tmp_path) is False
     finally:
-        path.chmod(0o600)
+        path.chmod(0o644)
 
 
 def test_a_rebuild_of_an_off_plugin_says_it_is_off_not_that_the_old_database_was_kept(tmp_path: Path) -> None:

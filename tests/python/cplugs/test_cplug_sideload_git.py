@@ -47,7 +47,7 @@ def test_a_bad_ref_is_refused(ref):
     assert caught.value.code == "ref_invalid"
 
 
-@pytest.mark.parametrize("subdir", ["../x", "/abs", "a/../../x", ".git/hooks", "a\\b"])
+@pytest.mark.parametrize("subdir", ["../x", "/abs", "a/../../x", ".git/hooks", ".GIT/hooks", "sub/.Git/hooks", "-rf", "./-rf", "plugins\nfoo", "plugins\rfoo", "plugins\x7ffoo", "a\\b"])
 def test_a_subfolder_outside_the_checkout_is_refused(subdir):
     with pytest.raises(SideloadRefused) as caught:
         sideload_git.check_subdir(subdir)

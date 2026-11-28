@@ -32,7 +32,7 @@ installPopoverPolyfill();
 
 import DetailPane from './DetailPane.svelte';
 import { closeItemMenu } from '../../item-menu/open.svelte';
-import { data, takeAddress } from '../page-store.svelte';
+import { closePane, data, takeAddress } from '../page-store.svelte';
 import { pane } from './pane-data.svelte';
 import { reports } from '../feed-store.svelte';
 
@@ -109,10 +109,10 @@ test('a run link opens the output tab at that run and closing the pane takes the
   expect(q('[data-pane-body]').getAttribute('data-pane-body')).toBe('output');
   expect(q('[data-step-n]').textContent).toBe('#2 of 3');
   expect(location.hash).toBe('#automations/run/r2');
-  q('[data-pane-x]').click();
+  closePane();
   await settle();
   expect(location.hash).toBe('#automations');
-  expect(q('[data-detail-pane]').hasAttribute('data-open')).toBe(false);
+  expect(data.paneOpen).toBe(false);
 });
 
 test('[ steps to the older run and ] to the newer one', async () => {

@@ -12,6 +12,9 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 _VOCAB = re.compile(r"[A-Za-z0-9_.:-]{1,64}")
 _VERSION = re.compile(r"[A-Za-z0-9_.+-]{1,32}")
+_AGY_SENDER_RE = re.compile(
+    r"\[Message\]\s+[^\n]*\bsender=([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})"
+)
 _SIDECAR_BYTES = 64 * 1024
 SYNTHETIC = "<synthetic>"
 Counts = Tuple[int, int, int, int]
@@ -165,6 +168,7 @@ def codex_line(obj: Mapping[str, Any], state: Dict[str, Any]) -> Optional[LineFa
         if isinstance(branch, str) and branch:
             meta["branch_hash"] = branch_hash(branch)
         if payload.get("thread_source") == "subagent":
+            meta["agent_kind"] = "subagent"
             meta["subagent_type"] = vocab(payload.get("agent_role"))
             meta["parent_conversation_id"] = vocab(payload.get("parent_thread_id"))
     if kind == "turn_context" and isinstance(payload.get("model"), str):
@@ -203,4 +207,66 @@ def codex_line(obj: Mapping[str, Any], state: Dict[str, Any]) -> Optional[LineFa
             state["reasoning"] = reasoning
             if reasoning > previous:
                 facts.counters.append(("thinking_tokens", "", reasoning - previous))
+    return facts
+
+
+def agy_parent_from_record(obj: Mapping[str, Any], self_id: Optional[str] = None) -> Optional[str]:
+    if obj.get("type") != "SYSTEM_MESSAGE":
+        return None
+    content = obj.get("content")
+    if not isinstance(content, str) or "sender=" not in content:
+        return None
+    match = _AGY_SENDER_RE.search(content)
+    if not match:
+        return None
+    parent = match.group(1)
+    return None if self_id and parent == self_id else parent
+
+
+def agy_line(obj: Mapping[str, Any], offset: int, state: Dict[str, Any],
+             *, conversation_id: Optional[str] = None) -> Optional[LineFacts]:
+    cwd = obj.get("cwd")
+    if isinstance(cwd, str) and cwd:
+        state["project"] = project_key(cwd)
+    t = minute_of(obj.get("created_at"))
+    if t is None:
+        return None
+    project = state.get("project", "")
+    meta: Dict[str, Any] = {}
+    kind = obj.get("type")
+    if kind == "USER_INPUT":
+        state["has_user_input"] = True
+        facts = LineFacts(t, project, meta=meta)
+        facts.counters.append(("turns", "", 1))
+        return facts
+    if kind == "SYSTEM_MESSAGE" and not state.get("has_user_input") and not state.get("parent_id"):
+        parent = agy_parent_from_record(obj, conversation_id)
+        if parent:
+            state["parent_id"] = parent
+            meta["parent_conversation_id"] = parent
+            meta["agent_kind"] = "subagent"
+    facts = LineFacts(t, project, meta=meta)
+    if kind == "CHECKPOINT":
+        facts.counters.append(("compactions", "", 1))
+        return facts
+    if kind != "PLANNER_RESPONSE":
+        return facts
+    raw_model = obj.get("model")
+    model = raw_model if isinstance(raw_model, str) and raw_model else state.get("model", "")
+    if model:
+        state["model"] = model
+    counts: Counts = (
+        count(obj.get("input_tokens")),
+        count(obj.get("cache_write_tokens")),
+        count(obj.get("cache_read_tokens")),
+        count(obj.get("output_tokens")),
+    )
+    if any(counts):
+        step_index = obj.get("step_index")
+        key = f"step:{step_index}" if isinstance(step_index, int) and not isinstance(step_index, bool) else f"@{offset}"
+        facts.response = Response(key, t, model, project, counts, (0,) * len(EXTRAS), None)
+    calls = obj.get("tool_calls")
+    for call in calls if isinstance(calls, list) else ():
+        if isinstance(call, dict) and isinstance(call.get("name"), str) and call["name"]:
+            facts.counters.append(("tool_calls", name(call.get("name")), 1))
     return facts

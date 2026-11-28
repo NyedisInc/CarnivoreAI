@@ -61,4 +61,6 @@ enum Palettes {
     static func palette(id: String?) -> Palette {
         all.first { $0.id == id } ?? all.first { $0.id == fallbackId }!
     }
+
+    static let clear = Color.clear
 }

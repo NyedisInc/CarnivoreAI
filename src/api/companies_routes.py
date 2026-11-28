@@ -98,14 +98,19 @@ def _attach_art(companies: list) -> None:
 @router.get("/companies", response_model=CompaniesResponse, dependencies=[Depends(require_auth)])
 async def list_companies() -> dict:
     """Every company A-Z with its project count; an empty list before any exists or when the datastore is down."""
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
+    from src.core.db import DatastoreUnreadableError, db_path_for
+    from src.core.db_reuse import datastore_pool
 
     db_file = db_path_for(settings.get_state_dir())
-    try:
-        with closing(connect(db_file, create=False)) as conn:
+
+    def _read_companies() -> list:
+        with datastore_pool.lend(db_file) as conn:
             companies = store.list_companies(conn)
-        await asyncio.to_thread(_attach_art, companies)
-        return {"companies": companies}
+        _attach_art(companies)
+        return companies
+
+    try:
+        return {"companies": await asyncio.to_thread(_read_companies)}
     except DatastoreUnreadableError as exc:
         logger.warning("companies_list_datastore_unreadable", error=str(exc))
         return {"companies": []}

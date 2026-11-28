@@ -54,8 +54,10 @@ function registerPowerCalm({ powerMonitor, app, appWindow, execFile, log = () =>
     });
   };
 
+  const onWebContentsCreated = (_event, wc) => onLoad(wc);
+
   for (const name of EVENTS) powerMonitor.on(name, schedule);
-  app.on('web-contents-created', (_event, wc) => onLoad(wc));
+  app.on('web-contents-created', onWebContentsCreated);
   const recheck = setInterval(evaluate, recheckMs);
   if (recheck.unref) recheck.unref();
   evaluate();
@@ -66,6 +68,7 @@ function registerPowerCalm({ powerMonitor, app, appWindow, execFile, log = () =>
       clearInterval(recheck);
       if (debounce) clearTimeout(debounce);
       for (const name of EVENTS) powerMonitor.removeListener(name, schedule);
+      app.removeListener('web-contents-created', onWebContentsCreated);
     },
   };
 }

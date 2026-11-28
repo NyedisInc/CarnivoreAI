@@ -104,7 +104,7 @@ describe('Elite Access entry', () => {
 
         const bar = document.createElement('div');
         document.body.appendChild(bar);
-        const sources = { storeTotal: 0, storeNewest: 0, storeUpdates: 0, storeByKind: {}, storeItems: [], installed: { skill: [], theme: [], mod: [], plugin: [] }, flagged: [], needs: [] };
+        const sources = { storeTotal: 0, storeNewest: 0, storeUpdates: 0, storeByKind: {}, storeItems: [], installed: { skill: [], theme: [], mod: [], plugin: [], widget: [], loadout: [] }, flagged: [], needs: [] };
         acts = mount(WarezMenu, { target: bar, props: { sources, node: { scope: 'store', page: 'everything' }, onNavigate: () => {}, t } as never });
         const button = bar.querySelector<HTMLButtonElement>('#warez-elite-open');
         expect(button?.textContent?.trim()).toBe('\u03c0');

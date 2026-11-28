@@ -139,3 +139,21 @@ def test_reserve_level_follows_schedule_then_keyboard():
     assert reserve_model.active(held, night, None)["level"] == "away"
     wrap = reserve_model.merged(cfg, {"schedule": {"in_use_from": "22:00", "in_use_to": "06:00"}})
     assert reserve_model.in_schedule(wrap, night) and not reserve_model.in_schedule(wrap, noon)
+
+
+def test_member_shows_a_computer_only_main_links_with_main_s_state_and_never_offline(pack):
+    c = pack["c"]
+    members = [{"install_id": IDS["a"], "label": "mac"}, {"install_id": IDS["b"], "label": "studio", "state": "connected"},
+               {"install_id": IDS["c"], "label": "pc"}]
+    pack["a"].member_labels = lambda: members
+
+    async def beat_c_from_main():
+        post = [t for t in pack["a"]._connected() if t[0] == IDS["c"]][0]
+        assert await pack["a"].beat(post[0], post[1], post[2]) is True
+    asyncio.run(beat_c_from_main())
+    only_main = [PeerInfo(IDS["a"], "mac", "peer-a", "connected", ["pack.machine"])]
+    peer_b = [m for m in c.view(only_main)["machines"] if m["install_id"] == IDS["b"]][0]
+    assert peer_b["state"] == "reported_connected" and peer_b["snapshot"] is None and peer_b["paired"] is False
+    c.roster.entries[IDS["a"]].received_at -= 120
+    peer_b = [m for m in c.view(only_main)["machines"] if m["install_id"] == IDS["b"]][0]
+    assert peer_b["state"] == "unknown"

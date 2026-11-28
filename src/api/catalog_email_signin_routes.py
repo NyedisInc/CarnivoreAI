@@ -7,6 +7,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from src.api.auth import require_auth
+from src.api.catalog_signin_finish import finish_signin
 from src.api.catalog_client_status import client_status
 from src.api.catalog_hosted_routes import (
     install_id as _install_id,
@@ -19,7 +20,6 @@ from src.api.catalog_hosted_routes import (
 from src.core.catalog import pow_client
 from src.core.catalog.device_label import device_fields
 from src.core.catalog.email_flow import MAILBOX_PATHS, EmailFlowStore
-from src.core.catalog import catalog_auth
 from src.core.catalog.token_store import CatalogSession
 from src.models.catalog_signin import (
     CatalogSessionResponse,
@@ -148,13 +148,13 @@ async def catalog_email_start(
     )
 
 
-def _store_session(
+async def _store_session(
     request: Request, hosted_body: Dict[str, Any], provider: str = "email"
 ) -> CatalogSession:
     _required_string(hosted_body, "login")
     _required_string(hosted_body, "access_token")
     _required_string(hosted_body, "refresh_token")
-    return catalog_auth.save_session(_state_dir(request), hosted_body, provider)
+    return await finish_signin(request, hosted_body, provider)
 
 
 @router.post(
@@ -233,6 +233,6 @@ async def verify_flow(
             status_code=client_status(answer.status), detail=dict(answer.body)
         )
 
-    session = _store_session(request, answer.body, pending.provider if ticket_flow else "email")
+    session = await _store_session(request, answer.body, pending.provider if ticket_flow else "email")
     _flows.finish(body.flow_id)
     return CatalogSessionResponse.held(session.login, session.provider)

@@ -20,8 +20,8 @@ import { skillsNode } from '../../skills-hub/tabs';
 import type { MenuSources } from './model';
 
 const SOURCES: MenuSources = {
-    storeTotal: 0, storeNewest: 0, storeUpdates: 0, storeByKind: { skill: 0, theme: 0, mod: 0, plugin: 0 }, storeItems: [],
-    installed: { skill: [], theme: [], mod: [], plugin: [] }, flagged: [], needs: [],
+    storeTotal: 0, storeNewest: 0, storeUpdates: 0, storeByKind: { skill: 0, theme: 0, mod: 0, plugin: 0, widget: 0, loadout: 0 }, storeItems: [],
+    installed: { skill: [], theme: [], mod: [], plugin: [], widget: [], loadout: [] }, flagged: [], needs: [],
 };
 const t = (key: string) => key;
 const PACK_OF_TWO = [{ is_self: true, paired: false }, { is_self: false, paired: true }];

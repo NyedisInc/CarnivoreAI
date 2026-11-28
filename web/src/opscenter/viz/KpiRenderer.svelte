@@ -10,6 +10,7 @@
   import TripwireEditor from './TripwireEditor.svelte';
   import ComputersPick from './ComputersPick.svelte';
   import { analytics, chartTick } from '../cells/analytics/state.svelte';
+  import { selfHostInstallId } from '../cells/analytics/host-id.svelte';
   import type { ChartConfig, RangePreset, Viz } from '../cells/analytics/types';
   import { changeAnalyticsConfig } from '../layout-editor/editor.svelte';
   import { t } from '../../lib/i18n/index.svelte';
@@ -34,7 +35,7 @@
   const preset = $derived(config.range.preset ?? VIZ_SPECS.kpi.preset);
   const now = $derived(chartTick(config));
   const read = planQuery(
-    () => ({ on: config.enabled, items: kpiPlan(config, { now, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions) }) }),
+    () => ({ on: config.enabled, items: kpiPlan(config, { now, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions), selfInstallId: selfHostInstallId() }) }),
     () => visible,
   );
   const outcome = $derived(read.outcomes?.[0] ?? null);

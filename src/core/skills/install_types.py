@@ -107,3 +107,6 @@ class InstallPlan:
     targets: tuple[PlannedTarget, ...]
     replaces: bool
     exec_paths: tuple[str, ...] = ()
+    provenance_repo: str = ""
+    provenance_tag: str = ""
+    commit_sha: str = ""

@@ -232,4 +232,5 @@ export default {
     'cplug.devwidgetlab.compare.delta_more': 'draft vs current: {draft} findings in the draft, {current} now',
     'cplug.devwidgetlab.compare.delta_fewer': 'draft vs current: {draft} findings in the draft, {current} now',
     'cplug.devwidgetlab.compare.no_target': '{widget} is not a widget this lab can draw.',
+    'cplug.devwidgetlab.studio.open': 'plugin studio',
 };

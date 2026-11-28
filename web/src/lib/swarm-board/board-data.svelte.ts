@@ -2,13 +2,13 @@ import { authFetch, ApiError } from '../../opscenter/api/auth.svelte';
 import { resourcePush } from '../resource-push/boot';
 import { familyOf } from '../resource-push/store';
 import { floorSource } from '../../plugins/sdk';
-import { swarmRoster, startSwarmRoster, type RosterAgent } from '../../plugins/huddle/agents/agent-roster.svelte';
-import { colorBook, type ColorBook } from '../../plugins/huddle/swarm/agent-colors.svelte';
-import type { NodeLooks } from '../../plugins/huddle/swarm/node-look';
-import { createNodeLooks } from '../../plugins/huddle/swarm/node-looks.svelte';
+import { swarmRoster, startSwarmRoster, type RosterAgent } from '../../plugins/taskmanager/agents/agent-roster.svelte';
+import { colorBook, type ColorBook } from '../../plugins/taskmanager/swarm/agent-colors.svelte';
+import type { NodeLooks } from '../../plugins/taskmanager/swarm/node-look';
+import { createNodeLooks } from '../../plugins/taskmanager/swarm/node-looks.svelte';
 import { COLUMNS, scopeParam, type BoardQuery, type CardBoard, type CardColumn, type CardLane, type CardView } from './board-types';
 
-export const CARDS_FAMILY = 'cplug.huddle.cards';
+export const CARDS_FAMILY = 'cplug.taskmanager.cards';
 export const BOARD_FALLBACK_POLL_MS = 15000;
 const COALESCE_MS = 150;
 export const DONE_LIMIT = 100;

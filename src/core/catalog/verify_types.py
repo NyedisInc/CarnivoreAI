@@ -50,6 +50,7 @@ class ItemRefusal:
     item_id: str
     code: str
     detail: str
+    provenance_repos: Tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

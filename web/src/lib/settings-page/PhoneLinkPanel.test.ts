@@ -422,4 +422,68 @@ describe('PhoneLinkPanel', () => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         expect(calls).toContain('PUT /phone-link');
     });
+
+    test('while opening the first pairing window (no cert yet), the panel shows certificate-request progress instead of a silent dimmed button', async () => {
+        let release!: () => void;
+        let windowOpened = false;
+        const wait = new Promise<void>((resolve) => { release = resolve; });
+        const fetcher = (async (path: string, init?: RequestInit) => {
+            if (path === '/phone-link/pairing-window' && init?.method === 'POST') {
+                await wait;
+                windowOpened = true;
+                const now = Date.now() / 1000;
+                return { url: 'https://h/pair#s', pair_url: 'https://h/pair', code: 'ABCD2345', expires_at: now + 600, qr: 'data:image/png;base64,AA==', qr_expires_at: now + 120, qr_rotate_seconds: 60 };
+            }
+            if (path === '/phone-link/devices') return [];
+            if (path === '/phone-link') {
+                return {
+                    ...STATUS,
+                    running: windowOpened,
+                    tunnel: windowOpened ? 'connected' : 'stopped',
+                    devices: 0,
+                    cert: null,
+                    window_open: windowOpened,
+                    pairing: { state: windowOpened ? 'open' : 'none', device: null },
+                };
+            }
+            return {};
+        }) as unknown as Fetcher;
+        mounted.push(mount(PhoneLinkPanel, { target: document.body, props: { fetcher } }));
+        for (let i = 0; i < 4; i++) await tick();
+        flushSync();
+        (q('[data-pl="pair"]') as HTMLButtonElement).click();
+        for (let i = 0; i < 3; i++) await tick();
+        flushSync();
+        expect(q('[data-pl="pair"]')?.textContent).toContain('opening pairing window');
+        expect(q('[data-pl="pairing-wait"]')?.textContent).toContain('requesting tls certificate');
+        release();
+        await settle();
+        expect(q('[data-pl="pairing-wait"]')).toBeNull();
+        expect(q('[data-pl="qr"]')).not.toBeNull();
+    });
+
+    test('a failed pairing-window request keeps its error visible after the trailing status reload', async () => {
+        const fetcher = (async (path: string, init?: RequestInit) => {
+            if (path === '/phone-link/pairing-window' && init?.method === 'POST') {
+                throw new ApiError('Dns01Error: acme-txt set failed: unreachable', 503);
+            }
+            if (path === '/phone-link/devices') return [];
+            if (path === '/phone-link') return { ...STATUS, running: false, tunnel: 'stopped', devices: 0, cert: null };
+            return {};
+        }) as unknown as Fetcher;
+        mounted.push(mount(PhoneLinkPanel, { target: document.body, props: { fetcher } }));
+        for (let i = 0; i < 4; i++) await tick();
+        flushSync();
+        (q('[data-pl="pair"]') as HTMLButtonElement).click();
+        await settle();
+        expect(q('[data-pl="problem"]')?.textContent).toContain('Dns01Error');
+    });
+
+    test('on a pack member, the panel tells the owner to pair on the main computer and hides switch/pair/custom domain', async () => {
+        await render({ ...STATUS, enabled: false, running: false, tunnel: 'stopped', cert: null, pack_member: true } as any, []);
+        expect(q('[data-pl="pack-member"]')?.textContent).toContain('pack member');
+        expect(q('[data-pl="pack-member"]')?.textContent).toContain('main computer');
+        expect(q('[data-pl="switch"]')).toBeNull();
+        expect(q('[data-pl="pair"]')).toBeNull();
+    });
 });

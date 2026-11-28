@@ -86,6 +86,11 @@ MIGRATIONS: Tuple[str, ...] = (
     """
     ALTER TABLE row_keys ADD COLUMN key_expires_at REAL NOT NULL DEFAULT 0
     """,
+    """
+    CREATE TABLE budget_requests (
+        tenant_id TEXT NOT NULL, argent_id TEXT NOT NULL, item_id TEXT NOT NULL, requested_micros INTEGER NOT NULL, approved_micros INTEGER,
+        state TEXT NOT NULL, decision_reason TEXT NOT NULL DEFAULT '', created_at REAL NOT NULL, decided_at REAL, PRIMARY KEY (tenant_id, argent_id))
+    """,
 )
 
 
@@ -122,6 +127,7 @@ def open_db(state_dir: Optional[Path] = None) -> sqlite3.Connection:
 
 
 LOGIN_SOON_SECONDS = 30 * 60
+KILLED_KEEP = 8
 
 
 class ArgentStore:
@@ -204,6 +210,19 @@ class ArgentStore:
     def delegate_drop(self, install_id: str) -> None:
         with closing(_open(self._state_dir)) as conn:
             conn.execute("DELETE FROM meta WHERE key = ?", (f"delegate:{install_id}",))
+
+    def delegate_killed(self, install_id: str) -> List[Dict[str, Any]]:
+        with closing(_open(self._state_dir)) as conn:
+            raw = self._meta(conn, f"killed_delegate:{install_id}")
+        return json.loads(raw) if raw else []
+
+    def delegate_killed_add(self, install_id: str, ids: List[str], at_ms: int) -> None:
+        with closing(_open(self._state_dir)) as conn:
+            raw = self._meta(conn, f"killed_delegate:{install_id}")
+            known = json.loads(raw) if raw else []
+            have = {str(e["id"]) for e in known}
+            known += [{"id": i, "killed_at": at_ms} for i in dict.fromkeys(ids) if i not in have]
+            self._put_meta(conn, f"killed_delegate:{install_id}", json.dumps(known[-KILLED_KEEP:]))
 
     def delegate_installs(self) -> List[str]:
         with closing(_open(self._state_dir)) as conn:

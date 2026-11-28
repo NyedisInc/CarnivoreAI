@@ -115,6 +115,7 @@ async def test_guard_does_not_neuter_a_legitimate_sweep(tmp_path, monkeypatch):
         str(Path.home() / "Development"),
         str(ROOT),
     ],
+    ids=["home", "home-development", "repo-root"],
 )
 def test_real_non_disposable_paths_are_refused_by_query_only(real_path):
     verdict = sweep_verdict(real_path)

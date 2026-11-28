@@ -2,6 +2,7 @@ import { gradeView, type GradeShape } from './grade';
 import { reviewView, type ReviewVerdict } from './review';
 import { costView } from './cost';
 import { displayKind } from './kind-display';
+import { revocationOfItem } from './revocation';
 import type { CatalogItem, CatalogVersion } from './types';
 
 export const MAX_TAGS = 8;
@@ -16,6 +17,15 @@ export const MAX_VERSION_CHARS = 64;
 
 const CLIP_MARK = '...';
 
+export interface CardScreenshotView {
+    readonly sha: string;
+    readonly w: number | null;
+    readonly h: number | null;
+    readonly source: 'author' | 'captured';
+    readonly surface: string | null;
+    readonly caption: string | null;
+}
+
 export interface CardView {
     renderKey: string;
     id: string | null;
@@ -26,6 +36,7 @@ export interface CardView {
     version: string | null;
     icon: string | null;
     mediaSha: string | null;
+    screenshots: readonly CardScreenshotView[];
     tags: string[] | null;
     scripts: number | null;
     marksScripts: boolean;
@@ -46,12 +57,16 @@ export interface CardView {
     isCplug: boolean;
     descTokens: number | null;
     untrusted: boolean;
+    installedByDefault: boolean;
     deprecated: boolean;
     supersededBy: string | null;
     gradeShape: GradeShape;
     gradeLetter: string | null;
     author: string | null;
     credit: { sourceUrl: string | null; publisher: string | null } | null;
+    revoked: boolean;
+    revocationReason: string | null;
+    revokedSince: string | null;
 }
 
 function present<T>(value: T | null | undefined): T | null {
@@ -86,6 +101,27 @@ function shown(value: unknown, limit: number): string | null {
 function mediaSha(media: unknown): string | null {
     const sha = media && typeof media === 'object' ? (media as { sha256?: unknown }).sha256 : null;
     return typeof sha === 'string' && /^[0-9a-f]{64}$/.test(sha) ? sha : null;
+}
+
+function screenshotList(raw: unknown): CardScreenshotView[] {
+    if (!Array.isArray(raw)) return [];
+    const out: CardScreenshotView[] = [];
+    for (const entry of raw.slice(0, 4)) {
+        if (!entry || typeof entry !== 'object') continue;
+        const rec = entry as Record<string, unknown>;
+        const sha = typeof rec.sha256 === 'string' && /^[0-9a-f]{64}$/.test(rec.sha256) ? rec.sha256 : null;
+        if (!sha) continue;
+        const src = rec.source === 'author' || rec.source === 'captured' ? rec.source : 'captured';
+        out.push({
+            sha,
+            w: typeof rec.w === 'number' && rec.w > 0 ? rec.w : null,
+            h: typeof rec.h === 'number' && rec.h > 0 ? rec.h : null,
+            source: src,
+            surface: typeof rec.surface === 'string' ? clip(rec.surface.trim(), 24) : null,
+            caption: typeof rec.caption === 'string' ? clip(rec.caption.trim(), 80) : null,
+        });
+    }
+    return out;
 }
 
 /* not a string */
@@ -133,6 +169,7 @@ export function cardView(item: CatalogItem | null, untrusted: boolean, index = 0
     const author = shown(fm.author, MAX_PUBLISHER_CHARS);
     const publisher = shown(item && item.publisher, MAX_PUBLISHER_CHARS);
     const grade = gradeView(version && version.grade);
+    const rev = revocationOfItem(item);
     return {
         renderKey: id ?? `#${index}`,
         id,
@@ -143,6 +180,7 @@ export function cardView(item: CatalogItem | null, untrusted: boolean, index = 0
         version: shown(item && item.latest, MAX_VERSION_CHARS),
         icon: shown(card && card.icon, MAX_ICON_CHARS),
         mediaSha: mediaSha(card && card.media),
+        screenshots: screenshotList(card && (card as Record<string, unknown>).screenshots),
         tags: tagList(card && card.tags),
         scripts,
         marksScripts: typeof scripts === 'number' && scripts > 0,
@@ -163,12 +201,16 @@ export function cardView(item: CatalogItem | null, untrusted: boolean, index = 0
         isCplug: kind === 'cplug',
         descTokens: costView(item)?.desc ?? null,
         untrusted,
+        installedByDefault: !!(item && item.installed_by_default),
         deprecated: !!(item && item.deprecated && typeof item.deprecated === 'object'),
         supersededBy: shown(item && item.deprecated && item.deprecated.superseded_by, MAX_NAME_CHARS + 40),
         gradeShape: grade.shape,
         gradeLetter: grade.letter,
         author,
         credit: author ? { sourceUrl: firstWebUrl([fm.homepage, fm.repository, fm.author_url]), publisher } : null,
+        revoked: rev.revoked,
+        revocationReason: shown(rev.reason, MAX_SUMMARY_CHARS),
+        revokedSince: shown(rev.since, MAX_VERSION_CHARS),
     };
 }
 
@@ -192,6 +234,7 @@ const KIND_ICONS: Readonly<Record<string, string>> = {
     theme: 'palette',
     plugin: 'plug',
     mod: 'mod',
+    widget: 'grid',
     loadout: 'pack',
 };
 

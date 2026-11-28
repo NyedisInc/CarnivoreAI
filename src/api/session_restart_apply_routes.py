@@ -35,6 +35,8 @@ def restart_error_to_http(exc: Exception, session_uuid: str = "") -> HTTPExcepti
         return api_error(404, "not_found", exc)
     if isinstance(exc, restart_ops.AlreadyRunning):
         return api_error(409, restart_live_gate.ALREADY_RUNNING_CODE, exc)
+    if isinstance(exc, restart_ops.ConversationOffloaded):
+        return api_error(409, exc.body["code"], exc, extra=exc.body)
     if isinstance(exc, restart_ops.RowTakenOver):
         return api_error(409, "row_taken_over", exc, held_tmux_name=exc.held_tmux_name)
     if isinstance(exc, restart_ops.ConversationMissing):

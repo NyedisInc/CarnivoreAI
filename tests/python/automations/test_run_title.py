@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pytest
 
+from src.core.automations import command_allowlist
 from src.core.automations import models as m
 from src.core.automations import run_feed, targets
 from src.core.automations.run_title import build
@@ -42,6 +43,7 @@ def _runners(monkeypatch):
         return m.RunOutcome()
     for kind in m.TARGET_KINDS:
         monkeypatch.setitem(targets.RUNNERS, kind, runner)
+    monkeypatch.setattr(command_allowlist, "allows", lambda text, path=None: True)
 
 
 def test_store_writes_and_serves(tmp_path) -> None:

@@ -28,6 +28,6 @@
   },
   "dependencies": {
     "bits-ui": "2.19.5",
-    "echarts": "6.0.0"
+    "echarts": "6.1.0"
   }
 }

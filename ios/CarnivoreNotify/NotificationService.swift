@@ -1,74 +1,212 @@
+import CryptoKit
+import Foundation
 import UniformTypeIdentifiers
 import UserNotifications
 
-final class NotificationService: UNNotificationServiceExtension {
+private final class PushReplayGuard: @unchecked Sendable {
+    private let lock = NSLock()
+    private var seen: [Data] = []
+    private let maxEntries = 256
+
+    func isReplay(_ blobString: String) -> Bool {
+        let digest = Data(SHA256.hash(data: Data(blobString.utf8)))
+        return lock.withLock {
+            if seen.contains(digest) { return true }
+            seen.append(digest)
+            if seen.count > maxEntries { seen.removeFirst(seen.count - maxEntries) }
+            return false
+        }
+    }
+}
+
+final class NotificationService: UNNotificationServiceExtension, @unchecked Sendable {
     static let budget: TimeInterval = 22
     static let videoAttachLimit = 15 * 1_048_576
+    static let imageAttachLimit = 12 * 1_048_576
 
-    private let lock = NSLock()
-    private var handler: ((UNNotificationContent) -> Void)?
-    private var content: UNMutableNotificationContent?
-    private var attachments: [UNNotificationAttachment] = []
-    private var fullCard: Data?
-    private var envelope: NotifyEnvelope?
-    private var origin: String?
-    private var workDir: URL?
+    private static let replayGuard = PushReplayGuard()
+
+    private final class RequestContext: @unchecked Sendable {
+        let lock = NSLock()
+        var handler: ((UNNotificationContent) -> Void)?
+        let content: UNMutableNotificationContent
+        var attachments: [UNNotificationAttachment] = []
+        var fullCard: Data?
+        var envelope: NotifyEnvelope?
+        var origin: String?
+        var workDir: URL?
+        var fetchTask: Task<Void, Never>?
+        var timer: DispatchWorkItem?
+
+        init(content: UNMutableNotificationContent, handler: @escaping (UNNotificationContent) -> Void) {
+            self.content = content
+            self.handler = handler
+        }
+
+        func setEnvelope(_ env: NotifyEnvelope, origin: String) {
+            lock.withLock {
+                self.envelope = env
+                self.origin = origin
+            }
+        }
+
+        func setFullCard(_ data: Data) {
+            lock.withLock { self.fullCard = data }
+        }
+
+        func setAttachments(_ made: [UNNotificationAttachment]) {
+            lock.withLock { self.attachments = made }
+        }
+
+        func setTasks(timer: DispatchWorkItem, fetchTask: Task<Void, Never>) {
+            lock.withLock {
+                self.timer = timer
+                self.fetchTask = fetchTask
+            }
+        }
+
+        func makeAttachmentFromData(name: String, data: Data, type: String) -> UNNotificationAttachment? {
+            guard let dir = ensureWorkDir() else { return nil }
+            let url = dir.appendingPathComponent(name)
+            guard (try? data.write(to: url, options: [.atomic, .completeFileProtection])) != nil else { return nil }
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+            return try? UNNotificationAttachment(identifier: name, url: url, options: [UNNotificationAttachmentOptionsTypeHintKey: type])
+        }
+
+        func makeAttachmentFromFile(name: String, tempURL: URL, type: String) -> UNNotificationAttachment? {
+            guard let dir = ensureWorkDir() else {
+                try? FileManager.default.removeItem(at: tempURL)
+                return nil
+            }
+            let dest = dir.appendingPathComponent(name)
+            try? FileManager.default.removeItem(at: dest)
+            do {
+                try FileManager.default.moveItem(at: tempURL, to: dest)
+                try? FileManager.default.setAttributes([
+                    .posixPermissions: 0o600,
+                    .protectionKey: FileProtectionType.complete,
+                ], ofItemAtPath: dest.path)
+                return try UNNotificationAttachment(identifier: name, url: dest, options: [UNNotificationAttachmentOptionsTypeHintKey: type])
+            } catch {
+                try? FileManager.default.removeItem(at: tempURL)
+                return nil
+            }
+        }
+
+        private func ensureWorkDir() -> URL? {
+            lock.withLock {
+                if let existing = workDir { return existing }
+                let dir = FileManager.default.temporaryDirectory
+                    .appendingPathComponent("notify-\(UUID().uuidString)", isDirectory: true)
+                guard (try? FileManager.default.createDirectory(
+                    at: dir, withIntermediateDirectories: true,
+                    attributes: [.posixPermissions: 0o700]
+                )) != nil else { return nil }
+                workDir = dir
+                return dir
+            }
+        }
+
+        func deliver(genericOnEmpty: Bool = false) {
+            let snapshot: (
+                handler: ((UNNotificationContent) -> Void)?,
+                task: Task<Void, Never>?,
+                timer: DispatchWorkItem?,
+                attachments: [UNNotificationAttachment],
+                fullCard: Data?,
+                env: NotifyEnvelope?,
+                origin: String?
+            ) = lock.withLock {
+                guard let pending = handler else { return (nil, nil, nil, [], nil, nil, nil) }
+                handler = nil
+                let t = fetchTask; let w = timer
+                fetchTask = nil; timer = nil
+                return (pending, t, w, attachments, fullCard, envelope, origin)
+            }
+            guard let pending = snapshot.handler else { return }
+            snapshot.timer?.cancel()
+            snapshot.task?.cancel()
+
+            if genericOnEmpty && snapshot.env == nil {
+                content.title = PushRewrite.generic.title
+                content.body = PushRewrite.generic.body
+                content.userInfo = [:]
+                pending(content)
+                return
+            }
+
+            if !snapshot.attachments.isEmpty { content.attachments = snapshot.attachments }
+            var info = content.userInfo as? [String: String] ?? [:]
+            if let readyCard = snapshot.fullCard, let readyEnv = snapshot.env, let readyOrigin = snapshot.origin {
+                info.merge(NotifyUserInfo.encode(readyEnv, origin: readyOrigin, fullCard: readyCard)) { _, new in new }
+            }
+            content.userInfo = NotificationMAC.sign(info)
+            pending(content)
+        }
+    }
+
+    private let activeLock = NSLock()
+    private var activeContext: RequestContext?
 
     override func didReceive(
         _ request: UNNotificationRequest,
         withContentHandler contentHandler: @escaping (UNNotificationContent) -> Void
     ) {
-        lock.lock()
-        attachments = []
-        fullCard = nil
-        envelope = nil
-        origin = nil
-        workDir = nil
-        lock.unlock()
-        handler = contentHandler
         let mutable = (request.content.mutableCopy() as? UNMutableNotificationContent) ?? UNMutableNotificationContent()
-        content = mutable
+        let ctx = RequestContext(content: mutable, handler: contentHandler)
+        activeLock.withLock { activeContext = ctx }
+
+        if let rawP = request.content.userInfo["p"] as? String, !rawP.isEmpty, Self.replayGuard.isReplay(rawP) {
+            ctx.deliver(genericOnEmpty: true)
+            return
+        }
+
         let result = PushRewrite.rewrite(userInfo: request.content.userInfo, candidates: PushKeyStore.candidates())
         mutable.title = result.title
         mutable.body = result.body
+
         var info: [String: String] = [:]
-        if let path = result.path, let origin = result.origin { info["path"] = path; info["origin"] = origin }
+        if let path = result.path, let origin = result.origin {
+            info["path"] = path
+            info["origin"] = origin
+        }
         if let thread = result.thread, let origin = result.origin {
             mutable.threadIdentifier = "\(origin)|\(thread)"
             info["thread"] = thread
             info["origin"] = origin
         }
         mutable.userInfo = info
-        guard let env = result.envelope, let origin = result.origin else { return deliver() }
-        envelope = env
-        self.origin = origin
-        applyV2(env, origin: origin, to: mutable)
+
+        guard let env = result.envelope, let origin = result.origin else {
+            ctx.deliver()
+            return
+        }
+        ctx.setEnvelope(env, origin: origin)
+
+        Self.applyV2(env, origin: origin, to: mutable)
         if let settle = env.settle {
             mutable.title = settle.agent
             mutable.body = settle.line
-            return deliver()
+            ctx.deliver()
+            return
         }
-        DispatchQueue.global().asyncAfter(deadline: .now() + Self.budget) { [weak self] in self?.deliver() }
-        Task { [weak self] in
-            await self?.fetchAndAttach(env, origin: origin)
-            self?.deliver()
+
+        let workItem = DispatchWorkItem { [weak ctx] in ctx?.deliver() }
+        let fetchTask = Task.detached(priority: .userInitiated) { [weak ctx] in
+            guard let ctx else { return }
+            await Self.fetchAndAttach(env, origin: origin, ctx: ctx)
+            ctx.deliver()
         }
+        ctx.setTasks(timer: workItem, fetchTask: fetchTask)
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + Self.budget, execute: workItem)
     }
 
     override func serviceExtensionTimeWillExpire() {
-        if envelope != nil { return deliver() }
-        lock.lock()
-        let pending = handler
-        let mutable = content ?? UNMutableNotificationContent()
-        handler = nil
-        lock.unlock()
-        mutable.title = PushRewrite.generic.title
-        mutable.body = PushRewrite.generic.body
-        mutable.userInfo = [:]
-        pending?(mutable)
+        let ctx = activeLock.withLock { activeContext }
+        ctx?.deliver(genericOnEmpty: true)
     }
 
-    private func applyV2(_ env: NotifyEnvelope, origin: String, to mutable: UNMutableNotificationContent) {
+    private static func applyV2(_ env: NotifyEnvelope, origin: String, to mutable: UNMutableNotificationContent) {
         mutable.subtitle = env.sub ?? ""
         mutable.categoryIdentifier = env.settle == nil ? NotifyContract.categoryId(env.kind) : ""
         let level = env.settle != nil ? "p" : (env.level ?? NotifyContract.kindStyle[env.kind]?.level ?? "a")
@@ -89,73 +227,56 @@ final class NotificationService: UNNotificationServiceExtension {
         mutable.userInfo = info
     }
 
-    private func fetchAndAttach(_ env: NotifyEnvelope, origin: String) async {
-        let base = URL(string: origin)
+    private static func fetchAndAttach(_ env: NotifyEnvelope, origin: String, ctx: RequestContext) async {
+        let base = URL(string: origin).flatMap { NotifyUserInfo.isAllowedBase($0) ? $0 : nil }
         let cap = env.cap
         async let card: NotifyCard? = {
             guard env.more, let base, let cap else { return nil }
             return await AnswerClient.fetchCard(base: base, cap: cap)
         }()
-        async let media: [(String, Data, String)] = fetchMedia(env, base: base, cap: cap)
-        let (fetchedCard, files) = await (card, media)
-        if let fetchedCard, let data = try? JSONSerialization.data(withJSONObject: fetchedCard.raw) { setFullCard(data) }
-        var made: [UNNotificationAttachment] = []
-        for (name, data, type) in files {
-            if let attachment = makeAttachment(name: name, data: data, type: type) { made.append(attachment) }
+        async let mediaFiles: [(String, URL, String)] = fetchMediaFiles(env, base: base, cap: cap)
+        let (fetchedCard, files) = await (card, mediaFiles)
+        if Task.isCancelled {
+            for (_, url, _) in files { try? FileManager.default.removeItem(at: url) }
+            return
         }
-        if made.isEmpty, let png = await MainActor.run(body: { CardThumb.png(kind: env.kind) }), let attachment = makeAttachment(name: "thumb.png", data: png, type: UTType.png.identifier) {
+        if let fetchedCard, let data = try? JSONSerialization.data(withJSONObject: fetchedCard.raw) {
+            ctx.setFullCard(data)
+        }
+        var made: [UNNotificationAttachment] = []
+        for (name, tempURL, type) in files {
+            if let attachment = ctx.makeAttachmentFromFile(name: name, tempURL: tempURL, type: type) {
+                made.append(attachment)
+            }
+        }
+        if made.isEmpty,
+           let png = CardThumbCG.png(kind: env.kind),
+           let attachment = ctx.makeAttachmentFromData(name: "thumb.png", data: png, type: UTType.png.identifier) {
             made.append(attachment)
         }
-        lock.withLock { attachments = made }
+        ctx.setAttachments(made)
     }
 
-    private func setFullCard(_ data: Data) { lock.lock(); fullCard = data; lock.unlock() }
-
-    private func fetchMedia(_ env: NotifyEnvelope, base: URL?, cap: String?) async -> [(String, Data, String)] {
-        guard let base, let cap, let m = env.media else { return [] }
-        var out: [(String, Data, String)] = []
+    private static func fetchMediaFiles(_ env: NotifyEnvelope, base: URL?, cap: String?) async -> [(String, URL, String)] {
+        guard let base, let cap, let m = env.media, NotifyMedia.isValidId(m.id) else { return [] }
+        var out: [(String, URL, String)] = []
+        let timeout = Self.budget - 2
         switch env.kind {
         case .image:
-            if let data = await AnswerClient.fetchMedia(base: base, cap: cap, id: m.id, poster: false, timeout: Self.budget - 2) {
-                out.append(m.mime == "image/jpeg" ? ("image.jpg", data, UTType.jpeg.identifier) : ("image.png", data, UTType.png.identifier))
+            if let file = await AnswerClient.downloadMedia(base: base, cap: cap, id: m.id, poster: false, maxBytes: Self.imageAttachLimit, timeout: timeout) {
+                let isJpeg = m.mime == "image/jpeg"
+                out.append((isJpeg ? "image.jpg" : "image.png", file, isJpeg ? UTType.jpeg.identifier : UTType.png.identifier))
             }
         case .file, .video:
-            if let poster = await AnswerClient.fetchMedia(base: base, cap: cap, id: m.id, poster: true, timeout: Self.budget - 2) {
+            if let poster = await AnswerClient.downloadMedia(base: base, cap: cap, id: m.id, poster: true, maxBytes: 4 * 1_048_576, timeout: timeout) {
                 out.append(("poster.png", poster, UTType.png.identifier))
             }
             if env.kind == .video, m.bytes <= Self.videoAttachLimit,
-               let data = await AnswerClient.fetchMedia(base: base, cap: cap, id: m.id, poster: false, timeout: Self.budget - 2) {
-                out.append(("video.mp4", data, UTType.mpeg4Movie.identifier))
+               let video = await AnswerClient.downloadMedia(base: base, cap: cap, id: m.id, poster: false, maxBytes: Self.videoAttachLimit, timeout: timeout) {
+                out.append(("video.mp4", video, UTType.mpeg4Movie.identifier))
             }
         default: break
         }
         return out
-    }
-
-    private func makeAttachment(name: String, data: Data, type: String) -> UNNotificationAttachment? {
-        lock.lock(); defer { lock.unlock() }
-        if workDir == nil {
-            let dir = FileManager.default.temporaryDirectory.appendingPathComponent("notify-\(UUID().uuidString)", isDirectory: true)
-            guard (try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])) != nil else { return nil }
-            workDir = dir
-        }
-        guard let dir = workDir else { return nil }
-        let url = dir.appendingPathComponent(name)
-        guard FileManager.default.createFile(atPath: url.path, contents: data, attributes: [.posixPermissions: 0o600]) else { return nil }
-        return try? UNNotificationAttachment(identifier: name, url: url, options: [UNNotificationAttachmentOptionsTypeHintKey: type])
-    }
-
-    private func deliver() {
-        lock.lock()
-        guard let pending = handler, let mutable = content else { lock.unlock(); return }
-        handler = nil
-        if !attachments.isEmpty { mutable.attachments = attachments }
-        if let fullCard, let env = envelope, let origin {
-            var info = mutable.userInfo as? [String: String] ?? [:]
-            info.merge(NotifyUserInfo.encode(env, origin: origin, fullCard: fullCard)) { _, new in new }
-            mutable.userInfo = info
-        }
-        lock.unlock()
-        pending(mutable)
     }
 }

@@ -24,10 +24,10 @@ from src.core.db_migration import ensure_db_migrated
 from src.core.swarm import body, delivery, store, thread_port, watch
 from src.core.swarm.cards import dealer, lease, ops, port as card_port, sweep
 from src.core.swarm.facade import SwarmFacade
-from src.plugins import huddle as huddle_plugin
-from src.plugins.huddle import service
-from src.plugins.huddle.cards import policy
-from src.plugins.huddle.public import TaskManagerCardPort
+from src.plugins import taskmanager as huddle_plugin
+from src.plugins.taskmanager import service
+from src.plugins.taskmanager.cards import policy
+from src.plugins.taskmanager.public import TaskManagerCardPort
 from src.core.work.storage import WorkStorage
 
 LEASE_S = sweep.LEASE_S

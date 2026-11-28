@@ -120,6 +120,7 @@ export interface CatalogItem {
     fm_keys?: string[] | null;
     related?: string[] | null;
     deprecated?: CatalogDeprecation | null;
+    installed_by_default?: boolean;
     featured_rank?: number | null;
     first_published_at?: string | null;
     [key: string]: unknown;
@@ -268,6 +269,10 @@ export interface CplugFactsData {
     network_hosts: { host: string; reason: string; methods: string[]; paths: string[]; secret: string }[];
     lan_hosts: { entry: string; reason: string; methods: string[]; paths: string[] }[];
     secrets: { name: string; label: string; hosts: string[] }[];
+    unmet_requirements?: {
+        min_app_version?: { need: string; have: string };
+        core?: string[];
+    };
 }
 
 export interface ModReport {

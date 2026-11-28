@@ -44,7 +44,7 @@ def _type_view(row: types.NotifyType) -> Dict[str, Any]:
 
 
 def _kind_view(spec: kind_specs.KindSpec) -> Dict[str, Any]:
-    return {
+    out: Dict[str, Any] = {
         "id": spec.id,
         "label_key": spec.label_key,
         "allow_private": spec.allow_private,
@@ -54,6 +54,11 @@ def _kind_view(spec: kind_specs.KindSpec) -> Dict[str, Any]:
         "public_fields": [_field_view(f) for f in spec.public_fields],
         "secret_fields": [_field_view(f) for f in spec.secret_fields],
     }
+    if spec.label:
+        out["label"] = spec.label
+    if spec.plugin_id:
+        out["plugin_id"] = spec.plugin_id
+    return out
 
 
 @router.get("/types")

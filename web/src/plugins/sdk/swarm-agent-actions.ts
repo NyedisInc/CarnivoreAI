@@ -1,3 +1,4 @@
+/* the Task Manager */
 
 export interface SwarmAgentActions {
   wake: (id: number, mode: 'fresh' | 'resume') => Promise<void>;

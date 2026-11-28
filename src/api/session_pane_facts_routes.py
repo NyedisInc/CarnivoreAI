@@ -31,10 +31,17 @@ async def get_session_pane_facts(request: Request, session_id: str) -> SessionPa
     """
     session_manager = request.app.state.session_manager
     refuse_remote(session_manager, session_id, "the pane facts read")
-    info = await session_manager.get_session_info(session_id)
-    if info is None:
-        raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
-    tmux_name = info.tmux_session
+    fast = getattr(session_manager, "resolve_session_ref", None)
+    if callable(fast):
+        ref = await fast(session_id)
+        if ref is None:
+            raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
+        tmux_name = ref.get("tmux_session")
+    else:
+        info = await session_manager.get_session_info(session_id)
+        if info is None:
+            raise HTTPException(status_code=404, detail=f"No session with id {session_id!r}")
+        tmux_name = info.tmux_session
     if not tmux_name:
         return SessionPaneFacts()
     facts = await read_pane_facts(session_manager.tmux_socket_name(), tmux_name)

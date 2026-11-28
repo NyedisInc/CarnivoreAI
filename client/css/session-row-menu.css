@@ -108,7 +108,6 @@
     display: flex;
     flex-direction: column;
     gap: 0;
-    /* a little brighter and longer */
     border-radius: var(--oc-radius-sm);
     max-height: calc(100vh - 16px);
     max-height: calc(100dvh - 16px);

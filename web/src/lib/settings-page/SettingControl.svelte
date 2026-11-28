@@ -5,6 +5,7 @@
     import ScreenReaderPanel from '../screen-reader/ScreenReaderPanel.svelte';
     import TerminalFontPanel from '../terminal-font/TerminalFontPanel.svelte';
     import CellDimPanel from '../cell-dim/CellDimPanel.svelte';
+    import CometPanel from '../comet/CometPanel.svelte';
     import TimeZonePanel from '../time-zone/TimeZonePanel.svelte';
     import SettingRow from './SettingRow.svelte';
     import TextControl from './controls/TextControl.svelte';
@@ -84,6 +85,8 @@
         <div class="st-legacy"><ToastModePanel /></div>
     {:else if def.control.kind === 'terminal-font'}
         <TerminalFontPanel />
+    {:else if def.control.kind === 'comet'}
+        <CometPanel {t} />
     {:else if def.control.kind === 'cell-dim'}
         <CellDimPanel />
     {:else if def.control.kind === 'screen-reader'}

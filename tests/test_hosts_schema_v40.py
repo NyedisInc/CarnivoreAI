@@ -47,6 +47,7 @@ def _index_sql(conn, name: str):
 
 def _rewind_to_v39(state_dir: Path) -> None:
     with _open(db_path_for(state_dir)) as conn:
+        conn.execute("DROP INDEX IF EXISTS ix_sessions_host_socket_name_id")
         for statement in REVERSAL_SQL_V40:
             conn.execute(statement)
         conn.execute("ALTER TABLE sessions DROP COLUMN host_key")
@@ -228,6 +229,7 @@ def test_a_crossed_key_40_is_caught_and_repaired_columns_before_the_index():
     }
     assert set(audit.missing_names) == {
         "hosts", "sessions.host_key", "projects.host_key", HOST_INSTANCE_INDEX,
+        "ix_sessions_host_socket_name_id",
         *later_host_columns,
     }
     conn.execute("BEGIN")

@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from src.config.provider_accounts import ProviderAccount, profile_dir_for
 from src.core.claude_config import accounts_folder_cache, profile_roots
@@ -84,15 +84,20 @@ def setup_complete(account: ProviderAccount) -> bool:
         return False
 
 
-def relay_rows(now: Optional[datetime] = None) -> List[AccountUsage]:
+def relay_rows(now: Optional[datetime] = None, *, stored: Optional[Dict[str, Any]] = None) -> List[AccountUsage]:
     from src.core.pack.relay import ledger_sync_store, ledger_sync_view
     from src.core.provider_ledger import credentials
 
     clock = now or datetime.now(timezone.utc)
     rows: List[AccountUsage] = []
-    stored, names = ledger_sync_store.statuses_by_profile(), ledger_sync_view.directory()
+    if stored is None:
+        stored = ledger_sync_store.statuses_by_profile()
+    names = ledger_sync_view.directory()
     for account in relay_accounts():
-        credential = credentials.read_claude_credential(profile_dir_for(account))
+        pdir = profile_dir_for(account)
+        credential = credentials._read_claude_file(pdir)
+        if credential is None:
+            credential = credentials.read_claude_credential(pdir)
         rows.append(ledger_sync_view.fill_relayed(AccountUsage(
             id=account.id, name=account.name, provider="claude", credential_state=credentials.credential_state_for(credential, clock),
             plan=credential.subscription_type if credential else None, managed=True, setup_complete=setup_complete(account),
@@ -101,5 +106,9 @@ def relay_rows(now: Optional[datetime] = None) -> List[AccountUsage]:
     return rows
 
 
-def all_relay_rows(now: Optional[datetime] = None) -> List[AccountUsage]:
-    return [*relay_rows(now), *codex_relay_rows(now)]
+def all_relay_rows(now: Optional[datetime] = None, *, stored: Optional[Dict[str, Any]] = None) -> List[AccountUsage]:
+    from src.core.pack.relay import ledger_sync_store
+
+    if stored is None:
+        stored = ledger_sync_store.statuses_by_profile()
+    return [*relay_rows(now, stored=stored), *codex_relay_rows(now)]

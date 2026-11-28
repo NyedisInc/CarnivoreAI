@@ -30,6 +30,10 @@ EXTRA_SHELL_NAMES: tuple[str, ...] = ("popout.html",)
 
 KEYED_PAGE_NAMES: tuple[str, ...] = (*EXTRA_SHELL_NAMES, "style-guide.html", "setup.html")
 
+UNKEYED_MODULE_ENTRIES: frozenset[str] = frozenset(
+    {"/static/dist/app.js", "/static/dist/popout.js", "/static/dist/style-guide.js"}
+)
+
 _KEY_CACHE: dict[str, tuple[int, int, str]] = {}
 
 _PATH_CACHE: dict[tuple[str, str], Optional[Path]] = {}
@@ -87,7 +91,7 @@ def url_to_path(url: str, client_dir: Path) -> Optional[Path]:
 def render(html: str, client_dir: Path) -> str:
     def rewrite(match: "re.Match[str]") -> str:
         url = match.group(1)
-        if "?" in url:
+        if "?" in url or url in UNKEYED_MODULE_ENTRIES:
             return match.group(0)
         path = url_to_path(url, client_dir)
         if path is None:

@@ -8,32 +8,18 @@ import subprocess
 from src.core.dev_tools import git_guard
 import uuid
 from contextlib import closing
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, Optional
 
 import structlog
 
 from src.core import db
+from src.core.swarm.types import BodyIdentity, CreateRefused
 from src.core.swarm import brief, definition, launch, memory, profiles, say, store
 
 logger = structlog.get_logger()
 
 GIT_TIMEOUT_S = 15
-
-
-class CreateRefused(RuntimeError):
-    pass
-
-
-@dataclass(frozen=True)
-class BodyIdentity:
-
-    session_id: str
-    row_id: int
-    session_uuid: str
-    tmux_name: str
-    tmux_epoch: Optional[int]
 
 
 def _git(args: list, cwd: str) -> subprocess.CompletedProcess:

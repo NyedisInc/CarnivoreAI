@@ -1,6 +1,7 @@
 
 export type Palette = 'carnivore' | 'oblivion';
 
+/* cannot be read */
 export function hueOf(value: string | null | undefined): number | null {
     const v = (value ?? '').trim().toLowerCase();
     let r: number;

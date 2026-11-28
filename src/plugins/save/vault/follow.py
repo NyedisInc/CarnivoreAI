@@ -10,8 +10,9 @@ from typing import Callable, Deque, Dict, List, Optional, Sequence, Set, Tuple
 
 import structlog
 
+from src.plugins.save.offload import upkeep as offload_upkeep
 from src.plugins.save.vault import constants as K
-from src.plugins.save.vault import folders, health, retention, units
+from src.plugins.save.vault import folders, gone_watch, health, retention, units
 from src.plugins.save.vault.stamp_memo import StampMemo
 from src.plugins.save.vault.identity import Identity, ProjectIndex
 from src.plugins.save.vault.location import VaultUnavailable
@@ -271,13 +272,15 @@ class Engine:
             self._legacy_retry_at = now + K.LEGACY_RETRY_SECONDS if progress.failed and not progress.more else 0.0
             self._dirty_since_assess = True
         cap = self._cap()
-        if (self._dirty_since_assess or cap != self._assessed_cap) and now - self._assess_at >= ASSESS_SECONDS:
+        if (self._dirty_since_assess or vault.summary_stale() or cap != self._assessed_cap) and now - self._assess_at >= ASSESS_SECONDS:
             self._assess(vault, now, cap)
         if now - self._gc_at >= GC_SECONDS:
             if retention.collect_garbage(vault, now=now).get("busy"):
                 self._gc_at = now - GC_SECONDS + GC_BUSY_RETRY_SECONDS
             else:
                 self._gc_at = now
+        if not self.throttle.cancelled:
+            offload_upkeep.run(vault, self._state_dir, now, self.throttle)
 
     def _assess(self, vault: Vault, now: float, cap: int) -> None:
         self._assess_at, self._dirty_since_assess, self._assessed_cap = now, False, cap
@@ -337,16 +340,21 @@ class Engine:
             self._sweep(vault, sources, now)
         else:
             swept = False
-        self._protect_on_timer(vault, now, swept=swept)
+        initial = self._assessed_cap is None
+        if not initial:
+            self._protect_on_timer(vault, now, swept=swept)
         captured, unchanged, failed = self._drain(vault, sources, now)
         ready = self._ready(now)
         if not ready and not self.throttle.cancelled:
             self._maintain(vault, now)
+        if initial:
+            self._protect_on_timer(vault, now, swept=swept)
         state = retention.read_state(vault.root)
         last_ok = now if not failed else health.read(self._state_dir).get("last_ok_at", now)
         coverage = self._coverage(now) if self._uncovered_units is not None else {}
         health.update(self._state_dir, active=True, unavailable="", started_at=self._started_at, last_ok_at=last_ok,
                       pending=len(self._queue), over_cap=bool(state.get("over_cap")), damaged=self._damaged,
-                      mass_gone=state.get("mass_gone"), legacy_unmigrated=self._legacy_failed, **coverage)
+                      mass_gone=state.get("mass_gone"), frozen=gone_watch.frozen(vault.root),
+                      legacy_unmigrated=self._legacy_failed, **coverage)
         self._verified.save(vault.root)
         return SliceResult(captured, unchanged, failed, len(self._queue), bool(ready) or self._legacy_due(now))

@@ -65,6 +65,12 @@ def _permission_args(family: str, mode: str) -> List[str]:
         if mode in _MODE_ONLY:
             return ["--permission-mode", mode]
         return list(permission_flags("claude", _CLAUDE_POSTURE[mode]))
+    if family == "agy":
+        if mode == "skip_all":
+            return ["--dangerously-skip-permissions"]
+        if mode in ("accept-edits", "auto"):
+            return ["--mode", mode]
+        return []
     return list(permission_flags("codex", _CODEX_POSTURE[mode])) if mode in _CODEX_POSTURE else []
 
 
@@ -142,11 +148,23 @@ def worker_hooks(app: Any) -> Tuple[CreateWorker, StopWorker]:
 
     async def create_worker(plan: LaunchPlan, session_id: str, label: str, working_dir: str) -> WorkerRef:
         from src.api.session_crud_routes import create_session_with_extra
+        from src.core.agy.identity import agy_profile_id
         from src.models import CreateSessionRequest
 
-        body = CreateSessionRequest(working_dir=working_dir, agent_type=plan.agent_type, label=label, model=plan.model,
+        agent_type = plan.agent_type
+        extra_args = list(plan.extra_args)
+        model = plan.model
+        if agent_type == "agy":
+            resolved = agy_profile_id()
+            if not resolved:
+                raise JobError("no_harness", "no antigravity launch profile is configured on this computer", 409)
+            agent_type = resolved
+            if model:
+                extra_args = ["--model", model, *extra_args]
+                model = None
+        body = CreateSessionRequest(working_dir=working_dir, agent_type=agent_type, label=label, model=model,
                                     opening_prompt=plan.opening_prompt)
-        created = await create_session_with_extra(request, body, agent_extra_args=list(plan.extra_args), extra_env=dict(plan.extra_env),
+        created = await create_session_with_extra(request, body, agent_extra_args=extra_args, extra_env=dict(plan.extra_env),
                                                   claude_account=plan.account_id, session_id=session_id)
         info = await app.state.session_manager.get_session_info(session_id=created.id)
         if info is None or not info.tmux_session or info.session_row_id is None:

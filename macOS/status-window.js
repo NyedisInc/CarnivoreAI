@@ -14,7 +14,6 @@ const HEIGHT = 380;
 function createStatusWindow(deps) {
   let win = null;
   let wired = false;
-  let quitting = false;
 
   const fromWindow = (event) => Boolean(win && !win.isDestroyed() && event.sender === win.webContents
     && event.senderFrame && event.senderFrame === event.sender.mainFrame);
@@ -26,6 +25,12 @@ function createStatusWindow(deps) {
     deps.ipcMain.on(ACTION_CHANNEL, (event, id) => {
       if (fromWindow(event) && typeof id === 'string') deps.runAction(id);
     });
+  }
+
+  function dispose() {
+    const current = win;
+    win = null;
+    if (current && !current.isDestroyed()) current.destroy();
   }
 
   function create() {
@@ -46,12 +51,7 @@ function createStatusWindow(deps) {
       wc.insertCSS(deps.tokensCss()).catch((error) => console.warn('[status-window] tokens not applied:', error && error.message));
     });
     created.once('ready-to-show', () => created.show());
-    created.on('close', (event) => {
-      if (quitting) return;
-      event.preventDefault();
-      created.hide();
-    });
-    created.on('closed', () => { win = null; });
+    created.on('closed', () => { if (win === created) win = null; });
     created.loadURL(serveLocalPage(wc.session, 'status', path.join(__dirname, 'status-window'), 'status.html'));
     return created;
   }
@@ -60,7 +60,7 @@ function createStatusWindow(deps) {
     if (!win || win.isDestroyed() || !win.isVisible()) return;
     const facts = deps.getFacts();
     if (!facts) {
-      win.hide();
+      dispose();
       return;
     }
     win.webContents.send(FACTS_CHANNEL, facts);
@@ -80,13 +80,12 @@ function createStatusWindow(deps) {
       return true;
     },
     close() {
-      if (win && !win.isDestroyed() && win.isVisible()) win.hide();
+      dispose();
     },
     isOpen: () => Boolean(win && !win.isDestroyed() && win.isVisible()),
     update,
     destroy() {
-      quitting = true;
-      if (win && !win.isDestroyed()) win.destroy();
+      dispose();
     },
   };
 }

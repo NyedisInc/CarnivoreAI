@@ -20,7 +20,7 @@ import { RAIL_PINNED_BODY_CLASS, RAIL_CONTAINER_ID, setRailPinnedClass } from '.
 import { MENU_FLYOUT, SESSION_LIST_WIDGET } from './widget-ids';
 import { activeFlyout, closeFlyout } from './flyout.svelte';
 import { press, railBtn, railOn, settle, setupRail, teardownRail } from './fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/taskmanager/swarm-flyout';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();
@@ -75,8 +75,24 @@ afterEach(async () => {
   await teardownRail();
 });
 
-test('the rail starts as a handle: no icons are drawn, and the list does not hide', async () => {
+async function autohideOn(): Promise<void> {
+  shared['widget_bars'] = { v: 1, rail: { mode: 'autohide' } };
+  widgetBars.reload();
   await railOn();
+}
+
+test('a fresh rail starts pinned open with icons and pin visible, and writes nothing (#3388)', async () => {
+  await railOn();
+  expect(stateOf()).toBe('pinned');
+  expect(handle()).toBeNull();
+  expect(shell().querySelector('[data-bar-pin]')?.getAttribute('aria-label')).toBe('unpin rail');
+  expect(document.body.classList.contains(RAIL_PINNED_BODY_CLASS)).toBe(true);
+  expect(document.getElementById(DRAWER_LIST_ID)!.hidden, 'the sidebar area never hides').toBe(false);
+  expect(writes, 'a default is never written').toEqual([]);
+});
+
+test('an unpinned (autohide) rail starts as a handle: no icons are drawn, and the list does not hide', async () => {
+  await autohideOn();
   expect(stateOf()).toBe('handle');
   expect(handle()).not.toBeNull();
   expect(handle()!.getAttribute('aria-label')).toBe('show the sidebar rail');
@@ -84,11 +100,11 @@ test('the rail starts as a handle: no icons are drawn, and the list does not hid
   expect(shell().querySelector('[data-bar-pin]'), 'no pin icon while closed').toBeNull();
   expect(document.body.classList.contains(RAIL_PINNED_BODY_CLASS)).toBe(false);
   expect(document.getElementById(DRAWER_LIST_ID)!.hidden, 'the sidebar area never hides').toBe(false);
-  expect(writes, 'a default is never written').toEqual([]);
+  expect(writes, 'reading stored mode writes nothing').toEqual([]);
 });
 
 test('a hover peeks it out and it goes back 300 ms after the pointer leaves; the pin lives in the footer, not the peek', async () => {
-  await railOn();
+  await autohideOn();
   vi.useFakeTimers();
   enter(shell());
   expect(stateOf(), 'a hover opens it').toBe('peek');
@@ -104,7 +120,7 @@ test('a hover peeks it out and it goes back 300 ms after the pointer leaves; the
 });
 
 test('Enter on the handle peeks the rail and brings the menu out; Escape sends it back to the handle', async () => {
-  await railOn();
+  await autohideOn();
   handle()!.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 0 }));
   await settle();
   vi.useFakeTimers();
@@ -117,7 +133,7 @@ test('Enter on the handle peeks the rail and brings the menu out; Escape sends i
 });
 
 test('a peek floats over the list: the drawer reserves only the handle track, in flow, unchanged by the peek', async () => {
-  await railOn();
+  await autohideOn();
   expect(document.body.classList.contains(RAIL_PINNED_BODY_CLASS)).toBe(false);
   open();
   expect(stateOf()).toBe('peek');
@@ -125,7 +141,7 @@ test('a peek floats over the list: the drawer reserves only the handle track, in
 });
 
 test('pin rail in the rail\'s own right-click menu writes widget_bars.rail.mode, keeps the rail out in its own column, and survives a reload', async () => {
-  await railOn();
+  await autohideOn();
   handle()!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
   flushSync();
   expect(railMenu.keyId, 'the rail itself, not a key').toBeNull();
@@ -150,7 +166,7 @@ test('pin rail in the rail\'s own right-click menu writes widget_bars.rail.mode,
 });
 
 test('unpinning sends the rail back to a handle; the rail has no close strip, so nothing on its edge hides or unpins it', async () => {
-  await railOn();
+  await autohideOn();
   await toggleBarPin('rail');
   await settle();
   expect(stateOf()).toBe('pinned');
@@ -179,7 +195,7 @@ test('a pinned rail still opens a slide-out over the list; the list stays mounte
 });
 
 test('one leave is one hide: the blur the browser fires when the layer hides does not peek the rail out again', async () => {
-  await railOn();
+  await autohideOn();
   vi.useFakeTimers();
   open();
   focusKey(false);
@@ -194,7 +210,7 @@ test('one leave is one hide: the blur the browser fires when the layer hides doe
 });
 
 test('a peek brings the menu out with it, the menu counts as the rail, and Escape ends both', async () => {
-  await railOn();
+  await autohideOn();
   vi.useFakeTimers();
   open();
   expect(stateOf()).toBe('peek');
@@ -225,7 +241,7 @@ test('a peek brings the menu out with it, the menu counts as the rail, and Escap
 });
 
 test('a menu row picked with a mouse closes the menu and it stays closed: the late pointer leave only retracts, it never peeks the menu out again', async () => {
-  await railOn();
+  await autohideOn();
   vi.useFakeTimers();
   open();
   expect(activeFlyout(), 'the menu rides the peek').toBe(MENU_FLYOUT);
@@ -241,7 +257,7 @@ test('a menu row picked with a mouse closes the menu and it stays closed: the la
 
 test('the menu flyout has no title row and the rail no keys while auto-hiding; a pinned rail has icon keys and no menu key; pinning from the open menu puts the menu away, and the menu never has a title row (#1801, #2047, #2908)', async () => {
   const titleRow = (): Element | null => document.querySelector('#session-sidebar-flyout [data-flyout="core.menu"] .sbr-flyout__title');
-  await railOn();
+  await autohideOn();
   vi.useFakeTimers();
   open();
   expect(activeFlyout(), 'the menu rides the peek').toBe(MENU_FLYOUT);
@@ -275,12 +291,12 @@ test('a pinned rail wears the pin icon last in its column; it toggles pin rail a
 });
 
 test('the rail handle draws the same DOM before and after the zone handle (golden, wrapper bar-handle rows)', async () => {
-  await railOn();
+  await autohideOn();
   matchGolden('handle.rail', shell().querySelector('.sbr-shell__handle'));
 });
 
 test('a pointer resting over the rail does not peek it while a modal is showing (#2672: the sidebar hid and showed behind the picker)', async () => {
-  await railOn();
+  await autohideOn();
   expect(stateOf()).toBe('handle');
   shell().getBoundingClientRect = () => ({ left: 0, top: 0, right: 40, bottom: 400, width: 40, height: 400, x: 0, y: 0, toJSON: () => ({}) });
   const modal = document.createElement('div');

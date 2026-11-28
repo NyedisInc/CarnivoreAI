@@ -178,7 +178,7 @@
         {#if opened}
             <AnchoredPopup label={t(opened === 'folder' ? 'plugins.page.sideload.load_folder' : 'plugins.page.sideload.load_git')}
                 anchor={opened === 'folder' ? folderButton : gitButton} onClose={() => (opened = null)}>
-                <SideloadLoadForm mode={opened} {t} onFolder={(path, name) => store.loadFolder(path, name)}
+                <SideloadLoadForm mode={opened} {t} onFolder={(path, name, consent) => store.loadFolder(path, name, consent)}
                     onGit={(request) => store.loadGit(request)} onDone={() => (opened = null)} />
             </AnchoredPopup>
         {/if}

@@ -5,7 +5,7 @@ export const SECTION_IDS = ['pinned', 'layouts', 'groups', 'companies', 'rogue',
 
 export type SectionId = (typeof SECTION_IDS)[number];
 
-export const DEFAULT_SECTION_ORDER: readonly SectionId[] = SECTION_IDS;
+export const DEFAULT_SECTION_ORDER: readonly SectionId[] = ['pack', ...SECTION_IDS.filter((id) => id !== 'pack')];
 
 export function isSectionId(value: unknown): value is SectionId {
     return typeof value === 'string' && (SECTION_IDS as readonly string[]).indexOf(value) !== -1;
@@ -21,10 +21,10 @@ export function resolveSectionOrder(stored?: readonly string[] | null): SectionI
     const out: SectionId[] = [];
     for (const id of Array.isArray(stored) ? stored : []) if (isSectionId(id) && out.indexOf(id) === -1) out.push(id);
     if (!out.length) return [...DEFAULT_SECTION_ORDER];
-    DEFAULT_SECTION_ORDER.forEach((id, at) => {
+    SECTION_IDS.forEach((id, at) => {
         if (out.indexOf(id) !== -1) return;
         let pred = -1;
-        for (let i = at - 1; i >= 0 && pred === -1; i -= 1) pred = out.indexOf(DEFAULT_SECTION_ORDER[i] as SectionId);
+        for (let i = at - 1; i >= 0 && pred === -1; i -= 1) pred = out.indexOf(SECTION_IDS[i] as SectionId);
         out.splice(pred + 1, 0, id);
     });
     return out;

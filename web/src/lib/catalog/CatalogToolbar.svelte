@@ -5,8 +5,8 @@
     import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
     import type { CatalogFilters } from './filter';
     import { stateOf, withState, pressOrClear, kindChipsFor, STATE_SEGMENTS, stateTip, type StateGroup } from './filter-groups';
-    import FilterGroup from './FilterGroup.svelte';
     import KindMark from './KindMark.svelte';
+    import Segmented, { type SegmentedOption } from '../base/Segmented.svelte';
 
     interface Props {
         filters: CatalogFilters;
@@ -18,59 +18,62 @@
     const { filters, kinds, t, onFilters }: Props = $props();
 
     const kindChips = $derived(kindChipsFor(kinds, filters.kind, t));
-    const STATES = STATE_SEGMENTS;
     const tip = (value: string): string => stateTip(value, t);
 
     const state = $derived(stateOf(filters));
+
+    const ALL_KINDS = '__all';
+
+    const kindOptions = $derived<SegmentedOption[]>([
+        { value: ALL_KINDS, label: t(BROWSE_KEYS.kindChipAll) },
+        ...kindChips.map((chip) => ({ value: chip.kind, label: chip.label, mark: kindMark, attrs: { 'data-kind': chip.kind } })),
+    ]);
+
+    const stateOptions = $derived<SegmentedOption[]>(STATE_SEGMENTS.map(([value, key]) => ({ value, label: t(key), title: tip(value) })));
 
     function pickKind(kind: string | null): void {
         onFilters({ ...filters, kind });
     }
 
-    function pickState(next: StateGroup): void {
-        onFilters(withState(filters, pressOrClear(state, next as Exclude<StateGroup, 'any'>)));
+    function pickState(next: string): void {
+        const group = STATE_SEGMENTS.find(([value]) => value === next)?.[0];
+        if (group) onFilters(withState(filters, pressOrClear<StateGroup>(state, group)));
     }
 
 </script>
 
+{#snippet kindMark(kind: string)}
+    {#if kind !== ALL_KINDS}<KindMark {kind} size="sm" {t} />{/if}
+{/snippet}
+
 {#snippet kindGroup()}
     {#if kindChips.length}
-        <FilterGroup id="kind" label={t('warez.group.kind')}>
-            <div class="oc-seg" role="radiogroup" aria-label={t('warez.group.kind')}>
-                <button type="button" class="oc-seg__item bar__kind" role="radio" aria-checked={filters.kind === null} onclick={() => pickKind(null)}>{t(BROWSE_KEYS.kindChipAll)}</button>
-                {#each kindChips as chip (chip.kind)}
-                    <button type="button" class="oc-seg__item bar__kind" role="radio" aria-checked={filters.kind === chip.kind} data-kind={chip.kind} onclick={() => pickKind(chip.kind)}>
-                        <KindMark kind={chip.kind} size="sm" {t} />{chip.label}
-                    </button>
-                {/each}
-            </div>
-        </FilterGroup>
+        <Segmented
+            data-group="kind"
+            caption={t('warez.group.kind')}
+            label={t('warez.group.kind')}
+            value={filters.kind ?? ALL_KINDS}
+            options={kindOptions}
+            onchange={(next) => pickKind(next === ALL_KINDS ? null : next)}
+        />
     {/if}
 {/snippet}
 
-{#snippet segGroup(id: string, label: string, items: readonly (readonly [string, string])[], current: string, pick: (next: never) => void, withAny: boolean)}
-    <FilterGroup {id} {label}>
-        <div class="oc-seg" role="radiogroup" aria-label={label}>
-            {#if withAny}
-                <button type="button" class="oc-seg__item bar__flag" role="radio" aria-checked={current === 'any'} title={t(BROWSE_KEYS.stateTipAny)} onclick={() => pick('any' as never)}>{t('warez.filter.any')}</button>
-            {/if}
-            {#each items as [value, key] (value)}
-                <button
-                    type="button"
-                    class="oc-seg__item bar__flag"
-                    role="radio"
-                    aria-checked={current === value}
-                    title={tip(value)}
-                    onclick={() => pick(value as never)}
-                >{t(key)}</button>
-            {/each}
-        </div>
-    </FilterGroup>
+{#snippet stateGroup()}
+    <Segmented
+        data-group="state"
+        caption={t('warez.group.state')}
+        label={t('warez.group.state')}
+        value={state}
+        options={stateOptions}
+        onchange={pickState}
+        onreselect={pickState}
+    />
 {/snippet}
 
 <div class="cat-rows">
     {@render kindGroup()}
-    {@render segGroup('state', t('warez.group.state'), STATES, state, pickState, false)}
+    {@render stateGroup()}
 </div>
 
 <style>
@@ -81,33 +84,5 @@
         gap: 8px;
         min-width: 0;
         padding: 4px 12px;
-    }
-
-    .bar__flag,
-    .bar__kind {
-        flex: none;
-        height: 100%;
-    }
-
-    @media (max-width: 767px) {
-        :global(.cat .oc-titlebar__back:not(.wik *)) {
-            width: 44px;
-            height: 44px;
-            margin: 0 -4px 0 -16px;
-        }
-
-        :global(.cat .oc-titlebar__omni-row > svg:not(.wik *)) {
-            visibility: hidden;
-        }
-
-        :global(.cat .oc-titlebar__omni-row .oc-field:not(.wik *)) {
-            height: 44px;
-            margin-block: -14px;
-        }
-
-        .bar__flag,
-        .bar__kind {
-            min-height: 44px;
-        }
     }
 </style>

@@ -19,9 +19,10 @@ NAME = "devclock"
 
 def write_plugin(folder, body: str = "print('tick')\n") -> None:
     folder.mkdir(parents=True, exist_ok=True)
-    manifest = {"schema": 1, "id": NAME, "name": "Dev Clock", "description": "Tells the time.", "version": "1.0.0", "entry": "main.py",
-                "tools": [], "permissions": {"app": ["notify"]}}
-    (folder / "cplug.json").write_text(json.dumps(manifest))
+    manifest = {"schema": 2, "kind": "plugin", "id": NAME, "name": "Dev Clock", "description": "Tells the time.",
+                "version": "1.0.0", "author": "owner", "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+                "permissions": {"write": ["notify"]}}
+    (folder / "carnivore.json").write_text(json.dumps(manifest))
     (folder / "main.py").write_text(body)
 
 
@@ -92,8 +93,8 @@ def test_fence_and_switch_then_unverified_local_row_then_edit_needs_approval_the
 
     reserved = w.src.parent / "huddle"
     write_plugin(reserved)
-    manifest = json.loads((reserved / "cplug.json").read_text())
-    (reserved / "cplug.json").write_text(json.dumps({**manifest, "id": "huddle"}))
+    manifest = json.loads((reserved / "carnivore.json").read_text())
+    (reserved / "carnivore.json").write_text(json.dumps({**manifest, "id": "huddle"}))
     r = w.client.post(URL, json={"path": str(reserved)}, headers=w.owner)
     assert r.status_code == 409 and r.json()["detail"]["code"] == "name_reserved", r.text
     assert post(w, name="../../escape").json()["detail"]["code"] == "name_invalid"

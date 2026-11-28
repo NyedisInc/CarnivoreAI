@@ -247,4 +247,25 @@ describe('turning off with no dialog', () => {
     expect(q('[data-ad="note"]')!.textContent).toContain('commits the master does not have');
     expect(qa('[data-ad="leftover"]').length).toBe(1);
   });
+  test('P20 9d: with the mesh switch on a copy refusal has plain words and a member with no row gets one line; with it off today\'s words stay', async () => {
+    const run = { running: false, refused: { studio: 'member_link_off', charlie: 'not_linked' }, error: null };
+    answer = home({ auto_delegate: true, copy_run: run });
+    roster.push(machine('charlie', { paired: false, state: 'reported_connected' }));
+    try {
+      await render();
+      expect(hintOf('studio')).toBe('could not copy here');
+      expect(q('[data-ad="member-refused"]')).toBeNull();
+      await unmount(mounted.pop()!);
+      document.body.replaceChildren();
+      roster[0]!.capabilities = ['pack.mesh_v1'];
+      await render();
+      expect(hintOf('studio')).toBe('could not copy: its link switch is off');
+      const lines = qa('[data-ad="member-refused"]');
+      expect(lines).toHaveLength(1);
+      expect(lines[0]!.textContent).toContain('charlie could not copy: no link to it from here right now');
+    } finally {
+      roster[0]!.capabilities = ['pack.jobs'];
+      roster.pop();
+    }
+  });
 });

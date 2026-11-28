@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
@@ -11,21 +11,26 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.argent.status import feature_on
 from src.api.auth import require_auth
-from src.core.argent import cost_split, budget, cost_poller, work_items
+from src.core.argent import cost_split, budget, budget_requests, cost_poller, work_items
 from src.core.argent import settings as settings_module
 from src.core.argent.client import ArgentError, NotFound, Unauthorized, Unreachable
+from src.core.argent.runtime import get_runtime
 
 logger = structlog.get_logger()
 router = APIRouter(tags=["argent"], dependencies=[Depends(require_auth)])
 
 
 class BudgetRequest(BaseModel):
-    """Ask for more budget. Example: {"item_id": "wi_story1", "note": "release week"}"""
+    """Ask for more budget on an item. ``amount_micros`` is the EXTRA amount Argent adds to the asker's current allotment on approval, not a new cap, in whole millionths of a dollar (above zero, at most ``budget_requests.MAX_REQUEST_MICROS``); ``reason`` is trimmed, 1 to 500 characters.
 
-    model_config = ConfigDict(extra="forbid")
+    Example: {"item_id": "wi_story1", "amount_micros": 5000000, "reason": "release week"}
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     item_id: str = Field(..., min_length=1, max_length=200)
-    note: str = Field("", max_length=500)
+    amount_micros: int = Field(..., gt=0, le=budget_requests.MAX_REQUEST_MICROS, strict=True)
+    reason: str = Field(..., min_length=1, max_length=500)
 
 
 class BudgetLift(BaseModel):
@@ -49,21 +54,43 @@ def _refuse(status: int, code: str, message: str) -> HTTPException:
     return HTTPException(status_code=status, detail={"code": code, "message": message})
 
 
-async def _call(path: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+BUDGET_REQUEST_UNAVAILABLE = "asking for more budget is not available yet; ask the budget owner in argent"
+
+
+async def _call(path: str, payload: Dict[str, Any], *, budget_ask: bool = False) -> Dict[str, Any]:
+    return (await _post(path, payload, budget_ask=budget_ask))[0]
+
+
+async def _post(path: str, payload: Dict[str, Any], *, budget_ask: bool = False) -> Tuple[Dict[str, Any], str]:
     if not feature_on():
         raise _refuse(409, "feature_off", "turn the argent feature on first")
     try:
-        client, _tenant = await work_items.client_for_call()
-        return dict((await client.post(path, json=payload)).body)
+        client, tenant = await work_items.client_for_call()
+        return dict((await client.post(path, json=payload, route_refusal_on_401=budget_ask)).body), tenant
     except Unauthorized as exc:
+        if budget_ask and exc.code != "login_required":
+            raise _refuse(501, "budget_request_unavailable", BUDGET_REQUEST_UNAVAILABLE) from None
         raise _refuse(403, "login_required" if exc.code == "login_required" else "login_expired", "log in to argent again") from None
     except NotFound:
+        if budget_ask:
+            raise _refuse(501, "budget_request_unavailable", BUDGET_REQUEST_UNAVAILABLE) from None
         raise _refuse(503, "unavailable", "argent cannot do that yet") from None
     except Unreachable:
         raise _refuse(502, "argent_unreachable", "argent did not answer") from None
     except ArgentError as exc:
+        if budget_ask:
+            if exc.status in (400, 403):
+                raise _refuse(501, "budget_request_unavailable", BUDGET_REQUEST_UNAVAILABLE) from None
+            if exc.status == 409 and exc.code == "pending_exists":
+                raise _pending(exc.body.get("id")) from None
+            raise _refuse(exc.status or 502, "argent_refused", "argent refused the request") from None
         err = exc.body.get("error") if isinstance(exc.body.get("error"), dict) else {}
         raise _refuse(exc.status or 502, exc.code or "argent_refused", str(err.get("message") or "argent refused")) from None
+
+
+def _pending(request_id: Any) -> HTTPException:
+    return HTTPException(status_code=409, detail={"code": "budget_request_pending", "message": "already asked; waiting on the budget owner",
+                                                  "id": request_id if isinstance(request_id, str) and len(request_id) <= 200 else ""})
 
 
 @router.get("/cost")
@@ -93,10 +120,36 @@ async def watch_agent_cost(body: AgentWatch) -> Dict[str, Any]:
 
 @router.post("/budget/requests")
 async def request_budget(body: BudgetRequest) -> Dict[str, Any]:
-    """Ask the budget owner for more budget on an item. Output: Argent's answer. Example: POST /api/v1/argent/budget/requests {"item_id": "wi_story1"}"""
-    reply = await _call("/v1/my/budget/requests", {"work_item_id": body.item_id, "note": body.note})
+    """Ask for more budget on an item, with the amount and the reason. Output: {id, state: "pending", requested_micros}; the poller follows it to approved, denied or expired.
+
+    409 ``budget_request_pending`` (with the open request's ``id``) while an ask is already waiting, on this item here or on the asker's allotment in Argent;
+    501 ``budget_request_unavailable`` while Argent's CLI route does not answer for this login (it never expires the login). The reason is never logged or kept here.
+    Example: POST /api/v1/argent/budget/requests {"item_id": "wi_story1", "amount_micros": 5000000, "reason": "release week"}
+    """
+    if feature_on():
+        tenant = (get_runtime().store.get_login() or {}).get("tenant_id")
+        waiting = await asyncio.to_thread(budget_requests.pending_for, str(tenant), body.item_id) if tenant else None
+        if waiting:
+            raise _pending(waiting["id"])
+    reply, tenant_id = await _post(budget_requests.PATH, {"requested_micros": body.amount_micros, "reason": body.reason, "work_item_id": body.item_id}, budget_ask=True)
+    request_id = reply.get("id")
+    if not isinstance(request_id, str) or not request_id or len(request_id) > 200:
+        raise _refuse(502, "argent_refused", "argent gave no request id")
+    await asyncio.to_thread(budget_requests.record_filed, tenant_id, request_id, body.item_id, body.amount_micros)
     cost_poller.poke()
-    return reply
+    return {"id": request_id, "state": budget_requests.PENDING, "requested_micros": body.amount_micros}
+
+
+@router.get("/budget/requests")
+async def list_budget_requests() -> Dict[str, Any]:
+    """The asks this computer filed, newest first. Output: {enabled, requests: [{id, item_id, requested_micros, approved_micros, state (pending, approved, denied, expired), decision_reason, created_at, decided_at}]}.
+
+    Read from the local record (no call to Argent); pushed on ``argent_budget_requests``. Off: {enabled: false, requests: []}. Example: GET /api/v1/argent/budget/requests
+    """
+    login = get_runtime().store.get_login() if feature_on() else None
+    if not login:
+        return {"enabled": feature_on(), "requests": []}
+    return {"enabled": True, "requests": await asyncio.to_thread(budget_requests.list_records, str(login["tenant_id"]))}
 
 
 @router.post("/budget/lift")

@@ -11,8 +11,9 @@
     link?: LinkState | null;
     tips?: boolean;
     size?: number;
+    remoteIcon?: 'link' | 'server';
   }
-  const { alpha = false, self = false, link = null, tips = true, size }: Props = $props();
+  const { alpha = false, self = false, link = null, tips = true, size, remoteIcon = 'link' }: Props = $props();
 </script>
 
 <span class="pk-marks">
@@ -24,7 +25,7 @@
   {/if}
   {#if link}
     <span class="pk-icon pk-icon--{link}" data-mark="link" data-link={link} role="img" aria-label={t(`pack.link.${link}`)} title={tips ? t(`pack.link.${link}`) : undefined}>
-      <Icon name={link === 'down' ? 'computers-broken' : 'computers-linked'} size={size ?? 18} />
+      <Icon name={remoteIcon === 'server' ? 'server' : (link === 'down' ? 'computers-broken' : 'computers-linked')} size={size ?? (remoteIcon === 'server' ? 14 : 18)} />
     </span>
   {/if}
 </span>

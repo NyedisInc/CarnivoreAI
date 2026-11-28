@@ -34,7 +34,7 @@ def test_a_record_naming_a_renamed_widget_resolves_to_the_current_id_and_that_id
         assert store.read_record(folder)["widget"] == new
         assert new in declared and old not in declared
     keyed = _draft(tmp_path, "keyed", "core.huddle-all:i2")
-    assert store.read_record(keyed)["widget"] == "core.task-manager-all:i2"
+    assert store.read_record(keyed)["widget"] == "core.task-manager-mk2-all:i2"
 
 
 def test_the_start_migration_rewrites_the_record_once_with_a_backup_and_leaves_every_file_alone(tmp_path: Path) -> None:
@@ -47,7 +47,7 @@ def test_the_start_migration_rewrites_the_record_once_with_a_backup_and_leaves_e
 
     assert renames.migrate_records(tmp_path) == ["task-manager"]
     record = json.loads((folder / "draft.json").read_text())
-    assert record["widget"] == "core.task-manager-all" and record["target"] == "core.task-list"
+    assert record["widget"] == "core.task-manager-mk2-all" and record["target"] == "core.task-manager-mk2"
     assert (folder / renames.BACKUP_NAME).read_text() == original
     assert not (other / renames.BACKUP_NAME).exists() and (other / "draft.json").read_text() == other_text
     assert {f.name: _snapshot(f) for f in (folder, other, new_draft)} == kept
@@ -68,4 +68,4 @@ def test_a_draft_built_against_an_older_checkout_is_stale_and_not_an_error(tmp_p
     monkeypatch.setattr(store, "root_of", lambda _folder: tmp_path)
     monkeypatch.setattr(store, "head_sha", lambda _repo: "5cb0aced572d")
     shown = store.summary(folder)
-    assert shown["stale"] is True and shown["state"] == "built" and shown["widget"] == "core.task-list"
+    assert shown["stale"] is True and shown["state"] == "built" and shown["widget"] == "core.task-manager-mk2"

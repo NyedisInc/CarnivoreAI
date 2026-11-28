@@ -95,17 +95,17 @@ never gets the stamp, so it shows no strip and no inset.</p>
     <dt>what</dt>
     <dd>The left panel from the menu button: the sidebar rail down its left edge (<code>SidebarRail.svelte</code>,
         <a href="#chrome-sidebar-rail">below</a>), whose keys open the menu (the destinations that were the home rail,
-        <code>rail-items.ts</code>), agents and the other slide-outs; a quick-look stats bar above the search (<code>DrawerStats.svelte</code>: the <code>.dst-row</code> / <code>.dst-field</code> frame copied from the search row at the same 24px and wearing <code>data-tooltip-off</code>, so no figure, glyph, chart or bar shows a hover tip; first, only when the pack holds more than one computer (this one and offline members counted), the wolf glyph and that number (<code>.dst-pack</code>, a plain readout, not a button); then three counts that are buttons, each named by <code>aria-label</code> (<code>.dst-count</code>: a click lists only the agents that figure counted with every fold open, and the figure wears a loud <code>--oc-yellow-bright</code> frame, <code>data-filter="on"</code>, until a second click clears it; one at a time) (the automations figure is not in this bar); after the counts a fourth <code>.dst-count</code>, the moon and the number of sleeping sessions (<code>data-kind="sleeping"</code>, counted before the filter so a hidden set keeps its number): a click shows or hides them, the same stored choice as the settings switch, and the moon and figure dim (<code>data-hidden="true"</code>) while they are hidden, never the yellow frame; the strip wears no box, no border and no fill, and the token readout ends flush with the row's right padding edge, in line with the new-agent button below, in whole numbers, no decimal (4M, 59k); up = tokens out and down = tokens in with a rate button that cycles a one-letter unit, /s, /m, /h and /d, and a bar chart button that cycles 1h, 5h, 1d and 7d; a measured zero is the <code>.dst-bar--zero</code> stub and an unmeasured slot the hatched <code>.dst-bar--gap</code>, never the same; a named state such as stats off, or a feed that cannot be read (signed out, no route, a failed read), replaces the token half as <code>.dst-word</code>; bars are 2px with a 1px gap and a long window folds buckets so every bar stays that wide, no tooltip on a bar; a paired computer that is missing hatches the chart from its last good time as <code>.dst-band</code> with a <code>.dst-flag</code> square on the rate, muted when it is paused or off and in the danger token when it cannot be reached); search with its mode dropdown
+        <code>rail-items.ts</code>), agents and the other slide-outs; a quick-look stats bar above the search (<code>DrawerStats.svelte</code>: the <code>.dst-row</code> / <code>.dst-field</code> frame copied from the search row at the same 24px and wearing <code>data-tooltip-off</code>, so no figure, glyph, chart or bar shows a hover tip; first, only when the pack holds more than one computer (this one and offline members counted), the wolf glyph and that number (<code>.dst-pack</code>, a plain readout, not a button); then three counts that are buttons, each named by <code>aria-label</code> (<code>.dst-count</code>: a click lists only the agents that figure counted with every fold open, and the figure wears a loud <code>--oc-yellow-bright</code> frame, <code>data-filter="on"</code>, until a second click clears it; one at a time) (the automations figure is not in this bar); after the counts a fourth <code>.dst-count</code>, the moon and the number of sleeping sessions (<code>data-kind="sleeping"</code>, counted before the filter so a hidden set keeps its number): a click toggles showing all sleeping agents inline (<code>data-expanded="true"</code> when toggled ON; default OFF folds sleeping agents per section and Layout into one quiet count-only line via <code>SleepFoldRow.svelte</code>; full hide-sleeping remains in the View menu and Settings, #3387, #3391) and the moon and figure dim (<code>data-hidden="true"</code>) while they are hidden, never the yellow frame; the strip wears no box, no border and no fill, and the token readout ends flush with the row's right padding edge, in line with the new-agent button below, in whole numbers, no decimal (4M, 59k); up = tokens out and down = tokens in with a rate button that cycles a one-letter unit, /s, /m, /h and /d, and a bar chart button that cycles 1h, 5h, 1d and 7d; a measured zero is the <code>.dst-bar--zero</code> stub and an unmeasured slot the hatched <code>.dst-bar--gap</code>, never the same; a named state such as stats off, or a feed that cannot be read (signed out, no route, a failed read), replaces the token half as <code>.dst-word</code>; bars are 2px with a 1px gap and a long window folds buckets so every bar stays that wide, no tooltip on a bar; a paired computer that is missing hatches the chart from its last good time as <code>.dst-band</code> with a <code>.dst-flag</code> square on the rate, muted when it is paused or off and in the danger token when it cannot be reached); search with its mode dropdown
         (<code>DrawerSearch.svelte</code>; sidebar search redesign D: the box is the base Field's search variant, <code>.oc-search</code>
         (icon, input, a clear x whenever there is text, a key hint, then the mode select in the trailing slot);
         under it the SIMILAR TERMS (<code>SearchTerms.svelte</code>, <code>.ds-terms</code>, <code>.ds-terms__label</code>,
         <code>.ds-terms__n</code>): base button chips, a term and how many messages hold it, from the deep search's suggest route;
-        a typed text lists AGENTS (<code>SearchAgents.svelte</code>, the quiet variant D row <code>SearchAgentRow.svelte</code>,
-        <code>.sd-r</code>, the mock's agent row ported in <code>deepsearch/search-d.css</code>: no box, no provider mark, no pin; line one
-        the light (a closed row wears the quiet hollow ring, so every name starts in one column), the name <code>.sd-r__name</code> with the match
-        <code>.sd-mark</code> (bright ink, a hairline under it) and the age <code>.sd-r__meta</code>, the row's kebab at its end; line two
-        <code>.sd-r__sub</code> the model and effort, or the muted note <code>.sd-dim</code> for an asleep or closed agent, or
-        <code>.sd-why</code> saying why a project or folder match is listed; the cursor's row is <code>.is-focus</code> (the focus edge and the state
+        a typed text lists AGENTS (<code>SearchAgents.svelte</code>; a session hit is the drawer's own session row,
+        <code>SessionRow.svelte</code>, at the current compact, cozy or detailed density, marked <code>data-search-hit</code>, with the match
+        <code>.sd-mark</code> (bright ink, a hairline under it) in its name, <code>.sd-r__sub .sd-why</code> saying why a project or folder match
+        is listed, and its pin <code>.session-sidebar-row-pin</code> always shown, whatever the row-icon toggle says: it pins and unpins by the
+        shared arrangement, and a pinned closed session stays listed while show closed is off; a closed session is found even with show closed
+        off and wears its closed chip; the cursor's row is <code>data-search-cursor</code> (the focus edge and the state
         layer, never hover); one click opens the session; a saved Layout or browser row is the same quiet row) then the top
         CONVERSATIONS (<code>SearchConversations.svelte</code>, hits (<code>HitRow.svelte</code>, <code>.sd-hit</code>: the head line
         <code>.sd-hit__top</code> with the light, the name <code>.sd-hit__name</code> and the muted who and when, the excerpt
@@ -120,6 +120,12 @@ never gets the stamp, so it shows no strip and no inset.</p>
         <code>.oc-btn .oc-btn--tool</code>; <code>drawer-strips.test.ts</code> holds both strips to a recorded DOM and refuses a
         hand-made input or button in <code>web/src/lib/drawer-tabs/</code>); bands of rows grouped by project under COMPANY headings (then ORPHANED PROJECTS), with TERMINALS and ROGUE AGENTS
         (<code>client/js/session-sidebar-*.js</code>, <code>client/css/session-sidebar*.css</code>); a footer bar.</dd>
+    <dt>new group drop target</dt>
+    <dd>While a row drag is in flight the drawer draws <code>NewGroupTarget.svelte</code>, a dashed <code>--oc-orange</code> box labelled
+        "+ new group" just below the GROUPS block (<code>.session-sidebar-newgroup</code>, copied from the empty pinned target; it is
+        drawn even with no group yet). It is a hit area, not a band and not a button: it carries <code>data-newgroup</code> and no
+        <code>data-group</code>, goes solid while the pointer is over it (<code>data-over</code>), and a drop on it asks for a name through the
+        shared text prompt, makes the group and files the agent in it. The keyboard twin is the row menu's "new group..." leaf.</dd>
     <dt>one band wrapper</dt>
     <dd>Every band is <code>Band.svelte</code> (<code>web/src/lib/sidebar-shell/</code>, wrapper package S-1): the
         <code>.session-sidebar-group</code> group, its heading row (none for the leader band) and its
@@ -128,6 +134,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         (<code>LeaderBand.svelte</code>), the <em>companies</em> and <em>groups</em> blocks, a company and the PACK section are uses of it (a PACK computer row is a switch: <code>aria-pressed</code>, and an off computer wears <code>data-pack-off</code>, dimmed with its name struck through),
         passing only their modifier class and data attributes. No other file draws the wrapper or the body by hand
         (<code>band-conformance.test.ts</code>; <code>band-structure.test.ts</code> holds the DOM to a recorded golden).
+        Every agent row leads with <code>RowAvatar.svelte</code> (<code>.sb-avatar</code>), a single unified avatar slot showing the live model robot face with a real AI provider corner badge (<code>.sb-avatar__badge</code>) or the real AI provider mark centered when no model is attached (#3387).
         The heading row and its kebab are <code>Heading.svelte</code>'s alone (wrapper package S-2): a hand-made group, a project and a
         company name their menu in the plan (<code>HeadingPlan.menu</code>: kind, id, accessible name) and the heading draws the one
         <code>.session-sidebar-group__menu</code> button, which opens that item type's menu through the one item menu
@@ -139,8 +146,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         <code>row-chips.ts</code>: a <code>&lt;button&gt;</code> for the chips that open something (the cozy subagent and timer chips,
         share, the cup, the automations clock, the pin, a live-work part), a <code>&lt;span&gt;</code> for the marks (provider with its role
         mark, archived, agents, shells, timers, the wake clock, workflow, the model mark, badges and stamps). The heading's inactive mark
-        and moved-away badge are the same component. A plugin <code>status-source</code> chip (<code>docs/cplug-platform.md</code> 7.4) is a
-        RowChipSpec of text and a title, painted here like a badge and never a signal to the light. No sessions-list file spreads a plan
+        and moved-away badge are the same component. No sessions-list file spreads a plan
         record onto a chip element by hand or writes a row chip's class into markup (<code>band-conformance.test.ts</code>;
         <code>row-structure.test.ts</code> holds every chip to a recorded golden).</dd>
     <dt>one row action, one menu trigger</dt>
@@ -253,7 +259,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         <code>.tp-body</code>, <code>.tp-notice</code>), the one widget header over the same body.</dd>
     <dt id="chrome-task-manager-markdown"><span id="chrome-huddle-markdown"></span>Task Manager post formatting</dt>
     <dd>Every Task Manager text surface draws a safe markdown subset through ONE renderer
-        (<code>web/src/plugins/huddle/TaskManagerMarkdown.svelte</code>, parser <code>task-manager-markdown.ts</code>); another plugin draws the same words through the sdk seam (<code>web/src/plugins/sdk/Markdown.svelte</code>, registered by the Task Manager at start, plain text when the Task Manager is off), as the review board does for a revision summary: the row's title, latest line,
+        (<code>web/src/plugins/taskmanager/TaskManagerMarkdown.svelte</code>, parser <code>task-manager-markdown.ts</code>); another plugin draws the same words through the sdk seam (<code>web/src/plugins/sdk/Markdown.svelte</code>, registered by the Task Manager at start, plain text when the Task Manager is off), as the review board does for a revision summary: the row's title, latest line,
         description and posts, the thread, the review block and the answer popup (item name, context, prompts, help, options,
         reasons), whoever wrote the words. A one-line host passes <code>inline</code>: the text draws as one run in
         <code>.hmd-line</code> (an inline span), so the host's own ellipsis or line clamp cuts the DRAWN words and bold, italic and
@@ -269,7 +275,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         unrecognized, and a malformed table, stays plain text.</dd>
     <dt id="chrome-task-manager-command"><span id="chrome-huddle-command"></span>Task Manager command area</dt>
     <dd>A fenced code block in any Task Manager post, and a typed question's <code>command</code>, draws through
-        <code>web/src/plugins/huddle/TaskManagerCommandBox.svelte</code> (<code>.hcb</code>): the code in a <code>.hcb-pre</code> box
+        <code>web/src/plugins/taskmanager/TaskManagerCommandBox.svelte</code> (<code>.hcb</code>): the code in a <code>.hcb-pre</code> box
         (the <code>.hmd-pre</code> look: hairline, small square corner, mono, the hover ground), an optional tracked language
         label (<code>.hcb-lang</code>) and an icon-only copy button in the corner (<code>.hcb-copy</code>, the catalog strings
         <code>cplug.huddle.command.copy</code> and <code>cplug.huddle.command.copied</code> as tooltip and aria label; <code>.hcb-copy--done</code>
@@ -281,10 +287,10 @@ never gets the stamp, so it shows no strip and no inset.</p>
         copy button; tokens only.</dd>
     <dt id="chrome-task-manager-bubble"><span id="chrome-huddle-bubble"></span>Task Manager message bubble</dt>
     <dd>Every Task Manager message bubble is ONE extensible class (Joe (ccsliinc), 2026-10-07: "for all the different types of message
-        bubbles lets make them an extensible class"): <code>web/src/plugins/huddle/TaskManagerBubble.svelte</code> over the shared base
+        bubbles lets make them an extensible class"): <code>web/src/plugins/taskmanager/TaskManagerBubble.svelte</code> over the shared base
         <code>web/src/lib/base/ChatBubble.svelte</code> (CSS <code>web/src/lib/base/chat-bubble.css</code>, <code>.hb</code>; the base
-        components section), its own kind variants in <code>web/src/plugins/huddle/task-manager-bubble.css</code>, and ONE registry,
-        <code>web/src/plugins/huddle/task-manager-bubbles.ts</code> (<code>BUBBLES</code>), mapping a kind to its label key, its token, its
+        components section), its own kind variants in <code>web/src/plugins/taskmanager/task-manager-bubble.css</code>, and ONE registry,
+        <code>web/src/plugins/taskmanager/task-manager-bubbles.ts</code> (<code>BUBBLES</code>), mapping a kind to its label key, its token, its
         icon and the slots its host may fill. The base owns the padding, the 1px hairline edge and the faint tint in the kind's token
         (<code>.hb</code>), the header row (<code>.hb-head</code>: author <code>.hb-who</code>, kind label <code>.hb-kind</code>, the
         time <code>.hb-time</code>), the markdown body through the single renderer (<code>.hb-body</code>) and its truncation
@@ -300,7 +306,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         </div></dd>
     <dt id="chrome-task-manager-answer-box"><span id="chrome-huddle-answer-box"></span>Task Manager answer box</dt>
     <dd>Claude answering a question Joe asked (<code>huddle_reply</code> kind <code>answer</code>, <code>docs/task-manager.md</code> section 42) is ONE box,
-        <code>web/src/plugins/huddle/TaskManagerAnswerBox.svelte</code> (<code>.hda</code>): his question quoted on top (<code>.hda-quote</code>, muted
+        <code>web/src/plugins/taskmanager/TaskManagerAnswerBox.svelte</code> (<code>.hda</code>): his question quoted on top (<code>.hda-quote</code>, muted
         <code>--oc-text-muted</code>, a 1px quote rule in the answer token, three lines at most), Claude's markdown answer below
         (<code>.hda-body</code>). It behaves like an info (info read key and count) but wears its OWN hue, the accent <code>--oc-orange</code> (<code>KIND_COLORS.answer</code>, box edge, tint, quote rule and the thread tag), apart from question yellow, info violet, look cyan and review green: never unread for the item, never a status change.</dd>
     <dt id="chrome-task-manager-form-answer"><span id="chrome-huddle-form-answer"></span>Task Manager form answer card</dt>
@@ -309,14 +315,14 @@ never gets the stamp, so it shows no strip and no inset.</p>
         <code>form_answer</code> bubble (<code>.hb-k--form_answer</code>): square corners, a dashed 1px edge and the panel ground in the quiet
         <code>--oc-text-muted</code> (not Joe's raised ground and bar, not the accent, no author mark), the <code>list</code> icon
         (<code>.tkm-fa-icon</code>) ahead of the "answers" tag, and inset on BOTH sides (<code>.hdt-msg--form</code>, <code>--hdt-form-inset</code>) so it
-        sits between Claude's left and Joe's right. The body is <code>web/src/plugins/huddle/TaskManagerFormAnswer.svelte</code> (<code>.hdfa</code>): per question the
+        sits between Claude's left and Joe's right. The body is <code>web/src/plugins/taskmanager/TaskManagerFormAnswer.svelte</code> (<code>.hdfa</code>): per question the
         prompt as a small dim label (<code>.hdfa-prompt</code>), the chosen answer under it (<code>.hdfa-words</code>), Joe's note
         (<code>.hdfa-note</code>), and <code>skipped</code> or <code>dismissed</code> said plainly, with hairlines between entries. The collapsed row's latest line
         wears the same <code>list</code> icon instead of the person mark.</dd>
     <dt id="chrome-task-manager-ask-form"><span id="chrome-huddle-ask-form"></span>Task Manager answer form</dt>
     <dd>A typed ask from Claude (<code>huddle_ask</code> with yes/no, single, multi, rank, short and long text questions;
-        <code>docs/task-manager-rich-questions.md</code>) is answered in ONE form, <code>web/src/plugins/huddle/ask/TaskManagerAskForm.svelte</code>
-        (<code>.hdq</code>, sheet <code>web/src/plugins/huddle/ask/ask-form.css</code>), drawn in a panel over the Task Manager
+        <code>docs/task-manager-rich-questions.md</code>) is answered in ONE form, <code>web/src/plugins/taskmanager/ask/TaskManagerAskForm.svelte</code>
+        (<code>.hdq</code>, sheet <code>web/src/plugins/taskmanager/ask/ask-form.css</code>), drawn in a panel over the Task Manager
         (<code>TaskManagerAskPanel.svelte</code>: <code>ModalShell</code> with <code>.hdq-modal</code>, capped at 720px, a full-height sheet under 1024). The
         row shows a lead line (the context's first line, <code>.tkm-ask-lead</code>) and a one-line bubble, <code>N questions</code> and an <code>answer</code> key
         (<code>TaskManagerAskBubble.svelte</code>, <code>.hdq-bubble</code>, the question token; muted when answered); the open thread draws the form inline
@@ -337,7 +343,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         Alt+PageDown and Alt+PageUp, Cmd or Ctrl+Enter; a rank grabs with Space. Every color is an <code>--oc-*</code> token, every string a
         <code>cplug.huddle.ask.*</code> catalog key, and the tooltips are on the icon-only rank keys alone.</dd>
     <dt id="chrome-task-manager"><span id="chrome-huddle"></span>the Task Manager</dt>
-    <dd>The shared list between Joe and Claude (<code>docs/task-manager.md</code>, <code>web/src/plugins/huddle/</code>), a transient
+    <dd>The shared list between Joe and Claude (<code>docs/task-manager.md</code>, <code>web/src/plugins/taskmanager/</code>), a transient
         tab that appears when Claude posts and never takes focus; the sidebar tab and its pop-out are the same component
         (the pop-out reads at the 12px body size, <code>--hd-fs</code>). Rows (numbered top down; each "all projects" group
         counts from 1, under a <code>.hd-group</code> heading in a <code>.hd-scroll</code> body) are the agents row's
@@ -460,7 +466,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
     <dt>Task Manager artifact card and popout</dt>
     <dd>An agent's HTML page on a thread (<code>docs/task-manager.md</code> section 61). <code>TaskManagerArtifactCard.svelte</code> draws a hairline-framed block (<code>.hda</code>: title, one line of description, size, and two quiet <code>.modal-btn-secondary</code> keys, "open in tab" and "open"), the sibling of the file chip. "open in tab" (Joe (ccsliinc), 2026-10-11, <code>docs/browser-pages.md</code>) opens the page as a page tab in the left sidebar (see "page tabs") on every open window, the same as an agent's <code>browser_open</code>. Catalog keys <code>cplug.huddle.artifact.open_in_tab*</code>. "open" shows <code>TaskManagerArtifactDialog.svelte</code>, a large dialog on the shared frame (<code>ModalShell</code> with <code>look="titlerow"</code> and <code>fill</code>) whose title strip carries the page title in the accent, "pop out" as a text key (<code>.hda-dlg-popout</code>) beside the frame's X, and whose body is ONE sandboxed frame (<code>.hda-dlg-frame</code>): <code>&lt;iframe sandbox="allow-scripts"&gt;</code> and never <code>allow-same-origin</code>, pointed at the server's signed viewer URL, which sends its own CSP. A question the agent asks sits right under the card in the thread.</dd>
     <dt>Task Manager live worker strip</dt>
-    <dd>Live worker state on a row (<code>docs/task-manager.md</code> section 46). <code>TaskManagerProgress.svelte</code> draws one line per worker under the row's title and at the top of the open detail: a phase chip (<code>.hdp-chip</code>, a 1px hairline in the phase token: running green, testing cyan, installing orange, blocked coral, queued and done dim), the worker label when there are several (<code>.hdp-worker</code>), the note (<code>.hdp-note</code>, ellipsised at 60 characters on the row, whole when open, <code>.hdp-line--full</code>) and the time since the last report (<code>.hdp-age</code>). A line with no report for 30 minutes is <code>.hdp-line--stale</code>, drawn dim. It renders nothing when the item has no line. Pushed on the <code>cplug.huddle.progress</code> topic; no poll.</dd>
+    <dd>Live worker state on a row (<code>docs/task-manager.md</code> section 46). <code>TaskManagerProgress.svelte</code> draws one line per worker under the row's title and at the top of the open detail: a phase chip (<code>.hdp-chip</code>, a 1px hairline in the phase token: running green, testing cyan, installing orange, blocked coral, queued and done dim), the worker label when there are several (<code>.hdp-worker</code>), the note (<code>.hdp-note</code>, ellipsised at 60 characters on the row, whole when open, <code>.hdp-line--full</code>) and the time since the last report (<code>.hdp-age</code>). A line with no report for 30 minutes is <code>.hdp-line--stale</code>, drawn dim. It renders nothing when the item has no line. Pushed on the <code>cplug.taskmanager.progress</code> topic; no poll.</dd>
     <dt>Task Manager session steps strip</dt>
     <dd>A working session's own checklist on the Task Manager (<code>docs/task-manager.md</code> section 56). <code>TaskManagerSteps.svelte</code> draws one fold button (<code>.hds-fold</code>) reading "3 of 7" (<code>.hds-count</code>) and "now: running tests" (<code>.hds-now</code>, the working green), which opens into the session tasks widget's own <code>TaskRows</code> (<code>.hds-list</code>, a hairline above). It sits BESIDE the worker progress lines, on a claimed working item's row and open detail only (the line under a project bar for a session that claims no item was dropped 2026-10-12). It renders nothing for a codex session, a finished list or an item that left working. Pushed on <code>session_tasks:huddle</code>; no poll.</dd>
     <dt>the session widget rails</dt>
@@ -967,7 +973,7 @@ never gets the stamp, so it shows no strip and no inset.</p>
         shade of their heading (<code>--band-shade</code>, the hue mixed toward <code>--oc-text-primary</code>); a project
         heading is <code>--oc-text-primary</code>; agent titles are untouched. A
         hand-made group paints in its own palette key, stamped on its section as <code>data-group-colour</code>, optional
-        <code>data-group-gradient</code> and <code>data-group-anim</code> (shimmer or pulse, none under reduced motion; the shimmer is a <code>.band-fx</code> span (inside a still <code>.band-fx-host</code> carrying <code>data-anim-host</code>, the one box the animation pauser watches so the windows pause together) of 24 sliding windows inside the name, each a flat slice of the old gradient over a counter-moving copy of the name, so only transform animates). The
+        <code>data-group-gradient</code> and <code>data-group-anim</code> (shimmer or pulse, none under reduced motion; both run on the shared 24 fps ambient clock via text-clipped <code>background-position</code> or <code>opacity</code> directly on <code>.session-sidebar-group__label</code> and <code>.session-sidebar-row-name</code>, with zero infinite CSS animations). Expanded saved Layouts (<code>.session-sidebar-layout__members</code>), populated hand-made groups (<code>[data-group^="g:"]</code>), expanded Companies, and all populated open Projects draw left-hand vertical guide lines at <code>55%</code> mix (<code>--row-hue</code> / <code>--band-hue</code> / <code>--sb-tint</code> / <code>--sb-block</code> when colored, falling back to crisp bright gray <code>--oc-text-muted</code> when uncolored, #3387, #3391, #3394). Top-level section children sit flush left under every section heading, all-asleep project headers wear lighter moon-gray (<code>data-all-asleep="1"</code>, <code>--oc-text-dim</code>) while nested <code>SleepFoldRow</code> counts sit darker underneath, Pack remote servers in the drawer use the <code>server</code> icon with mint-emerald online green, and collapsed nested parents uniformly order <code>[caret] [type icon] [status indicator] [name]</code>. The
         palette is named once, <code>--drawer-hue-*</code> in <code>client/css/session-sidebar-colours.css</code>: nine
         <code>--oc-*</code> tokens or <code>color-mix()</code>es of two, never a literal. Do not add a hue anywhere else; add
         a key to the palette and to <code>src/core/session_group_style.py</code> together.</dd>
@@ -1599,7 +1605,7 @@ and writes <code>/beast-mode</code>. THE CROSSTALK TRAIL (#1907, <code>Crosstalk
     questions <code>--oc-yellow</code>, swarm <code>--oc-green</code>, menu <code>--oc-text-muted</code> (graphite,
     never blue). Do: register a new slide-out with a tint and reuse an existing component as its body. Do not: draw a
     border on a slide-out, hand it a literal color, or add a dock or width control.</p>
-<p class="sg-p">THE RAIL AUTO-HIDES like the widget bars (issue #1790, Joe (ccsliinc), 2026-10-14; a hover or a click opens it (hover restored: Alex (example-owner), 2026-10-20, #2021), and the pin is in its
+<p class="sg-p">THE RAIL STARTS PINNED OPEN BY DEFAULT like the widget bars (issue #3388, Alex (example-owner), 2026-11-26, matching #2511) and AUTO-HIDES when unpinned (issue #1790, Joe (ccsliinc), 2026-10-14; a hover or a click opens it (hover restored: Alex (example-owner), 2026-10-20, #2021), and the pin is in its
     own right-click menu and, last in its column, a pin icon (<code>.sbr-shell__pin</code>): Joe (ccsliinc), 2026-10-20, items 1049 and 1041), reusing their handle and peek state machine. <code>SidebarRailShell.svelte</code> (<code>.sbr-shell</code>) wraps the rail: at rest only the 10px handle
     (<code>ZoneHandle.svelte</code> drawing <code>BarHandle.svelte</code>, <code>.bar-handle--rail</code>, the grip pill with its hairline on the list side, collapsed (<code>aria-expanded="false"</code>) it wears an accent fade, the accent at the top easing into its own ground at the bottom,
     <code>.sbr-shell__handle</code>) holds the column; a hover over it or a click on it slides the rail layer (<code>.sbr-shell__layer</code>) OVER the list with
@@ -1713,10 +1719,21 @@ and writes <code>/beast-mode</code>. THE CROSSTALK TRAIL (#1907, <code>Crosstalk
         <code>frame</code> (<code>column</code>, <code>nav</code> or <code>canvas</code>) and a page puts components into the named regions
         (<code>[data-frame-region]</code>: header, find, tabs, tools, side, body, detail, foot); it writes no geometry of its own, and
         <code>tests/python/design_system/test_frame_regions_owned.py</code> refuses a rule that restyles a region outside
-        the frame (<code>web/src/opscenter/page.css</code> and <code>page-frames.css</code>). Sizes are the <code>--oc-frame-*</code> tokens. The header holds the title, the sub, an optional
+        the frame (<code>web/src/opscenter/page.css</code>, <code>page-frames.css</code> and <code>page-tools.css</code>). Sizes are the <code>--oc-frame-*</code> tokens. The header holds the title, the sub, an optional
         search (<code>.oc-titlebar__find</code>, the same spot and size on every page that has one) and the actions; every base button in the
         header and toolbar is <code>--oc-frame-btn-h</code> tall (<code>scripts/design/frame_header_controls.py</code> refuses a raw button there).
-        The slide-out is a fourth frame, owned by the widget host, and keeps its own 44px header.</p>
+        The tool row puts its controls on its bottom edge, so a captioned field lines up, or with <code>toolAlign="center"</code> on one
+        center line (the manager pages); below 768 it wraps, or with <code>toolRow="line"</code> stays ONE row whose chips
+        (<code>.oc-page__chips</code>) or kit toolbar (<code>.oc-toolbar</code>) scroll sideways and whose own actions
+        (<code>.oc-page__tools--end</code>) sit at the right (<code>page-tools.css</code>, folded up from the manager frame). With
+        <code>omnibar="kit"</code> (the warez phone header) the phone back key and the omnibar search are 44px targets and the omnibar draws no
+        magnifier; with <code>omniGap</code> (the manager pages) the main column sits 12px under the omnibar; with <code>detailAccent</code> the
+        detail title wears the accent (the automations quick view). Below 900px a detail that replaces its list takes the focus into its
+        head and hands it back to the opener when it closes. A page embedded inside another page's body is a region of it, with no border or corner;
+        a filled detail body (<code>.oc-page__detail-body--fill</code>) has no padding and no scroll of its own.
+        The slide-out is a fourth frame, owned by the widget host, and keeps its own 44px header; its title row and actions row are frame
+        regions too (<code>data-btn-density="frame"</code>), so every button in them, the close X included, is the same
+        <code>--oc-frame-btn-h</code> as a page header button (Joe (ccsliinc), 2026-11-20, #2775, call C), and no widget writes a button size there.</p>
 
 <div class="sg-specimen">
     <div class="sg-specimen__label"><span>frame</span><span>column: header, tool row, body, detail, foot</span></div>

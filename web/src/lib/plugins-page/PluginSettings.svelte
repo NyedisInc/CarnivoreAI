@@ -24,8 +24,9 @@
     let error = $state<{ key: string; text: string } | null>(null);
     let advice = $state<readonly SettingsWarning[]>([]);
     const schema = $derived(plugin.settingsSchema);
-    const shown = $derived(schema ? visibleSchema(plugin.cplugId, schema) : null);
+    const shown = $derived(schema ? visibleSchema(schema) : null);
     const Extra = $derived(settingsExtraOf(plugin.cplugId));
+    const showForm = $derived(formIsShown(shown, Boolean(Extra)));
 
     const chosen = $derived(
         Object.fromEntries(Object.entries(settings).filter(([key, value]) => schema?.fields[key] && schema.fields[key]!.default !== value)),
@@ -55,9 +56,9 @@
     <div class="plp-region" data-plugin-settings id={`plugin-settings-${plugin.cplugId}`}>
         <CplugSurface {plugin} surface="settings" {t} />
     </div>
-{:else if hasPluginSettings(plugin) && (shown || Extra)}
+{:else if hasPluginSettings(plugin) && (showForm || Extra)}
     <div class="plp-region" data-plugin-settings id={`plugin-settings-${plugin.cplugId}`}>
-        {#if shown && formIsShown(shown, Boolean(Extra))}<SettingsForm schema={shown} values={chosen} {t} onChange={(key, value) => void change(key, value)} {busyKey} {error} warnings={advice} idPrefix={`plugin-${plugin.cplugId}`} />{/if}
+        {#if shown && showForm}<SettingsForm schema={shown} values={chosen} {t} onChange={(key, value) => void change(key, value)} {busyKey} {error} warnings={advice} idPrefix={`plugin-${plugin.cplugId}`} />{/if}
         {#if Extra}<Extra />{/if}
     </div>
 {:else}

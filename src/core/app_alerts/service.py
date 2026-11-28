@@ -106,6 +106,18 @@ def resolve(key: str, *, db_path: Optional[Path] = None) -> List[Dict[str, Any]]
     return rows
 
 
+def drop_actions(key: str, action_ids: Sequence[str], *, db_path: Optional[Path] = None) -> int:
+    path = db_path or _db_path
+    if path is None:
+        return 0
+    try:
+        with closing(_connect(path)) as conn:
+            return store.drop_actions(conn, key, action_ids)
+    except (sqlite3.Error, ValueError, OSError) as exc:
+        logger.error("app_alert_drop_actions_failed", key=key, error=str(exc), error_type=type(exc).__name__)
+        return 0
+
+
 def list_view(db_path: Path, *, include_closed: bool, limit: int) -> Dict[str, Any]:
     with closing(_connect(db_path)) as conn:
         for row in store.wake_snoozed(conn):

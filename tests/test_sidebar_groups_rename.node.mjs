@@ -182,7 +182,7 @@ await test('every class the groups module EMITS has a CSS rule somewhere', () =>
 
 await test('the density contract is DECLARED in the stylesheet, not left to add up', () => {
     const css = repoFile('client', 'css', 'session-sidebar-density.css');
-    for (const [mode, px] of [['compact', 24], ['cozy', 46], ['detailed', 66]]) {
+    for (const [mode, px] of [['compact', 28], ['cozy', 46], ['detailed', 66]]) {
         const re = new RegExp(
             `\\[data-density="${mode}"\\]\\s*\\.session-sidebar-row\\s*\\{[^}]*min-height:\\s*${px}px`);
         assert.ok(re.test(css), `${mode} must declare min-height: ${px}px`);

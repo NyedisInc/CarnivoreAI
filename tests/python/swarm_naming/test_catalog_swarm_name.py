@@ -18,9 +18,14 @@ PACK_MEANS_MACHINES = ("pack.", "projects.page.pack", "projects.page.action.pack
                        "pack_knock.", "notify.type.computer.knock.", "notify.copy.computer.knock.",
                        "skills.prov.consent_pack",
                        "automations.placement.", "launch_picker.computer.", "api.error.requirement_unmet", "api.error.pack_not_running",
-                       "notify.routing.group.when.security")
+                       "notify.routing.group.when.security",
+                       "pack.approval.", "pack.globalsync.", "api.error.link_peers_", "api.error.settings_unavailable",
+                       "settings.phone_link.pack_member", "ios.app.tab_pack", "ios.app.pack_")
 ALPHA_IS_THE_LEAD = ("pack.machines.", "pack.work.", "app_alert.pack_skills.", "drawer.pack.alpha", "skills.pack.",
-                     "notify.type.pack.skills.")
+                     "notify.type.pack.skills.",
+                     "first_run.", "computers.", "roster.", "pack.approval.", "pack.globalsync.", "api.error.link_peers_",
+                     "api.error.settings_unavailable",
+                     "settings.phone_link.pack_member")
 ALPHA = re.compile(r"\balpha\b", re.IGNORECASE)
 
 

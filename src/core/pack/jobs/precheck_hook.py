@@ -7,7 +7,13 @@ import sys
 import urllib.request
 
 EXEMPT = frozenset({"git", "gh", "ls", "cat", "head", "tail", "grep", "rg", "sed", "awk", "wc", "echo", "cd", "pwd", "mkdir", "mv", "cp", "rm",
-                    "touch", "find", "which"})
+                    "touch", "find", "which", "cut", "tr", "sort", "uniq", "seq", "xargs", "tee", "export", "set", "unset", "local", "break",
+                    "continue", "return", "basename", "dirname", "realpath", "stat", "date", "shasum", "sha256sum", "md5", "jq", "yq", "printf",
+                    "read", "sysctl", "sw_vers", "uname", "ps", "pgrep", "lsof", "env", "id", "whoami", "pbcopy", "pbpaste", "open", "chmod",
+                    "chown", "ln", "readlink", "mktemp", "gofmt",
+                    "ssh", "scp", "sftp", "rsync", "mosh", "sleep", "true", "false", "test", "[", "[["})
+WRAPPERS = frozenset({"timeout", "gtimeout", "time", "nice", "ionice", "caffeinate", "nohup", "command", "exec", "env"})
+FLOW_WORDS = frozenset({"until", "while", "do", "done", "if", "then", "else", "elif", "fi"})
 HEAVY_PROGRAMS = frozenset({"webpack", "tsc", "make", "xcodebuild", "gradle", "gradlew", "mvn", "pytest", "vitest", "jest", "playwright",
                             "ffmpeg", "blender", "remotion"})
 HEAVY_ARGS = {"npm": {"build", "test"}, "pnpm": {"build", "test"}, "yarn": {"build", "test"}, "bun": {"build", "test"}, "vite": {"build"},
@@ -17,6 +23,64 @@ RED_MARK = "\x1b[31m///\x1b[0m"
 LOCAL_HOSTS = ("localhost", "127.0.0.1")
 TIMEOUT_S = 0.25
 _OPERATORS = {";", "&&", "||", "|", "&", "|&", "(", ")", "\n"}
+
+
+def _unwrap_words(words):
+    while words:
+        head = words[0]
+        if "=" in head and not head.startswith("=") and head.split("=", 1)[0].replace("_", "a").isalnum():
+            words = words[1:]
+            continue
+        if head in FLOW_WORDS:
+            words = words[1:]
+            continue
+        base = os.path.basename(head)
+        if base in ("timeout", "gtimeout"):
+            rest = words[1:]
+            while rest and rest[0].startswith("-"):
+                flag = rest[0]
+                rest = rest[2:] if flag in ("-k", "-s", "--kill-after", "--signal") and len(rest) > 1 else rest[1:]
+            words = rest[1:] if len(rest) >= 2 else []
+            continue
+        if base in ("time", "nohup", "command", "exec"):
+            rest = words[1:]
+            while rest and rest[0].startswith("-"):
+                rest = rest[1:]
+            words = rest
+            continue
+        if base in ("nice", "caffeinate", "env"):
+            rest = words[1:]
+            while rest and (rest[0].startswith("-") or ("=" in rest[0] and base == "env")):
+                flag = rest[0]
+                rest = rest[2:] if flag in ("-n", "-u", "-t") and len(rest) > 1 else rest[1:]
+            words = rest
+            continue
+        break
+    return words
+
+
+def _raw_programs(command):
+    command = command.split("<<", 1)[0]
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    tokens, current = list(lexer), []
+    out = []
+    for token in tokens + [";"]:
+        if token in _OPERATORS or (set(token) <= set(";&|()") and token):
+            if current:
+                out.append(current)
+            current = []
+        else:
+            current.append(token)
+    result = []
+    for words in out:
+        while words and "=" in words[0] and not words[0].startswith("=") and words[0].split("=", 1)[0].replace("_", "a").isalnum():
+            words = words[1:]
+        while words and words[0] in FLOW_WORDS:
+            words = words[1:]
+        if words and words[0] != "for":
+            result.append((os.path.basename(words[0]), words[1:]))
+    return result
 
 
 def _programs(command):
@@ -34,10 +98,17 @@ def _programs(command):
             current.append(token)
     result = []
     for words in out:
-        while words and "=" in words[0] and not words[0].startswith("=") and words[0].split("=", 1)[0].replace("_", "a").isalnum():
-            words = words[1:]
-        if words:
-            result.append((os.path.basename(words[0]), words[1:]))
+        words = _unwrap_words(words)
+        if not words or words[0] == "for":
+            continue
+        base = os.path.basename(words[0])
+        if base in ("bash", "sh", "zsh") and len(words) >= 3 and words[1] in ("-c", "-lc", "-ec"):
+            try:
+                result.extend(_programs(words[2]))
+                continue
+            except ValueError:
+                pass
+        result.append((base, words[1:]))
     return result
 
 
@@ -81,7 +152,7 @@ def expects_long(command, background=False, timeout_ms=None):
     if background is True or (isinstance(timeout_ms, (int, float)) and not isinstance(timeout_ms, bool) and timeout_ms > 120000):
         return True
     try:
-        parts = _programs(command)
+        parts = _raw_programs(command)
     except ValueError:
         return False
     for name, args in parts:
@@ -131,8 +202,8 @@ def message(text):
 def agent_task(tool, where):
     kind = tool.get("subagent_type")
     typed = ", agent_type = " + kind if isinstance(kind, str) and kind and all(c.islower() or c.isdigit() or c == "-" for c in kind) else ""
-    return (f"this computer is full; carnivore runs this subagent on {where}, another computer in the pack. do not start it here: call the carnivore "
-            f"delegate tool with task = the subagent's prompt{typed}, and use its answer.")
+    return (f"this computer is full and {where} has room. 1) call the carnivore delegate tool now with task = the subagent's prompt{typed}. "
+            "2) if it answers here, start the subagent again: it goes through. 3) do not retry it first, wait, or schedule a wake.")
 
 
 def main_agent(data):
@@ -171,8 +242,8 @@ def main():
     if not answer or answer.get("decision") != "block":
         return 0
     where = answer.get("computer") or "another computer in the pack"
-    plain, terminal = message(f"this computer is full; carnivore runs this heavy command on {where}, another computer in the pack. "
-                              "use the carnivore delegate tool.")
+    plain, terminal = message(f"this computer is full and {where} has room. 1) call the carnivore delegate tool now with this exact command. "
+                              "2) if it answers here, run the command again: it goes through. 3) do not retry it first, wait, or schedule a wake.")
     sys.stdout.write(json.dumps({"hookSpecificOutput": {"hookEventName": "PreToolUse", "permissionDecision": "deny", "permissionDecisionReason": plain},
                                  "systemMessage": terminal}) + "\n")
     return 0

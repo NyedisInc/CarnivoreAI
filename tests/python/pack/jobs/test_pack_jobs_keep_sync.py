@@ -189,3 +189,39 @@ async def test_prewarm_is_held_while_a_delegate_job_would_need_a_card(rig: Rig) 
 def test_the_default_seam_never_asks_for_a_warm_up(rig: Rig) -> None:
     bare = keep_sync.KeepSync(rig.store, carry=rig._carry, view_for=rig._view, gauge=lambda: {}, prewarm=rig._prewarm, project_of=lambda u: None)
     assert bare._may_prewarm() is False
+
+
+NEW = "iid-new"
+
+
+@arun
+async def test_a_computer_that_qualifies_later_gets_the_missing_copy(tmp_path: Path) -> None:
+    from src.core.pack.jobs import copy_run
+    from src.core.pack.jobs.types import JobError
+
+    store = JobStore(tmp_path)
+    store.policy_upsert(UID, auto_delegate=1)
+    now, made, refuse = [10_000.0], [], [None]
+
+    async def make(name: str, uid: str, peer: str) -> bool:
+        made.append(peer)
+        if refuse[0]:
+            raise JobError(refuse[0], "refused", 409)
+        return True
+
+    def view(root: str, uid: str) -> PlaceView:
+        peers = [rule.MachineInput(i, i, {"pressure": {"pegged": False}}, usable=True, has_project=False) for i in (NEW, "iid-old", "iid-never", "ssh:x")]
+        return PlaceView(rule.MachineInput("iid-a", "home", None, is_self=True), peers, {NEW: [CAP_JOBS], "iid-old": [], "iid-never": [CAP_JOBS], "ssh:x": [CAP_JOBS]})
+
+    store.policy_upsert(UID, never_use_json='["iid-never"]')
+    sync = keep_sync.KeepSync(store, carry=lambda *a: None, view_for=view, gauge=lambda: None, prewarm=lambda *a: None,
+                              project_of=lambda uid: {"root": "/p", "uid": uid, "display_name": "P"}, clock=lambda: now[0], make_copy=make)
+    assert [r["outcome"] for r in await sync.tick()] == ["copy_made"] and made == [NEW]
+    assert copy_run.get(UID)["running"] is False
+    refuse[0] = "peer_refused"
+    out = await sync.tick()
+    assert [r["outcome"] for r in out] == ["copy_refused"] and copy_run.get(UID)["refused"] == {NEW: "peer_refused"}
+    now[0] += 60
+    assert await sync.tick() == [] and made == [NEW, NEW]
+    sync.on_reconnect(NEW)
+    assert [r["code"] for r in await sync.tick()] == ["peer_refused"] and made == [NEW, NEW, NEW]

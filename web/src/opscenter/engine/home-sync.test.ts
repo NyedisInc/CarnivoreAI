@@ -11,11 +11,13 @@ import {
   HOME_LAYOUT_FIELD as FIELD,
   WRITE_DELAY,
   applyHome,
+  homeBoards,
   type HomeValue,
   hydrateHome,
   parseHome,
   resetHomeSync,
   startHomeSync,
+  viewBoard,
 } from './home-sync.svelte';
 import { homeSeedLevel, setHomeSeedLevel } from './home-seed';
 import { homeLayout } from './layout.svelte';
@@ -239,4 +241,65 @@ test('u161-03: a migration whose write throws is retried on the next hydrate', a
   await hydrateHome();
   await hydrateHome();
   expect(prefs.sets).toHaveLength(1);
+});
+
+test('remote preferences.changed updating home_layout.active switches the displayed dashboard cleanly without clobbering a deliberate temporary view (#3385)', async () => {
+  const boardLayout = (collapsed: boolean): Layout => ({ ...resetLayout(META, 'home'), heroCollapsed: collapsed });
+  const multi = (active: string): HomeValue => ({
+    v: 2,
+    boards: [
+      { id: 'home', name: 'home', layout: boardLayout(false) },
+      { id: 'ops', name: 'ops', layout: boardLayout(true) },
+      { id: 'noc', name: 'noc', layout: boardLayout(false) },
+    ],
+    analytics_seed: 2,
+    active,
+  });
+
+  prefs.values[FIELD] = multi('home');
+  startHomeSync({ target: null });
+  await hydrateHome();
+  expect(homeBoards.active).toBe('home');
+  expect(homeBoards.viewing).toBeNull();
+  expect(homeLayout.state.layout.heroCollapsed).toBe(false);
+
+  const push = (next: HomeValue): void => {
+    prefs.values[FIELD] = next;
+    for (const listener of prefs.listeners) listener(FIELD, next, { state: prefs.COMMITTED });
+  };
+  push(multi('ops'));
+  expect(homeBoards.active).toBe('ops');
+  expect(homeBoards.viewing).toBeNull();
+  expect(homeLayout.state.layout.heroCollapsed).toBe(true);
+  await settle();
+  expect(prefs.sets).toHaveLength(0);
+
+  await viewBoard('noc');
+  expect(homeBoards.viewing).toBe('noc');
+  expect(homeBoards.active).toBe('ops');
+  push(multi('home'));
+  expect(homeBoards.active).toBe('home');
+  expect(homeBoards.viewing).toBe('noc');
+
+  push(multi('noc'));
+  expect(homeBoards.active).toBe('noc');
+  expect(homeBoards.viewing).toBeNull();
+
+  await viewBoard('ops');
+  expect(homeBoards.viewing).toBe('ops');
+  const withoutOps: HomeValue = {
+    v: 2,
+    boards: [
+      { id: 'home', name: 'home', layout: boardLayout(false) },
+      { id: 'noc', name: 'noc', layout: boardLayout(true) },
+    ],
+    analytics_seed: 2,
+    active: 'noc',
+  };
+  push(withoutOps);
+  expect(homeBoards.active).toBe('noc');
+  expect(homeBoards.viewing).toBeNull();
+  expect(homeLayout.state.layout.heroCollapsed).toBe(true);
+  await settle();
+  expect(prefs.sets).toHaveLength(0);
 });

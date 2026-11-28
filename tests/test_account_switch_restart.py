@@ -850,7 +850,7 @@ def test_the_pass_tells_the_rotation_whether_the_pointer_moved(state):
 
 
 def test_the_ledger_hook_does_not_wait_on_a_rotation(monkeypatch):
-    from src.core.account_switch import auto_switch, ledger_hook, profile_setup
+    from src.core.account_switch import agy_rotate, auto_switch, ledger_hook, profile_setup
 
     gate = {}
 
@@ -864,8 +864,10 @@ def test_the_ledger_hook_does_not_wait_on_a_rotation(monkeypatch):
         gate["release"] = asyncio.Event()
         monkeypatch.setattr(profile_setup, "after_pass", noop)
         monkeypatch.setattr(auto_switch, "after_pass", noop)
+        monkeypatch.setattr(agy_rotate, "after_pass", noop)
         monkeypatch.setattr(auto_restart, "after_pass", slow)
         await asyncio.wait_for(ledger_hook.after_ledger_pass(None, None), 1)
+        await asyncio.sleep(0.02)
         assert len(ledger_hook._TASKS) == 1
         gate["release"].set()
         await asyncio.sleep(0.05)

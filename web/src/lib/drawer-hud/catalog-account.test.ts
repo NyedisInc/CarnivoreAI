@@ -89,22 +89,29 @@ describe('a phone tab that comes back reads the account again', () => {
 describe('a read that began before a sign out cannot bring the member back (u136-03)', () => {
     afterEach(() => vi.unstubAllGlobals());
 
-    test('a pushed signed_in:false discards the read still in flight', async () => {
+    test('a pushed account.session frame is a re-read hint: the newest read wins, the frame settles nothing (#3081)', async () => {
         let frameHandler: ((f: { type?: string; signed_in?: boolean }) => void) | null = null;
         const target = { addEventListener: () => {}, removeEventListener: () => {} };
         vi.stubGlobal('window', target);
         vi.stubGlobal('document', { ...target, visibilityState: 'visible' });
         let release!: () => void;
         const slow = new Promise<void>((r) => (release = r));
+        let reads = 0;
         g.API = {
             getCatalogSession: async () => {
-                await slow;
-                return { signed_in: true, login: 'alex@example.com', provider: 'github' };
+                reads++;
+                if (reads === 1) {
+                    await slow;
+                    return { signed_in: true, login: 'alex@example.com', provider: 'github' };
+                }
+                return { signed_in: false };
             },
         };
         (globalThis as { AppEvents?: unknown }).AppEvents = { subscribe: (h: typeof frameHandler) => ((frameHandler = h), () => {}) };
         const stop = followCatalogAccount();
-        frameHandler!({ type: 'account.session', signed_in: false });
+        frameHandler!({ type: 'account.session' });
+        await new Promise((r) => setTimeout(r, 0));
+        expect(reads).toBe(2);
         expect(catalogAccount.facts).toBeNull();
         release();
         await new Promise((r) => setTimeout(r, 0));

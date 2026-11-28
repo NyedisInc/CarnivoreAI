@@ -32,7 +32,7 @@ const isSessionless = (c: RowMenuCtx): boolean => c.kind === 'browser' || c.kind
 
 const isRemote = (c: RowMenuCtx): boolean => !!c.hostKey && c.hostKey !== 'local';
 
-const SLEEPABLE_FAMILIES = ['claude', 'codex'];
+const SLEEPABLE_FAMILIES = ['claude', 'codex', 'custom'];
 
 const SWARM_FAMILIES = ['claude', 'codex'];
 
@@ -97,6 +97,12 @@ export const ROW_ITEMS: readonly RowItem[] = [
     {
         id: 'add-members', order: 300,
         label: () => 'add',
+        available: (c) => !!c.groupable && c.kind === 'layout',
+        enabled: always, reason: noReason,
+    },
+    {
+        id: 'group', order: 305,
+        label: () => tr('sidebar.group.menu.new'),
         available: (c) => !!c.groupable && c.kind === 'layout',
         enabled: always, reason: noReason,
     },

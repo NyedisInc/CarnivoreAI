@@ -9,7 +9,7 @@
     import { secretField } from '../../secret-field';
     import type { Destination, Kind, KindField } from './api';
     import ModelPicker from '../../byoai/ModelPicker.svelte';
-    import { complete, initialDraft, kindItems, kindOf, type Draft } from './form-logic';
+    import { complete, fieldLabel, initialDraft, kindItems, kindOf, type Draft } from './form-logic';
 
     interface Props {
         t?: Translate;
@@ -21,15 +21,33 @@
     }
     const { t = reactiveT, kinds, destination, busy = false, onSave, onCancel }: Props = $props();
 
+    const FALLBACK_KIND: Kind = {
+        id: '',
+        label_key: '',
+        sms_like: false,
+        details_allowed: false,
+        virtual: false,
+        public_fields: [],
+        secret_fields: [],
+    };
+
     // svelte-ignore state_referenced_locally
-    const first = kindOf(kinds, destination?.kind ?? '') ?? kinds[0]!;
+    const first = kindOf(kinds, destination?.kind ?? '') ?? kinds[0] ?? FALLBACK_KIND;
     // svelte-ignore state_referenced_locally
     let draft = $state<Draft>(initialDraft(first, destination));
     let localOnly = $state(false);
 
-    const kind = $derived(kindOf(kinds, draft.kind) ?? first);
     const editing = $derived(destination !== null);
-    const ready = $derived(complete(kind, draft, destination));
+    const kind = $derived(kindOf(kinds, draft.kind) ?? (editing ? first : (kinds[0] ?? FALLBACK_KIND)));
+    const ready = $derived(kind.id !== '' && complete(kind, draft, destination));
+
+    $effect(() => {
+        if (editing || kinds.length === 0) return;
+        if (!kindOf(kinds, draft.kind)) {
+            const next = kinds[0]!;
+            draft = { ...initialDraft(next, null), name: draft.name, enabled: draft.enabled };
+        }
+    });
 
     function pickKind(id: string): void {
         const next = kindOf(kinds, id);
@@ -37,7 +55,7 @@
         draft = { ...initialDraft(next, null), name: draft.name, enabled: draft.enabled };
     }
 
-    const label = (f: KindField): string => t(`settings.notify.field.${f.name}`);
+    const label = (f: KindField): string => fieldLabel(f, t);
     const isSet = (name: string): boolean => destination?.secrets[name]?.set === true;
 </script>
 

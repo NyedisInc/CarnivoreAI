@@ -17,6 +17,7 @@ class OverlayPlan:
     chained: bool = False
     replaces_flags: bool = False
     upstream_url: str = ""
+    tool: str = ""
 
 
 @dataclass(frozen=True)

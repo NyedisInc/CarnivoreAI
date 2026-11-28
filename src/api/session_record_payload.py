@@ -1,11 +1,19 @@
 
 from src.core.agent_family_display import resolve_family_for_display
+from src.core.agent_wrapper_display import resolve_wrapper_for_display
 from src.config import wrapper_reader
 from src.models import SessionRecord
 from typing import Optional
 
 
 
+
+
+def _wrapper_icon_for_row(row: dict) -> Optional[str]:
+    agent_type = row.get("agent_type")
+    if not agent_type:
+        return None
+    return resolve_wrapper_for_display(str(agent_type), wrapper_reader.configured_wrappers()).icon
 
 
 def _family_name_for_row(row: dict) -> Optional[str]:
@@ -55,6 +63,7 @@ def _session_record_payload(row: dict, unread_store=None, theme_store=None) -> S
         agent_type=row.get("agent_type"),
         agent_family=_family_name_for_row(row),
         agent_family_source=row.get("agent_family_source"),
+        agent_wrapper_icon=_wrapper_icon_for_row(row),
         model=row.get("model"),
         archived_at=row.get("archived_at"),
         title=row.get("title"),

@@ -93,18 +93,19 @@ class _Planner:
         found: List[PlannedFile] = []
         for entry in entries:
             key = _KEYS.get(entry.role)
-            if key is None or entry.home not in (P.HOME_CLAUDE, P.HOME_CODEX) or not entry.rel:
+            home = P.HOME_CODEX if entry.home.startswith(f"{P.HOME_CODEX}@") else entry.home
+            if key is None or home not in (P.HOME_CLAUDE, P.HOME_CODEX) or not entry.rel:
                 continue
             rule = P.POLICY[key]
             if (rule.own if self.variant == P.OWN else rule.share) != P.CARRY:
                 continue
-            if same_place(entry.home, entry.rel) in self.on_disk:
+            if same_place(home, entry.rel) in self.on_disk:
                 continue
             placed = self.homes.place(entry.source_path) if entry.source_path else None
-            index = placed[1] if placed is not None and placed[0] == entry.home else 0
+            index = placed[1] if placed is not None and placed[0] == home else 0
             found.append(PlannedFile(
-                key=key, role=entry.role, home=entry.home, home_index=index, rel=entry.rel, source_path=None,
-                conversation_id=conversation, family=entry.family, enc_folder=enc_of(entry.home, entry.rel),
+                key=key, role=entry.role, home=home, home_index=index, rel=entry.rel, source_path=None,
+                conversation_id=conversation, family=entry.family, enc_folder=enc_of(home, entry.rel),
                 line_mode=P.line_mode(entry.role, os.path.basename(entry.rel)), size=int(entry.length),
                 origin=ORIGIN_VAULT, vault=(entry.signature, entry.rel), mtime_ns=int(entry.mtime_ns or 0),
                 mode=int(entry.mode or 0) & 0o7777, artifact=what))

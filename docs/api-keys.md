@@ -56,6 +56,7 @@ A key is refused on:
 | `/api/v1/api-keys` | api key management (create, list, revoke) | a stolen key must not mint more keys or revoke the owner's |
 | `/api/v1/auth/` | sign in (TOTP verify), refresh, sign out, status, authenticator enrollment (TOTP setup and the re-pair hatch), the join door | sign-in stays the owner's |
 | `/api/v1/mcp-admin/tokens` | minting and revoking MCP client tokens | minting a credential, the same class as creating a key |
+| `/api/v1/cplugs/save/mass-gone/clear` | lifting the backup vault's mass-gone freeze (#3141) | the owner's own yes after a mass loss; a key must not re-enable pruning |
 
 There is no password route and no authenticated TOTP reset route in this build; TOTP setup lives under `/auth/enrollment`,
 which the `/auth/` prefix covers. Most `/auth/*` routes never read a bearer at all (they take a TOTP code or a refresh

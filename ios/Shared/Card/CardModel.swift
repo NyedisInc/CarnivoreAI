@@ -134,7 +134,8 @@ struct CardModel: Equatable {
             return out
         case .file:
             let name = card.string("name") ?? ""
-            let type = (name.split(separator: ".").last.map(String.init) ?? (card.string("mime") ?? "").split(separator: "/").last.map(String.init) ?? "").lowercased()
+            let ext = name.contains(".") ? name.split(separator: ".").last.map(String.init) : nil
+            let type = (ext ?? (card.string("mime") ?? "").split(separator: "/").last.map(String.init) ?? "file").lowercased()
             let size = sizeText(card.int("bytes") ?? 0)
             let meta = (card.int("pages") ?? 0) > 0 ? Strings.fill(Strings.cardValueFilePages, ["size": size, "pages": String(card.int("pages") ?? 0)]) : size
             return [.fileHead(name: name, type: type, meta: meta, from: Strings.cardRowFrom + " " + (card.string("from") ?? agent))]

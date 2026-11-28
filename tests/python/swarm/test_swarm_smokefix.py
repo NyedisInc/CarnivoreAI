@@ -24,9 +24,9 @@ from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.swarm import answers, delivery, facts, owner_message, spawn, store, thread_port
 from src.plugins.host import runtime
-from src.plugins.huddle import routes as huddle_routes
-from src.plugins.huddle.public import TaskManagerSwarmPort
-from tests.python.cplugs.owner import turn_on
+from src.plugins.taskmanager import routes as huddle_routes
+from src.plugins.taskmanager.public import TaskManagerSwarmPort
+from tests.python.cplugs.owner import include_task_manager_routes, turn_on
 
 BASE = "/api/v1/cplugs/huddle"
 
@@ -47,12 +47,12 @@ def world(tmp_path, monkeypatch):
         other = store.create_agent(conn, slug="other", rank="project", job="other", display_name="Other",
                                    repo_dir=str(tmp_path / "other"), effort="high")
     app = FastAPI()
-    app.include_router(huddle_routes.router, prefix="/api/v1")
+    include_task_manager_routes(app, huddle_routes.router)
     app.include_router(swarm_routes.router, prefix="/api/v1")
     host = runtime.install(app, tmp_path)
     host.publish = lambda topic: None
     turn_on(host)
-    ctx = host.context("huddle")
+    ctx = host.context("taskmanager")
     port = TaskManagerSwarmPort(ctx)
     ctx.swarm.register_thread_port(port)
     app.dependency_overrides[require_auth] = lambda: {"sub": "test"}

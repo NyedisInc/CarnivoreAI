@@ -91,6 +91,7 @@
     {#if mod.version}<span class="mods-line">{mod.version}</span>{/if}
     <span class="mods-mark" data-mod-source={mod.source}>{t(`mods.source.${mod.source}`)}</span>
     <span class="mods-line" data-mod-state-label>{stateLabel(mod)}</span>
+    {#if mod.restored}<span class="mods-line mods-line--warn" data-mod-restored>{t('mods.restored')}</span>{/if}
     {#if !mod.is_mod}<span class="mods-mark">{t('mods.kind.plugin_dir')}</span>{/if}
     {#if !mod.present}<span class="mods-line mods-line--warn">{t('mods.missing')}</span>{/if}
     {#if mod.description}<span class="mods-line mods-row__desc">{mod.description}</span>{/if}

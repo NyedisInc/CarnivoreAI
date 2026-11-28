@@ -5,7 +5,8 @@ import fnmatch
 import re
 from typing import Optional, Tuple
 
-HARNESSES: Tuple[str, ...] = ("claude", "codex")
+HARNESSES: Tuple[str, ...] = ("claude", "codex", "agy")
+ONLY_ITEMS = {"agents": ("skills",), "agy": ("skills", "rules")}
 HOME_TOKEN = "@@CARNIVORE-HOME@@"
 
 DENIED_NAMES: frozenset = frozenset({
@@ -24,7 +25,7 @@ DENIED_GLOBS: Tuple[str, ...] = ("*.sqlite*", "*.db", "*.db-*", "*.lock", "*.loc
                                  "*.synced-at", "*.stamp.json", "*.signature.json", "carnivore-*", ".*", "*credentials*", "*.jsonl")
 PLUGIN_FILES: Tuple[str, ...] = ("plugins/installed_plugins.json", "plugins/known_marketplaces.json", "plugins/blocklist.json")
 PLUGIN_DIRS: Tuple[str, ...] = ("plugins/marketplaces", "plugins/cache")
-SLOT_RE = re.compile(r"^(claude|codex|agents)\.(default|[a-z0-9][a-z0-9._-]{0,62})$")
+SLOT_RE = re.compile(r"^(claude|codex|agents|agy)\.(default|[a-z0-9][a-z0-9._-]{0,62})$")
 
 MAX_FILE_BYTES = 20 * 1024 * 1024
 MAX_TEXT_BYTES = 5 * 1024 * 1024
@@ -70,6 +71,6 @@ def path_problem(kind: str, rel: str) -> Optional[str]:
     if parts[0] == "plugins" and kind == "claude":
         joined = "/".join(parts)
         return None if any(joined == a or joined.startswith(a + "/") for a in (*PLUGIN_FILES, *PLUGIN_DIRS)) else "not a synced item"
-    if kind == "agents" and parts[0] != "skills":
+    if kind in ONLY_ITEMS and parts[0] not in ONLY_ITEMS[kind]:
         return "not a synced item"
     return "denied" if is_denied(parts[0]) else None

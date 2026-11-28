@@ -479,3 +479,23 @@ describe('issue #2945: a project made from the new project form is filed under i
         expect(rec.calls.map(([kind]) => kind)).not.toContain('createSession');
     });
 });
+
+describe('issue #3374: new project is still persisted when initial agent launch exits (502)', () => {
+    test('a 502 agent_exited failure on local createProjectFlow still persists the project row and refreshes projects', async () => {
+        const boom = Object.assign(new Error('agent_exited'), {
+            status: 502,
+            body: { code: 'agent_exited', detail: 'agent started and quit right away' },
+        });
+        const rec = recorder({
+            createSession: async () => {
+                throw boom;
+            },
+        });
+        const m = modals({ newProject: [GOOD_NEW_PROJECT] });
+        const result = await createProjectFlow(rec.host, m.openers, enT(), null);
+        expect(result.outcome).toBe('failed');
+        expect(rec.calls.map(([kind]) => kind)).toContain('createProject');
+        expect(rec.calls.map(([kind]) => kind)).toContain('reloadProjects');
+        expect(rec.errors).toHaveLength(1);
+    });
+});

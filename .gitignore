@@ -132,6 +132,8 @@ web/node_modules.nosync/
 
 !hosted/catalog/admin/dist/
 
+!src/plugins/sdk_ts/dist/
+
 !.claude/skills/
 
 !.claude/agents/

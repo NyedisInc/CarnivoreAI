@@ -12,7 +12,8 @@ from fastapi.responses import JSONResponse
 
 from src.api.auth import require_auth
 from src.api.catalog_client_status import client_status
-from src.core.catalog import catalog_auth, hosted_api, token_refresh
+from src.api.catalog_signin_finish import finish_signin
+from src.core.catalog import catalog_auth, client_sessions, hosted_api, token_refresh
 from src.core.catalog.device_label import device_fields
 from src.core.catalog.device_flow import DeviceFlowStore
 from src.core.db import get_meta
@@ -82,7 +83,7 @@ async def _hosted(
             status_code=502, detail={"code": exc.code, "detail": exc.detail}
         ) from exc
     if bearer and token_refresh.is_session_revoked(answer.status, answer.body):
-        catalog_auth.forget_if_access_is(_state_dir(request), bearer)
+        catalog_auth.forget_credential(_state_dir(request), bearer)
         logger.info("catalog_session_revoked_upstream")
     return answer
 
@@ -377,7 +378,7 @@ async def finish_device_flow(
     _required_string(hosted_body, "login")
     _required_string(hosted_body, "access_token")
     _required_string(hosted_body, "refresh_token")
-    session = catalog_auth.save_session(_state_dir(request), hosted_body, provider)
+    session = await finish_signin(request, hosted_body, provider)
     _flows.finish(body.flow_id)
     return CatalogSessionResponse.held(session.login)
 
@@ -398,16 +399,18 @@ async def catalog_auth_session(request: Request) -> CatalogSessionResponse:
     ONLY AN UNUSABLE REFRESH TOKEN READS AS SIGNED OUT. The reply also
     carries the stored provider and the account email.
     """
-    held = await catalog_auth.current(
-        _state_dir(request), _catalog(request).api_base_url(), allow_guest=True
+    views = await client_sessions.session_views(
+        _state_dir(request), _catalog(request).api_base_url(), client_sessions.client_ref(request)
     )
-    if held is None:
-        return CatalogSessionResponse(signed_in=False, login=None)
-    if held.is_guest:
+    client, computer = views["client"], views["computer"]
+    if views["guest"]:
         return JSONResponse(  # type: ignore[return-value]
-            {"signed_in": False, "login": None, "provider": None, "email": None, "kind": "guest"}
+            {"signed_in": False, "login": None, "provider": None, "email": None, "kind": "guest",
+             "client": client, "computer": computer}
         )
-    return CatalogSessionResponse.held(held.login, held.provider)
+    answer = CatalogSessionResponse.held(client["login"], client["provider"]) if client["signed_in"] \
+        else CatalogSessionResponse(signed_in=False, login=None)
+    return JSONResponse({**answer.model_dump(), "client": client, "computer": computer})  # type: ignore[return-value]
 
 
 @router.post(
@@ -416,13 +419,17 @@ async def catalog_auth_session(request: Request) -> CatalogSessionResponse:
     dependencies=[Depends(require_auth)],
 )
 async def catalog_auth_signout(request: Request) -> CatalogSessionResponse:
-    """Sign this device out: end its hosted session, then forget the stored sign in.
+    """Sign THIS CLIENT out of carnivore; the computer's own session (relay, phone link, push) stays.
 
-    The hosted session is revoked first, best effort with the held access
-    token, so the device disappears from the account's session list and the
-    token dies now rather than at its eight hour end. An unreachable host or
-    an already dead session never blocks the local sign out: what this
-    machine holds is cleared either way, bytes included.
+    An own client's hosted session is revoked first, best effort; a bound client just loses its link to the
+    computer's. A request carrying a pre-upgrade token (no ``fam`` claim) cannot say which client it is and gets 409
+    ``refresh_and_retry`` without anything being touched. Signing out of everything is ``signout-all``.
     """
-    await catalog_auth.sign_out(_state_dir(request), _catalog(request).api_base_url())
+    try:
+        await catalog_auth.sign_out_client(
+            _state_dir(request), _catalog(request).api_base_url(), client_sessions.client_ref(request).key
+        )
+    except catalog_auth.UnknownClient:
+        raise HTTPException(409, detail={
+            "code": "refresh_and_retry", "detail": "refresh your session and try again"}) from None
     return CatalogSessionResponse(signed_in=False, login=None)

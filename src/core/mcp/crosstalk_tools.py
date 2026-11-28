@@ -221,7 +221,7 @@ async def agent_spawn(manager: Any, caller: AgentCaller, args: dict) -> dict:
         result = await spawn_for_caller(SimpleNamespace(app=manager.app), body, caller)
     except HTTPException as exc:
         detail = exc.detail
-        raise ToolError(detail.get('message', str(detail)) if isinstance(detail, dict) else str(detail)) from exc
+        raise ToolError(detail.get('reason') or detail.get('message') or str(detail) if isinstance(detail, dict) else str(detail)) from exc
     return result if 'content' in result else _ok(result)
 
 

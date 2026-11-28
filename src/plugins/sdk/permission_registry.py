@@ -4,8 +4,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 
-from src.plugins.sdk.ai_features import PERMISSION_PREFIX as AI_PREFIX
-from src.plugins.sdk.network import LAN_PREFIX, LAN_WRITE_PREFIX, NETWORK_PREFIX, NETWORK_WRITE_PREFIX
+if __package__:
+    from .ai_features import PERMISSION_PREFIX as AI_PREFIX
+    from .network import LAN_PREFIX, LAN_WRITE_PREFIX, NETWORK_PREFIX, NETWORK_WRITE_PREFIX
+else:
+    from ai_features import PERMISSION_PREFIX as AI_PREFIX  # type: ignore[no-redef]
+    from network import LAN_PREFIX, LAN_WRITE_PREFIX, NETWORK_PREFIX, NETWORK_WRITE_PREFIX  # type: ignore[no-redef]
+
+SERVICES_PREFIX = "services:"
+EVENTS_PREFIX = "events:"
 
 LOW, MEDIUM, HIGH, NEVER = "low", "medium", "high", "never"
 RISKS = (LOW, MEDIUM, HIGH, NEVER)
@@ -35,7 +42,7 @@ class Permission:
 
 
 def consent_key_for(name: str) -> str:
-    return "plugins.page.permission." + name.rstrip(":").replace(".", "_")
+    return "plugins.page.permission." + name.rstrip(":").replace(": ", "_").replace(".", "_")
 
 
 def _row(name: str, risk: str, *, tiers: Tuple[str, ...] = ALL_TIERS, declarable: bool = False, default_granted: bool = False,
@@ -47,23 +54,23 @@ def _row(name: str, risk: str, *, tiers: Tuple[str, ...] = ALL_TIERS, declarable
 REGISTRY: Tuple[Permission, ...] = (
     _row("sessions.read", LOW, declarable=True, default_granted=True),
     _row("notify", LOW, declarable=True, default_granted=True),
-    _row("feed.view: meta", LOW),
-    _row("sessions.output", MEDIUM),
-    _row("feed.view: scrubbed", MEDIUM),
+    _row("feed.view: meta", LOW, declarable=True),
+    _row("sessions.output", MEDIUM, declarable=True),
+    _row("feed.view: scrubbed", MEDIUM, declarable=True),
     _row("sessions.read.remote", MEDIUM),
-    _row("ledger.read", MEDIUM),
+    _row("ledger.read", MEDIUM, declarable=True),
     _row("mcp.health.read", MEDIUM, declarable=True),
     _row("flow.read", MEDIUM, declarable=True),
-    _row("projects.git.read", MEDIUM),
-    _row("feed.view: raw", HIGH),
+    _row("projects.git.read", MEDIUM, declarable=True),
+    _row("feed.view: raw", HIGH, declarable=True),
     _row("sessions.message", HIGH, declarable=True),
     _row("sessions.create", HIGH, declarable=True),
-    _row("sessions.control", HIGH),
+    _row("sessions.control", HIGH, declarable=True),
     _row("agent_writes", HIGH, declarable=True),
     _row("agent_tools", HIGH),
     _row("cross_session", HIGH),
-    _row("projects.git.snapshot", HIGH),
-    _row("exports.write", HIGH),
+    _row("projects.git.snapshot", HIGH, declarable=True),
+    _row("exports.write", HIGH, declarable=True),
     _row("swarm", HIGH, tiers=FIRST_PARTY_HOLDERS, declarable=True),
     _row("activity.read", HIGH, tiers=FIRST_PARTY_HOLDERS, declarable=True),
     _row("imports.write", HIGH, tiers=FIRST_PARTY_HOLDERS, declarable=True),
@@ -71,7 +78,9 @@ REGISTRY: Tuple[Permission, ...] = (
     _row(AI_PREFIX, MEDIUM, declarable=True),
     _row(NETWORK_WRITE_PREFIX, MEDIUM, declarable=True),
     _row(NETWORK_PREFIX, MEDIUM, declarable=True),
-    _row("hooks.inbound:", MEDIUM),
+    _row("hooks.inbound:", MEDIUM, declarable=True),
+    _row(SERVICES_PREFIX, MEDIUM, declarable=True),
+    _row(EVENTS_PREFIX, MEDIUM, declarable=True),
     _row(LAN_WRITE_PREFIX, HIGH, declarable=True),
     _row(LAN_PREFIX, HIGH, declarable=True),
 )

@@ -1,13 +1,13 @@
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
 import pytest
 
-from src.plugins.sdk.manifest import ManifestError, parse_manifest
+from src.plugins.sdk import renamed_from as rf
+from src.plugins.sdk.manifest import ManifestError, load_manifest, parse_manifest
 from src.plugins.sdk.ownership import OwnershipError, parse_ownership
 from tests.helpers.catalog_text import catalog_text, slice_paths
 from tests.python.cplugs.test_cplug_self_containment import ROOT, plugin_ids
@@ -17,7 +17,19 @@ CATALOG_KEY = re.compile(r"""['"](cplug\.([a-z0-9]+)\.[^'"]*)['"]\s*:""")
 
 
 def _manifest(pid: str) -> dict:
-    return json.loads((ROOT / "src" / "plugins" / pid / "cplug.json").read_text(encoding="utf-8"))
+    return {
+        "schema": 1,
+        "id": pid,
+        "name_key": f"cplug.{pid}.name",
+        "description_key": f"cplug.{pid}.description",
+        "version": "1.1.0",
+        "icon": "archive",
+        "author": "Carnivore",
+        "min_app_version": "1.12.20",
+        "tier": "builtin",
+        "default_enabled": False,
+        "owns": {"strings": [f"cplug.{pid}."]},
+    }
 
 
 def test_a_well_formed_block_parses():
@@ -34,7 +46,7 @@ def test_a_well_formed_block_parses():
     {"routes": ["/../huddle"]},
     {"styles": ["../huddle/a.css"]},
     {"styles": ["/abs.css"]},
-    {"tests": ["tests/python/cplugs/huddle/"]},
+    {"tests": ["tests/python/cplugs/taskmanager/"]},
     {"style_guide": ["web/src/lib/x.svelte"]},
     {"contributions": ["core.everything"]},
     {"files": ["../escape"]},
@@ -59,7 +71,7 @@ def test_the_manifest_refuses_a_broken_block():
 
 @pytest.mark.parametrize("pid", plugin_ids())
 def test_every_declared_file_exists(pid):
-    owns = parse_manifest(_manifest(pid)).owns
+    owns = load_manifest(str(ROOT / "src" / "plugins" / pid / "__init__.py")).owns
     web = ROOT / "web" / "src" / "plugins" / pid
     missing = [str(web / f) for f in (*owns.styles, *owns.assets) if not (web / f).exists()]
     missing += [t for t in (*owns.tests, *owns.style_guide) if not (ROOT / t.replace("web/src/cplugs/", "web/src/plugins/", 1)).exists()]
@@ -68,7 +80,7 @@ def test_every_declared_file_exists(pid):
 
 @pytest.mark.parametrize("pid", plugin_ids())
 def test_a_plugin_that_declares_styles_keeps_no_undeclared_css(pid):
-    owns = parse_manifest(_manifest(pid)).owns
+    owns = load_manifest(str(ROOT / "src" / "plugins" / pid / "__init__.py")).owns
     if not owns.styles:
         pytest.skip("no styles declared")
     web = ROOT / "web" / "src" / "plugins" / pid
@@ -78,6 +90,9 @@ def test_a_plugin_that_declares_styles_keeps_no_undeclared_css(pid):
 
 def test_every_plugin_string_key_lives_in_a_real_plugin_namespace():
     ids = set(plugin_ids())
+    for pid in plugin_ids():
+        m = load_manifest(str(ROOT / "src" / "plugins" / pid / "__init__.py"))
+        ids.add(rf.kept_old_id(m.renamed_from, m.renamed_from_keeps, rf.KEEP_STRINGS) or pid)
     orphans = sorted({m.group(1) for m in CATALOG_KEY.finditer(catalog_text()) if m.group(2) not in ids})
     assert orphans == []
 
@@ -94,7 +109,7 @@ def test_the_five_removable_plugins_all_ship_a_slice_and_declare_owns():
     five = {pid for pid in ("share", "unread", "flow", "reviewboard", "save") if (Path(__file__).resolve().parents[3] / "src" / "plugins" / pid).is_dir()}
     assert len(five) >= 4 and five <= set(slice_paths())
     for pid in five:
-        owns = parse_manifest(_manifest(pid)).owns
+        owns = load_manifest(str(ROOT / "src" / "plugins" / pid / "__init__.py")).owns
         assert owns.strings == (f"cplug.{pid}.",) and owns.tests, pid
 
 

@@ -11,6 +11,7 @@ import pytest
 import structlog
 
 from src.core.log_monitor import LogMonitor
+from src.core.session_output import tap as output_tap
 
 from tests.test_ws_subprotocol_auth import (  # noqa: F401
     _mint_token,
@@ -75,6 +76,7 @@ class _PatternMonitor(LogMonitor):
 
     def __init__(self) -> None:
         super().__init__(session_manager=None)
+        self.register_pattern_callback("file_created", lambda *_: None)
 
     subscribe = _FakeLogMonitor.subscribe
     unsubscribe = _FakeLogMonitor.unsubscribe
@@ -85,7 +87,8 @@ def test_terminal_socket_logs_no_input_and_no_output_text(every_log_line):
 
     entries, caplog = every_log_line
     canary = _canary()
-    app = _build_app(_PatternMonitor())
+    monitor = _PatternMonitor()
+    app = _build_app(monitor)
     manager_ = app.state.session_manager
     registry = app.state.services.registry
     client = TestClient(app)
@@ -98,7 +101,13 @@ def test_terminal_socket_logs_no_input_and_no_output_text(every_log_line):
         ws.send_bytes(canary.encode())
         ws.send_text(f"{canary} is not json")
         ws.send_bytes(UNDECODABLE)
-        registry.publish(SESSION_ID, f"Wrote to: {canary}\r\n".encode())
+        line = f"Wrote to: {canary}\r\n".encode()
+        registry.publish(SESSION_ID, line)
+        output_tap.TAP.add(monitor._on_session_output)
+        try:
+            output_tap.TAP.emit(SESSION_ID, line)
+        finally:
+            output_tap.TAP.remove(monitor._on_session_output)
         for _ in range(40):
             frame = ws.receive()
             if canary.encode() in (frame.get("bytes") or b""):

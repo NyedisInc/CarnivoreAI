@@ -1,6 +1,30 @@
 
 @layer legacy {
+:root {
+    --oc-amb-join-dur: 1ms;
+    --amb-uc-op: 1;
+    --amb-uc-sc-a: 0.4;
+    --amb-uc-sc-b: 0.4;
+    --amb-band-pos: 100%;
+    --amb-band-op: 1;
+    --amb-steam-y-1: 1.5;
+    --amb-steam-y-2: 1.5;
+    --amb-steam-y-3: 1.5;
+    --kaw-u: 1;
+    --amb-spark-sc-a: 0.6;
+    --amb-spark-sc-b: 0.6;
+    --amb-pulse-op: 1;
+    --amb-led-op: 1;
+    --amb-focus-op: 0.85;
+}
 @keyframes amb-join-dialog-glow {}
+@keyframes amb-join-avatar-spiral {}
+@keyframes amb-join-status-lights {}
+@keyframes amb-join-drawer-bands {}
+@keyframes amb-join-effort-badges {}
+@keyframes amb-join-sparks-steam {}
+@keyframes amb-join-busy-pulses {}
+@keyframes amb-join-terminal-ring {}
 
 [data-anim-offscreen],
 [data-anim-offscreen]::before,

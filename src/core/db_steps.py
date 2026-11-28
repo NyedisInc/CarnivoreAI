@@ -73,7 +73,7 @@ from src.core.db_ddl.pipeline import apply_v51, apply_v53
 from src.core.db_ddl.search_index import apply_v52
 from src.core.transcript_manifest.ddl import apply_v54
 from src.core.db_ddl.search_index import apply_v55
-from src.core.hosts.ddl import apply_v40, apply_v96
+from src.core.hosts.ddl import apply_v40, apply_v96, apply_v109
 from src.core.launch_profiles.ddl import apply_v56
 from src.core.crosstalk.ddl import apply_v57, apply_v94, apply_v102
 from src.core.messaging.ddl import apply_v73, apply_v92
@@ -92,12 +92,16 @@ from src.core.pack.migrate.ddl import apply_pack_migrate
 from src.core.pack.move.ddl import apply_pack_move
 from src.core.computers.ddl import apply_computer_links
 from src.core.companion_shell.ddl import apply_v86
-from src.core.pack.rollup_import.ddl import apply_v89, apply_v103
+from src.core.pack.rollup_import.ddl import apply_v89, apply_v103, apply_v107, apply_v108, apply_v113
 from src.core.pack.trust_carry.ddl import apply_v87, apply_v88
 from src.core.flow_data.ddl import apply_mcp_surface, apply_v90
 from src.core.exports.ddl import apply_v93
 from src.core.session_groups.session_group_rule import apply_v101
+from src.core.session_groups.session_group_parent import apply_v111
+from src.core.skills.provenance_ddl import apply_v112
 from src.core.plugin_registry.marker import apply_v104
+from src.core.project_ids.ddl import apply_v110
+from src.core.mcp.session_creators import apply_v106
 from src.core.skills.consent_via_ddl import (
     CONSENT_VIA_COLUMN,
     DDL_V41_ADD_CONSENT_VIA,
@@ -836,6 +840,38 @@ def _step_v104_to_v105(conn: sqlite3.Connection) -> None:
     apply_v105(conn)
 
 
+def _step_v105_to_v106(conn: sqlite3.Connection) -> None:
+    apply_v106(conn)
+
+
+def _step_v106_to_v107(conn: sqlite3.Connection) -> None:
+    apply_v107(conn)
+
+
+def _step_v107_to_v108(conn: sqlite3.Connection) -> None:
+    apply_v108(conn)
+
+
+def _step_v108_to_v109(conn: sqlite3.Connection) -> None:
+    apply_v109(conn)
+
+
+def _step_v109_to_v110(conn: sqlite3.Connection) -> None:
+    apply_v110(conn)
+
+
+def _step_v110_to_v111(conn: sqlite3.Connection) -> None:
+    apply_v111(conn)
+
+
+def _step_v111_to_v112(conn: sqlite3.Connection) -> None:
+    apply_v112(conn)
+
+
+def _step_v112_to_v113(conn: sqlite3.Connection) -> None:
+    apply_v113(conn)
+
+
 STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     0: _step_v0_to_v1,
     1: _step_v1_to_v2,
@@ -942,6 +978,14 @@ STEPS: Dict[int, Callable[[sqlite3.Connection], None]] = {
     102: _step_v102_to_v103,
     103: _step_v103_to_v104,
     104: _step_v104_to_v105,
+    105: _step_v105_to_v106,
+    106: _step_v106_to_v107,
+    107: _step_v107_to_v108,
+    108: _step_v108_to_v109,
+    109: _step_v109_to_v110,
+    110: _step_v110_to_v111,
+    111: _step_v111_to_v112,
+    112: _step_v112_to_v113,
 }
 
 

@@ -20,9 +20,9 @@ export function clean(dest: Destination, kind: Kind | undefined): Destination {
 
 async function read(fetcher: Fetcher | undefined): Promise<void> {
     try {
-        if (notify.kinds.length === 0) notify.kinds = await fetchKinds(fetcher);
-        const settings = await fetchSettings(fetcher);
-        notify.destinations = settings.destinations.map((d) => clean(d, notify.kinds.find((k) => k.id === d.kind)));
+        const [kinds, settings] = await Promise.all([fetchKinds(fetcher), fetchSettings(fetcher)]);
+        notify.kinds = kinds;
+        notify.destinations = settings.destinations.map((d) => clean(d, kinds.find((k) => k.id === d.kind)));
         notify.paused = settings.paused;
         notify.problem = '';
         notify.loaded = true;

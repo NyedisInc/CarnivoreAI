@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
-  import { openTabPopout, t } from '../sdk';
+  import { openPluginStudio, openTabPopout, t } from '../sdk';
   import { Button, IconButton, Segmented } from '../sdk/ui';
   import { labWidgets, type FrameReport, type LabHost, type SidebarView } from '../sdk/widget-lab';
   import { activeThemeId } from '../sdk/themes';
@@ -96,11 +96,12 @@
       <span class="dwl-strip-name">{widget.title}</span><span class="dwl-hint">{widget.key}</span>
       {#if verdict !== 'none'}<span class="dwl-verdict" data-verdict={verdict}>{t(`cplug.devwidgetlab.verdict.${verdict}`)}</span>{/if}
     {/if}
-    {#if !live.menuOpen}
-      <div class="dwl-seg dwl-views">
+    <div class="dwl-seg dwl-views">
+      <Button size="sm" variant="secondary" data-dwl-studio onclick={() => void openPluginStudio({ template: 'widget' })}>{t('cplug.devwidgetlab.studio.open')}</Button>
+      {#if !live.menuOpen}
         <Button size="sm" data-lab-menu onclick={() => link.send({ intent: 'open-menu' })}>{t('cplug.devwidgetlab.viewer.menu')}</Button>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </header>
 
   <p class="dwl-context dwl-hint">

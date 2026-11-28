@@ -94,3 +94,12 @@ test('opening on an empty list shows the empty line and does not close', async (
   expect(document.querySelector('.aa-empty')).not.toBeNull();
   expect(onClose).not.toHaveBeenCalled();
 });
+
+test('a refused budget ask shows the not-available line on the notice row, not a generic failure', async () => {
+  const ask = { id: 'argent_request_budget', label_key: 'app_alert.action.argent_ask_owner', method: 'POST', route: '/argent/budget/requests', body: { item_id: 'wi_1' },
+    refusals: { budget_request_unavailable: 'argent.cost.ask_unavailable' } };
+  await open([alertRow({ source: 'argent', actions: [ask], params: { owner: 'Ada' } })]);
+  vi.mocked(fetch).mockImplementationOnce(async () => new Response(JSON.stringify({ detail: { code: 'budget_request_unavailable' } }), { status: 501 }));
+  document.querySelector<HTMLElement>('[data-app-alert-action="argent_request_budget"]')!.click();
+  await vi.waitFor(() => expect(document.body.textContent).toContain('asking for more budget is not available yet; ask Ada in argent'));
+});

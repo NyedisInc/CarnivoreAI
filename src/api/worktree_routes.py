@@ -14,6 +14,8 @@ from src.api.auth import require_auth
 from src.api.error_response import api_error
 from src.config import settings
 from src.core import project_worktree
+from src.core.hosts.identity import backend_host_key
+from src.core.session_ops import close_record
 from src.core.worktrees import cleanup, launch, repo_file
 from src.core.worktrees.store import default_store
 
@@ -134,7 +136,13 @@ async def cleanup_worktrees(body: CleanupRequest, request: Request,
     async def stop(path: str) -> None:
         for sid, sess in dict(manager._registry.sessions).items():
             if _under(path, getattr(sess, "working_dir", None)) and manager.is_session_live(sid):
-                await manager.destroy_session(session_id=sid)
+                backend = manager._registry.backends.get(sid)
+                name = getattr(backend, "tmux_session", None)
+                epoch = await close_record.instance_epoch(backend) if name else None
+                await close_record.stop_and_record(
+                    lambda sid=sid: manager.destroy_session(session_id=sid),
+                    socket=getattr(backend, "socket_name", None), name=name, epoch=epoch,
+                    host=backend_host_key(backend))
 
     async def archive(path: str) -> None:
         from src.api.blueprints_launch import StepFailed, find_project

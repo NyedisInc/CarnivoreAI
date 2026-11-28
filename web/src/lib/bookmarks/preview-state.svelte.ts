@@ -1,3 +1,4 @@
+/* transcript is not on this computer */
 import { ApiError } from '../../opscenter/api/auth.svelte';
 import { widgetSetting } from '../item-settings/store.svelte';
 import { getPreview, type PreviewPart } from './api';

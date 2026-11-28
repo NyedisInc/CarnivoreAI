@@ -16,6 +16,7 @@ export interface PaintedPart {
   paintedBy: SidebarPartPainter;
 }
 
+/* the Task Manager */
 export interface TabBodyPart {
   tab: string;
 }

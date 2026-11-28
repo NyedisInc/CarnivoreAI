@@ -116,7 +116,7 @@
     onclick={onOverlayClick}
 >
     <div
-        class={[contentClass ? `modal-content ${contentClass}` : 'modal-content', fill && 'modal-content--fill']}
+        class={[contentClass ? `modal-content ${contentClass}` : 'modal-content', 'modal-content--capped', fill && 'modal-content--fill']}
         style:width
         style:height
         style:max-width={width || height ? 'none' : undefined}
@@ -134,6 +134,25 @@
 </div>
 
 <style>
+    .modal-content--capped {
+        display: flex;
+        flex-direction: column;
+        max-height: 100%;
+        box-sizing: border-box;
+    }
+
+    .modal-content--capped > .modal-titlerow,
+    .modal-content--capped > .modal-header,
+    .modal-content--capped > .modal-footer {
+        flex: 0 0 auto;
+    }
+
+    .modal-content--capped .modal-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+    }
+
     .modal-content--fill {
         display: flex;
         flex-direction: column;

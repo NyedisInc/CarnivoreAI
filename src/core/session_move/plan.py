@@ -92,13 +92,13 @@ def read_row(conn: sqlite3.Connection, session_uuid: str) -> Optional[Dict[str, 
 
     scope_sql, scope_params = host_scope(conn)
     row = conn.execute(
-        "SELECT id, session_uuid, working_dir, project_id, tmux_name, tmux_socket, claude_session_uuid, agent_family "
+        "SELECT id, session_uuid, working_dir, project_id, tmux_name, tmux_socket, claude_session_uuid, agent_family, agent_type "
         "FROM sessions WHERE session_uuid = ? AND archived_at IS NULL" + scope_sql,
         (session_uuid, *scope_params)).fetchone()
     if row is None:
         return None
     keys = ("id", "session_uuid", "working_dir", "project_id", "tmux_name", "tmux_socket",
-            "claude_session_uuid", "agent_family")
+            "claude_session_uuid", "agent_family", "agent_type")
     return dict(zip(keys, tuple(row)))
 
 
@@ -180,6 +180,7 @@ def _check_files(plan: SessionMovePlan) -> None:
 
 
 def _check_resume(plan: SessionMovePlan, row: Mapping[str, Any], preview: Any, corpus_root: Optional[Path]) -> None:
+    from src.core.agy.identity import row_is_agy
     from src.core.attention.codex_pane_home import codex_home_for_row, gone_identity
     from src.core.session_transcript_presence import CONVERSATION_ABSENT, family_conversation_presence
 
@@ -191,7 +192,8 @@ def _check_resume(plan: SessionMovePlan, row: Mapping[str, Any], preview: Any, c
         return
     presence = family_conversation_presence(
         row.get("agent_family"), plan.claude_session_uuid, working_dir=plan.source, corpus_root=corpus_root,
-        codex_home=codex_home_for_row(row.get("agent_family"), row.get("tmux_socket"), row.get("tmux_name"), identity=gone_identity(row)))
+        codex_home=codex_home_for_row(row.get("agent_family"), row.get("tmux_socket"), row.get("tmux_name"), identity=gone_identity(row)),
+        agent_is_agy=row_is_agy(row))
     if presence.outcome == CONVERSATION_ABSENT:
         plan.refuse(CONVERSATION_MISSING, "the conversation's transcript is not on this computer, so it cannot be resumed")
     rung = getattr(preview, "projected", None) if preview else None

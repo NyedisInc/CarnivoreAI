@@ -10,6 +10,7 @@ console.log('[SessionRestartOptions Module] Loading...');
         shell: 'session.restart.kind.shell',
         not_dead: 'session.restart.kind.not_dead',
         transcript_missing: 'session.restart.kind.transcript_missing',
+        offloaded: 'session.restart.kind.offloaded',
         cannot_determine: 'session.restart.kind.cannot_determine',
         recreate: 'session.restart.kind.recreate',
     };

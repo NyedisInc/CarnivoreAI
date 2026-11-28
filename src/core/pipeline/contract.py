@@ -16,6 +16,7 @@ EV_FILE_REMOVED: str = "file_removed"
 
 FAMILY_CLAUDE: str = "claude"
 FAMILY_CODEX: str = "codex"
+FAMILY_AGY: str = "agy"
 FILE_CONVERSATION: str = "conversation"
 FILE_SUBAGENT: str = "subagent"
 
@@ -151,6 +152,7 @@ class Plugin:
     file_kinds_fn: Optional[Callable[[], FrozenSet[str]]] = None
     before_scan: Optional[Callable[[sqlite3.Connection], None]] = None
     per_file_removal: bool = False
+    before_removal: Optional[Callable[[str, str], None]] = None
     switch_id: Optional[str] = None
 
     def reads(self, family: str, file_kind: Optional[str] = None) -> bool:
@@ -176,8 +178,8 @@ def validate(plugin: Plugin) -> None:
         raise PluginContractError(f"plugin {plugin.id}: schema_version must be a positive int")
     if not callable(plugin.migrate) or not callable(plugin.on_events):
         raise PluginContractError(f"plugin {plugin.id}: migrate and on_events must be callable")
-    if not plugin.families or not plugin.families <= {FAMILY_CLAUDE, FAMILY_CODEX}:
-        raise PluginContractError(f"plugin {plugin.id}: families must be claude and/or codex")
+    if not plugin.families or not plugin.families <= {FAMILY_CLAUDE, FAMILY_CODEX, FAMILY_AGY}:
+        raise PluginContractError(f"plugin {plugin.id}: families must be claude, codex and/or agy")
     if not plugin.file_kinds or not plugin.file_kinds <= {FILE_CONVERSATION, FILE_SUBAGENT}:
         raise PluginContractError(f"plugin {plugin.id}: file_kinds must be conversation and/or subagent")
     if plugin.switch_id is not None and not re.match(ID_PATTERN, plugin.switch_id):

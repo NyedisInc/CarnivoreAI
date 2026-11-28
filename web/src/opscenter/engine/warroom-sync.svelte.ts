@@ -18,6 +18,7 @@ export function parseWarroom(value: unknown): Layout | null {
 }
 
 let dirty = false;
+let migrating = false;
 let applying = false;
 let inflight = false;
 let started = false;
@@ -60,38 +61,62 @@ export function applyWarroom(next: Layout): void {
   held = null;
   if (dirty) return;
   if (JSON.stringify(live()) === JSON.stringify(next)) return;
+  let migrated = false;
   applying = true;
   try {
-    warroomLayout.adopt(next);
+    migrated = warroomLayout.adopt(next);
   } finally {
     applying = false;
+  }
+  if (migrated) {
+    migrating = true;
+    scheduleWrite();
   }
 }
 
 async function flush(): Promise<void> {
   const api = preferencesApi();
-  if (!dirty || !api) return;
+  if ((!dirty && !migrating) || !api) return;
   if (inflight || surfaceBusy() || api.status() !== api.HYDRATED) {
     scheduleWrite(RETRY_DELAY * 4);
     return;
   }
   const value = { v: 1, layout: live() };
+  const userEdit = dirty;
+  const migration = migrating;
   dirty = false;
+  migrating = false;
   inflight = true;
   try {
     let result = await api.set(WARROOM_LAYOUT_FIELD, value);
-    if (result.status === 'stale_revision') result = await api.set(WARROOM_LAYOUT_FIELD, value);
+    if (result.status === 'stale_revision') result = userEdit ? await api.set(WARROOM_LAYOUT_FIELD, value) : await resendMigration(api);
     if (result.status !== 'committed' && result.status !== 'unchanged') {
-      dirty = true;
+      dirty = dirty || userEdit;
+      migrating = migrating || migration;
       scheduleWrite(RETRY_DELAY * 4);
     }
   } catch (error) {
     console.warn('[war room layout] write failed', error);
-    dirty = true;
+    dirty = dirty || userEdit;
+    migrating = migrating || migration;
     scheduleWrite(RETRY_DELAY * 4);
   } finally {
     inflight = false;
   }
+}
+
+async function resendMigration(api: NonNullable<ReturnType<typeof preferencesApi>>): Promise<{ status: string }> {
+  if (dirty) return { status: 'unchanged' };
+  const theirs = parseWarroom(api.committedValue(WARROOM_LAYOUT_FIELD));
+  if (!theirs) return { status: 'unchanged' };
+  let migrated = false;
+  applying = true;
+  try {
+    migrated = warroomLayout.adopt(theirs);
+  } finally {
+    applying = false;
+  }
+  return migrated ? api.set(WARROOM_LAYOUT_FIELD, { v: 1, layout: live() }) : { status: 'unchanged' };
 }
 
 export function hydrateWarroom(): void {
@@ -128,6 +153,7 @@ export function resetWarroomSync(): void {
   stops = [];
   started = false;
   dirty = false;
+  migrating = false;
   held = null;
   applying = false;
   inflight = false;

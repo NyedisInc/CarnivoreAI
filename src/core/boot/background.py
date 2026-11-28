@@ -16,6 +16,7 @@ from src.core.browsers.manager import BrowserManager
 from src.core.catalog import theme_migration
 from src.core.catalog.index_refresher import IndexRefresher
 from src.core.pipe_prune import PipePruner
+from src.core.retention.scheduler import run_forever as run_retention
 from src.core.resource_push import topics as resource_topics
 from src.core.skills.auto_update import after_refresh_hook, run_auto_update_pass
 from src.core.skills.journal_recovery import recover_pending
@@ -146,6 +147,10 @@ def _start_auto_update(ctx: "BootContext", tasks: _Tasks) -> None:
 
     async def _boot_auto_update() -> None:
         await asyncio.wait({skill_journal_task})
+        from src.core.product_identity import test_mode_enabled
+
+        if not test_mode_enabled():
+            await asyncio.sleep(15.0)
         await run_required_pass(app)
         await run_adoption_pass(services)
         await run_catalog_move_pass(services, settings.get_state_dir())
@@ -154,10 +159,13 @@ def _start_auto_update(ctx: "BootContext", tasks: _Tasks) -> None:
     catalog_index_refresher = IndexRefresher(services.catalog.index_cache, services=services)
     catalog_index_refresher.start()
     app.state.catalog_index_refresher = catalog_index_refresher
-    app.state.skill_auto_update = asyncio.create_task(_boot_auto_update())
+    boot_task = asyncio.create_task(_boot_auto_update())
+    tasks.by_name["skill_auto_update"] = boot_task
+    app.state.skill_auto_update = boot_task
 
 
-async def _stop_index_refresher(ctx: "BootContext", _tasks: _Tasks) -> None:
+async def _stop_index_refresher(ctx: "BootContext", tasks: _Tasks) -> None:
+    await stop_task(tasks.by_name.get("skill_auto_update"))
     await ctx.app.state.catalog_index_refresher.stop()
 
 
@@ -171,6 +179,14 @@ async def _stop_turn_checkpoints(_ctx: "BootContext", _tasks: _Tasks) -> None:
     from src.api import checkpoint_capture
 
     checkpoint_capture.unsubscribe()
+
+
+def _start_retention(_ctx: "BootContext", tasks: _Tasks) -> None:
+    tasks.by_name["retention"] = spawn_supervised("retention", run_retention)
+
+
+async def _stop_retention(_ctx: "BootContext", tasks: _Tasks) -> None:
+    await stop_task(tasks.by_name.get("retention"))
 
 
 def steps() -> list[BootStep]:
@@ -194,4 +210,6 @@ def steps() -> list[BootStep]:
                  stop_order=teardown_slot(23)),
         BootStep(name="turn_checkpoints", order=415, stop_name="turn_checkpoints", start=bind(_start_turn_checkpoints),
                  stop=bind(_stop_turn_checkpoints), stop_order=teardown_slot(30)),
+        BootStep(name="retention", order=416, stop_name="retention_task", start=bind(_start_retention), stop=bind(_stop_retention),
+                 stop_order=teardown_slot(50)),
     ]

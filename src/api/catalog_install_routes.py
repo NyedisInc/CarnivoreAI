@@ -75,7 +75,7 @@ from src.core.skills.install_types import (
 from src.core.skills.installer import discard_staging
 from src.core.skills.loadout_members import MEMBER_ALREADY_PRESENT, MEMBER_INSTALLED
 from src.core.skills.ledger_types import AlreadyInstalled
-from src.core.skills.kinds import KIND_CPLUG, KIND_MOD, manifest_name
+from src.core.skills.kinds import KIND_CPLUG, KIND_MOD, resolve_manifest_path
 from src.models.catalog_api import (
     InstallPreviewResponse,
     InstallRequest,
@@ -137,9 +137,10 @@ async def list_installed(
         rows = [row for row in rows if row.scope == scope]
     if resolved_project is not None:
         rows = [row for row in rows if row.project_path == resolved_project]
+    cache = getattr(getattr(services, "catalog", None), "index_cache", None)
     views = []
     for row in rows:
-        view = installed_view(row, snapshot)
+        view = installed_view(row, snapshot, cache=cache) if cache is not None else installed_view(row, snapshot)
         if is_loadout(row.kind):
             members = stored_member_views(request, row.install_id)
             view.members = members
@@ -178,7 +179,12 @@ async def preview_install(
     """
     services = request.app.state.services
     snapshot = await _snapshot(request)
-    item, version = resolve_item(snapshot, body.item_id)
+    cache = getattr(getattr(services, "catalog", None), "index_cache", None)
+    item, version = (
+        resolve_item(snapshot, body.item_id, cache=cache)
+        if cache is not None
+        else resolve_item(snapshot, body.item_id)
+    )
     scope, project_path = await scope_arguments(request, body)
     refuse_unsupported_scope(item, scope)
 
@@ -209,7 +215,7 @@ async def preview_install(
             raise refuse_409(verdict.code, verdict.detail)
 
         body_sha, _size = await asyncio.to_thread(
-            hash_file, staged.path / manifest_name(item.kind)
+            lambda: hash_file(resolve_manifest_path(item.kind, staged.path))
         )
 
         mod_facts = (
@@ -281,7 +287,12 @@ async def run_install(
 ) -> InstalledItemView:
     services = request.app.state.services
     snapshot = await _snapshot(request)
-    item, version = resolve_item(snapshot, body.item_id)
+    cache = getattr(getattr(services, "catalog", None), "index_cache", None)
+    item, version = (
+        resolve_item(snapshot, body.item_id, cache=cache)
+        if cache is not None
+        else resolve_item(snapshot, body.item_id)
+    )
     scope, project_path = await scope_arguments(request, body)
     refuse_unsupported_scope(item, scope)
 
@@ -338,7 +349,7 @@ async def run_install(
             raise sheet_required(REASON_SCRIPTS)
         if needs_consent:
             body_sha, _size = await asyncio.to_thread(
-                hash_file, staged.path / manifest_name(item.kind)
+                lambda: hash_file(resolve_manifest_path(item.kind, staged.path))
             )
             if not install_consent_satisfied(
                 body.consent, digest=staged.digest, body_sha=body_sha
@@ -356,9 +367,14 @@ async def run_install(
                     mod_facts=mod_facts,
                 )
             if item.kind == KIND_CPLUG:
-                catalog_cplug_gates.check_cplug_consent(body.consent, mod_facts)
+                catalog_cplug_gates.check_cplug_consent(body.consent, mod_facts, version=version)
             elif mod_facts is not None:
                 catalog_mod_gates.check_mod_consent(body.consent, mod_facts)
+        if item.kind == KIND_CPLUG and catalog_cplug_gates.version_requires_warning_ack(version):
+            if not catalog_cplug_gates.flagged_ack_given(body.consent):
+                if one_click:
+                    raise sheet_required("flagged")
+                raise catalog_cplug_gates.flagged_409(version)
 
         verdict = await plan(
             request,
@@ -406,8 +422,13 @@ async def run_install(
         if item.kind == KIND_MOD and verdict.replaces:
             await asyncio.to_thread(catalog_mod_gates.unregister_planned, verdict)
         if item.kind == KIND_CPLUG:
-            cplug_reserved = await asyncio.to_thread(catalog_cplug_gates.reserve_install, request, item,
-                getattr(getattr(version, "sig", None), "key_id", "") or "")
+            cplug_reserved = await asyncio.to_thread(
+                catalog_cplug_gates.reserve_install,
+                request,
+                item,
+                getattr(getattr(version, "sig", None), "key_id", "") or "",
+                commit_sha=getattr(getattr(version, "provenance", None), "commit_sha", "") or "",
+            )
         try:
             row = await asyncio.to_thread(
                 apply_now, request, verdict, index_url, consent_via
@@ -464,6 +485,7 @@ async def run_install(
         scope=row.scope,
         version=row.version,
     )
-    view = installed_view(row, snapshot)
+    cache = getattr(getattr(services, "catalog", None), "index_cache", None)
+    view = installed_view(row, snapshot, cache=cache) if cache is not None else installed_view(row, snapshot)
     view.mod_registration = registration
     return view

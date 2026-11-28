@@ -1,0 +1,1 @@
+import{v as e}from"./widget-lab-chunk-poll.svelte.js";var t=()=>e(`/computers`);export{t};

@@ -115,7 +115,7 @@
 
   const heading = $derived(copyHeading ?? (declaredOptions?.menuHeadingKey ? t(declaredOptions.menuHeadingKey) : undefined));
   const scope = $derived(pinRowId != null ? pinnedScopeFor(cell, pinRowId) : activeScopeFor(cell));
-  const popOut = $derived('popOut' in extras ? extras.popOut : popOutFor(manifest, cell, view, scope, options, pinRowId != null));
+  const popOut = $derived('popOut' in extras ? extras.popOut : popOutFor(manifest, cell, view, scope, options, pinRowId != null, target));
 
   const root = $derived(placementMenu({ host, editing, onClose, options: optionInput, declared, copyHeading: heading, lead, copyTail, ...extras, popOut }));
 </script>

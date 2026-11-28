@@ -34,6 +34,17 @@ def tally_for(watcher: Any, info: Any, now: datetime) -> Optional[SubagentTally]
     return _tally_from(info, fresh_claude_observation(watcher, info, now))
 
 
+def _agy_teamwork(info: Any) -> Optional[bool]:
+    from src.config import settings
+    from src.core.agy.identity import info_is_agy
+    from src.core.agy.state import state_for_conversation, teamwork_active
+
+    if not info_is_agy(info):
+        return None
+    uuid = getattr(info, "claude_session_uuid", None)
+    return teamwork_active(state_for_conversation(settings.get_state_dir(), uuid))
+
+
 def mark_subagents(session_manager: Any, infos: Iterable[Any]) -> None:
     watcher = watcher_of(session_manager)
     now = datetime.now(timezone.utc)
@@ -47,5 +58,5 @@ def mark_subagents(session_manager: Any, infos: Iterable[Any]) -> None:
         info.subagents_total = tally.total if tally is not None else None
         info.subagents_stalled = tally.stalled if tally is not None else None
         info.workflow_active = (
-            workflow_active(observation.evidence) if observation is not None else None
+            workflow_active(observation.evidence) if observation is not None else _agy_teamwork(info)
         )

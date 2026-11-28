@@ -9,11 +9,11 @@ from typing import Any, Awaitable, Callable, Optional, Sequence, Tuple
 
 import structlog
 
-from src.core.approvals import carried_trust, dev_channels, effort_nudge, mcp_multi
-from src.core.approvals.auto_answer import catalog, desk, mcp_installed
+from src.core.approvals import carried_trust, cli_trust, dev_channels, effort_nudge, mcp_multi
+from src.core.approvals.auto_answer import catalog, desk, mcp_installed, pane_cwd
 from src.core.approvals.extract import CHROME_ACCEPT_LABEL, CHROME_DECLINE_LABEL, DEV_CHANNELS_ACCEPT, is_chrome_prompt
 from src.core.session_startup_gate import SCREEN_BYPASS_PERMISSIONS, SCREEN_EFFORT_NUDGE, SCREEN_MCP_SERVER, SCREEN_TRUST
-from src.core.swarm.auto_trust import (GATE_AWAITING, is_claude_trust_dialog, is_plain_imports_dialog, plain_dialog_folder,
+from src.core.swarm.auto_trust import (GATE_AWAITING, is_claude_trust_dialog, is_home_variant, is_plain_imports_dialog, plain_dialog_folder,
                                        shows_folder)
 
 logger = structlog.get_logger()
@@ -39,6 +39,7 @@ class Seams:
     in_projects: Callable[[str], bool]
     mcp_installed: Callable[[str, str], bool] = mcp_installed.installed_for
     in_agent_slot: Callable[[str], bool] = lambda _folder: False
+    pane_cwd: Callable[[Optional[str], str], Awaitable[Optional[str]]] = pane_cwd.read
 
 
 @dataclass(frozen=True)
@@ -50,6 +51,7 @@ class Ctx:
     scope: str
     info: Callable[[str], Awaitable[Any]]
     seams: Seams
+    socket: Optional[str] = None
 
 
 Guard = Callable[[Ctx], Awaitable[Verdict]]
@@ -103,6 +105,8 @@ async def _folder_trust_guard(ctx: Ctx) -> Verdict:
     evidence = "carried" if carried is not None else await asyncio.to_thread(_scope_evidence, ctx, folder)
     if evidence is None and await asyncio.to_thread(ctx.seams.in_agent_slot, folder):
         evidence = "agent_slot"
+    if evidence is None and folder == os.path.realpath(os.path.expanduser("~")) and is_home_variant(ctx.dialog):
+        evidence = "home_session_only"
     if evidence is None:
         return Verdict(DECLINE, "not_a_project")
     if plain_dialog_folder(ctx.dialog) is None:
@@ -112,9 +116,40 @@ async def _folder_trust_guard(ctx: Ctx) -> Verdict:
     return Verdict(ALLOW, evidence=evidence)
 
 
+async def _cli_trust_guard(ctx: Ctx) -> Verdict:
+    info = await ctx.info(ctx.session_id)
+    work = getattr(getattr(info, "session", None), "working_dir", None)
+    if info is None or not work:
+        return Verdict(WAIT, "not_measured")
+    cli = cli_trust.cli_of(ctx.dialog)
+    if cli is None or cli_trust.row_cli(info) != cli:
+        return Verdict(DECLINE, "other_cli")
+    folder = os.path.realpath(str(work))
+    if folder == os.sep or folder == os.path.realpath(os.path.expanduser("~")):
+        return Verdict(DECLINE, "broad_folder")
+    evidence = await asyncio.to_thread(_scope_evidence, ctx, folder)
+    if evidence is None:
+        return Verdict(DECLINE, "not_a_project")
+    named = cli_trust.shows_folder(ctx.dialog, folder)
+    if named is False:
+        return Verdict(DECLINE, "other_folder")
+    if named is None:
+        name = cli_trust.shown_name(ctx.dialog)
+        if name is not None and name != os.path.basename(folder):
+            return Verdict(DECLINE, "other_folder")
+        if not ctx.socket:
+            return Verdict(DECLINE, "cwd_unprovable")
+        cwd = await ctx.seams.pane_cwd(ctx.socket, str(getattr(info, "tmux_session", "") or ""))
+        if cwd is None:
+            return Verdict(RETRY, "cwd_unread")
+        if os.path.realpath(cwd) != folder:
+            return Verdict(DECLINE, "other_folder")
+    return Verdict(ALLOW, evidence=evidence)
+
+
 async def _desk_trust_guard(ctx: Ctx) -> Verdict:
-    work, folder = await _measured_folder(ctx)
-    if work is None or folder is None:
+    info = await ctx.info(ctx.session_id)
+    if info is None or getattr(info, "agent_family", None) != "claude":
         return Verdict(WAIT, "not_measured")
     shown = desk.shown_folder(ctx.dialog)
     if shown is None:
@@ -253,7 +288,9 @@ RULES: Tuple[ScreenRule, ...] = (
     ScreenRule(catalog.info_for(catalog.RULE_MCP_SERVER), is_mcp_servers_dialog, mcp_multi.SUBMIT_LABEL, _mcp_servers_guard, needs_gate=True),
     ScreenRule(catalog.info_for(catalog.RULE_EFFORT_KEEP), is_effort_dialog, "Keep", _effort_keep_guard, pick=_effort_keep_label),
     ScreenRule(catalog.info_for(catalog.RULE_FOLDER_TRUST), desk.is_add_directory_dialog, desk.ADD_YES_LABEL,
-               _desk_trust_guard, needs_gate=True, slot="desk"),
+               _desk_trust_guard, needs_gate=False, slot="desk"),
+    ScreenRule(catalog.info_for(catalog.RULE_CLI_TRUST), lambda d: cli_trust.safe_label(d) is not None, "Trust this folder",
+               _cli_trust_guard, pick=cli_trust.safe_label),
 )
 
 

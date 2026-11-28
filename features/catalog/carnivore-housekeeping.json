@@ -1,0 +1,46 @@
+{
+  "api_routes": [
+    "GET /api/v1/maintenance/retention",
+    "POST /api/v1/maintenance/retention/run"
+  ],
+  "area": "settings",
+  "description": "Carnivore cleans up after itself. Shortly after boot and then once a day it keeps the newest 2 pre-upgrade database backups in its state folder and the newest 2 rollback app bundles, and keeps the desktop app's log folder under 50 MB. Anything older moves to the backup drive: a database backup or log is copied, checked by sha256, and only then removed from the Mac; a rollback bundle leaves only once a verified archive of it exists on the drive (an existing one, or one it packs and checks by entry count). If the backup drive is unplugged or is not the expected volume, nothing moves, a warning is logged, and the next run tries again. The live database, its online copy, the vault, checkpoints, session journal, crates and claude-code-local are never touched. It also clears the scratchpad of finished agent sessions under /private/tmp/claude-<uid>: only when the conversation is not running and nothing in its folder changed for 24 hours (scratch_idle_hours), contents of scratchpad only, never tasks. The keep counts, the log cap and the schedule are in the retention block of config.json.",
+  "docs": [
+    "docs/retention.md"
+  ],
+  "examples": [
+    "Plug in the backup drive and wait for the next run: the third-oldest carnivore.db.bak-v backup appears under manual-backups/carnivore-db on the drive and leaves the state folder.",
+    "Unplug the drive: the next run logs that the drive is not ready and leaves every file where it is.",
+    "POST /api/v1/maintenance/retention/run with no body lists what a run would move without moving anything."
+  ],
+  "how_to": [
+    "It runs by itself; nothing to turn on. To change what it keeps, set retention.keep_db_backups, keep_rollback_bundles or menubar_log_cap_mb in config.json.",
+    "To see what it would do now, POST /api/v1/maintenance/retention/run (a dry run by default) or call the retention_preview MCP tool.",
+    "To run it now for real, POST the same route with {\"dry_run\": false} or call retention_run (it needs the owner's approval).",
+    "To see the last run, GET /api/v1/maintenance/retention or call retention_status."
+  ],
+  "id": "carnivore-housekeeping",
+  "issues": [
+    3310
+  ],
+  "keywords": [
+    "retention",
+    "cleanup",
+    "backup drive",
+    "rollback",
+    "logs",
+    "database backups",
+    "housekeeping"
+  ],
+  "media_exempt": "background job with no screen; its state is read through the retention route and MCP tools",
+  "name": "housekeeping to the backup drive",
+  "since": "2026-11-23",
+  "status": "beta",
+  "summary": "Carnivore keeps the newest 2 database backups and rollback bundles and caps app logs at 50 MB, moving older ones to the backup drive after a verified copy.",
+  "updated": "2026-11-23",
+  "where": [
+    "Runs inside the Carnivore server (boot step retention); no screen.",
+    "Settings: the retention block of config.json.",
+    "Status and run-now: GET and POST /api/v1/maintenance/retention, and the retention_status, retention_preview and retention_run MCP tools."
+  ]
+}

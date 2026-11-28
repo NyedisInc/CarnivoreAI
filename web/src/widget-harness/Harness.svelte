@@ -24,6 +24,7 @@
   if (zone !== 'drawer' && new URLSearchParams(location.search).get('header') === 'off') store.setHeaderShown(widget.slot, false);
   const placed = widget.manifest === PLUGIN_VIEW_ID ? FIXTURE_KIND : widget.manifest;
   const manifest = $derived(manifestById(placed));
+  /* the Task Manager */
   if (zone === 'drawer') {
     const headerParam = new URLSearchParams(location.search).get('header');
     const options = headerParam === 'on' || headerParam === 'off' ? { [HEADER_OPTION]: headerParam === 'on' } : undefined;

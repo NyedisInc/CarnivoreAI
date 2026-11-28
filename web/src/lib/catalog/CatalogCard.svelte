@@ -8,6 +8,7 @@
     import Icon from '../../opscenter/ui/Icon.svelte';
     import { icons } from '../../opscenter/ui/icons';
     import CardMediaImg from './CardMediaImg.svelte';
+    import Button from '../base/Button.svelte';
     import { previewFor } from './card-image-store.svelte';
     import AddSplit from './AddSplit.svelte';
     import { isReadonly } from './readonly';
@@ -57,14 +58,14 @@
 
     const kindMod = $derived(card.kind && /^[a-z]+$/.test(card.kind) ? card.kind : 'unknown');
     const isInstalled = $derived(state.kind === 'installed' || state.kind === 'update-available');
-    const scoped = $derived(card.kind !== 'theme' && card.kind !== 'mod');
+    const scoped = $derived(card.kind !== 'theme' && card.kind !== 'mod' && !card.isCplug);
 
     const iconKnown = $derived(!!card.icon && Object.hasOwn(icons, card.icon));
     const glyph = $derived(Array.from(card.headline || card.id || '?')[0]?.toUpperCase() ?? '?');
     const miniature = $derived(card.kind === 'theme' && palette !== null);
     const preview = $derived(previewFor(card.id));
 
-    const hasFlags = $derived(card.untrusted || (!!card.verdict && card.verdict !== 'clean') || card.deprecated || card.marksInstructionsWrite);
+    const hasFlags = $derived(card.revoked || card.untrusted || (!!card.verdict && card.verdict !== 'clean') || card.deprecated || card.installedByDefault || card.marksInstructionsWrite);
 
     function rowClick(event: MouseEvent): void {
         if (!onOpen) return;
@@ -96,11 +97,14 @@
 {/snippet}
 
 {#snippet flags()}
-    {#if card.untrusted}
+    {#if card.revoked}
+        <VerdictMark verdict="blocked" {t} label={t(SKILL_KEYS.revokedBadge)} />
+    {:else if card.untrusted}
         <VerdictMark verdict="blocked" {t} label={t('warez.verdict.untrusted')} />
     {:else if card.verdict && card.verdict !== 'clean'}
         <VerdictMark verdict={card.verdict} {t} />
     {/if}
+    {#if card.installedByDefault}<span data-default-mark>{t('warez.default.mark')}</span>{/if}
     {#if card.deprecated}<span data-deprecated-mark>{t('skill.deprecated.mark')}</span>{/if}
     {#if card.marksInstructionsWrite}
         <span class="catalog-card__warn" data-instructions-write-mark role="img" aria-label={t(SKILL_KEYS.cardInstructionsWrite)} title={t(SKILL_KEYS.cardInstructionsWriteTitle)}>!</span>
@@ -119,7 +123,9 @@
 {/snippet}
 
 {#snippet verdictBlock()}
-    {#if card.untrusted}
+    {#if card.revoked}
+        <VerdictMark verdict="blocked" {t} label={t(SKILL_KEYS.revokedBadge)} />
+    {:else if card.untrusted}
         <VerdictMark verdict="blocked" {t} label={t('warez.verdict.untrusted')} />
     {:else if card.verdict}
         <VerdictMark verdict={card.verdict} {t} />
@@ -128,7 +134,9 @@
 
 {#snippet act()}
     
-    {#if state.kind === 'verifying'}
+    {#if card.revoked}
+        <Button size="sm" data-act="revoked" disabled>{t(SKILL_KEYS.revokedBadge)}</Button>
+    {:else if state.kind === 'verifying'}
         <span class="catalog-card__state">{t(SKILL_KEYS.stateVerifying)}</span>
     {:else if state.kind === 'installing'}
         <span class="catalog-card__state">{t(SKILL_KEYS.stateInstalling)}</span>

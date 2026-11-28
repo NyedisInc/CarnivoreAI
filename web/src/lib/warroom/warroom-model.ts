@@ -16,6 +16,7 @@ export interface LiveTile {
   key: string;
   row: SessionInfo;
   name: string;
+  /* its link is down */
   offline: string | null;
 }
 

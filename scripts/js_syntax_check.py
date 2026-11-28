@@ -50,7 +50,8 @@ def collect(paths: list[str]) -> list[Path]:
                 continue
             if "dist" in parts and parts[parts.index("dist") - 1] == "client":
                 continue
-            found.add(candidate)
+            if candidate.is_file():
+                found.add(candidate)
     return sorted(found)
 
 

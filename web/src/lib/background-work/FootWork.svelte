@@ -18,6 +18,7 @@
     sessionId,
     form = 'full',
     active = null,
+    expanded = false,
     onwidths = undefined,
     onopen = undefined,
     hideAgents = false,
@@ -29,6 +30,7 @@
     sessionId: string;
     form?: Form;
     active?: ControlSection | null;
+    expanded?: boolean;
     onwidths?: (widths: Record<Form, number>) => void;
     onopen?: (section: ControlSection) => void;
     hideAgents?: boolean;
@@ -43,12 +45,22 @@
   const row = $derived(rowFor(sessions.data, sessionId));
   const wantsLists = $derived(!hideAgents || !hideShells || shellsInline);
   const key = $derived(refreshKey(row as Record<string, unknown> | null));
+  const hasListingWork = $derived(
+    (typeof row?.subagents_running === 'number' && row.subagents_running > 0)
+    || (typeof row?.background_open === 'number' && row.background_open > 0)
+    || (typeof row?.background_processes?.count === 'number' && row.background_processes.count > 0)
+    || row?.background_processes?.state === 'running',
+  );
   let agentRows = $state<SubagentRow[] | null>(null);
   let work = $state<SessionBackgroundWork | null>(null);
   let generation = 0;
   $effect(() => {
     void key;
-    if (!wantsLists || auth.state === 'signed-out') return;
+    if (!wantsLists || auth.state === 'signed-out' || (!expanded && !hasListingWork)) {
+      agentRows = null;
+      work = null;
+      return;
+    }
     const mine = ++generation;
     void readSessionWork(sessionId, key).then(({ subagents: ag, work: bw }) => {
       if (mine !== generation) return;
@@ -58,13 +70,24 @@
     return () => { generation += 1; };
   });
   const counts = $derived(workCounts(agentRows, work));
+  const provisionalAgents = $derived(
+    typeof row?.subagents_running === 'number' && row.subagents_running > 0 ? row.subagents_running : null,
+  );
+  const provisionalShells = $derived(
+    row?.background_processes?.state === 'running' && typeof row.background_processes.count === 'number' && row.background_processes.count > 0
+      ? row.background_processes.count
+      : null,
+  );
   const portCount = $derived(portLines(row as Record<string, unknown> | null).length);
-  const agentsCount = $derived(!hideAgents && counts.agents ? counts.agents : null);
-  const shellsCount = $derived(!hideShells && !shellsInline && counts.shells ? counts.shells : null);
-  $effect(() => { onshells?.(shellsInline && counts.shells ? counts.shells : null); });
+  const resolvedAgents = $derived(counts.agents !== null ? counts.agents : provisionalAgents);
+  const resolvedShells = $derived(counts.shells !== null ? counts.shells : provisionalShells);
+  const agentsCount = $derived(!hideAgents && resolvedAgents ? resolvedAgents : null);
+  const shellsCount = $derived(!hideShells && !shellsInline && resolvedShells ? resolvedShells : null);
+  $effect(() => { onshells?.(shellsInline && resolvedShells ? resolvedShells : null); });
   let nowMs = $state(Date.now());
   const timers = $derived(hideTimers ? null : timerChip(row, nowMs));
   const until = $derived(untilText(row?.timers_next_fire_at, nowMs));
+  const stalledCount = $derived(((n) => (typeof n === 'number' && n > 0 ? Math.floor(n) : null))(row?.stalled_agents));
 
   const ticking = $derived(timers !== null);
   $effect(() => {
@@ -119,7 +142,12 @@
   {/if}
 {/snippet}
 
+{#snippet stalledContent()}
+  <span class="oc-tfw-label">{t('background_work.foot.stalled_label')}</span><span class="oc-tfw-num">{stalledCount}</span>
+{/snippet}
+
 {#snippet copy(f: Form)}
+  {#if stalledCount !== null}<span class="oc-tfw-seg">{@render stalledContent()}</span>{/if}
   {#if agentsCount !== null}<span class="oc-tfw-seg">{@render agentsContent(f)}</span>{/if}
   {#if shellsCount !== null}<span class="oc-tfw-seg">{@render shellsContent(f)}</span>{/if}
   {#if timers !== null}<span class="oc-tfw-seg">{@render timersContent(f)}</span>{/if}
@@ -132,7 +160,7 @@
     ><path d="M3.5 1v2.2M6.5 1v2.2M2.4 3.2h5.2v1.6a2.6 2.6 0 0 1-5.2 0zM5 7.4V9.4" /></svg>
 {/snippet}
 
-{#if agentsCount !== null || shellsCount !== null || timers !== null || portCount > 0}
+{#if agentsCount !== null || shellsCount !== null || timers !== null || portCount > 0 || stalledCount !== null}
   <span class="oc-tfw" data-form={form}>
     {#if agentsCount !== null}
       <button data-base-exempt="a segment of the terminal foot bar, drawn flush in the bar strip (foot-plan measures its exact width)" type="button" class="oc-tfw-seg" data-seg="agents"
@@ -153,6 +181,10 @@
         aria-expanded={active === 'timers' ? 'true' : 'false'} data-active={active === 'timers' ? 'true' : 'false'} aria-label={timers.title}
         onmousedown={keepTerminalFocus} onclick={(e) => ask('timers', e)}
         >{@render timersContent(form)}</button>
+    {/if}
+    {#if stalledCount !== null}
+      <span class="oc-tfw-seg" data-seg="stalled" title={t('background_work.foot.stalled_title', { count: stalledCount })}
+        >{@render stalledContent()}</span>
     {/if}
     {#if portCount > 0}
       <span class="oc-tfw-seg" data-seg="ports" data-active={active === 'ports' ? 'true' : 'false'}

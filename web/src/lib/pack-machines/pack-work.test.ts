@@ -25,9 +25,9 @@ const machine = (id: string, over: Record<string, unknown> = {}) => ({ install_i
   capabilities: [], specs: null, snapshot: snap, age_seconds: 2, ...over });
 
 const mounted: ReturnType<typeof mount>[] = [];
-async function render(mode: string): Promise<HTMLElement> {
+async function render(mode: string, machines?: unknown[]): Promise<HTMLElement> {
   roster = { master_install_id: 'nostromo', self_install_id: 'nostromo', settings: { placement_mode: mode, auto_distribute: false }, disagreement: null,
-    machines: [machine('nostromo', { is_self: true, is_master: true, state: 'self' }), machine('studio')] };
+    machines: machines ?? [machine('nostromo', { is_self: true, is_master: true, state: 'self' }), machine('studio')] };
   const target = document.createElement('div');
   document.body.append(target);
   mounted.push(mount(PackWorkTab, { target, props: {} }));
@@ -48,6 +48,17 @@ describe('pack > work', () => {
     expect(root.querySelector('[data-pm="master-line"]')!.textContent).toContain('nostromo');
     expect(root.querySelector('[data-pw="count"]')!.textContent).toBe('2 computers, 2 online');
     expect(root.querySelector('[data-pw="follows"]')!.textContent).toBe('follows the alpha');
+  });
+
+  test('a member lists every computer the signed list names, an unreachable alpha and a computer reached through another included', async () => {
+    const root = await render('stats', [
+      machine('me', { is_self: true, state: 'self' }),
+      machine('nostromo', { is_master: true, state: 'disconnected', snapshot: null }),
+      machine('third', { paired: false, state: 'reported_connected', snapshot: null }),
+    ]);
+    expect(root.querySelector('[data-pw="count"]')!.textContent).toBe('3 computers, 2 online');
+    expect(root.querySelector('[data-machine="nostromo"]')!.textContent).toContain('disconnected');
+    expect(root.querySelector('[data-machine="third"]')!.textContent).toContain('connected to alpha');
   });
 
   test('the placement model pickers show only while enhanced placement is on', async () => {

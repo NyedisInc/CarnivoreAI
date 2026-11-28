@@ -10,7 +10,8 @@ import pytest
 
 from tests.python.swarm.test_swarm_s7_smokefix import _db, env  # noqa: F401,E402
 from src.core.db import connect, db_path_for
-from src.core.swarm import body, body_create, project_agent, project_promote, store
+from src.core.swarm.types import ProjectMissing
+from src.core.swarm import body, body_create, project_promote, store
 
 ORION = "Orion"
 
@@ -123,7 +124,7 @@ def test_promoting_the_session_that_already_is_the_agent_changes_nothing(world):
 
 
 def test_a_missing_project_and_a_missing_session_are_refused(world):
-    with pytest.raises(project_agent.ProjectMissing):
+    with pytest.raises(ProjectMissing):
         _promote(world, "lead", project_id=9999)
     with pytest.raises(project_promote.PromoteRefused, match="no such session"):
         asyncio.run(project_promote.promote_session(SimpleNamespace(), "u-nobody", world.orion["id"]))

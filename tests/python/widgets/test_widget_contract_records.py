@@ -8,7 +8,7 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.plugins.sdk.sidecar import validate_document
+from src.plugins.sdk.schema_check import validate_document
 from src.plugins.sdk.widget_decl import problems_in
 
 DATA = Path(__file__).resolve().parents[3] / "src" / "data"

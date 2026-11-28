@@ -1,4 +1,5 @@
 {
-  "dmg_arch": "universal",
+  "dmg_arch": "auto",
+  "arches": ["arm64", "x64"],
   "single_arch_name_tokens": ["arm64", "x64"]
 }

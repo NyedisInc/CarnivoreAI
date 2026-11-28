@@ -52,7 +52,7 @@ def test_peer_list_is_read_once_until_the_database_is_written(tmp_path: Path) ->
     opened.clear()
     listed = []
     real = peer_hosts.list_peers
-    peer_hosts.list_peers = lambda conn: listed.append(1) or []
+    peer_hosts.list_peers = lambda conn, **_: listed.append(1) or []
     peer_listing._PEERS_CACHE = None
     try:
         for _ in range(5):

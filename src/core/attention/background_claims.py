@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.core.attention.registry_record import REG_IDLE
-from src.core.background_work.measured import STATE_NONE
+from src.core.attention.registry_record import REG_IDLE, REG_SHELL
+from src.core.background_work.measured import STATE_NONE, STATE_RUNNING
 
 
 def measurement_overrules_claims(evidence: Any) -> bool:
@@ -16,6 +16,20 @@ def measurement_overrules_claims(evidence: Any) -> bool:
         and registry is not None
         and registry.known
         and registry.status == REG_IDLE
+    )
+
+
+def only_servers_run(evidence: Any) -> bool:
+    measure = getattr(evidence, "background_process", None)
+    registry = getattr(evidence, "registry", None)
+    return (
+        measure is not None
+        and measure.state == STATE_RUNNING
+        and (measure.count or 0) > 0
+        and measure.servers >= measure.count
+        and registry is not None
+        and registry.known
+        and registry.status in (REG_IDLE, REG_SHELL)
     )
 
 
@@ -48,11 +62,12 @@ def leftover_claims(evidence: Any) -> int:
 
 
 def standing_background_claims(evidence: Any) -> int:
-    if measurement_overrules_claims(evidence):
+    if measurement_overrules_claims(evidence) or only_servers_run(evidence):
         return 0
     return max(claims_after_epoch(evidence) - leftover_claims(evidence), 0)
 
 
 __all__ = [
-    "claims_after_epoch", "leftover_claims", "measurement_overrules_claims", "standing_background_claims",
+    "claims_after_epoch", "leftover_claims", "measurement_overrules_claims", "only_servers_run",
+    "standing_background_claims",
 ]

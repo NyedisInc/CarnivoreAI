@@ -226,7 +226,8 @@
             })),
     );
     $effect(() => {
-        const ids = [...ctl.items.map(storeIdOf), ...offEntries(requiredEntries).map((e) => e.item_id)].filter((id): id is string => Boolean(id));
+        const bundled = new Set(requiredEntries.map((e) => e.item_id));
+        const ids = ctl.items.map(storeIdOf).filter((id): id is string => Boolean(id) && !bundled.has(id as string));
         if (ids.length > 0) skillRatings.want(ids, catalogHost ?? browserCatalogHost());
     });
 

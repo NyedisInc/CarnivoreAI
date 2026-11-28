@@ -1,6 +1,6 @@
 
 import { innerX, innerY, isDrawn, overflowOf, shared } from './box-geometry';
-import catalog from '../../../client/js/i18n/catalog.en.js';
+import { fallbackCatalogKeys } from '../lib/i18n/fallback';
 
 export interface FitFinding {
   rule: 'overflow-x' | 'overflow-y' | 'scrollbar-x' | 'clipped-text' | 'overlap' | 'bad-text' | 'catalog-key' | 'unavailable';
@@ -19,7 +19,15 @@ const RAW_ID = /\b[A-Za-z0-9]+(?:_[A-Za-z0-9]+)+\b/;
 
 const DOTTED = /\b[a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+\b/g;
 
-const CATALOG_KEYS: ReadonlySet<string> = new Set(Object.keys(catalog as Record<string, string>));
+let cachedCatalogKeys: ReadonlySet<string> | null = null;
+function catalogKeys(): ReadonlySet<string> {
+  if (cachedCatalogKeys && cachedCatalogKeys.size > 0) return cachedCatalogKeys;
+  const layer = (globalThis as { CloudeI18n?: { catalogFor?(locale: string): { messages?: Record<string, unknown> } } }).CloudeI18n;
+  const msgs = layer?.catalogFor?.('en')?.messages;
+  const keys = msgs ? Object.keys(msgs) : fallbackCatalogKeys();
+  cachedCatalogKeys = new Set(keys);
+  return cachedCatalogKeys;
+}
 
 export function cssPath(el: Element, root: Element): string {
   const parts: string[] = [];
@@ -174,8 +182,9 @@ export function fitCheck(cell: Element): FitFinding[] {
     if (bad) {
       add(el, { rule: 'bad-text', selector: cssPath(el, cell), px: 0, detail: `shows "${bad[0]}" in "${text.slice(0, 60)}"` });
     }
+    const knownKeys = catalogKeys();
     for (const token of text.match(DOTTED) ?? []) {
-      if (CATALOG_KEYS.has(token)) {
+      if (knownKeys.has(token)) {
         add(el, { rule: 'catalog-key', selector: cssPath(el, cell), px: 0, detail: `shows the catalog key "${token}"` });
         break;
       }

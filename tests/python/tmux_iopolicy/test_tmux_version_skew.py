@@ -25,13 +25,27 @@ def _bundled_tmux() -> Path:
     return next((c for c in candidates if c.is_file()), candidates[-1])
 
 
-SPIKE_TMUX = _bundled_tmux()
-BREW_TMUX = Path(os.environ.get("CARNIVORE_SKEW_TMUX") or "/opt/homebrew/bin/tmux")
-SESSION = "carnivore_skewtest"
-
-
 def _version(path: Path) -> str:
     return subprocess.run([str(path), "-V"], capture_output=True, text=True).stdout.strip().removeprefix("tmux ")
+
+
+def _skew_tmux() -> Path:
+    env = os.environ.get("CARNIVORE_SKEW_TMUX")
+    if env:
+        return Path(env)
+    candidates = [Path("/opt/homebrew/bin/tmux"), Path.home() / "carnivore-suite" / "skew" / "tmux"]
+    existing = [c for c in candidates if c.is_file()]
+    if SPIKE_TMUX.is_file():
+        bundled_ver = td.tmux_version_key(_version(SPIKE_TMUX))
+        for candidate in existing:
+            if td.tmux_version_key(_version(candidate)) != bundled_ver:
+                return candidate
+    return existing[0] if existing else candidates[0]
+
+
+SPIKE_TMUX = _bundled_tmux()
+BREW_TMUX = _skew_tmux()
+SESSION = "carnivore_skewtest"
 
 
 pytestmark = pytest.mark.skipif(sys.platform != "darwin", reason="the payload tmux binaries are macOS builds")

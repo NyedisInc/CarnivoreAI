@@ -9,7 +9,7 @@ import pytest
 
 from src.core.browser_pages import open_pages, page_tab
 from src.core import row_looks
-from src.plugins.huddle import artifact_port as task_manager_artifact_port, artifact_post, board_port
+from src.plugins.taskmanager import artifact_port as task_manager_artifact_port, artifact_post, board_port
 from src.plugins.reviewboard import artifact_port, migrate, scan, service
 from tests.python.cplugs.reviewboard.harness import Env, task_manager_on, task_manager_store, make_env
 

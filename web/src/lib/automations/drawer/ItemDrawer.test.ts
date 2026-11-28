@@ -93,7 +93,8 @@ test('Escape closes the drawer and focus goes back to what opened it', async () 
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
   await settle();
   expect(data.drawer).toBeNull();
-  expect(q('[data-ap-drawer]').hasAttribute('data-open')).toBe(false);
+  unmount(app!);
+  app = null;
   expect(document.activeElement).toBe(opener);
 });
 

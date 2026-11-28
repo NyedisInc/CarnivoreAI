@@ -177,11 +177,9 @@
         display: flex;
         flex-direction: column;
         box-sizing: border-box;
-        width: max-content;
-        max-width: 300px;
+        width: 100%;
+        height: 100%;
         min-height: 0;
-        background: var(--oc-ground-titlerow);
-        box-shadow: inset -1px 0 0 0 var(--oc-line-rule);
         font-family: var(--font-mono);
     }
 
@@ -416,7 +414,14 @@
     .wm__label {
         flex: 1 1 0;
         min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .wm--phone .wm__label {
         overflow-wrap: anywhere;
+        white-space: normal;
     }
 
     .wm__label--hit {

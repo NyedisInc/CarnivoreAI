@@ -20,6 +20,7 @@ from src.core.federation import peer_hosts, peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.account_switch.launch_env import _config_path
 from src.core.pack.identity import home, replicas
+from src.core.pack.jobs import member_link
 from src.core.pack.machines import capabilities as pack_capabilities
 from src.core.pack.move import account
 from src.core.pack.transport import bundles
@@ -46,9 +47,12 @@ def _require_home(conn: Any, project: Dict[str, Any]) -> None:
         raise HTTPException(409, {"code": "not_project_home", "detail": "this machine holds a replica; change replicas on the project's home"})
 
 
-def find_peer(machine: str) -> peer_hosts.PeerRow:
-    with closing(peer_auth.open_db()) as conn:
-        peers = peer_hosts.list_peers(conn)
+def find_peer(machine: str, *, members: bool = False) -> peer_hosts.PeerRow:
+    if members:
+        peers = member_link.find_rows()
+    else:
+        with closing(peer_auth.open_db()) as conn:
+            peers = peer_hosts.list_peers(conn)
     wanted = machine.strip().lower()
     for peer in peers:
         if wanted in (peer.key.lower(), str(peer.label).lower(), peer.peer_install_id.lower()):
@@ -56,11 +60,16 @@ def find_peer(machine: str) -> peer_hosts.PeerRow:
     raise HTTPException(404, {"code": "unknown_machine", "detail": f"no paired computer named {machine!r}"})
 
 
-async def call_peer(peer: peer_hosts.PeerRow, method: str, path: str, body: Any = None, *, timeout: float = PEER_TIMEOUT_SECONDS) -> Any:
-    links = peer_links.LINKS
-    client = links.client(peer.peer_install_id) if links is not None else None
+async def call_peer(peer: peer_hosts.PeerRow, method: str, path: str, body: Any = None, *, timeout: float = PEER_TIMEOUT_SECONDS,
+                    mesh: bool = False) -> Any:
+    if mesh:
+        client = member_link.client_for(peer.peer_install_id)
+    else:
+        links = peer_links.LINKS
+        client = links.client(peer.peer_install_id) if links is not None else None
     if client is None:
-        raise HTTPException(502, {"code": "machine_unreachable", "detail": f"{peer.label} is not connected right now"})
+        words = member_link.UNREACHABLE.format(label=peer.label) if mesh and member_link.on() else f"{peer.label} is not connected right now"
+        raise HTTPException(502, {"code": "machine_unreachable", "detail": words})
     try:
         reply = await asyncio.wait_for(client.request(method, path, json=body), timeout)
     except (PeerUnreachable, PeerRefused, asyncio.TimeoutError) as exc:
@@ -83,8 +92,7 @@ async def call_peer(peer: peer_hosts.PeerRow, method: str, path: str, body: Any 
 def _auto_field(peer_install_id: str, auto: bool) -> Dict[str, Any]:
     from src.api.federation_pack_copies_routes import CAP_FORGET_COPY
 
-    links = peer_links.LINKS
-    if not auto or links is None or not pack_capabilities.has(links.capabilities(peer_install_id), CAP_FORGET_COPY):
+    if not auto or not pack_capabilities.has(member_link.caps_for(peer_install_id), CAP_FORGET_COPY):
         return {}
     return {"auto": True}
 
@@ -134,15 +142,18 @@ async def add_project_replica(project_name: str, body: AddReplicaRequest) -> Dic
                     "company_uid": company[0] if company else None, "company_name": company[1] if company else None}
 
     found = await run_in_threadpool(read)
-    project, peer = found["project"], await run_in_threadpool(find_peer, body.machine)
+    project, peer = found["project"], await run_in_threadpool(lambda: find_peer(body.machine, members=True))
     if direction.contained(peer.peer_install_id):
         raise HTTPException(409, {"code": direction.REFUSAL_CODE, "detail": f"{peer.label} is set to one way and holds no replicas"})
+    refusal = await run_in_threadpool(member_link.copy_refusal, peer.peer_install_id, str(peer.label))
+    if refusal is not None:
+        raise HTTPException(refusal[0], {"code": refusal[1], "detail": refusal[2]})
     answer = await call_peer(peer, "POST", REPLICA_PATH, {
         "project_uid": project["uid"], "name": project["display_name"], "root": body.root,
         "company_uid": found["company_uid"], "company_name": found["company_name"], "transport": body.transport,
         **trust_wire.source_trusted_field(peer.peer_install_id, await run_in_threadpool(trust_store.project_trusted, project["root"], found["profiles"])),
         **trust_wire.source_imports_field(peer.peer_install_id, await run_in_threadpool(imports.source_imports_ok, project["root"], found["profiles"])),
-        **_auto_field(peer.peer_install_id, body.auto)})
+        **_auto_field(peer.peer_install_id, body.auto)}, mesh=True)
 
     def write() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:
@@ -157,7 +168,7 @@ async def add_project_replica(project_name: str, body: AddReplicaRequest) -> Dic
     from src.api import project_transport_routes
 
     if await run_in_threadpool(bundles.is_repo, project["root"]):
-        view["code"] = await project_transport_routes.carry_to(project, peer.peer_install_id, str(peer.label), True)
+        view["code"] = await project_transport_routes.carry_to(project, peer.peer_install_id, str(peer.label), True, mesh=True)
     return view
 
 
@@ -176,11 +187,11 @@ async def remove_project_replica(project_name: str, machine: str) -> Dict[str, A
             _require_home(conn, project)
             return project
 
-    project, peer = await run_in_threadpool(read), await run_in_threadpool(find_peer, machine)
+    project, peer = await run_in_threadpool(read), await run_in_threadpool(lambda: find_peer(machine, members=True))
     known = await run_in_threadpool(lambda: _has_replica(project["uid"], peer.peer_install_id))
     if not known:
         raise HTTPException(404, {"code": "unknown_replica", "detail": f"{peer.label} holds no replica of {project['display_name']!r}"})
-    await call_peer(peer, "DELETE", f"{REPLICA_PATH}/{project['uid']}")
+    await call_peer(peer, "DELETE", f"{REPLICA_PATH}/{project['uid']}", mesh=True)
 
     def write() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:

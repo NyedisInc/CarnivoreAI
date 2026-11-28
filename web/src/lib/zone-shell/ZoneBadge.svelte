@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the Task Manager */
   import Icon from '../../opscenter/ui/Icon.svelte';
 
   let { global = false, markPx = 8 }: { global?: boolean; markPx?: number } = $props();

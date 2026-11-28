@@ -3,8 +3,8 @@ import { describe, expect, test, vi } from 'vitest';
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 import type { Translate } from '../sessions/types';
 import { ApiError } from '../../opscenter/api/auth.svelte';
-import { grantCplug } from './cplug-grant';
-import { createCplugsAdapter, setCplugEnabled, toCplugItem, type CplugRow } from './cplugs-adapter';
+import { grantCplug, sheetStamp } from './cplug-grant';
+import { createCplugsAdapter, listCplugItems, permissionLabel, setCplugEnabled, toCplugItem, type CplugRow, type CplugSheet } from './cplugs-adapter';
 
 const en = createI18n({ locale: 'en' }) as { t: Translate };
 const t: Translate = (key, params) => en.t(key, params);
@@ -22,7 +22,7 @@ function server(row: CplugRow) {
         const method = init.method ?? 'GET';
         const body = init.body ? JSON.parse(String(init.body)) : null;
         calls.push({ path, method, body });
-        if (path === '/cplugs') return { cplugs: [current] };
+        if (path === '/cplugs' || path.startsWith('/cplugs?')) return { cplugs: [current] };
         if (method === 'PUT') {
             current = { ...current, enabled: body.enabled, state: body.enabled ? 'active' : 'disabled',
                         grants: body.grants ?? current.grants, revision: (current.revision ?? 0) + 1 };
@@ -171,5 +171,157 @@ describe('an installed third-party plugin (A6, #2122)', () => {
         expect(item.tools).toEqual(['clock_now']);
         expect(seen.some((key) => key.startsWith('cplug.clock'))).toBe(false);
         expect(toCplugItem(OFF, t).thirdParty).toBe(false);
+    });
+});
+
+describe('unified agent-plugin rows (M3.2)', () => {
+    test('listCplugItems fetches /cplugs?include_agent_plugins=true and maps agent-plugin metadata', async () => {
+        const agentRow: CplugRow = {
+            id: 'agent:demo-plugin',
+            item_id: 'demo-plugin',
+            install_id: 'inst-agent-1',
+            kind: 'agent-plugin',
+            tier: 'catalog',
+            name: 'Demo Agent Plugin',
+            description: 'Installed from GitHub.',
+            publisher: 'octocat',
+            enabled: null,
+            state: 'active',
+            trust_tier: 'unverified_github',
+            trust_badge: 'Unverified',
+            scope: 'project',
+            project_path: '/tmp/proj',
+            git_source: { url: 'https://github.com/octocat/demo-plugin', repo: 'octocat/demo-plugin', ref: 'main', commit: 'deadbeef' },
+            permissions: { app: [] },
+            grants: { app: [] },
+            revision: 1,
+            watchdog: { pid: 4321, restart_count: 0, rss_bytes: 18 * 1024 * 1024, last_call: 'ping', last_event: 'ready' },
+            declarative_widget: { id: 'demo-w', title: 'Demo Widget' },
+        };
+        const { fetcher, calls } = server(agentRow);
+        const items = await listCplugItems(t, fetcher as never);
+        expect(calls[0]?.path).toBe('/cplugs?include_agent_plugins=true');
+        expect(items).toHaveLength(1);
+        const item = items[0]!;
+        expect(item.id).toBe('cplug:agent:demo-plugin');
+        expect(item.name).toBe('Demo Agent Plugin');
+        expect(item.pluginKind).toBe('agent-plugin');
+        expect(item.enabled).toBeNull();
+        expect(item.trustTier).toBe('unverified_github');
+        expect(item.trustBadge).toBe('Unverified');
+        expect(item.scope).toBe('project');
+        expect(item.projectPath).toBe('/tmp/proj');
+        expect(item.installId).toBe('inst-agent-1');
+        expect(item.gitSource?.repo).toBe('octocat/demo-plugin');
+        expect(item.watchdog?.pid).toBe(4321);
+        expect(item.declarativeWidget).toEqual({ id: 'demo-w', title: 'Demo Widget' });
+    });
+
+    test('toCplugItem forwards runtime_active onto runtimeActive when present', () => {
+        expect(toCplugItem({ ...OFF, runtime_active: false }, t).runtimeActive).toBe(false);
+        expect(toCplugItem({ ...OFF, runtime_active: true }, t).runtimeActive).toBe(true);
+        expect(toCplugItem(OFF, t).runtimeActive).toBeUndefined();
+    });
+});
+
+describe('M4.1b bus/slot metadata, permissionLabel, and ui_slots consent forwarding', () => {
+    test('permissionLabel resolves services: and events: prefixes cleanly via i18n catalog', () => {
+        const svc = permissionLabel('services:kv.v1', t);
+        const evt = permissionLabel('events:session.started', t);
+        expect(svc).toBe('call the kv.v1 plugin service');
+        expect(evt).toBe('emit or subscribe to the session.started plugin event');
+        expect(svc).not.toContain('plugins.page.permission.');
+        expect(evt).not.toContain('plugins.page.permission.');
+    });
+
+    test('toCplugItem maps all M4.1b slot, bus, channel, harness, and popout fields', () => {
+        const row: CplugRow = {
+            ...OFF,
+            id: 'bus-plugin',
+            runtime: 'sidecar',
+            name: 'Bus Plugin',
+            tier: 'catalog',
+            grants: { app: [], ui_slots: ['terminal.toolbar'] },
+            granted_ui_slots: ['terminal.toolbar'],
+            services: { provides: [{ name: 'kv.v1', methods: ['get', 'set'] }], consumes: ['auth.v1'] },
+            events: { on: ['session.started'], emit: ['bus:updated'], allowed: ['session.started'] },
+            ui_slots: ['bus.board'],
+            ui_contribute: { 'terminal.toolbar': [{ id: 'btn', label: 'Run', route: 'run' }] },
+            commands: [{ id: 'bus.open', title: 'Open Bus', shortcut: 'Cmd+Shift+B' }],
+            chords: [{ command: 'bus.open', shortcut: 'Cmd+Shift+B' }],
+            session_row_actions: [{ id: 'act', label: 'Inspect', route: 'inspect' }],
+            session_badges: [{ text: 'ok', tone: 'accent' }],
+            terminal_toolbar: [{ id: 'btn', label: 'Run', route: 'run' }],
+            project_panels: [{ id: 'panel', title: 'Bus', route: 'panel' }],
+            channels: [{ id: 'ops', kind_id: 'plugin:bus-plugin:ops', label: 'Ops Feed' }],
+            harnesses: ['harnesses/agent.toml'],
+            popout: true,
+        };
+        const item = toCplugItem(row, t);
+        expect(item.grantedUiSlots).toEqual(['terminal.toolbar']);
+        expect(item.uiSlotGrants).toEqual(['terminal.toolbar']);
+        expect(item.services).toEqual(row.services);
+        expect(item.events).toEqual(row.events);
+        expect(item.uiSlots).toEqual(['bus.board']);
+        expect(item.uiContribute).toEqual(row.ui_contribute);
+        expect(item.commands).toEqual(row.commands);
+        expect(item.chords).toEqual(row.chords);
+        expect(item.sessionRowActions).toEqual(row.session_row_actions);
+        expect(item.sessionBadges).toEqual(row.session_badges);
+        expect(item.terminalToolbar).toEqual(row.terminal_toolbar);
+        expect(item.projectPanels).toEqual(row.project_panels);
+        expect(item.channels).toEqual(row.channels);
+        expect(item.harnesses).toEqual(['harnesses/agent.toml']);
+        expect(item.popout).toBe(true);
+    });
+
+    test('setCplugEnabled blocks un-ticked ui_slots and grantCplug forwards ui_slots, ui_slots_sha, and slot_ticks', async () => {
+        const slotRow: CplugRow = {
+            ...OFF,
+            id: 'slot-plugin',
+            consent_required: true,
+            permissions: { app: ['sessions.read'] },
+            risks: { 'sessions.read': 'low' },
+            ui_contribute: { 'terminal.toolbar': [{ id: 't1', label: 'Go', route: 'go' }] },
+        };
+        const sheet: CplugSheet = {
+            digest: 'd1',
+            body_sha: 'b1',
+            grants_sha: 'g1',
+            permissions: [{ name: 'sessions.read', risk: 'low', granted: false }],
+            ui_slots: [{ slot: 'terminal.toolbar', count: 1, risk: 'medium', reason: 'add toolbar action', granted: false, needs_tick: true }],
+            ui_slots_sha: 'slots-sha-1',
+        };
+        expect(sheetStamp(sheet)).toBe('d1|b1|g1|slots-sha-1');
+
+        const base = server(slotRow);
+        const fetcher = vi.fn(async (path: string, init: RequestInit = {}) =>
+            path.endsWith('/sheet')
+                ? (base.calls.push({ path, method: 'GET', body: null }), sheet)
+                : (base.fetcher as never as (p: string, i?: RequestInit) => Promise<unknown>)(path, init),
+        );
+
+        await expect(setCplugEnabled('cplug:slot-plugin', true, t, fetcher as never, async () => {})).rejects.toThrow(/tick/);
+
+        await grantCplug('slot-plugin', [], t, fetcher as never, async () => {}, {
+            enable: true,
+            seen: sheet,
+            slotTicks: ['terminal.toolbar'],
+            uiSlots: ['terminal.toolbar'],
+        });
+        const put = base.calls.find((c) => c.method === 'PUT')!;
+        expect(put.body).toEqual({
+            revision: 3,
+            enabled: true,
+            grants: { app: ['sessions.read'], ui_slots: ['terminal.toolbar'] },
+            consent: {
+                digest: 'd1',
+                body_sha: 'b1',
+                grants_sha: 'g1',
+                ticks: [],
+                ui_slots_sha: 'slots-sha-1',
+                slot_ticks: ['terminal.toolbar'],
+            },
+        });
     });
 });

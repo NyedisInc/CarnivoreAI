@@ -3,6 +3,7 @@
 import { readMigrating, writeMigrating } from '../lib/browser-storage-migrate';
 import { BROWSER_ID } from '../lib/browser/browser-id';
 import { BOARD_PARAM } from '../opscenter/engine/home-boards';
+import { currentWidgetId } from '../opscenter/engine/retired-widget-ids';
 import { SIZE_UNIT_PX, suggestedSizes } from '../opscenter/widgets/fits';
 import type { WidgetFits } from '../opscenter/widgets/types';
 import { HEAD_ROW_PX } from '../opscenter/shell/widget-head';
@@ -159,15 +160,31 @@ export const WIDGET_PARAM = 'widget';
 
 export const WIDGET_WINDOW_CAP = Object.freeze({ width: 900, height: 700 });
 
-const WIDGET_ID = /^(?:core\.[a-z0-9][a-z0-9-]*|[a-z][a-z0-9]{1,23}\.[a-z][a-z0-9-]{0,31}:[a-z0-9][a-z0-9:_-]{0,63})$/;
+const WIDGET_ID = /^(?:core\.[a-z0-9][a-z0-9-]*|(?!core\.)[a-z][a-z0-9-]{1,23}\.[a-z][a-z0-9-]{0,31}:[a-z0-9][a-z0-9:_-]{0,63})$/;
 
 export function isWidgetId(id: unknown): id is string {
     return typeof id === 'string' && WIDGET_ID.test(id);
 }
 
+export function parseWidgetTarget(id: string): { kind: string; target: string | null } {
+    if (id.startsWith('core.')) return { kind: id, target: null };
+    const idx = id.indexOf(':');
+    if (idx === -1) return { kind: id, target: null };
+    return { kind: id.slice(0, idx), target: id.slice(idx + 1) || null };
+}
+
 export function widgetFromSearch(search: string): string | null {
     const id = new URLSearchParams(search).get(WIDGET_PARAM);
-    return isWidgetId(id) ? id : null;
+    return isWidgetId(id) ? currentWidgetId(id) : null;
+}
+
+export function rewriteRetiredWidgetUrl(win: Window): void {
+    const params = new URLSearchParams(win.location.search);
+    const asked = params.get(WIDGET_PARAM);
+    const shown = widgetFromSearch(win.location.search);
+    if (asked === null || shown === null || shown === asked) return;
+    params.set(WIDGET_PARAM, shown);
+    win.history.replaceState(win.history.state, '', `${win.location.pathname}?${params.toString()}${win.location.hash}`);
 }
 
 export const PLACEMENT_PARAMS = Object.freeze({ session: 'session', view: 'view', options: 'options', pinned: 'pinned' });

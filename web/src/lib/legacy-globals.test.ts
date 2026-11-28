@@ -9,11 +9,11 @@ export const WINDOW_CAST = /\b(?:window|hostWindow\(\)|globalThis)\)?\s+as\s+unk
 
 const WINDOW_CAST_KNOWN: readonly string[] = [
   'admin/App.svelte x1',
-  'plugins/huddle/style-guide/CharacterBoard.svelte x1',
-  'plugins/huddle/style-guide/ExpressionBoard.svelte x1',
-  'plugins/huddle/style-guide/SwarmPageBoard.svelte x1',
-  'plugins/huddle/style-guide/SwarmPanelBoard.svelte x1',
-  'plugins/huddle/swarm/swarm-settings.svelte.ts x1',
+  'plugins/taskmanager/style-guide/CharacterBoard.svelte x1',
+  'plugins/taskmanager/style-guide/ExpressionBoard.svelte x1',
+  'plugins/taskmanager/style-guide/SwarmPageBoard.svelte x1',
+  'plugins/taskmanager/style-guide/SwarmPanelBoard.svelte x1',
+  'plugins/taskmanager/swarm/swarm-settings.svelte.ts x1',
   'plugins/sdk/floor.svelte.ts x1',
   'plugins/sdk/sessions.svelte.ts x1',
   'lib/add-to-menu/host.ts x1',

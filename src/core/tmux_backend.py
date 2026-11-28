@@ -30,6 +30,7 @@ from src.core.tmux_command_batch import (
     COMMAND_SEPARATOR, BatchOutcome, environment_commands, redact_env_pair, run_on_stdin, run_optional_batch,
 )
 from src.core.tmux_discovery import (
+    SERVER_ONLY_ENV,
     pane_client_env,
 )
 from src.core.pane_tail.tail_supervisor import supervise_tail
@@ -52,9 +53,9 @@ from src.core.session_respawn import (
     RESPAWN_PANE_FORMAT,
     RespawnResult,
     parse_respawn_probe,
-    refuse_if_transcript_missing,
     resolve_respawn_plan,
 )
+from src.core.respawn.transcript_guard import refuse_if_transcript_missing
 
 logger = structlog.get_logger()
 
@@ -257,6 +258,10 @@ class TmuxBackend(SessionBackend):
             return await self._run_tmux(*args, check=check)
         return await run_on_stdin(self._run_tmux, *args, check=check)
 
+    async def scrub_server_only_globals(self) -> None:
+        for key in SERVER_ONLY_ENV:
+            await self._run_tmux("set-environment", "-g", "-u", key, check=False)
+
     async def set_session_environment(
         self, target: str, values: Mapping[str, Optional[str]], *, note: str
     ) -> BatchOutcome:
@@ -331,6 +336,7 @@ class TmuxBackend(SessionBackend):
         if env:
             tmux_env.update({k: v for k, v in env.items() if v is not None
                              and not is_secret_name(k)})
+        await self.scrub_server_only_globals()
         removals = sorted(k for k, v in (env or {}).items() if v is None)
         for key in removals:
             tmux_env.pop(key, None)
@@ -792,6 +798,12 @@ class TmuxBackend(SessionBackend):
             return None
         return parse_epoch(out.decode("utf-8", errors="replace"))
 
+    async def tmux_session_id(self) -> Optional[str]:
+        rc, out, _ = await self._run_tmux(
+            "display-message", "-p", "-t", exact_pane_target(self.tmux_session), "#{session_id}", check=False)
+        text = out.decode("utf-8", errors="replace").strip() if rc == 0 and out else ""
+        return text if text.startswith("$") else None
+
     async def _resume_presence(self, uuid: str, family: Optional[str] = None) -> Tuple[str, str]:
         return await self._lifecycle.resume_presence(uuid, family)
 
@@ -1015,7 +1027,7 @@ class TmuxBackend(SessionBackend):
                 return cleaned
         return ""
 
-    async def stop(self) -> None:
+    async def stop(self, kill_target: Optional[str] = None) -> None:
         if not self._running and self._reader_task is None:
             await self._lifecycle.stopping()
             await self._lifecycle.stopped()
@@ -1039,14 +1051,14 @@ class TmuxBackend(SessionBackend):
         await self._run_tmux(
             "pipe-pane",
             "-t",
-            exact_pane_target(self.tmux_session),
+            kill_target or exact_pane_target(self.tmux_session),
             check=False,
         )
 
         await self._run_tmux(
             "kill-session",
             "-t",
-            f"={self.tmux_session}",
+            kill_target or f"={self.tmux_session}",
             check=False,
         )
 
@@ -1279,6 +1291,50 @@ class TmuxBackend(SessionBackend):
         return with_cursor_restore(
             normalize_replay_newlines(body), self.pane_cursor_position())
 
+    def capture_attach_snapshot(self) -> Tuple[Optional[bool], bytes]:
+        marker = b"<<<CARNIVORE_ATTACH_META>>>"
+        target = exact_pane_target(self.tmux_session)
+        rc, out, _ = self._run_tmux_sync(
+            "capture-pane",
+            "-p",
+            "-e",
+            "-S",
+            "0",
+            "-t",
+            target,
+            ";",
+            "display-message",
+            "-p",
+            "-t",
+            target,
+            "<<<CARNIVORE_ATTACH_META>>> #{alternate_on} #{cursor_x} #{cursor_y}",
+            check=False,
+        )
+        idx = out.rfind(marker) if rc == 0 else -1
+        if idx < 0:
+            try:
+                alt = bool(self.pane_in_alternate_screen())
+            except Exception:
+                alt = None
+            return alt, self.capture_visible_screen()
+        raw_screen = out[:idx]
+        meta_parts = out[idx + len(marker):].decode("utf-8", errors="replace").strip().split()
+        alternate_known: Optional[bool] = None
+        if len(meta_parts) >= 1 and meta_parts[0] in ("0", "1"):
+            alternate_known = meta_parts[0] == "1"
+        cursor: Optional[Tuple[int, int]] = None
+        if len(meta_parts) >= 3:
+            try:
+                cx, cy = int(meta_parts[1]), int(meta_parts[2])
+                if cx >= 0 and cy >= 0:
+                    cursor = (cx, cy)
+            except ValueError:
+                cursor = None
+        body = raw_screen.rstrip(b"\r\n")
+        if not body.strip():
+            return alternate_known, b""
+        return alternate_known, with_cursor_restore(normalize_replay_newlines(body), cursor)
+
     def pane_cursor_position(self) -> Optional[Tuple[int, int]]:
         rc, out, _ = self._run_tmux_sync(
             "display-message",
@@ -1390,7 +1446,7 @@ class TmuxBackend(SessionBackend):
                     await self._maybe_rotate(pipe_path, fd)
 
                 try:
-                    chunk = os.read(fd, 8192)
+                    chunk = os.read(fd, 65536)
                 except BlockingIOError:
                     chunk = b""
                 except OSError as exc:
@@ -1479,7 +1535,7 @@ class TmuxBackend(SessionBackend):
         drained = 0
         while True:
             try:
-                chunk = os.read(current_fd, 8192)
+                chunk = os.read(current_fd, 65536)
             except BlockingIOError:
                 break
             except OSError as exc:

@@ -452,3 +452,43 @@ def test_a_real_child_holding_the_output_file_is_live_and_its_exit_is_not(tmp_pa
         child.kill()
         child.wait()
     assert state() == PARKED_NONE
+
+
+
+MONITOR_CMD = 'while pgrep -f "bash x.sh" >/dev/null; do sleep 30; done; echo DONE'
+SHELL_FMT = ("/bin/zsh -c source /h/shell-snapshots/snapshot-zsh-1.sh 2>/dev/null || true && "
+             "eval '%s' < /dev/null && pwd -P >| /tmp/cwd-1")
+
+
+def _monitor_launches(deadline_at: str, command: str = MONITOR_CMD):
+    from src.core.subagents.parked_launches import OpenLaunch, OpenLaunches, command_digest
+    launch = OpenLaunch("a1", "monitor", "b3oye", _at("2026-11-20T05:09:14Z"),
+                        deadline=_at(deadline_at), owner_active_at=_at("2026-11-20T05:09:15Z"),
+                        command_digest=command_digest(command))
+    return OpenLaunches((launch,), 1, _at("2026-11-20T05:00:00Z"), launch.deadline)
+
+
+def test_a_monitor_is_live_only_on_an_exact_command_match_under_claude():
+    launches = _monitor_launches("2026-11-20T05:39:14Z")
+    shell = SHELL_FMT % MONITOR_CMD.replace("'", "'\"'\"'")
+    parents = {10: 1, 11: 10, 99: 7}
+    cases = [
+        ({11: shell}, PARKED_LIVE),
+        ({11: SHELL_FMT % "sleep 5"}, PARKED_UNMEASURED),
+        ({99: shell}, PARKED_UNMEASURED),
+        ({11: "sleep 30"}, PARKED_UNMEASURED),
+    ]
+    for commands, want in cases:
+        got = parked_work.judge(launches, claude_pid=1, process_parents=lambda: parents,
+                                process_commands=lambda c=commands: c)
+        assert got.state == want, commands
+        assert all("pgrep" not in str(entry) for entry in got.entries)
+    assert parked_work.judge(launches, claude_pid=1, process_parents=lambda: parents).state \
+        == PARKED_UNMEASURED
+
+
+def test_a_monitor_that_expired_unheard_counts_as_a_stalled_agent(tmp_path):
+    parent = _monitor_only(tmp_path, "2026-09-27T20:56:05.000Z")
+    registry = _registry("2026-09-27T20:00:00.000Z", "2026-09-27T20:56:04.000Z")
+    _facts, parked = _read(parent, _at("2026-09-27T20:56:05.000Z"), registry)
+    assert (parked.state, parked.stalled) == (PARKED_NONE, 1)

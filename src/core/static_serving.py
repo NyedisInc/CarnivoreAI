@@ -11,6 +11,32 @@ from starlette.responses import FileResponse, HTMLResponse, Response
 
 from src.core import static_asset_keys, static_cache
 
+DEV_SKIP_PREFIXES: tuple[str, ...] = (
+    "widget-harness-build/",
+    "dist/widget-lab/",
+    "style-guide/",
+    "dist/style-guide-chunk-",
+    "dist/widget-preview-chunk-",
+)
+DEV_SKIP_FILES: frozenset[str] = frozenset({
+    "dist/style-guide.js",
+    "dist/widget-preview.js",
+    "dist/widget-preview.css",
+})
+
+CRITICAL_SHELL_FILES: tuple[str, ...] = (
+    "index.html",
+    "dist/app.js",
+    "dist/app.css",
+    "js/api.js",
+)
+
+
+def _is_dev_bundle(rel_posix: str) -> bool:
+    if rel_posix in DEV_SKIP_FILES:
+        return True
+    return any(rel_posix.startswith(prefix) for prefix in DEV_SKIP_PREFIXES)
+
 
 async def maybe_gzip_file_response(response: Response, scope: dict) -> Response:
     if not isinstance(response, FileResponse) or response.status_code != 200:
@@ -43,13 +69,30 @@ async def maybe_gzip_file_response(response: Response, scope: dict) -> Response:
                      media_type=response.media_type)
 
 
-def warm_static_gzip_cache(root: Path, suffixes: tuple[str, ...]) -> int:
+def warm_static_gzip_cache(
+    root: Path,
+    suffixes: tuple[str, ...],
+    *,
+    only_files: tuple[str, ...] | None = None,
+    skip_dev: bool = True,
+) -> int:
     entries = []
-    for candidate in root.rglob("*"):
+    if only_files is not None:
+        candidates = [root / rel for rel in only_files]
+    else:
+        candidates = list(root.rglob("*"))
+    for candidate in candidates:
         if not candidate.is_file():
             continue
         if not candidate.name.lower().endswith(suffixes):
             continue
+        if only_files is None and skip_dev:
+            try:
+                rel_posix = candidate.relative_to(root).as_posix()
+            except ValueError:
+                rel_posix = ""
+            if _is_dev_bundle(rel_posix):
+                continue
         try:
             stat_result = candidate.stat()
         except OSError:

@@ -5,7 +5,7 @@ import sqlite3
 from contextlib import closing
 from pathlib import Path
 
-from src.plugins.huddle.public import TaskManagerStore
+from src.plugins.taskmanager.public import TaskManagerStore
 from src.core.work.storage import LEGACY_STORAGE, WorkStorage
 from src.plugins.sdk import CplugStorage
 

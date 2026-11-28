@@ -8,6 +8,8 @@ from typing import Any, List, Mapping, Optional, Sequence
 import structlog
 
 from src.core.attention.evidence import FAMILY_CODEX
+
+FAMILY_CUSTOM = "custom"
 from src.core.claude_project_dirs import path_spellings
 from src.core.claude_transcript_correlate import (
     default_projects_dir,
@@ -16,6 +18,7 @@ from src.core.claude_transcript_correlate import (
 from src.core.session_respawn import (
     RESPAWN_AGENT,
     RESPAWN_CANNOT_DETERMINE,
+    RESPAWN_OFFLOADED,
     RESPAWN_TRANSCRIPT_MISSING,
     RespawnPlan,
 )
@@ -45,6 +48,7 @@ class ResumeDirectory:
     transcript_path: Optional[str] = None
     checked: Sequence[str] = ()
     detail: str = ""
+    offloaded: bool = False
 
     @property
     def refuses(self) -> bool:
@@ -95,6 +99,9 @@ def resume_directory(
         )
     if family == FAMILY_CODEX:
         return _codex_resume_directory(working_dir, claude_session_uuid, codex_home)
+    if family == FAMILY_CUSTOM:
+        return ResumeDirectory(
+            outcome=DIRECTORY_UNCHECKED, detail="a custom agent's conversation is not in claude's transcript store, so it was not checked")
     if corpus_root is not None:
         bases: Sequence[Path] = (corpus_root,)
     else:
@@ -141,6 +148,11 @@ def resume_directory(
                 "nothing was looked for"
             ),
         )
+    from src.core.backup_health import offload_guard
+
+    off = offload_guard.lookup(claude_session_uuid)
+    if off is not None:
+        return ResumeDirectory(outcome=DIRECTORY_NOT_FOUND, checked=tuple(checked), detail=off.detail, offloaded=True)
     return ResumeDirectory(
         outcome=DIRECTORY_NOT_FOUND,
         checked=tuple(checked),
@@ -202,7 +214,7 @@ def plan_imported_restart(
     )
     if measured.refuses:
         return ImportedRestartPlan(
-            kind=RESPAWN_TRANSCRIPT_MISSING,
+            kind=RESPAWN_OFFLOADED if measured.offloaded else RESPAWN_TRANSCRIPT_MISSING,
             conversation=target.outcome,
             reuse_session_id=_row_id(row),
             detail=measured.detail,

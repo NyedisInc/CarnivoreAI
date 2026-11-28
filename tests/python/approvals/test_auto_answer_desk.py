@@ -66,3 +66,32 @@ def test_only_a_real_swarm_desk_folder_is_added(tmp_path: Path, monkeypatch) -> 
     assert pressed(desk / "76") == []
     assert pressed(state / "swarm" / "other") == []
     assert pressed(tmp_path / "outside") == []
+
+
+def test_resumed_swarm_session_with_scrollback_and_ready_gate_still_adds_own_desk(tmp_path: Path, monkeypatch) -> None:
+    state = tmp_path / "Application Support" / "Carnivore"
+    desk_dir = state / "swarm" / "desk" / "4"
+    desk_dir.mkdir(parents=True)
+    monkeypatch.setattr(settings, "state_dir_override", str(state))
+    scrollback = (
+        "  ⏺ I checked the 6 saved rules again and kept all of them.\n"
+        "  When a card reaches Done the owner's chats show one done line.\n"
+        + SCREEN.format(path=desk_dir)
+    )
+    dialog = extract_dialog(scrollback, "claude")
+    assert dialog is not None and dialog.startup_kind == "trust"
+    presses = Presses()
+
+    async def info(_sid: str):
+        return SimpleNamespace(session=SimpleNamespace(id=_sid, working_dir=str(tmp_path / "proj")),
+                               agent_family="claude", startup_gate="ready", tmux_session="t")
+
+    engine = make_engine(answer=presses, info=info)
+
+    async def go() -> None:
+        task = engine.on_observation(SimpleNamespace(session_id="ses_resumed"), reading(dialog))
+        assert task is not None
+        await task
+
+    asyncio.run(go())
+    assert presses.labels == ["Yes, add it"]

@@ -156,7 +156,7 @@ class Refresher:
         if not token or not cfg.server_url:
             return REJECTED
         try:
-            reply = await ArgentClient(cfg.server_url, lambda: token, ca_path=cfg.ca_path, transport=self._transport).post(REFRESH_PATH)
+            reply = await ArgentClient(cfg.server_url, lambda: token, transport=self._transport).post(REFRESH_PATH)
         except Unauthorized:
             await self._login_over()
             logger.info("argent_refresh_login_over")

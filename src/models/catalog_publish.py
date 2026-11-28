@@ -3,9 +3,27 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 
 from src.models.catalog_submit import SubmissionFileView, SubmissionRefusalView
+
+
+class OwnerPublishRequest(BaseModel):
+    """`POST /cplug-owner/publish`: preview or submit a local plugin folder or GitHub owner/repo@tag pointer."""
+
+    model_config = ConfigDict(extra="forbid")
+    path: Optional[StrictStr] = Field(default=None, min_length=1, max_length=2000)
+    source_type: Literal["upload", "github"] = "upload"
+    pointer: Optional[StrictStr] = Field(default=None, min_length=3, max_length=400)
+    repo: Optional[StrictStr] = Field(default=None, min_length=3, max_length=150)
+    tag: Optional[StrictStr] = Field(default=None, min_length=1, max_length=255)
+    commit_sha: Optional[StrictStr] = Field(default=None, min_length=40, max_length=40)
+    subdir: Optional[StrictStr] = Field(default=None, max_length=512)
+    kind: Optional[StrictStr] = Field(default=None, max_length=32)
+    name: Optional[StrictStr] = Field(default=None, max_length=64)
+    version: Optional[StrictStr] = Field(default=None, max_length=64)
+    digest: Optional[StrictStr] = Field(default=None, min_length=64, max_length=64)
+    dry_run: StrictBool = False
 
 
 class PublishablePreviewRequest(BaseModel):
@@ -18,6 +36,14 @@ class PublishablePreviewRequest(BaseModel):
 class PublishSendRequest(PublishablePreviewRequest):
 
     digest: str = Field(min_length=64, max_length=64)
+    source_type: Literal["upload", "github"] = "upload"
+    pointer: Optional[StrictStr] = Field(default=None, min_length=3, max_length=400)
+    repo: Optional[StrictStr] = Field(default=None, min_length=3, max_length=150)
+    tag: Optional[StrictStr] = Field(default=None, min_length=1, max_length=255)
+    commit_sha: Optional[StrictStr] = Field(default=None, min_length=40, max_length=40)
+    subdir: Optional[StrictStr] = Field(default=None, max_length=512)
+    kind: Optional[StrictStr] = Field(default=None, max_length=32)
+    name: Optional[StrictStr] = Field(default=None, max_length=64)
 
 
 class PublishHeroRequest(BaseModel):
@@ -29,7 +55,11 @@ class PublishHeroRequest(BaseModel):
 
     kind: str = Field(default="skill", max_length=16)
     name: str = Field(min_length=1, max_length=64)
-    image_base64: str = Field(min_length=1, max_length=700_000)
+    image_base64: str = Field(default="", max_length=700_000)
+    role: Literal["hero", "screenshot"] = "hero"
+    action: Literal["set", "remove"] = "set"
+    slot: Optional[int] = Field(default=None, ge=1, le=4)
+    caption: Optional[str] = Field(default=None, max_length=80)
     source: Literal["made", "yours"] = "yours"
 
 
@@ -68,11 +98,16 @@ class PublishPreviewResponse(BaseModel):
     total_bytes: int
     files: List[SubmissionFileView] = Field(default_factory=list)
     refusals: List[SubmissionRefusalView] = Field(default_factory=list)
+    script_files: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
     lint: Dict[str, Any] = Field(default_factory=dict)
     cost: Dict[str, Any] = Field(default_factory=dict)
     compat: Dict[str, Any] = Field(default_factory=dict)
     digest: str
     can_send: bool
+    source_type: str = "upload"
+    git_pointer: str = ""
+    commit_sha: str = ""
 
 
 class PublishAccountResponse(BaseModel):

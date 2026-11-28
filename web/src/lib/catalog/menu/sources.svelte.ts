@@ -88,6 +88,8 @@ export function createMenuData(catalog: CatalogData, t: Translate): MenuData {
                     catalogId: item.id as string,
                 })),
             ],
+            widget: [],
+            loadout: [],
         };
         const installed = Object.fromEntries(MENU_KINDS.map((kind) => [kind, kind === 'plugin' ? own[kind] : [...own[kind], ...fromCatalog(kind, own[kind])]])) as unknown as Record<MenuKind, readonly InstalledEntry[]>;
         const flagged: FlaggedEntry[] = MENU_KINDS.flatMap((kind) =>

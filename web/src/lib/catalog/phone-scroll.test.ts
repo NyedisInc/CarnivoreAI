@@ -40,7 +40,7 @@ describe('the catalog screen scrolls as one page on a phone', () => {
     const framePhone = phoneBlock(PAGE_CSS, '1023px');
 
     test('the phone block exists, so the cases below read something', () => {
-        expect(phone).toContain('.screen__body--reading');
+        expect(phone).toContain('.screen__body');
     });
 
     test('the overlay is the scroller and keeps its overscroll to itself', () => {

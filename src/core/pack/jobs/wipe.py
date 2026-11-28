@@ -110,19 +110,18 @@ def home_tips(root: str) -> Tuple[List[str], str]:
 
 def _capable(install_id: str) -> bool:
     from src.api.federation_pack_copies_routes import CAP_FORGET_COPY
-    from src.core.federation import peer_links
+    from src.core.pack.jobs import member_link
     from src.core.pack.machines import capabilities
 
-    links = peer_links.LINKS
-    return links is not None and capabilities.has(links.capabilities(install_id), CAP_FORGET_COPY)
+    return capabilities.has(member_link.caps_for(install_id), CAP_FORGET_COPY)
 
 
 async def _ask(install_id: str, body: Dict[str, Any]) -> Any:
     from src.api import project_replica_routes as routes
 
-    peer = await asyncio.to_thread(routes.find_peer, install_id)
+    peer = await asyncio.to_thread(lambda: routes.find_peer(install_id, members=True))
     limit = routes.PEER_TIMEOUT_SECONDS if body.get("dry_run") else PEER_REAL_TIMEOUT_S
-    return await routes.call_peer(peer, "POST", "/federation/pack/jobs/forget-copy", body, timeout=limit)
+    return await routes.call_peer(peer, "POST", "/federation/pack/jobs/forget-copy", body, timeout=limit, mesh=True)
 
 
 async def ask_one(install_id: str, project_uid: str, tips: List[str], *, dry_run: bool, ask: Optional[Ask] = None) -> FarAnswer:

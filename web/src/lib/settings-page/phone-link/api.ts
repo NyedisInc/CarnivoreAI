@@ -16,6 +16,7 @@ export interface PairingView {
 
 export interface LinkStatus {
     readonly enabled: boolean;
+    readonly pack_member?: boolean;
     readonly running: boolean;
     readonly tunnel: string;
     readonly hostname: string;

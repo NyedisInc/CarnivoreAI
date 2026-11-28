@@ -1,4 +1,5 @@
 import { t } from '../i18n/index.svelte';
+import { CANCELLED, runWithOffloadRestore } from '../offload-prompt/offload-prompt';
 import { drawerEnv } from './env';
 import { sessionStore } from '../sessions/store.svelte';
 
@@ -94,19 +95,22 @@ export async function runRestart(
         if (why) notifyFailure(name, 'session.restart.predict_failed', { name, why });
         return;
     }
-    await act(ctrl, name, target, choice);
+    await act(ctrl, name, target, choice, choice.sessionUuid ?? uuid);
 }
 
-async function act(ctrl: RestartCtrl, name: string, target: string, choice: RestartChoice): Promise<void> {
+async function act(ctrl: RestartCtrl, name: string, target: string, choice: RestartChoice, sessionUuid: string | null | undefined): Promise<void> {
     const g = drawerEnv() as RestartGlobals;
     const recreating = choice.mode === 'recreate';
     const verb = recreating ? 'recreate' : 'restart';
     const failedKey = recreating ? 'session.recreate.failed' : 'session.restart.card_failed';
     let result: RestartResult | null = null;
     try {
-        result = recreating
-            ? await g.API!.recreateSession(choice.sessionUuid, choice.agentType, choice.account)
-            : await g.API!.respawnSession(target, choice.agentType, choice.confirmRestartLive === true, choice.account);
+        const issue = (): Promise<RestartResult> => recreating
+            ? g.API!.recreateSession(choice.sessionUuid, choice.agentType, choice.account)
+            : g.API!.respawnSession(target, choice.agentType, choice.confirmRestartLive === true, choice.account);
+        const out = await runWithOffloadRestore({ sessionUuid, label: name }, issue);
+        if (out === CANCELLED) return;
+        result = out;
     } catch (err) {
         console.error(`SessionSidebar: ${verb} failed:`, err);
         notifyFailure(name, failedKey, { name, detail: err instanceof Error ? err.message : String(err) });

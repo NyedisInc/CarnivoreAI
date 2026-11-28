@@ -77,6 +77,6 @@ export function previewDocument(config: PreviewConfig): string {
     '<div class="config-editor-header" id="config-editor-header"></div>' +
     '<div class="modal-body config-editor-body"><div id="config-editor-tree" class="config-editor-tree"></div></div>' +
     '</div></div>' +
-    `<script type="module" src="${escapeAttribute(PREVIEW_SCRIPT)}"></script></body></html>`
+    `<script type="module" src="/static/js/i18n/boot.js"></script><script type="module" src="${escapeAttribute(PREVIEW_SCRIPT)}"></script></body></html>`
   );
 }

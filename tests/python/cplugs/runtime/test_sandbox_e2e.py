@@ -75,7 +75,7 @@ def run(coro):
 
 def test_sns_and_slack_channel_plugin_runs_out_of_process(tmp_path):
     rig = Rig(tmp_path)
-    spec = rig.spec("chan", "channel_plugin", {"network_hosts:hooks.slack.com", "network_hosts:sns.us-east-1.amazonaws.com"},
+    spec = rig.spec("chan", "channel_plugin", {"network_hosts:hooks.slack.com", "network_hosts:sns.us-east-1.amazonaws.com", "events:alert"},
                     tools=CHANNEL_TOOLS)
 
     async def go():
@@ -101,7 +101,7 @@ def _probe(tmp_path):
     listener = socket.socket()
     listener.bind(("127.0.0.1", 0))
     listener.listen(1)
-    spec = rig.spec("probe", "probe_plugin", set(), subs={"probe"})
+    spec = rig.spec("probe", "probe_plugin", {"events:probe"}, subs={"probe"})
 
     async def go():
         assert await rig.sup.enable(spec) == "running"
@@ -141,8 +141,8 @@ def test_sandbox_probe_goes_red_under_a_permissive_profile(tmp_path, monkeypatch
 
 def test_a_hostile_frame_the_rss_watchdog_and_a_tool_rug_pull_each_end_the_process(tmp_path):
     rig = Rig(tmp_path)
-    raw = rig.spec("rawer", "probe_plugin", set(), subs={"raw"})
-    fat = rig.spec("fatty", "probe_plugin", set(), subs={"alloc"})
+    raw = rig.spec("rawer", "probe_plugin", {"events:raw"}, subs={"raw"})
+    fat = rig.spec("fatty", "probe_plugin", {"events:alloc"}, subs={"alloc"})
     pulled = rig.spec("pulled", "channel_plugin", set(), tools=({**CHANNEL_TOOLS[0], "description": "something else"},))
 
     async def wait_ended(name: str, timeout: float = 20.0) -> str:
@@ -160,7 +160,8 @@ def test_a_hostile_frame_the_rss_watchdog_and_a_tool_rug_pull_each_end_the_proce
         await rig.sup.process("fatty").deliver_event("alloc", 1, {"mb": 220})
         second = await wait_ended("fatty")
         await rig.sup.enable(pulled)
-        third = rig.sup.process("pulled").ended
+        assert rig.sup.process("pulled") is None
+        third = rig.sup.state("pulled")
         await rig.sup.shutdown()
         return first, second, third
 

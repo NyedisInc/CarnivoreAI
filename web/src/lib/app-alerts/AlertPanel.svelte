@@ -53,13 +53,26 @@
     if (ok && sections.open.length === 0 && sections.resolved.length === 0 && waiting.length === 0) onClose();
   }
 
+  async function recheckAfter(alert: AppAlert, action: AlertAction): Promise<void> {
+    const recheck = alert.actions.find((a) => a.id === 'recheck');
+    if (!recheck || action.id === 'recheck' || !action.route) return;
+    try {
+      await runAlertAction(recheck);
+    } catch {
+    }
+  }
+
   async function runAction(alert: AppAlert, action: AlertAction): Promise<void> {
     notes[alert.id] = action.id === 'recheck' ? t('app_alert.row.rechecking') : '';
     try {
       await runAlertAction(action);
-      notes[alert.id] = action.id === 'recheck' ? t('app_alert.row.rechecked') : '';
+      notes[alert.id] = action.id === 'recheck' ? t('app_alert.row.rechecked') : action.done_key ? t(action.done_key) : '';
+      await recheckAfter(alert, action);
     } catch (error) {
-      notes[alert.id] = (error as { status?: number }).status === 403 ? t('app_alert.row.forbidden') : t('app_alert.row.recheck_failed');
+      const refusalKey = action.refusals?.[(error as { code?: string | null }).code ?? ''];
+      const owner = alert.params.owner;
+      if (refusalKey) notes[alert.id] = t(refusalKey, { owner: owner && owner !== '-' ? String(owner) : t('argent.cost.ask_unavailable_owner') });
+      else notes[alert.id] = (error as { status?: number }).status === 403 ? t('app_alert.row.forbidden') : t('app_alert.row.recheck_failed');
     }
     await refreshAlerts();
   }

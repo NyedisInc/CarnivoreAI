@@ -27,3 +27,27 @@ export function catalogMediaUrl(sha: string): Promise<string | null> {
     }
     return held;
 }
+
+const apiUrlCache = new Map<string, Promise<string | null>>();
+
+export function catalogApiImageUrl(url: string): Promise<string | null> {
+    const full = url.startsWith('/api/v1/') ? url : `/api/v1${url.startsWith('/') ? '' : '/'}${url}`;
+    let held = apiUrlCache.get(full);
+    if (!held) {
+        held = (async (): Promise<string | null> => {
+            if (auth.state === 'signed-out') return null;
+            const token = accessToken();
+            const headers = new Headers();
+            if (token) headers.set('Authorization', `Bearer ${token}`);
+            try {
+                const resp = await fetch(full, { headers });
+                if (!resp.ok) return null;
+                return URL.createObjectURL(await resp.blob());
+            } catch {
+                return null;
+            }
+        })();
+        apiUrlCache.set(full, held);
+    }
+    return held;
+}

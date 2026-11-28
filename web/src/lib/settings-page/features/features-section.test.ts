@@ -35,7 +35,7 @@ const REVIEWBOARD = row('reviewboard');
 const DEV = row('tmdevtools', { tier: 'dev' });
 const STORE = row('acme', { tier: 'catalog', runtime: 'sidecar', name: 'acme clock', publisher: 'acme' });
 const REVIEWBOARD_BARE = row('flow');
-const HUDDLE = row('huddle', { settings: { wrap: true }, settings_schema: { version: 1, fields: { wrap: { kind: 'boolean', labelKey: 'cplug.huddle.settings.wrap', default: true } } } });
+const HUDDLE = row('taskmanager', { settings: { wrap: true }, settings_schema: { version: 1, fields: { wrap: { kind: 'boolean', labelKey: 'cplug.huddle.settings.wrap', default: true } } } });
 
 let listing: CplugRow[] = [];
 let developerMode = false;
@@ -176,12 +176,12 @@ describe('settings > features', () => {
     });
 
     test('an old plugin link to an enabled built-in with settings opens its features entry', async () => {
-        listing = [withSettings('huddle')];
-        window.location.hash = '#settings/plugin/huddle';
+        listing = [withSettings('taskmanager')];
+        window.location.hash = '#settings/plugin/taskmanager';
         const root = await mountPage(false);
-        expect(root.querySelector('[data-plugin-entry="huddle"]')).not.toBeNull();
-        expect(root.querySelector('[data-st-features-list] button[data-plugin="huddle"][aria-current="page"]')).not.toBeNull();
-        expect(window.location.hash).toBe('#settings/plugin/huddle');
+        expect(root.querySelector('[data-plugin-entry="taskmanager"]')).not.toBeNull();
+        expect(root.querySelector('[data-st-features-list] button[data-plugin="taskmanager"][aria-current="page"]')).not.toBeNull();
+        expect(window.location.hash).toBe('#settings/plugin/taskmanager');
     });
 
     test('its address round-trips and opens the item with its switch in the pane', async () => {
@@ -206,9 +206,9 @@ describe('settings > features', () => {
     test('the old plugin link to a disabled built-in hands over to its features row without trapping back: one press returns to where the owner was', async () => {
         listing = [{ ...HUDDLE, enabled: false, state: 'disabled' }];
         window.history.replaceState(null, '', '#settings/general');
-        window.history.pushState(null, '', '#settings/plugin/huddle');
+        window.history.pushState(null, '', '#settings/plugin/huddle'); // the Task Manager
         const root = await mountPage(false);
-        expect(window.location.hash).toBe('#settings/features/huddle');
+        expect(window.location.hash).toBe('#settings/features/taskmanager');
         expect(root.querySelector('[data-screen="features"]')).not.toBeNull();
         window.history.back();
         await new Promise((resolve) => setTimeout(resolve, 100));
@@ -244,7 +244,7 @@ describe('settings > features, the Swarm switch (#2701, Joe (ccsliinc), 2026-10-
         const screen = await openFeatures(await mountPage());
         screen.querySelector<HTMLElement>('[data-item-id="switch:swarm"]')!.click();
         await settle();
-        expect(screen.querySelector('[data-plugin-pane-switch="huddle"]')).not.toBeNull();
+        expect(screen.querySelector('[data-plugin-pane-switch="taskmanager"]')).not.toBeNull();
     });
 
     test('NEGATIVE: with no task manager row, clicking the swarm card opens nothing', async () => {

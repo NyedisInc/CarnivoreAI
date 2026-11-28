@@ -6,6 +6,7 @@ import uuid as _uuid
 from dataclasses import dataclass
 from typing import List, Optional
 
+from src.core.session_groups import session_group_parent as parent_store
 from src.core.session_groups import session_group_rule as rule_store
 from src.core import session_group_style as style_store
 from src.core.db import column_exists, table_exists, transaction
@@ -49,6 +50,7 @@ class SessionGroup:
     member_session_uuids: tuple = ()
     style: Optional[style_store.GroupStyle] = None
     rule: Optional[dict] = None
+    parent_key: Optional[str] = None
 
 
 def normalize_name(raw: str) -> str:
@@ -70,13 +72,16 @@ def list_groups(conn: sqlite3.Connection) -> List[SessionGroup]:
     members = members_by_group(conn)
     styles = style_store.styles_by_group(conn)
     rules = rule_store.rules_by_group(conn)
+    has_parent = column_exists(conn, "session_groups", parent_store.PARENT_COLUMN)
+    parent_sel = f", {parent_store.PARENT_COLUMN}" if has_parent else ", NULL"
     rows = conn.execute(
-        "SELECT id, group_uuid, name, position, created_at, updated_at "
+        f"SELECT id, group_uuid, name, position, created_at, updated_at{parent_sel} "
         "FROM session_groups ORDER BY position ASC, group_uuid ASC"
     ).fetchall()
     out: List[SessionGroup] = []
     for r in rows:
         filed = members.get(int(r[0]), [])
+        raw_parent = r[6]
         out.append(
             SessionGroup(
                 group_uuid=str(r[1]),
@@ -88,16 +93,25 @@ def list_groups(conn: sqlite3.Connection) -> List[SessionGroup]:
                 member_session_uuids=tuple(uuid for uuid, _ in filed),
                 style=style_store.resolve(styles.get(int(r[0])), str(r[1])),
                 rule=rules.get(int(r[0])),
+                parent_key=(str(raw_parent) if raw_parent else None),
             )
         )
     return out
 
 
 def create_group(
-    conn: sqlite3.Connection, name: str, *, now: Optional[str] = None
+    conn: sqlite3.Connection,
+    name: str,
+    *,
+    parent_key: Optional[str] = None,
+    now: Optional[str] = None,
 ) -> SessionGroup:
     _require_tables(conn)
     clean = normalize_name(name)
+    has_parent = column_exists(conn, "session_groups", parent_store.PARENT_COLUMN)
+    resolved_parent = parent_store.validate_parent_target(conn, parent_key)
+    if resolved_parent is not None and not has_parent:
+        raise GroupsUnavailable("the group parent_key column is not present (schema before v111)")
     stamp = now or utc_now()
     with transaction(conn):
         count = int(
@@ -112,12 +126,20 @@ def create_group(
             "SELECT COALESCE(MAX(position), -1) FROM session_groups"
         ).fetchone()[0]
         group_uuid = str(_uuid.uuid4())
-        conn.execute(
-            "INSERT INTO session_groups "
-            "(group_uuid, name, position, created_at, updated_at) "
-            "VALUES (?, ?, ?, ?, ?)",
-            (group_uuid, clean, int(top) + 1, stamp, stamp),
-        )
+        if has_parent:
+            conn.execute(
+                "INSERT INTO session_groups "
+                "(group_uuid, name, position, created_at, updated_at, parent_key) "
+                "VALUES (?, ?, ?, ?, ?, ?)",
+                (group_uuid, clean, int(top) + 1, stamp, stamp, resolved_parent),
+            )
+        else:
+            conn.execute(
+                "INSERT INTO session_groups "
+                "(group_uuid, name, position, created_at, updated_at) "
+                "VALUES (?, ?, ?, ?, ?)",
+                (group_uuid, clean, int(top) + 1, stamp, stamp),
+            )
         gid = int(conn.execute("SELECT last_insert_rowid()").fetchone()[0])
         style = style_store.resolve(None, group_uuid)
         if table_exists(conn, SESSION_GROUP_STYLES_TABLE):
@@ -134,6 +156,7 @@ def create_group(
         updated_at=stamp,
         members=(),
         style=style,
+        parent_key=resolved_parent,
     )
 
 
@@ -202,10 +225,39 @@ def rename_group(
         )
 
 
-def delete_group(conn: sqlite3.Connection, group_uuid: str) -> int:
+def set_group_parent(
+    conn: sqlite3.Connection,
+    group_uuid: str,
+    parent_key: Optional[str],
+    *,
+    now: Optional[str] = None,
+) -> None:
     _require_tables(conn)
+    if not column_exists(conn, "session_groups", parent_store.PARENT_COLUMN):
+        raise GroupsUnavailable("the group parent_key column is not present (schema before v111)")
     with transaction(conn):
         gid = _group_id(conn, group_uuid)
+        resolved = parent_store.validate_parent_target(conn, parent_key, group_uuid=group_uuid)
+        conn.execute(
+            "UPDATE session_groups SET parent_key = ?, updated_at = ? WHERE id = ?",
+            (resolved, now or utc_now(), gid),
+        )
+
+
+def delete_group(conn: sqlite3.Connection, group_uuid: str) -> int:
+    _require_tables(conn)
+    has_parent = column_exists(conn, "session_groups", parent_store.PARENT_COLUMN)
+    with transaction(conn):
+        gid = _group_id(conn, group_uuid)
+        if has_parent:
+            row = conn.execute(
+                "SELECT parent_key FROM session_groups WHERE id = ?", (gid,)
+            ).fetchone()
+            promoted_parent = row[0] if row else None
+            conn.execute(
+                "UPDATE session_groups SET parent_key = ?, updated_at = ? WHERE parent_key = ?",
+                (promoted_parent, utc_now(), f"g:{group_uuid}"),
+            )
         freed = clear_group(conn, gid)
         conn.execute("DELETE FROM session_groups WHERE id = ?", (gid,))
     return freed

@@ -5,6 +5,7 @@ import { legacyAnswer, suiteOfTest } from './goldens';
 import type { LegacyWindow } from './legacy-fixture';
 import { loadInteractions, recorded, settle, startRun, type Harness, type RunOptions } from './interaction-fixture';
 import { SHELL_ATTR, sidebarShell } from './shell.svelte';
+import { setSleepingFolded } from '../drawer/sleep-fold.svelte';
 
 export type { Harness, RunOptions };
 export { recorded, settle };
@@ -55,6 +56,7 @@ export interface Run {
 
 export async function play(steps: Steps, o: RunOptions = {}): Promise<Run> {
     const mode = 'shell';
+    setSleepingFolded(false);
     const h = startRun(o);
     const shell = h.list.getAttribute(SHELL_ATTR);
     const snaps: Snapshot[] = [];

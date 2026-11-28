@@ -9,7 +9,8 @@
   import { ageWords, dialWords } from '../computers/computers-format';
   import { setDirection, activity } from '../computers/computers-store.svelte';
   import { rosterActivity } from './roster-store.svelte';
-  import { dialKey } from './Status.svelte';
+  import { dialKey, statusWord } from './Status.svelte';
+  import { seenWords } from './seen-words';
   import type { RosterComputer } from './roster-model';
 
   const TOOLS = ['python3.12', 'python3', 'node', 'npm', 'git', 'gh', 'docker', 'tmux', 'claude', 'playwright', 'playwright_browsers'] as const;
@@ -17,7 +18,7 @@
   const { c, onWork, nowMs }: { c: RosterComputer; onWork: () => void; nowMs: number } = $props();
   const chain = $derived(c.machine?.snapshot?.toolchain ?? null);
   const specs = $derived(c.machine?.specs ?? null);
-  const dialWord = $derived(t(`roster.dial.${dialKey(c)}`));
+  const dialWord = $derived(c.member && c.machine ? statusWord(c, t) : t(`roster.dial.${dialKey(c)}`));
   const dialLine = $derived(
     c.since ? t('roster.ov.since', { word: dialWord, time: c.since })
       : c.entry?.firewall_on && c.entry.dial?.state === 'unreachable' ? t('roster.ov.firewall', { word: dialWord }) : dialWord,
@@ -30,7 +31,7 @@
 <section class="m1-sec"><h3 class="pp-k">{t('roster.ov.load')}</h3><Meters {c} /></section>
 {#if c.kind !== 'ssh-only'}
   <p class="m1-setwork"><span class="pp-hint">{t('roster.ov.reserve_hint')}</span>
-    <Button variant="quiet" size="sm" onclick={onWork}>{t('roster.ov.set_in_work')}</Button></p>
+    <Button size="sm" onclick={onWork}>{t('roster.ov.set_in_work')}</Button></p>
 {/if}
 <PaneAbilities {c} {onWork} {nowMs} />
 <section class="m1-sec"><h3 class="pp-k">{t('roster.ov.tools')}</h3>
@@ -47,10 +48,10 @@
     <dt>{t('roster.ov.model')}</dt><dd>{specs?.model ?? '-'}</dd>
     <dt>{t('roster.ov.cores')}</dt><dd>{specs?.cores ?? '-'}</dd>
     <dt>{t('roster.ov.memory')}</dt><dd>{specs?.mem_total_gb != null ? t('roster.card.gb', { n: Math.round(specs.mem_total_gb) }) : '-'}</dd>
-    <dt>{t('roster.ov.app_version')}</dt><dd>{c.machine?.snapshot?.app_version ?? '-'}</dd>
+    <dt>{t('roster.ov.app_version')}</dt><dd>{c.machine?.snapshot?.app_version ?? c.appVersion ?? '-'}</dd>
     <dt>{t('roster.ov.in_pack')}</dt><dd>{t(`roster.kind.${c.kind}`)}</dd>
     <dt>{t('roster.ov.joined')}</dt><dd>{joined ?? '-'}</dd>
-    <dt>{t('roster.ov.last_seen')}</dt><dd>{c.isSelf ? t('roster.card.this') : c.lastSeen ? ageWords(c.lastSeen, nowMs) : t('roster.card.never_seen')}</dd>
+    <dt>{t('roster.ov.last_seen')}</dt><dd>{seenWords(c, nowMs, false) ?? '-'}</dd>
     <dt>{t('roster.ov.dial')}</dt><dd>{dialLine}</dd>
   </dl>
 </section>

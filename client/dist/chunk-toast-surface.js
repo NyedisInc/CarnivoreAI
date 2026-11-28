@@ -1,0 +1,1 @@
+function e(e=globalThis){let t=e.ToastManager;return t&&(typeof t.add==`function`||typeof t.pruneHidden==`function`)?t:null}function t(t){let n=e();return!n||typeof n.add!=`function`?!1:(n.add(t),!0)}export{e as n,t};

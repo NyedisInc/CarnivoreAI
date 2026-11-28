@@ -7,8 +7,10 @@ import { layoutsBridge } from '../layouts-bridge/bridge';
 import type { Layout } from '../layouts-bridge/api.svelte';
 import { t } from '../i18n/index.svelte';
 import { companyList } from '../companies';
+import { rowsForGroup } from '../drawer/nested-groups';
+import { companySource } from '../sidebar-shell/company-source.svelte';
 import { fileProject, newCompanyPrompt } from '../sidebar-shell/company-actions';
-import { commitAssignment } from '../sidebar-shell/group-assign';
+import { commitAssignment, createGroupThenAssign } from '../sidebar-shell/group-assign';
 import { announceFailure, reasonOf } from '../sidebar-shell/interaction-globals';
 
 const CONTAINER_ID = 'add-to-cascade-menu';
@@ -110,7 +112,7 @@ function groupChildrenForAgent(name: string): MenuNode[] {
   }
   const current = store.groupOf(name);
   const groups = store.current().groups.filter((g) => g.group_uuid !== current);
-  return groups.map((g) => ({
+  const leaves: MenuNode[] = groups.map((g) => ({
     id: g.group_uuid,
     label: g.name,
     run: () => {
@@ -118,6 +120,16 @@ function groupChildrenForAgent(name: string): MenuNode[] {
       void assignGroup(name, g.group_uuid);
     },
   }));
+  // does not exist yet
+  leaves.push({
+    id: 'new-group',
+    label: t('sidebar.group.pick.new'),
+    run: () => {
+      finish();
+      void createGroupThenAssign(name);
+    },
+  });
+  return leaves;
 }
 
 function layoutChildrenForAgent(sessionUuid: string | null): MenuNode[] {
@@ -146,9 +158,22 @@ function agentChildrenForGroup(groupUuid: string): MenuNode[] {
     }));
 }
 
+function resolvedGroupSessionUuids(group: GroupRecord | null | undefined): string[] {
+  if (!group) return [];
+  const out = new Set<string>();
+  for (const u of group.member_session_uuids ?? []) if (u) out.add(u);
+  const rows = legacy().SessionSidebar?.rows<LegacyRow>() ?? [];
+  if (rows.length) {
+    for (const r of rowsForGroup(group.group_uuid, rows, companySource())) {
+      if (typeof r.session_uuid === 'string' && r.session_uuid) out.add(r.session_uuid);
+    }
+  }
+  return Array.from(out);
+}
+
 function layoutChildrenForGroup(groupUuid: string): MenuNode[] {
   const store = legacy().SessionSidebarGroupStore;
-  const memberUuids = (store?.groupByUuid(groupUuid)?.member_session_uuids ?? []).filter(Boolean);
+  const memberUuids = resolvedGroupSessionUuids(store?.groupByUuid(groupUuid));
   if (!memberUuids.length) return [];
   return layoutList()
     .filter((l) => memberUuids.some((u) => !isLayoutMember(l, u)))
@@ -182,16 +207,14 @@ function groupChildrenForLayout(layoutUuid: string): MenuNode[] {
   const layout = layoutsBridge.get(layoutUuid);
   if (!store || !store.isUsable() || !layout) return [];
   return store.current().groups
-    .filter((g) => {
-      const memberUuids = (g.member_session_uuids ?? []).filter(Boolean);
-      return memberUuids.length > 0 && memberUuids.some((u) => !isLayoutMember(layout, u));
-    })
-    .map((g) => ({
+    .map((g) => ({ g, memberUuids: resolvedGroupSessionUuids(g) }))
+    .filter(({ memberUuids }) => memberUuids.length > 0 && memberUuids.some((u) => !isLayoutMember(layout, u)))
+    .map(({ g, memberUuids }) => ({
       id: g.group_uuid,
       label: g.name,
       run: () => {
         finish();
-        void addGroupToLayout(layoutUuid, (g.member_session_uuids ?? []).filter(Boolean));
+        void addGroupToLayout(layoutUuid, memberUuids);
       },
     }));
 }

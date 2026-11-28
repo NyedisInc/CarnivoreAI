@@ -18,11 +18,12 @@ os.environ.setdefault("JWT_SECRET", "testjwtnotreal")
 from fastapi.testclient import TestClient  # noqa: E402
 from starlette.websockets import WebSocketDisconnect  # noqa: E402
 
-from src.api import peer_auth  # noqa: E402
+from src.api import mesh_dark, peer_auth  # noqa: E402
 from src.api.auth import require_auth  # noqa: E402
 from src.core.db import connect, db_path_for, get_meta  # noqa: E402
 from src.core.db_migration import ensure_db_migrated  # noqa: E402
 from src.core.federation import fed_key, grants, peer_forward, peer_token  # noqa: E402
+from src.core.pack.machines import capabilities  # noqa: E402
 from src.main import app  # noqa: E402
 from src.plugins.host.peer_refusal import PEER_FORBIDDEN_CODE, READ_METHODS, refuse_peer_token_writes  # noqa: E402
 from tests.test_route_auth_inventory import _dep_calls, _walk  # noqa: E402
@@ -34,6 +35,7 @@ PEER_ALLOWED = {
     ("GET", "/api/v1/sessions/list"): "sessions",
     ("GET", "/api/v1/sessions/asleep"): "sessions",
     ("GET", "/api/v1/sessions/list-and-asleep"): "sessions",
+    ("POST", "/api/v1/sessions/hydrate"): "sessions",
     ("POST", "/api/v1/warroom/screens"): "sessions",
     ("GET", "/api/v1/federation/hello"): "sessions",
     ("POST", "/api/v1/federation/link"): "sessions",
@@ -55,6 +57,7 @@ PEER_ALLOWED = {
     ("POST", "/api/v1/federation/notify-sync/exchange"): "settings",
     ("POST", "/api/v1/federation/notify-sync/secrets"): "settings",
     ("POST", "/api/v1/federation/pack/exchange"): "machine",
+    ("POST", "/api/v1/federation/pack/mesh/sync"): "machine",
     ("GET", "/api/v1/federation/pack/rollup"): "machine",
     ("POST", "/api/v1/federation/link-cert"): "machine",
     ("PUT", "/api/v1/federation/pack/reserve"): "machine",
@@ -91,7 +94,10 @@ PEER_ALLOWED = {
     ("POST", "/api/v1/federation/pack/jobs/forget-copy"): "replica",
     ("POST", "/api/v1/federation/pack/jobs/install"): "replica",
     ("GET", "/api/v1/federation/pack/jobs/install/{install_id}"): "replica",
+    ("POST", "/api/v1/sessions/hydrate"): "sessions",
+    ("GET", "/api/v1/federation/pack/jobs/activity"): "replica",
     ("POST", "/api/v1/federation/pack/jobs/prewarm"): "replica",
+    ("POST", "/api/v1/federation/pack/jobs/look"): "replica",
     ("POST", "/api/v1/federation/pack/sessions/create"): "replica",
     ("POST", "/api/v1/federation/pack/gh-login"): "credentials",
     ("POST", "/api/v1/federation/pack/ledger-status"): "credentials",
@@ -106,7 +112,7 @@ PEER_ALLOWED = {
     ("POST", "/api/v1/federation/pack/global/blobs/{blob_id}/seal"): "global-setup",
     ("GET", "/api/v1/federation/pack/global/blobs/{blob_id}"): "global-setup",
     ("POST", "/api/v1/federation/pack/global/apply"): "global-setup",
-    ("POST", "/api/v1/federation/pack/global/panel"): "global-setup",
+    ("POST", "/api/v1/federation/pack/global/panel"): "pack-ui",
     ("POST", "/api/v1/federation/pack/global/panel-change"): "machine",
     ("POST", "/api/v1/federation/pack/skills/export"): "skills",
     ("GET", "/api/v1/federation/pack/skills/export/{blob_id}"): "skills",
@@ -120,7 +126,8 @@ PEER_ALLOWED = {
 
 PEER_ALLOWED_SOCKETS = {"/ws/terminal", "/ws/events"}
 
-UNSCOPED_PUBLIC_PREFIXES = ("/api/v1/federation/pair/", "/api/v1/federation/token")
+UNSCOPED_PUBLIC_PREFIXES = ("/api/v1/federation/pair/", "/api/v1/federation/token",
+                            "/api/v1/federation/mesh/token")
 
 
 def _routes() -> List[Tuple[str, str, object]]:
@@ -188,6 +195,8 @@ def test_a_peer_token_gets_401_on_every_unscoped_route(peer_bearer) -> None:
     leaks = []
     for method, path, route in _routes():
         if (method, path) in PEER_ALLOWED or path.startswith(UNSCOPED_PUBLIC_PREFIXES):
+            continue
+        if (method, path) in mesh_dark.DARK and not capabilities.mesh_on():
             continue
         if not any(c is require_auth or hasattr(c, "peer_scope") for c in _dep_calls(route.dependant)):
             continue

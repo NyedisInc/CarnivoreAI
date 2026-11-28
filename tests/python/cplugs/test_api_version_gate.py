@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import json
 import shutil
 from pathlib import Path
 from typing import Any
@@ -9,7 +8,6 @@ from typing import Any
 import pytest
 
 from scripts.plugin import check, templates
-from src.core.catalog import plugin_pack
 from src.core.plugin_health.model import HealthRow
 from src.plugins.host import install_gates, sideload
 from src.plugins.sdk import api_contract
@@ -20,20 +18,18 @@ CPLUGS_ROOT = Path(api_contract.__file__).resolve().parents[1]
 
 def source(tmp_path: Path, api_version: Any = None) -> Path:
     folder = tmp_path / "src" / "clock"
-    folder.parent.mkdir(parents=True)
+    folder.parent.mkdir(parents=True, exist_ok=True)
     templates.scaffold(folder, "clock", "sidecar")
+    shutil.rmtree(folder / "tests", ignore_errors=True)
     if api_version is not None:
-        path = folder / "carnivore.json"
-        doc = json.loads(path.read_text())
-        doc["api_version"] = api_version
-        path.write_text(json.dumps(doc))
+        path = folder / "carnivore.toml"
+        text = path.read_text(encoding="utf-8")
+        if isinstance(api_version, int):
+            rep = f"api_version = {api_version}"
+        else:
+            rep = f'api_version = "{api_version}"'
+        path.write_text(text.replace("api_version = 1", rep), encoding="utf-8")
     return folder
-
-
-def packed(tmp_path: Path, api_version: Any = None) -> Path:
-    out = tmp_path / "pkg" / "clock"
-    plugin_pack.pack_folder(source(tmp_path, api_version), out, "author", frozenset({"tests"}))
-    return out
 
 
 def test_served_set_is_the_documented_contracts() -> None:
@@ -49,13 +45,13 @@ def test_is_served(value: Any, served: bool) -> None:
 
 def test_install_refuses_an_unserved_version_with_its_code(tmp_path: Path) -> None:
     with pytest.raises(install_gates.CplugGateRefusal) as caught:
-        install_gates.evaluate("author/clock", packed(tmp_path, UNSERVED))
+        install_gates.evaluate("author/clock", source(tmp_path, UNSERVED))
     assert caught.value.code == install_gates.API_VERSION_UNSUPPORTED == "cplug_api_version_unsupported"
     assert str(UNSERVED) in caught.value.detail
 
 
 def test_install_accepts_a_served_version(tmp_path: Path) -> None:
-    assert install_gates.evaluate("author/clock", packed(tmp_path)).facts["id"] == "clock"
+    assert install_gates.evaluate("author/clock", source(tmp_path)).facts["id"] == "clock"
 
 
 def test_sideload_refuses_an_unserved_version_and_leaves_no_staging(tmp_path: Path) -> None:

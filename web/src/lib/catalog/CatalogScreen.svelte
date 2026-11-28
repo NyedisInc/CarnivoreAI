@@ -1,11 +1,9 @@
 
 <script lang="ts">
     import { MANAGER_KEYS } from '../manager-frame/manager-model';
-    import { onMount, tick } from 'svelte';
+    import { onMount } from 'svelte';
     import { t as reactiveT } from '../i18n/index.svelte';
-    import DetailGrip from './DetailGrip.svelte';
-    import { readDetailWidth, THEME_DETAIL_WIDTH } from './detail-width';
-    import { openModal, openModalCount } from '../modal';
+    import { openModalCount } from '../modal';
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';
     import { BROWSE_KEYS } from '../../../../client/js/labels/skill-browse.js';
     import type { Translate } from '../sessions/types';
@@ -37,17 +35,29 @@
     import { viewport } from '../../opscenter/engine/viewport.svelte';
     import type { ManagerView } from '../manager-frame/view-memory';
     import { readPageView, writePageView } from '../../opscenter/ui/page-view';
-    import { isPressable, isTyping, keyAction, type KeyAction } from './keys';
+    import { isPressable, isTyping, keyAction } from './keys';
     import { sortCards, type SortKey } from './sort';
     import { readSort, writeSort } from './sort-store';
-    import InstallSheet from './InstallSheet.svelte';
+    import PluginInstallSheet from '../plugins-page/PluginInstallSheet.svelte';
+    import { pluginsStore } from '../plugins/store.svelte';
+    import {
+        applyCatalogLedgerChange,
+        catalogProjectOptions,
+        deriveCatalogRuntimeActive,
+        dispatchCatalogKeyAction,
+        openLegacyInstallSheet,
+        runCatalogPluginUpdateIfDue,
+        runQuickAddForCard,
+        stepCatalogSelection,
+        type CatalogPluginSheetState,
+        type CatalogSheetPrefill,
+    } from './catalog-plugin-sheet';
     import { browserCatalogHost, type CatalogHost } from './catalog';
     import { openPublishPage } from './publish-entry';
     import { provideReadonly } from './readonly';
     import TrustLine from './TrustLine.svelte';
     import { revealOnPhone } from './phone-reveal';
     import { createCatalogData } from './catalog-data.svelte';
-    import { quickAdd } from './quick-add';
     import { addProjectsOf } from './add-projects';
     import type { ProjectRow } from '../sessions/types';
     import { installedDescTotal } from './cost';
@@ -120,11 +130,6 @@
     let node = $state<MenuNode>(HOME_NODE);
     let phoneView = $state<'menu' | 'page'>('menu');
     let selectedId = $state<string | null>(null);
-    let detailW = $state(readDetailWidth());
-    let bodyEl = $state<HTMLElement | null>(null);
-    $effect(() => {
-        if (selected && bodyEl) detailW = readDetailWidth(bodyEl.clientWidth);
-    });
     let sortKey = $state<SortKey>(readSort());
     /* the downloaded sort */
     let installs = $state<ReadonlyMap<string, number>>(new Map());
@@ -175,7 +180,7 @@
                null)
             : null,
     );
-    const themeDrawer = $derived(selected?.kind === 'theme');
+    const reading = $derived(selected && !installedPane ? selected : null);
 
     export function show(options: { kind?: string; item?: string; node?: MenuNode; home?: boolean } = {}): void {
         if (options.home) {
@@ -309,100 +314,64 @@
         }
     }
 
-    async function openSheet(
-        card: CardView,
-        prefill: { scope: 'global' | 'project'; projectPath: string | null } | null = null,
-    ): Promise<void> {
-        if (openModalCount() > 0) return;
-        const id = card.id;
-        data.send(id, { kind: 'verify' });
-        const answer = (await openModal(InstallSheet as never, {
-            card,
-            host,
-            t,
-            prefill,
-        } as never)) as SheetOutcome | null;
-        if (answer && answer.outcome === 'installed') {
-            data.send(id, { kind: 'install' });
-            data.send(id, { kind: 'installed' });
-            data.setInstalled(id, answer.row);
+    let pluginSheet = $state<CatalogPluginSheetState | null>(null);
+
+    async function openSheet(card: CardView, prefill: CatalogSheetPrefill | null = null): Promise<void> {
+        if (openModalCount() > 0 || pluginSheet !== null) return;
+        if (card.isCplug || card.isPlugin) {
+            if (await runCatalogPluginUpdateIfDue({ card, prefill, host, data, t })) return;
+            const safePrefill =
+                card.isCplug && !card.isPlugin
+                    ? { scope: 'global' as const, projectPath: null }
+                    : prefill;
+            data.send(card.id, { kind: 'verify' });
+            pluginSheet = { card, prefill: safePrefill };
             return;
         }
-        if (answer && answer.outcome === 'refused') {
-            data.send(id, { kind: 'refused', code: answer.code ?? '' });
-            return;
-        }
-        data.send(id, { kind: 'dismiss' });
+        data.send(card.id, { kind: 'verify' });
+        await openLegacyInstallSheet({ card, host, data, t, prefill });
     }
 
     async function addTo(card: CardView, target: 'global' | 'project', projectPath: string | null = null): Promise<void> {
-        const id = card.id;
-        if (!id || openModalCount() > 0) return;
-        data.send(id, { kind: 'verify' });
-        data.send(id, { kind: 'install' });
-        const answer = await quickAdd(host, id, target, projectPath);
-        if (answer.outcome === 'installed') {
-            data.send(id, { kind: 'installed' });
-            data.setInstalled(id, answer.row);
-        } else if (answer.outcome === 'refused') {
-            data.send(id, { kind: 'refused', code: answer.code });
-        } else {
-            data.send(id, { kind: 'refused', code: 'sheet_required' });
-            data.send(id, { kind: 'verify' });
-            await openSheet(card, answer.prefill);
+        if (!card.id || openModalCount() > 0 || pluginSheet !== null) return;
+        if (card.isCplug || card.isPlugin) {
+            const safeScope = card.isCplug && !card.isPlugin ? 'global' : target;
+            const safePath = safeScope === 'project' ? projectPath : null;
+            await openSheet(card, { scope: safeScope, projectPath: safePath });
+            return;
         }
+        await runQuickAddForCard({
+            card,
+            target,
+            projectPath,
+            host,
+            data,
+            onSheetRequired: (prefill) => openSheet(card, prefill),
+        });
     }
 
     function onLedgerChange(id: string, row: InstalledItem | null, installId: string | null = null): void {
-        data.setInstalled(id, row, installId);
-        if (!row) {
-            if (!(data.installed[id] ?? []).length) data.send(id, { kind: 'uninstalled' });
-        }
-        else if (row.update_available !== true) data.send(id, { kind: 'installed' });
-    }
-
-    function clickAct(act: string): void {
-        const button = document.querySelector<HTMLButtonElement>(
-            `.screen__detail [data-act="${act}"]`,
-        );
-        if (button && !button.disabled) button.click();
-    }
-
-    async function moveSelection(step: 1 | -1): Promise<void> {
-        const ids = [...shown, ...shownUntrusted]
-            .map((card) => card.id)
-            .filter((id): id is string => !!id);
-        if (!ids.length) return;
-        const at = selectedId ? ids.indexOf(selectedId) : -1;
-        const next = at < 0 ? (step === 1 ? 0 : ids.length - 1) : at + step;
-        if (next < 0 || next >= ids.length) return;
-        selectedId = ids[next] ?? null;
-        await tick();
-        document.querySelector('.rows__row--on')?.scrollIntoView({ block: 'nearest' });
-    }
-
-    function runKey(action: KeyAction): void {
-        if (action === 'search') {
-            searchInput?.focus();
-        } else if (action === 'next' || action === 'prev') {
-            void moveSelection(action === 'next' ? 1 : -1);
-        } else if (action === 'open') {
-            if (!selectedId) void moveSelection(1);
-            else document.querySelector<HTMLElement>('.screen__detail .acts .oc-btn')?.focus();
-        } else if (action === 'help') {
-            document.querySelector<HTMLButtonElement>('[data-keys-button]')?.click();
-        } else {
-            clickAct(action);
-        }
+        applyCatalogLedgerChange(data, id, row, installId);
     }
 
     function onKeydown(event: KeyboardEvent): void {
         if (!open || !active) return;
-        if (openModalCount() > 0) return;
+        if (openModalCount() > 0 || pluginSheet !== null) return;
         const action = keyAction(event, isTyping(event.target), isPressable(event.target));
         if (!action) return;
         event.preventDefault();
-        runKey(action);
+        dispatchCatalogKeyAction(action, {
+            searchInput,
+            selectedId,
+            moveSelection: (step) =>
+                stepCatalogSelection({
+                    shown,
+                    shownUntrusted,
+                    selectedId,
+                    setSelectedId: (id) => { selectedId = id; },
+                    step,
+                }),
+        });
     }
 
     $effect(() => {
@@ -464,7 +433,7 @@
     });
 </script>
 
-{#snippet detailPane(card: CardView, onClose: () => void)}
+{#snippet detailPane(card: CardView, onClose?: () => void)}
             <CatalogDetail
                 card={card}
                 item={data.items.find((entry) => entry && entry.id === card.id) ?? null}
@@ -481,6 +450,11 @@
                 signedIn={signedIn === true}
                 {onClose}
             />
+{/snippet}
+
+
+{#snippet readingPane()}
+    {#if reading}<div class="screen__detail" use:revealOnPhone>{@render detailPane(reading)}</div>{/if}
 {/snippet}
 
 {#snippet catalogDetail(id: string)}
@@ -527,6 +501,15 @@
     {#if highlights}{@render highlights()}{/if}
 {/snippet}
 
+
+{#snippet sideNav()}
+    {#if menuOn}
+        <WarezMenu {sources} {node} find={typed} onClearFind={() => onQuery('')} onNavigate={navigate} {t} />
+    {:else}
+        <CatalogFilterRail {filters} {kinds} {t} onFilters={(next) => { filters = next; }} onPublish={() => openPublishPage()} />
+    {/if}
+{/snippet}
+
 {#snippet flipControl()}
     <ViewToggle {view} onView={setView} {t} shelf />
 {/snippet}
@@ -539,6 +522,7 @@
         <WarezActs refreshing={data.refreshing} onRefresh={() => void data.refreshIndex()} onPublish={() => openPublishPage()} showPublish={menuOn || false} {t} />
     {/snippet}
 
+    
     <Page
         class="cat"
         title={title ?? t(SKILL_KEYS.screenTitle)}
@@ -548,12 +532,19 @@
         closeLabel={t(MANAGER_KEYS.close)}
         frame="nav"
         scroll="self"
+        side={searchInTitle ? undefined : sideNav}
+        sideLabel={menuOn ? nodeLabel(node, sources, t) : (title ?? t(SKILL_KEYS.screenTitle))}
         actions={searchInTitle ? undefined : pageActions}
         find={searchInTitle ? undefined : searchField}
         search={!embedded && searchInTitle && !(menuOn && phoneView === 'menu') ? searchField : undefined}
         backIcon="chevron-left"
+        omnibar="kit"
         controls={!embedded && searchInTitle && !(menuOn && phoneView === 'menu') ? flipControl : undefined}
-        bar={searchInTitle && !embedded && !menuOn && !installedPane ? pageBar : undefined}
+        bar={searchInTitle && !embedded && !menuOn && !installedPane && !selected ? pageBar : undefined}
+        detail={reading ? readingPane : undefined}
+        detailTitle={reading?.headline ?? undefined}
+        detailFill
+        onDetailClose={() => { selectedId = null; }}
     >
         <div class="cat-col">
         {#if notFoundId}
@@ -575,14 +566,7 @@
                     <h1 class="screen__backtitle">{nodeLabel(node, sources, t)}</h1>
                 </div>
             {/if}
-        <div class="screen__body" class:screen__body--reading={!!selected && !installedPane} class:screen__body--rail={!searchInTitle} class:screen__body--flush={menuOn} style:--cat-detail-w="{themeDrawer ? THEME_DETAIL_WIDTH : detailW}px" bind:this={bodyEl}>
-            {#if !searchInTitle}
-                {#if menuOn}
-                    <WarezMenu {sources} {node} find={typed} onClearFind={() => onQuery('')} onNavigate={navigate} {t} />
-                {:else}
-                    <CatalogFilterRail {filters} {kinds} {t} onFilters={(next) => { filters = next; }} onPublish={() => openPublishPage()} />
-                {/if}
-            {/if}
+        <div class="screen__body" class:screen__body--flush={menuOn}>
             {#if installedPane && (node.scope === 'installed' || node.scope === 'look' || node.scope === 'publish')}
                 <div class="screen__installed"><WarezPane {node} {sources} {t} onNavigate={navigate} onChanged={() => void menu.reload()} {catalogDetail} /></div>
             {:else}
@@ -608,17 +592,35 @@
             />
             {/if}
 
-            {#if selected && !installedPane}
-                <div class="screen__detail" use:revealOnPhone>
-                    {#if !themeDrawer}<DetailGrip bind:width={detailW} label={t(SKILL_KEYS.detailResize)} />{/if}
-                    {@render detailPane(selected, () => { selectedId = null; })}
-                </div>
-            {/if}
         </div>
         {/if}
         {#if readonly}<TrustLine index={data.index} {t} />{/if}
         </div>
     </Page>
+
+    <PluginInstallSheet
+        open={pluginSheet !== null}
+        mode="catalog"
+        card={pluginSheet?.card ?? null}
+        {host}
+        projects={catalogProjectOptions(projectRows)}
+        initialScope={pluginSheet?.card.isCplug && !pluginSheet?.card.isPlugin ? 'global' : (pluginSheet?.prefill?.scope ?? null)}
+        initialProject={pluginSheet?.card.isCplug && !pluginSheet?.card.isPlugin ? null : (pluginSheet?.prefill?.projectPath ?? currentProject)}
+        runtimeActive={deriveCatalogRuntimeActive(pluginsStore.rows)}
+        onClose={() => {
+            const id = pluginSheet?.card.id ?? null;
+            pluginSheet = null;
+            data.send(id, { kind: 'dismiss' });
+        }}
+        onDone={() => {
+            const id = pluginSheet?.card.id ?? null;
+            pluginSheet = null;
+            data.send(id, { kind: 'install' });
+            data.send(id, { kind: 'installed' });
+            void data.refresh();
+        }}
+        {t}
+    />
 {/if}
 
 <style>
@@ -669,18 +671,6 @@
     .screen__body--flush {
         width: 100%;
         margin-inline: 0;
-    }
-
-    .screen__body--rail {
-        grid-template-columns: auto minmax(0, 1fr);
-    }
-
-    .screen__body--rail.screen__body--reading {
-        grid-template-columns: auto minmax(0, 1fr) min(var(--cat-detail-w, 400px), calc(100% - 448px));
-    }
-
-    .screen__body--reading {
-        grid-template-columns: minmax(0, 1fr) min(var(--cat-detail-w, 400px), calc(100% - 280px));
     }
 
     .screen__menu {
@@ -737,16 +727,11 @@
     }
 
     .screen__detail {
-        position: relative;
         display: flex;
         flex-direction: column;
-        min-height: 0;
-        background: var(--oc-ground-panel);
-        box-shadow: inset 1px 0 0 0 var(--oc-line-rule);
-        overflow: hidden;
+        min-height: 100%;
     }
 
-    /* the reading pane */
     @media (max-width: 767px) {
         :global(.cat) {
             --cat-gutter: 12px;
@@ -758,22 +743,6 @@
 
         .screen__installed {
             overflow: visible;
-        }
-
-        .screen__body--reading {
-            grid-template-columns: 1fr;
-        }
-
-        .screen__body--reading :global(.rows) {
-            display: none;
-        }
-
-        :global(.cat:has(.screen__body--reading) .oc-page__bar) {
-            display: none;
-        }
-
-        .screen__detail {
-            box-shadow: none;
         }
     }
 </style>

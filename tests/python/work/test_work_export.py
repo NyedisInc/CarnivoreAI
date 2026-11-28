@@ -13,7 +13,7 @@ from src.core.work import tables
 from src.core.work.importer import copy, ready
 from src.core.work.ladder import SCHEMA_VERSION as LEGACY_VERSION
 from src.core.work.storage import storage_for
-from src.plugins.huddle.public import TaskManagerStore
+from src.plugins.taskmanager.public import TaskManagerStore
 from src.plugins.sdk.storage import CplugStorage
 from tests.python.work.test_work_import import _legacy
 

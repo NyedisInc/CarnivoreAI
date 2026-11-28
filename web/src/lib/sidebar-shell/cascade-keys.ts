@@ -21,6 +21,7 @@ export interface CascadeWorld {
     projects: CascadeProject[];
     layoutKeys: string[];
     groupKeys?: string[];
+    groupParent?: (groupKey: string) => string | null;
 }
 
 function liveLayoutKeys(): string[] {
@@ -30,11 +31,14 @@ function liveLayoutKeys(): string[] {
 
 export function liveCascadeWorld(source: CompanySource = companySource()): CascadeWorld {
     const list = (projects.data ?? []).filter((p) => p.id !== null && p.id !== undefined);
+    const groups = GroupStore.current().groups;
+    const parentByKey = new Map(groups.map((g) => [GroupStore.bandKeyFor(g.group_uuid), g.parent_key ?? null]));
     return {
         companyIds: source.companies.map((c) => c.id),
         companyParent: (id) => (source.parentOf ? source.parentOf(id) : null),
         layoutKeys: liveLayoutKeys(),
-        groupKeys: GroupStore.current().groups.map((g) => GroupStore.bandKeyFor(g.group_uuid)),
+        groupKeys: groups.map((g) => GroupStore.bandKeyFor(g.group_uuid)),
+        groupParent: (k) => parentByKey.get(k) ?? null,
         projects: list.map((p) => ({
             id: String(p.id),
             companyId: source.companyOf(String(p.id)),
@@ -61,7 +65,9 @@ export function cascadeKeysFor(key: string, world: CascadeWorld): CascadeKeys {
         tree.push(COMPANY_ORPHANED_KEY);
         for (const p of world.projects) addProject(p.id);
     } else if (key === GROUPS_FOLD_KEY) {
-        tree.push(...(world.groupKeys ?? []));
+        const allGroups = world.groupKeys ?? [];
+        const gp = world.groupParent;
+        for (const gk of allGroups) if (!gp || gp(gk) === null) tree.push(gk);
     } else if (key === LAYOUT_FOLD_KEY) {
         inverted.push(...world.layoutKeys);
     } else if (key === COMPANY_ORPHANED_KEY) {
@@ -88,6 +94,24 @@ export function cascadeKeysFor(key: string, world: CascadeWorld): CascadeKeys {
             grew = false;
             for (const p of world.projects) {
                 if (!seen.has(p.id) && p.parentId !== null && seen.has(p.parentId)) { seen.add(p.id); grew = true; addProject(p.id); }
+            }
+        }
+    }
+    if (world.groupParent && world.groupKeys?.length) {
+        const parents = new Set<string>([key, ...tree, ...(key === LAYOUT_FOLD_KEY ? world.layoutKeys : [])]);
+        const inTree = new Set<string>(tree);
+        let grew = true;
+        while (grew) {
+            grew = false;
+            for (const gk of world.groupKeys) {
+                if (inTree.has(gk) || gk === key) continue;
+                const parent = world.groupParent(gk);
+                if (parent !== null && parents.has(parent)) {
+                    inTree.add(gk);
+                    parents.add(gk);
+                    tree.push(gk);
+                    grew = true;
+                }
             }
         }
     }

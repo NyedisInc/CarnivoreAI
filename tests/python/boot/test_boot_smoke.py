@@ -17,7 +17,8 @@ from src.main import app  # noqa: E402
 _STATE_NAMES = ("sidecar_runtime", "card_art_backfill", "services", "session_manager", "event_hub", "ui_preferences_store")
 
 
-def test_the_app_boots_and_shuts_down_through_the_registry() -> None:
+def test_the_app_boots_and_shuts_down_through_the_registry(monkeypatch, tmp_path) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
     with capture_logs() as logs:
         with TestClient(app) as client:
             assert client.get("/health").status_code == 200

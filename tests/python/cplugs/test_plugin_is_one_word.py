@@ -14,7 +14,7 @@ SERVER_MODULES = (
     "src/api/catalog_install_support.py",
     "src/api/catalog_installed_support.py",
     "hosted/catalog/api/validate_kinds.py",
-    "hosted/catalog/api/validate_cplug.py",
+    "src/plugins/sdk/cplug_validate.py",
 )
 FEATURE_USER_FIELDS = ("name", "summary", "description", "where", "how_to", "examples")
 FILES = ("hosted/catalog_index/seed_readme.md", "docs/extension-contract.md")

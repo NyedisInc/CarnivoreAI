@@ -1,16 +1,5 @@
 /* WHY THIS FILE LOADS LAST */
 
-@property --pf-angle {
-    syntax: '<angle>';
-    inherits: false;
-    initial-value: 0deg;
-}
-
-@keyframes popup-focus-orbit {
-    from { --pf-angle: 0deg; }
-    to { --pf-angle: 360deg; }
-}
-
 .popup-focus {
     --pf-ground: var(--oc-ground-raised);
     --pf-edge-top: var(--oc-line-panel);
@@ -21,7 +10,7 @@
     background:
         linear-gradient(var(--pf-ground), var(--pf-ground)) padding-box,
         conic-gradient(
-            from var(--pf-angle),
+            from var(--pf-angle, 0deg),
             transparent 0deg,
             transparent 130deg,
             var(--pf-sheen) 180deg,
@@ -33,7 +22,7 @@
         0 3px 2px var(--pf-glow),
         0 8px 24px rgba(0, 0, 0, 0.55),
         0 2px 6px rgba(0, 0, 0, 0.35);
-    animation: popup-focus-orbit 6s linear infinite;
+    animation: amb-join-dialog-glow 1ms;
 }
 
 .popup-focus.popup-focus-turn {
@@ -88,7 +77,7 @@
         transparent 360deg
     );
     will-change: transform;
-    transform: rotate(calc(var(--amb-step, 0) * 15deg));
+    transform: rotate(var(--amb-sheen-deg, 0deg));
 }
 
 @media (prefers-reduced-motion: reduce) {

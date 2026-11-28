@@ -1,0 +1,1 @@
+function e(){let e=globalThis.carnivoreDesktop;return e&&typeof e==`object`?e:null}function t(t,n=e()){return!!n&&Array.isArray(n.capabilities)&&n.capabilities.includes(t)&&typeof n[t]==`function`}export{t as n,e as t};

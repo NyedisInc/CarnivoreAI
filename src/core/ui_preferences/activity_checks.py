@@ -1,13 +1,18 @@
 
 from __future__ import annotations
 
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from src.core.automations.ui_prefs import check_read_run_ids, check_seen_at
 from src.core.ui_preferences.checks import json_size_cap
-from src.core.ui_preferences.constants import DEEPSEARCH_INDEX_SCOPES, MAX_DISABLED_PLUGINS, MAX_HOME_LAYOUT_BYTES, MAX_TERMINAL_LAYOUTS_BYTES, TERMINAL_SCREEN_READER_MODES, TOAST_MODES
+from src.core.ui_preferences.constants import COMET_LAP_MAX_SECONDS, COMET_LAP_MIN_SECONDS, COMET_UNREAD_COLORS, DEEPSEARCH_INDEX_SCOPES, MAX_DISABLED_PLUGINS, MAX_HOME_LAYOUT_BYTES, MAX_TERMINAL_LAYOUTS_BYTES, TERMINAL_SCREEN_READER_MODES, TOAST_MODES
 from src.core.ui_preferences.layouts import HomeLayout, TerminalLayouts
 from src.plugins.sdk import chat_category
+
+
+class ActivityChecksError(ValueError):
+    pass
+
 
 
 def check_toast_mode(value: Optional[str]) -> Optional[str]:
@@ -16,15 +21,29 @@ def check_toast_mode(value: Optional[str]) -> Optional[str]:
     return value
 
 
+def check_comet_lap_seconds(value: Optional[Union[int, float]]) -> Optional[Union[int, float]]:
+    if value is None:
+        return value
+    if not COMET_LAP_MIN_SECONDS <= value <= COMET_LAP_MAX_SECONDS:
+        raise ValueError(f"comet_lap_seconds must be from {COMET_LAP_MIN_SECONDS} to {COMET_LAP_MAX_SECONDS} seconds")
+    return value
+
+
+def check_comet_unread_color(value: Optional[str]) -> Optional[str]:
+    if value is not None and value not in COMET_UNREAD_COLORS:
+        raise ValueError(f"comet_unread_color must be one of {list(COMET_UNREAD_COLORS)}")
+    return value
+
+
 def check_terminal_screen_reader(value: Optional[str]) -> Optional[str]:
     if value is not None and value not in TERMINAL_SCREEN_READER_MODES:
-        raise ValueError(f"terminal_screen_reader must be one of {list(TERMINAL_SCREEN_READER_MODES)}")
+        raise ActivityChecksError(f"terminal_screen_reader must be one of {list(TERMINAL_SCREEN_READER_MODES)}")
     return value
 
 
 def check_deepsearch_index_scope(value: Optional[str]) -> Optional[str]:
     if value is not None and value not in DEEPSEARCH_INDEX_SCOPES:
-        raise ValueError(f"deepsearch_index_scope must be one of {list(DEEPSEARCH_INDEX_SCOPES)}")
+        raise ActivityChecksError(f"deepsearch_index_scope must be one of {list(DEEPSEARCH_INDEX_SCOPES)}")
     return value
 
 

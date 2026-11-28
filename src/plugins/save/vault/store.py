@@ -66,8 +66,26 @@ class Vault:
         self.guard = CaptureGuard()
         self.partials: Dict[str, Partial] = {}
         self._clock = clock
+        self._seq_lock = threading.Lock()
+        self._change_seq: int = 0
+        self._assessed_seq: int = 0
 
-    def changed(self) -> None:
+    def change_seq(self) -> int:
+        with self._seq_lock:
+            return self._change_seq
+
+    def mark_assessed(self, seq: int) -> None:
+        with self._seq_lock:
+            self._assessed_seq = max(self._assessed_seq, seq)
+
+    def summary_stale(self) -> bool:
+        with self._seq_lock:
+            return self._change_seq != self._assessed_seq
+
+    def changed(self, *, mark_dirty: bool = True) -> None:
+        if mark_dirty:
+            with self._seq_lock:
+                self._change_seq += 1
         if self._on_change is not None:
             self._on_change()
 
@@ -97,8 +115,18 @@ class Vault:
         self.changed()
         return manifest
 
-    def _supersedes(self, unit: str, prior: Optional[Manifest], *, conversation: bool = False) -> bool:
+    def _only_extends(self, prior: Manifest, files: Sequence[FileEntry]) -> bool:
+        new = {(f.home, f.rel): f for f in files}
+        for old in prior.files:
+            entry = new.get((old.home, old.rel))
+            if entry is None or not entry.extends(old) or not self._tail_extends(old, entry):
+                return False
+        return True
+
+    def _supersedes(self, unit: str, prior: Optional[Manifest], files: Sequence[FileEntry] = (), *, conversation: bool = False) -> bool:
         if prior is None:
+            return False
+        if retention.is_frozen(self) and not self._only_extends(prior, files):
             return False
         if conversation:
             return (not self.manifests.is_pinned(unit, prior.point_id) and not self.manifests.is_kept(unit, prior.point_id)
@@ -187,7 +215,7 @@ class Vault:
                 if prior is not None and self._rewritten(prior_files, entries):
                     self.manifests.set_kept(unit, prior.point_id)
                     logger.warning("vault_conversation_rewritten", unit=unit, kept=prior.point_id)
-                supersede = self._supersedes(unit, prior, conversation=plan.kind == units.KIND_CONVERSATION)
+                supersede = self._supersedes(unit, prior, files, conversation=plan.kind == units.KIND_CONVERSATION)
                 main = next((f for f in files if f.role in K.MAIN_ROLES), None)
                 wd = identity.working_dir or units.peek_working_dir(Path(main.source_path) if main else None)
                 manifest = self._publish(unit, plan.kind, plan.family, plan.conversation_id, plan.encoded_folder, files, prior,
@@ -212,7 +240,7 @@ class Vault:
                 return CaptureOutcome(STATUS_NO_FILES, unit)
             if prior is not None and signature(files) == signature(prior.files):
                 return CaptureOutcome(STATUS_UNCHANGED, unit, prior.point_id, prior.raw_bytes())
-            supersede = self._supersedes(unit, prior)
+            supersede = self._supersedes(unit, prior, files)
             manifest = self._publish(unit, units.KIND_SIDE_DBS, units.FAMILY_CLAUDE, None, None, files, prior, Identity(),
                                      K.REASON_FOLLOW, self._stamp(now))
             if supersede and prior is not None:
@@ -272,7 +300,7 @@ class Vault:
                 if prior is not None and gone:
                     self.manifests.set_kept(unit, prior.point_id)
                     logger.info("vault_folder_files_deleted", unit=unit, kept=prior.point_id, deleted=len(gone), first=gone[0])
-                supersede = self._supersedes(unit, prior)
+                supersede = self._supersedes(unit, prior, files)
                 manifest = self._publish(unit, K.KIND_FOLDER, K.FAMILY_PLUGIN, None, None, files, prior,
                                          Identity(working_dir=str(root)), K.REASON_FOLLOW if prior else K.REASON_BACKFILL, self._stamp(now))
                 if supersede and prior is not None:

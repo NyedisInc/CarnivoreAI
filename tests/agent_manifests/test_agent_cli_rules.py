@@ -18,7 +18,7 @@ from src.core.attention.transcript_facts import FACTS_NO_RECORD, TranscriptFacts
 from src.core.session_status import LIVENESS_LIVE
 
 FIXTURES = Path(__file__).with_name("fixtures")
-SHIPPED = {"amp", "copilot", "cursor", "droid", "gemini", "kilo", "opencode", "pi"}
+SHIPPED = {"agy", "amp", "copilot", "cursor", "droid", "gemini", "kilo", "opencode", "pi"}
 
 
 def _manifest(cli: str) -> engine.Manifest:
@@ -36,10 +36,15 @@ def test_every_shipped_rule_file_loads_with_rules_and_a_version():
 
 
 @pytest.mark.parametrize("cli,fixture,state", [
+    ("agy", "agy-onboarding-theme", "blocked"),
+    ("agy", "agy-onboarding-tos", "blocked"),
     ("opencode", "opencode-working", "working"),
     ("opencode", "opencode-idle", None),
     ("opencode", "opencode-interrupted", None),
     ("copilot", "copilot-trust", "blocked"),
+    ("copilot", "copilot-permission", "blocked"),
+    ("copilot", "copilot-working", "working"),
+    ("copilot", "copilot-idle", "idle"),
     ("gemini", "gemini-trust", "blocked"),
     ("cursor", "cursor-trust", "blocked"),
 ])
@@ -81,6 +86,13 @@ def test_the_resolver_turns_a_reading_into_a_light_and_no_match_into_unknown():
     blocked = resolve_attention(_evidence(ManifestReading("opencode", "v", "blocked", "permission_required")))
     assert (blocked.state, blocked.reason) == (STATE_NEEDS_USER, "permission")
     assert resolve_attention(_evidence(ManifestReading("opencode", "v"))).state == STATE_UNKNOWN
+
+
+def test_a_working_or_idle_reading_proves_no_dialog_is_up_so_a_confirmed_ask_can_clear():
+    assert _evidence(ManifestReading("copilot", "v", "working", "w")).dialog_clear() is True
+    assert _evidence(ManifestReading("copilot", "v", "idle", "i")).dialog_clear() is True
+    assert _evidence(ManifestReading("copilot", "v", "blocked", "permission_required")).dialog_clear() is False
+    assert _evidence(ManifestReading("copilot", "v")).dialog_clear() is False
 
 
 def test_the_screen_is_captured_only_when_a_known_cli_runs():

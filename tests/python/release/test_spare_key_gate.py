@@ -148,7 +148,8 @@ def build_tree(tmp_path):
     log = tmp_path / "calls.log"
     for tool, status in (("aws", 1), ("security", 1), ("node", 1), ("npm", 0)):
         stub = stubs / tool
-        policy = 'case "$1" in scripts/electron-policy.js|scripts/electron-fuses-check.js) exit 0;; esac\n' if tool == "node" else ""
+        policy = 'case "$1" in scripts/electron-policy.js|scripts/electron-fuses-check.js|scripts/release-preflight.js) exit 0;; esac\n' if tool == "node" else ""
+        policy += 'case "$1" in ci|install) exit 0;; esac\n' if tool == "npm" else ""
         stub.write_text(f'#!/bin/sh\n{policy}echo "{tool} $*" >> "{log}"\nexit {status}\n')
         stub.chmod(0o755)
     home = tmp_path / "home"

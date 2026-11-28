@@ -1,4 +1,5 @@
 import { isPageTab } from './page-tabs';
+import { currentWidgetId } from './retired-widget-ids';
 
 export const WIDGET_TAB_PREFIX = 'widget:';
 
@@ -27,7 +28,8 @@ export function widgetTargetOfTab(tab: string): string | null {
 }
 
 export function widgetIdOfTab(tab: string): string | null {
-  return splitWidgetTab(tab)?.id ?? null;
+  const id = splitWidgetTab(tab)?.id;
+  return id ? currentWidgetId(id) : null;
 }
 
 export function isWidgetTab(tab: string): boolean {

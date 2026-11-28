@@ -28,7 +28,7 @@ from src.core.project_authority import MODE_DB, resolve_projects
 from src.core.skill_manager.root_create import RootCreateRefused, ensure_skill_roots
 from src.core.skills.digest import hash_file
 from src.core.skills.installer import discard_staging
-from src.core.skills.kinds import manifest_name
+from src.core.skills.kinds import resolve_manifest_path
 from src.core.skills.ledger_types import SCOPE_PROJECT
 from src.models.blueprints import PROMPT_FAMILIES, BlueprintSession, BlueprintSpec
 from src.models.blueprints_launch import (
@@ -200,7 +200,9 @@ async def consent_sheet(request: Request, item: Any, version: Any) -> Optional[D
     except HTTPException:
         return None
     try:
-        body_sha, _size = await asyncio.to_thread(hash_file, staged.path / manifest_name(item.kind))
+        body_sha, _size = await asyncio.to_thread(
+            lambda: hash_file(resolve_manifest_path(item.kind, staged.path))
+        )
         return preview_body(request, item=item, version=version, staged=staged,
                             plan_token=None, body_sha=body_sha).model_dump(mode="json")
     finally:

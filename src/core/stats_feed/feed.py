@@ -170,8 +170,12 @@ class StatsFeed:
             lag = feed_state.read_lag(self.state_dir, self.db_path)
         return snap, feed_state.local_state(self.state_dir, snap, lag), lag, moved
 
-    async def refresh(self) -> bool:
+    async def refresh(self, *, coalesce_if_loaded: bool = False) -> bool:
+        entered_at = self._clock()
         async with self._lock:
+            if coalesce_if_loaded and self._snap is not None and self._as_of is not None and self._clock() - entered_at >= 0.0:
+                if self._lag_at is not None and self._clock() - self._lag_at < 2.0:
+                    return False
             self.counters["refreshes"] += 1
             store = self._store_for()
             before = (self._snap.revision if self._snap else None, self._snap.db_identity if self._snap else None,
@@ -247,9 +251,15 @@ class StatsFeed:
         if lease:
             self.touch(pulled=ask_peers)
         if not maintained:
-            await self.refresh()
+            await self.refresh(coalesce_if_loaded=True)
         if asking is not None:
-            await asyncio.shield(asking)
+            if lease:
+                try:
+                    await asyncio.wait_for(asyncio.shield(asking), timeout=0.25)
+                except asyncio.TimeoutError:
+                    pass
+            else:
+                await asyncio.shield(asking)
         return self._served(window)
 
     def push_body(self) -> Optional[Dict[str, Any]]:

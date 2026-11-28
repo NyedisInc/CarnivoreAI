@@ -1,3 +1,4 @@
+/* the Task Manager */
 
 export interface TaskClock {
   readonly nowSec: number;

@@ -87,7 +87,14 @@ export interface FaceOptions {
 export function faceFacts(row: FaceRow, opts: FaceOptions = {}): AgentMarkFacts {
   const family = row.agent_family ?? null;
   if (opts.lifecycle) {
-    return { ...NOT_MEASURED, family, status: opts.lifecycle, unread: opts.lifecycle === 'asleep' && row.unread === true, transport: opts.transport ?? null };
+    return {
+      ...NOT_MEASURED,
+      family,
+      icon: row.agent_wrapper_icon ?? null,
+      status: opts.lifecycle,
+      unread: opts.lifecycle === 'asleep' && row.unread === true,
+      transport: opts.transport ?? null,
+    };
   }
   return {
     family,
@@ -110,6 +117,14 @@ export function agentMarkFacts(row: SessionInfo): AgentMarkFacts {
 }
 
 export function providerMark(family: string | null, size = 14): ProviderMark {
+  const lower = typeof family === 'string' ? family.toLowerCase() : '';
+  if (lower === 'antigravity' || lower === 'agy') {
+    const mod = legacy().WrapperMark;
+    const svg = mod ? mod.svg({ icon: 'logo-antigravity', family: 'custom' }, size) : '';
+    const text = t('ledger.editor.provider_antigravity');
+    const label = text && text !== 'ledger.editor.provider_antigravity' ? text : 'antigravity';
+    return { key: 'antigravity', svg, label };
+  }
   const icon = legacy().AgentFamilyIcon;
   const key = icon ? icon.normalize(family) : 'unknown';
   const catalogKey = `session.agentfamily.${key}`;

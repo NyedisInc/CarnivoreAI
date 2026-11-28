@@ -99,7 +99,7 @@ async def cplug_update(manager: Any, caller: AgentCaller, args: dict) -> dict:
     from src.plugins.host.routes import UpdateBody, put_cplug  # noqa: PLC0415
     from src.core.mcp.write_tools import _request, park  # noqa: PLC0415
 
-    cplug_id = args.get("cplug_id")
+    cplug_id = runtime.canonical_id(args["cplug_id"]) if isinstance(args.get("cplug_id"), str) else args.get("cplug_id")
     d = runtime.find(cplug_id) if isinstance(cplug_id, str) else None
     if d is None:
         raise ToolError(f"no such plugin: {cplug_id}")

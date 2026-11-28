@@ -19,6 +19,7 @@ from src.models import (
 )
 from typing import Any, Callable, Dict, List, Optional, TypeVar
 
+from src.api.asleep_offloaded import stamp_offloaded
 from src.api.session_record_payload import _session_record_payload, attach_host_labels
 
 from fastapi.concurrency import run_in_threadpool
@@ -131,7 +132,9 @@ async def stored_record_rows(app_state: Any, *, include_automated: bool = False,
         rows = read_stored_rows(db_path, include_automated)
         if keep is not None:
             rows = [row for row in rows if keep(row)]
-        return [_session_record_payload(row, store) for row in rows]
+        projected = [_session_record_payload(row, store) for row in rows]
+        stamp_offloaded(rows, projected)
+        return projected
 
     try:
         records = await run_in_threadpool(project)

@@ -53,7 +53,11 @@ class World:
         body = json.loads(request.content or b"{}")
         self.http.append((request.method, request.url.path, body))
         self.keys.append(request.headers.get("idempotency-key"))
-        if request.url.path.endswith("/writeback"):
+        if request.url.path.endswith(("/writeback", "/close")):
+            if self.mode == "bad_status":
+                return httpx.Response(400, json={"error": {"code": "bad_status"}})
+            if self.mode == "label":
+                return httpx.Response(200, json={"ok": True, "status_refused": "in review"})
             if self.mode == "throttled":
                 return httpx.Response(429, headers={"Retry-After": "900"}, json={"error": "rate_limited"})
             if self.mode == "not_connected":
@@ -97,6 +101,7 @@ def world(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> World:
     monkeypatch.setattr(writeback, "install_id", lambda: "install-fixture")
     monkeypatch.setattr(notices, "writeback_review", lambda *a: w.notes.append(("review", *a)))
     monkeypatch.setattr(notices, "writeback_refused", lambda *a: w.notes.append(("refused", *a)))
+    monkeypatch.setattr(notices, "writeback_tracker_newer", lambda *a: w.notes.append(("tracker_newer", *a)))
     monkeypatch.setattr(notices, "writeback_blocked_secret", lambda *a: w.notes.append(("blocked", *a)))
     monkeypatch.setattr(notices, "writeback_review_resolved", lambda *a: None)
     yield w
@@ -313,3 +318,65 @@ def test_a_disconnected_tracker_holds_the_comment_but_a_422_or_other_4xx_is_fina
     queue(dict(COMMIT, sha="d3"), now=5000.0, item="wi_story2")
     run(world, 5000.0 + writeback.WINDOW_SECONDS)
     assert {r["item_id"]: r["result"] for r in rows("failed")}["wi_story2"] == "secret_detected"
+
+
+
+def move(milestone: str, item: str = "wi_story1", **over: Any) -> int:
+    return writeback.enqueue_move("ten_1", item, milestone, now=1000.0, **over)
+
+
+def moves(world: World, suffix: str) -> List[Dict[str, Any]]:
+    return [b for m, p, b in world.http if m == "POST" and p.endswith(suffix)]
+
+
+def test_a_close_row_is_sent_at_once_with_beast_off_to_the_close_route(world: World) -> None:
+    assert not world.beast
+    move(writeback.MOVE_CLOSE, reason="all validated")
+    run(world, 1000.0)
+    assert moves(world, "/work-items/wi_story1/close") == [{"reason": "all validated", "comment": False}] and rows("posted") and not rows("review")
+    assert world.keys[-1] and world.keys[-1].startswith("cwb-")
+
+
+def test_a_picked_row_sends_a_status_writeback_with_the_milestone_and_no_to_status(world: World) -> None:
+    move(writeback.MOVE_PICKED, session_id="ref_1")
+    run(world, 1000.0)
+    assert moves(world, "/work-items/wi_story1/writeback") == [{"kind": "status", "milestone": "picked", "session_id": "ref_1"}] and rows("posted")
+
+
+def test_a_second_unsent_row_for_the_same_item_and_move_is_the_same_row(world: World) -> None:
+    assert move(writeback.MOVE_CLOSE) == move(writeback.MOVE_CLOSE) and move(writeback.MOVE_PICKED) != move(writeback.MOVE_CLOSE)
+    run(world, 1000.0)
+    assert len(moves(world, "/close")) == 1
+
+
+def test_a_failed_close_is_kept_and_retried_on_the_queue_schedule(world: World) -> None:
+    world.mode = "down"
+    move(writeback.MOVE_CLOSE)
+    run(world, 1000.0)
+    assert len(rows("ready")) == 1 and rows("ready")[0]["attempts"] == 1
+    run(world, 1001.0)
+    assert len(moves(world, "/close")) == 1
+    world.mode = "up"
+    run(world, 1000.0 + writeback.BACKOFF_SECONDS + 1)
+    assert len(rows("posted")) == 1
+
+
+def test_a_picked_row_that_gets_400_waits_then_gives_up_quietly(world: World) -> None:
+    world.mode = "bad_status"
+    move(writeback.MOVE_PICKED)
+    moment = 1000.0
+    for _ in range(writeback.MAX_ATTEMPTS):
+        run(world, moment)
+        moment += writeback.MAX_BACKOFF + 1
+    assert len(moves(world, "/writeback")) == writeback.MAX_ATTEMPTS and rows("failed")[0]["result"] == "gave_up" and world.notes == []
+
+
+def test_a_status_refused_close_names_the_story_and_the_trackers_state(world: World) -> None:
+    world.mode = "label"
+    move(writeback.MOVE_CLOSE)
+    run(world, 1000.0)
+    assert world.notes == [("tracker_newer", rows("posted")[0]["id"], "Fixture Story", "in review")]
+    world.mode = "refused"
+    move(writeback.MOVE_PICKED, item="wi_story1")
+    run(world, 1001.0)
+    assert world.notes[-1][3] == ""

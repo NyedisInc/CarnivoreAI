@@ -24,8 +24,9 @@ from src.core.inventory.scope import CONVERSATIONS, Scope
 from src.core.inventory.vault_claims import vault_manifests
 from src.core.sessions import theme_dotfile
 from src.core.time_machine.limits import tree_root
-from src.core.work import storage as work_storage
+from src.core.work import folders as work_folders
 from src.core.work import tables as work_tables
+from src.plugins.sdk.renamed_files import marker_name, merged_item_files
 
 logger = structlog.get_logger()
 
@@ -44,7 +45,6 @@ STORE_FOLDER = "project-folder"
 SWARM_DESK_DIR = ("swarm", "desk")
 SWARM_SETTINGS_DIR = ("swarm", "settings")
 SWARM_HOOKS_DIR = ("swarm", "hooks")
-TASK_FILES_DIR = "files"
 _CONVERSATION_ENTRY = re.compile(r"^(?P<id>[0-9A-Za-z][0-9A-Za-z-]{7,63})(\.jsonl)?$")
 
 _POINT_REWRITE = (FieldRef("<point>/meta.json#working_dir", ROLE_PATH), FieldRef("<point>/meta.json#transcript.source_path", ROLE_PATH),
@@ -135,12 +135,44 @@ def _pipe_log(locations: Locations, ident: SessionIdentity, blockers: List[str])
     return [art] if art is not None else []
 
 
+def _single_task_root(new_root: Path, old_root: Path, item: str) -> Optional[Path]:
+    has_new, has_old = os.path.lexists(new_root / item), os.path.lexists(old_root / item)
+    if has_new and has_old:
+        return None
+    if not has_old:
+        return new_root
+    return None if os.path.lexists(old_root / marker_name(work_folders.NEW_ID)) else old_root
+
+
+def _task_files(state_dir: Path, item: str, blockers: List[str]) -> List[Artifact]:
+    new_root, old_root = work_folders.files_roots(state_dir)
+    reason = f"files attached to the item (artifacts, pastes); the item rows name them in {work_tables.MESSAGES}.parts"
+    single = _single_task_root(new_root, old_root, item)
+    if single is not None:
+        return _dirs_named(single, [item], STORE_TASK_FILES, reason, _TASK_REWRITE, blockers)
+    kept = set(merged_item_files(new_root, old_root, item))
+    out: List[Artifact] = []
+    for root in (new_root, old_root):
+        folder = root / item
+        if folder.is_symlink() or not folder.is_dir():
+            out += _dirs_named(root, [item], STORE_TASK_FILES, reason, _TASK_REWRITE, blockers)
+            continue
+        entries = list(folder.iterdir())
+        if entries and all(e in kept for e in entries):
+            out += _dirs_named(root, [item], STORE_TASK_FILES, reason, _TASK_REWRITE, blockers)
+            continue
+        for path in sorted(e for e in entries if e in kept):
+            art = measured_artifact(STORE_TASK_FILES, str(path), root, REPORT, reason, blockers, _TASK_REWRITE)
+            if art is not None:
+                out.append(art)
+    return out
+
+
 def _task_and_desk(locations: Locations, scope: Scope, main: sqlite3.Connection, blockers: List[str]) -> List[Artifact]:
-    task_files = work_storage.folder(locations.state_dir) / TASK_FILES_DIR
     items = [str(i) for i in claimed_item_ids(main, scope)]
-    out = _dirs_named(task_files, items, STORE_TASK_FILES,
-                      f"files attached to the item (artifacts, pastes); the item rows name them in {work_tables.MESSAGES}.parts",
-                      _TASK_REWRITE, blockers)
+    out: List[Artifact] = []
+    for item in items:
+        out += _task_files(locations.state_dir, item, blockers)
     desk = Path(locations.state_dir).joinpath(*SWARM_DESK_DIR)
     agents = [str(i) for i in _ids_where(main, "swarm_agents", scope, MAIN_STORE)]
     out += _dirs_named(desk, agents, STORE_DESK, "the Swarm agent's desk notes", _DESK_REWRITE, blockers)

@@ -1,4 +1,5 @@
-import manifest from '../../../../src/plugins/tmdevtools/cplug.json';
+/* the Task Manager */
+import manifest from '../../../../src/plugins/tmdevtools/carnivore.toml';
 import type { CplugManifest, CplugWeb } from '../sdk';
 import { startCommands } from './commands';
 

@@ -122,7 +122,7 @@ def test_deep_link_route_serves_spa(client):
     assert resp.status_code == 200
     body = resp.text.lower()
     assert "<!doctype html" in body
-    assert "cloude code" in body
+    assert "<title>carnivore</title>" in body
 
 
 def test_deep_link_route_accepts_dotted_name(client):

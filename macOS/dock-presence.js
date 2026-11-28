@@ -17,14 +17,40 @@ function recentProjects(list) {
   return [...newest.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_RECENT).map(([name]) => name);
 }
 
-function buildDockMenuTemplate({ rows: list, led, t, openApp, openApproval, sessionLink }) {
+function analyzeListingRows(list, led) {
+  const newest = new Map();
+  const waiting = [];
+  const questions = new Set();
+  let count = 0;
+  if (Array.isArray(list)) {
+    for (const info of list) {
+      if (!info || typeof info !== 'object') continue;
+      const validRow = rows.isRow(info);
+      if (validRow && rows.isLocal(info) && typeof info.project_name === 'string' && info.project_name) {
+        newest.set(info.project_name, Math.max(newest.get(info.project_name) || 0, rows.recency(info)));
+      }
+      const kind = needYou.needYouKind(info, led);
+      if (kind) {
+        count += 1;
+        if (validRow) {
+          waiting.push({ info, kind });
+          if (kind === 'question') questions.add(rows.rowKey(info));
+        }
+      }
+    }
+  }
+  const projects = [...newest.entries()].sort((a, b) => b[1] - a[1]).slice(0, MAX_RECENT).map(([name]) => name);
+  return { count, projects, waiting, questions };
+}
+
+function buildDockMenuTemplate({ rows: list, led, t, openApp, openApproval, sessionLink, projects: preProjects, waiting: preWaiting }) {
   const items = [{ id: 'new', label: t('menubar.new_session'), click: () => openApp('') }];
-  const projects = recentProjects(list);
+  const projects = preProjects || recentProjects(list);
   if (projects.length) {
     items.push({ id: 'recent', label: t('menubar.dock.recent_projects'), submenu: projects.map((name) => ({
       id: `project:${name}`, label: clip(name), click: () => openApp(`session/${encodeURIComponent(name)}`) })) });
   }
-  const waiting = needYou.waitingRows(list.filter(rows.isRow), led);
+  const waiting = preWaiting || needYou.waitingRows(list.filter(rows.isRow), led);
   if (waiting.length) {
     items.push({ type: 'separator' }, { id: 'needyou', label: t('menubar.need_you', { count: waiting.length }), enabled: false });
     for (const { info, kind } of waiting.slice(0, MAX_WAITING)) {
@@ -54,15 +80,15 @@ function createDockPresence(deps) {
         seeded = false;
         return;
       }
-      const count = needYou.needYouCount(listing.rows, env.led);
+      const { count, projects, waiting, questions: now } = analyzeListingRows(listing.rows, env.led);
       const text = count > 0 ? String(count) : '';
       if (text !== badge) { dock.setBadge(text); badge = text; }
       const template = buildDockMenuTemplate({ rows: listing.rows, led: env.led, t: env.t, openApp: deps.openApp,
-        openApproval: deps.openApproval, sessionLink: deps.sessionLink });
+        openApproval: deps.openApproval, sessionLink: deps.sessionLink, projects, waiting });
       const signature = JSON.stringify(template);
       if (signature !== menuSignature) { dock.setMenu(deps.Menu.buildFromTemplate(template)); menuSignature = signature; }
-      const now = questionKeys(listing.rows, env.led);
-      const arrived = [...now].some((key) => !questions.has(key));
+      let arrived = false;
+      for (const key of now) { if (!questions.has(key)) { arrived = true; break; } }
       questions = now;
       const focused = !!(deps.isWindowFocused && deps.isWindowFocused());
       if (seeded && arrived && !focused) dock.bounce('informational');

@@ -11,6 +11,7 @@ import structlog
 
 from src.core import setup_state
 from src.core.computers import commit, store
+from src.core.pack.machines import capabilities
 from src.core.federation import grants, peer_hosts, peer_listing, peer_sockets, shadow_rows
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.resource_push import topics
@@ -64,12 +65,19 @@ async def forget_computer(iid: str, *, notify_peer: bool, open_db: Callable[[], 
                           repin: Callable[[], Awaitable[Any]], notify: Optional[Callable[[str], None]] = None) -> bool:
     told = await tell_peer(links, iid) if notify_peer else False
     grant_id, row = await asyncio.to_thread(_drop_rows, open_db, iid)
+    from src.core.federation import mesh_peers
+
+    await mesh_peers.star_row_gone(iid)
     peer_listing.forget(iid)
     await links.remove(iid)
     if grant_id is not None:
         await peer_sockets.close_grant(grant_id)
     if row is not None and row.role == "main" and row.transport == "tls":
         await asyncio.to_thread(_leave_local, config_path, fed_dir, own_iid, pack)
+        if capabilities.mesh_on():
+            from src.core.computers import mesh_removal
+
+            await asyncio.to_thread(mesh_removal.leave_mesh_rows, open_db)
     await repin()
     if notify is not None:
         for topic in TOPICS:

@@ -105,7 +105,7 @@ def test_branch_route_opens_a_new_session_on_the_copy(client, env, monkeypatch):
 
 def test_mcp_bookmark_add_marks_the_newest_point_as_claude(env, monkeypatch):
     info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), tmux_session="cloude_fixture", session_row_id=7,
-                           host_key="local")
+                           host_key="local", label=None, claude_title=None)
 
     class View:
         app = None

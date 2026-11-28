@@ -289,6 +289,16 @@ def deliver_removed(delivery: Delivery, conversation_id: str) -> None:
                 _fail(run, exc)
 
 
+def _before_removal(run: PluginRun, target: FileTarget) -> None:
+    hook = run.plugin.before_removal
+    if hook is None:
+        return
+    try:
+        hook(target.conversation_id, target.path)
+    except Exception as exc:  # noqa: BLE001
+        log.log_error("pipeline_before_removal_failed", plugin=run.plugin.id, error=exc)
+
+
 def deliver_file_removed(delivery: Delivery, target: FileTarget) -> None:
     from src.core.db import transaction
 
@@ -303,6 +313,7 @@ def deliver_file_removed(delivery: Delivery, target: FileTarget) -> None:
         if run.failed is not None or not run.plugin.per_file_removal:
             continue
         with _busy(delivery, run):
+            _before_removal(run, target)
             try:
                 with plugin_db.lock_for(run.plugin.id):
                     conn = plugin_db.pooled_db(delivery.state_dir, run.plugin)

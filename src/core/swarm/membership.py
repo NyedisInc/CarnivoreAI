@@ -10,6 +10,7 @@ import structlog
 from fastapi import HTTPException
 
 from src.core import db
+from src.core.swarm.types import BodyIdentity, CreateRefused, TurnOnError
 from src.core.swarm import body, body_create, memory, project_agent, project_promote, push, routing, slugs, store, switch, thread_port
 from src.core.swarm.names import shown_name
 from src.core.trail_entry import utc_now
@@ -30,7 +31,7 @@ MEMBER_JOINED = (
     "deal it queue cards only while it is idle with nothing open from the owner, and never override what the owner told it directly.")
 
 
-class MembershipRefused(project_agent.TurnOnError):
+class MembershipRefused(TurnOnError):
 
     def __init__(self, code: str, sentence: str, **extra: Any) -> None:
         super().__init__(sentence)
@@ -62,7 +63,7 @@ async def _remote_peer(session: Dict[str, Any], joining: bool) -> Any:
 
     try:
         peer = await asyncio.to_thread(remote_body.peer_for, _host(session))
-    except body_create.CreateRefused:
+    except CreateRefused:
         peer = None
     if peer is None or not remote_body.adopts(peer):
         verb = "join" if joining else "leave"
@@ -132,7 +133,7 @@ def _bind(conn: sqlite3.Connection, found: Dict[str, Any], specialty: Optional[s
 def _write_files(conn: sqlite3.Connection, agent: Dict[str, Any], leader: Dict[str, Any], state_dir: Any) -> None:
     try:
         body_create.write_files(state_dir, agent, leader["display_name"], leader["slug"])
-    except (body_create.CreateRefused, memory.SwarmFileError, OSError) as exc:
+    except (CreateRefused, memory.SwarmFileError, OSError) as exc:
         conn.execute("UPDATE swarm_agents SET session_row_id = NULL WHERE id = ?", (agent["id"],))
         store.tear_down(conn, agent["id"])
         raise MembershipRefused("refused", f"the agent's files could not be written: {exc}") from exc
@@ -262,7 +263,7 @@ async def leave(app_state: Any, session_uuid: str, *, confirm_restart: bool = Fa
 
         try:
             await remote_body.release(agent)
-        except body_create.CreateRefused as exc:
+        except CreateRefused as exc:
             raise MembershipRefused("refused", str(exc)) from exc
     released = await _release_cards(app_state, agent["id"])
     await body.run_db(lambda c: _park(c, agent["id"], session["id"]))
@@ -343,7 +344,7 @@ async def bind_new_session(app_state: Any, plan: Dict[str, Any], session_id: str
     try:
         info = await app_state.session_manager.get_session_info(session_id)
         if info is None or info.session_row_id is None:
-            raise body_create.CreateRefused("the new session is not in the listing")
+            raise CreateRefused("the new session is not in the listing")
         row_id = int(info.session_row_id)
 
         def bind(conn: sqlite3.Connection) -> str:
@@ -352,9 +353,9 @@ async def bind_new_session(app_state: Any, plan: Dict[str, Any], session_id: str
             return str(found[0]) if found and found[0] else ""
 
         key = await body.run_db(bind)
-        ident = body_create.BodyIdentity(session_id, row_id, key, str(info.tmux_session), info.session.tmux_created_epoch)
+        ident = BodyIdentity(session_id, row_id, key, str(info.tmux_session), info.session.tmux_created_epoch)
         await body.finish_start(app_state, agent, plan["wake_id"], ident)
-    except (body_create.CreateRefused, body.BodyError, db.DatastoreUnreadableError, sqlite3.Error, RuntimeError) as exc:
+    except (CreateRefused, body.BodyError, db.DatastoreUnreadableError, sqlite3.Error, RuntimeError) as exc:
         logger.error("swarm_new_session_member_bind_failed", agent_id=agent["id"], session_id=session_id, error=str(exc)[:200])
         await body.run_db(lambda c: c.execute("UPDATE swarm_agents SET session_row_id = NULL WHERE id = ?", (agent["id"],)))
         await drop_new_session_member(plan)

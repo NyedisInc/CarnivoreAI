@@ -32,7 +32,8 @@ identify the backup to restore, and the two are different entries.
   code v2 was 2.
 
   Step 2 - the backup OF version 2. Backups are taken BEFORE a step runs
-  and are named for the version they leave (`cloude.db.bak-v<from>-<ts>`),
+  and are named for the version they leave (`carnivore.db.bak-v<from>-<ts>`,
+  or `cloude.db.bak-v...` on a pre-rename install),
   so the snapshot of version 2 hangs off the entry with from_version=2,
   which is `schema 2->3` - an entry that started AFTER the target code
   point. Selecting the backup attached to the step found in step 1
@@ -84,7 +85,7 @@ DATA_KINDS = (KIND_SCHEMA, KIND_CONFIG)
 VERSION_ESTABLISHING = {KIND_SCHEMA: (KIND_SCHEMA, KIND_BOOTSTRAP),
                         KIND_CONFIG: (KIND_CONFIG,)}
 
-ARTIFACT = {KIND_SCHEMA: "cloude.db", KIND_CONFIG: "config.json"}
+ARTIFACT = {KIND_SCHEMA: "carnivore.db", KIND_CONFIG: "config.json"}
 
 OUTCOME_RESTORE = "restore"
 OUTCOME_ALREADY_CURRENT = "already_current"

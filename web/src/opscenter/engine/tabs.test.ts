@@ -84,3 +84,9 @@ describe('close, move, split, merge', () => {
     expect(JSON.stringify(input)).toBe(frozen);
   });
 });
+
+test('a remembered active tab that names a retired widget shows its successor (issue #2531)', () => {
+  const groups = { [P]: { tabs: [P, 'widget:core.task-manager-mk2'] } };
+  expect(activeOf(groups, { [P]: 'widget:core.task-list' }, P)).toBe('widget:core.task-manager-mk2');
+  expect(activeOf(groups, { [P]: 'widget:core.task-manager' }, P)).toBe('widget:core.task-manager-mk2');
+});

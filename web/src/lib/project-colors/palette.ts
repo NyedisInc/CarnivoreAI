@@ -1,17 +1,17 @@
 
 export const SOFT_PROJECT_COLORS = [
-  { name: 'clay', hex: '#966356' },
-  { name: 'terracotta', hex: '#a7593d' },
-  { name: 'copper', hex: '#a25e2b' },
-  { name: 'saddle', hex: '#a17557' },
-  { name: 'caramel', hex: '#c07e45' },
-  { name: 'bronze', hex: '#817040' },
-  { name: 'cobalt', hex: '#4e69ba' },
-  { name: 'iris', hex: '#7b75e2' },
-  { name: 'amethyst', hex: '#7457c2' },
-  { name: 'ultraviolet', hex: '#a167cf' },
-  { name: 'orchid', hex: '#b765a1' },
-  { name: 'raspberry', hex: '#ad3f7f' },
+  { name: 'crimson', hex: '#e6495c' },
+  { name: 'tangerine', hex: '#e67329' },
+  { name: 'amber', hex: '#c99214' },
+  { name: 'lime', hex: '#6ea61c' },
+  { name: 'emerald', hex: '#1ea662' },
+  { name: 'teal', hex: '#12a392' },
+  { name: 'cyan', hex: '#1c9ed6' },
+  { name: 'cobalt', hex: '#4a80eb' },
+  { name: 'indigo', hex: '#7a6af0' },
+  { name: 'violet', hex: '#ae62eb' },
+  { name: 'magenta', hex: '#de54be' },
+  { name: 'rose', hex: '#e64e83' },
 ] as const;
 
 export type ProjectColor = string;

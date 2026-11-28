@@ -81,6 +81,8 @@ from src.core.config_merge import (  # noqa: E402
 
 BASE_FILENAME = "config-base.json"
 
+STATE_DIR_ENV_NAMES = ("CARNIVORE_STATE_DIR", "CLOUDE_STATE_DIR", "CLOUDECODE_STATE_DIR")
+
 OUTCOME_LABELS = {
     "unchanged": "unchanged",
     "updated_default": "NEW DEFAULT   ",
@@ -96,11 +98,17 @@ def resolve_state_dir(override: str | None) -> Path:
     if override:
         return Path(override).expanduser()
 
-    env_value = os.environ.get("CLOUDE_STATE_DIR", "").strip()
-    if env_value:
-        return Path(env_value).expanduser()
+    for name in STATE_DIR_ENV_NAMES:
+        env_value = os.environ.get(name, "").strip()
+        if env_value:
+            return Path(env_value).expanduser()
 
-    return Path.home() / "Library" / "Application Support" / "CloudeCode"
+    base = Path.home() / "Library" / "Application Support"
+    current = base / "Carnivore"
+    legacy = base / "CloudeCode"
+    if not current.is_dir() and legacy.is_dir():
+        return legacy
+    return current
 
 
 def write_json_atomic(path: Path, data: dict) -> None:

@@ -9,11 +9,18 @@ from typing import Dict, List, Set
 import pytest
 
 from src.plugins.host import runtime
+from src.plugins.sdk import renamed_from as rf
 from src.plugins.sdk.definition import CplugDefinition
 from tests.helpers.catalog_text import catalog_text, slice_paths
 
 ROOT = Path(__file__).resolve().parents[3]
 DEFINITIONS = {d.id: d for d in runtime.definitions()}
+RENAMED_TO = {d.manifest.renamed_from: d.id for d in DEFINITIONS.values() if d.manifest.renamed_from}
+
+
+def string_prefixes(pid: str) -> tuple:
+    m = DEFINITIONS[pid].manifest
+    return rf.string_prefixes(pid, rf.kept_old_id(m.renamed_from, m.renamed_from_keeps, rf.KEEP_STRINGS))
 KEY_REF = re.compile(r"""['"`](cplug\.([a-z0-9]+)\.[A-Za-z0-9_.\-]*)""")
 SOURCE_SUFFIXES = (".py", ".ts", ".svelte", ".js")
 DEFINED_KEY = re.compile(r"""['"](cplug\.[a-z0-9]+\.[^'"]*)['"]\s*:""")
@@ -38,7 +45,7 @@ def test_every_declared_route_exists(pid: str) -> None:
 
 
 UNDECLARED_ROUTES_OK = {
-    "huddle": "no sidecar yet: the Task Manager split owner adds it (#1711), 62 routes",
+    "taskmanager": "no sidecar yet: the Task Manager split owner adds it (#1711), 62 routes",
     "devwidgetlab": "being edited in #1944 (widget contract); it declares /capture and /status there",
 }
 
@@ -95,7 +102,8 @@ def test_the_registry_row_check_can_fail() -> None:
 
 
 def own_key_violations(pid: str, text: str, defined: Set[str]) -> List[str]:
-    return sorted({m.group(1) for m in KEY_REF.finditer(text) if m.group(2) != pid and m.group(2) in DEFINITIONS and m.group(1) in defined})
+    owner = lambda key_id: RENAMED_TO.get(key_id, key_id)  # noqa: E731
+    return sorted({m.group(1) for m in KEY_REF.finditer(text) if owner(m.group(2)) != pid and owner(m.group(2)) in DEFINITIONS and m.group(1) in defined})
 
 
 def defined_keys() -> Set[str]:
@@ -114,7 +122,7 @@ def plugin_sources(pid: str) -> Dict[Path, str]:
 @pytest.mark.parametrize("pid", sorted(DEFINITIONS))
 def test_a_plugin_owns_its_catalog_keys_and_reaches_no_other_plugins(pid: str) -> None:
     owns = DEFINITIONS[pid].manifest.owns
-    assert all(prefix.startswith(f"cplug.{pid}.") for prefix in owns.strings)
+    assert all(prefix.startswith(string_prefixes(pid)) for prefix in owns.strings)
     if pid in slice_paths():
         assert owns.strings, f"{pid} keeps a catalog slice, so it must declare owns.strings"
     reaches = {str(p.relative_to(ROOT)): v for p, text in plugin_sources(pid).items() if (v := own_key_violations(pid, text, defined_keys()))}
@@ -125,5 +133,5 @@ def test_the_namespace_check_can_fail() -> None:
     defined = {"cplug.save.name", "cplug.share.name"}
     assert own_key_violations("save", "t('cplug.save.name') t('cplug.share.name')", defined) == ["cplug.share.name"]
     assert own_key_violations("save", "t('cplug.ghost.name')", defined) == [], "an unshipped namespace is the orphan test's job"
-    assert own_key_violations("flow", "topic 'cplug.huddle.list'", defined) == [], "a push topic is not a catalog key"
-    assert "cplug.share.name" in defined_keys() and "cplug.huddle.list" not in defined_keys()
+    assert own_key_violations("flow", "topic 'cplug.taskmanager.list'", defined) == [], "a push topic is not a catalog key"
+    assert "cplug.share.name" in defined_keys() and "cplug.taskmanager.list" not in defined_keys()

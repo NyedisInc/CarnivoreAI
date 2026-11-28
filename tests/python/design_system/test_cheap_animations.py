@@ -34,17 +34,20 @@ def test_keyframe_parser_can_go_red():
 
 
 def test_effort_keyframes_animate_only_transform_and_opacity():
-    frames = animated_properties(EFFORT_CSS.read_text(encoding="utf-8"))
-    assert {"effort-shimmer", "effort-sheen-window", "effort-sheen-copy", "effort-rainbow-a", "effort-rainbow-b"} <= set(frames)
+    css = EFFORT_CSS.read_text(encoding="utf-8")
+    frames = animated_properties(css)
     for name, props in frames.items():
         assert props <= CHEAP, f"{name} animates {sorted(props - CHEAP)}"
+    assert "amb-join-effort-badges" in css
+    assert "filter: drop-shadow" not in re.sub(r"/\*.*?\*/", "", css, flags=re.S)
 
 
 def test_drawer_band_and_group_label_keyframes_animate_only_transform_and_opacity():
-    frames = animated_properties((REPO / "client" / "css" / "session-sidebar-colours.css").read_text(encoding="utf-8"))
-    assert {"band-fx-travel", "band-fx-counter", "drawer-band-pulse"} <= set(frames)
+    css = (REPO / "client" / "css" / "session-sidebar-colours.css").read_text(encoding="utf-8")
+    frames = animated_properties(css)
     for name, props in frames.items():
         assert props <= CHEAP, f"{name} animates {sorted(props - CHEAP)}"
+    assert "amb-join-drawer-bands" in css
 
 
 PAUSER_DRIVER = r"""

@@ -48,7 +48,7 @@ class TestTheWalker:
         assert [f[0] for f in preview.files] == ["SKILL.md", "notes/extra.md"]
         assert preview.total_bytes == expected
 
-    def test_no_manifest_scripts_and_big_file_are_refused(self, tmp_path):
+    def test_no_manifest_and_big_file_are_refused_while_scripts_are_allowed(self, tmp_path):
         folder = tmp_path / "work" / "my-skill"
         folder.mkdir(parents=True)
         (folder / "scripts").mkdir()
@@ -57,7 +57,7 @@ class TestTheWalker:
         preview = submission_preview.preview_folder(str(folder))
         codes = _codes(preview)
         assert "submission_invalid" in codes
-        assert "scripts_not_supported" in codes
+        assert "scripts_not_supported" not in codes
         named = [r.path for r in preview.refusals if r.code == "body_too_large"]
         assert "big.md" in named
 

@@ -27,7 +27,13 @@ CATALOG_TABLES = (
 
 RESERVED_KEYS = (26, 27, 28)
 
-CROSSED_NAMES = CATALOG_TABLES + ("installed_items.consent_via", "installed_items.forked")
+CROSSED_NAMES = CATALOG_TABLES + (
+    "installed_items.consent_via",
+    "installed_items.forked",
+    "installed_items.provenance_repo",
+    "installed_items.provenance_tag",
+    "installed_items.commit_sha",
+)
 
 
 def _chain_with_reservations(conn: sqlite3.Connection, keys) -> None:

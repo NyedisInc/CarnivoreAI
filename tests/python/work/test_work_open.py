@@ -17,7 +17,7 @@ from fastapi import FastAPI
 
 from src.core.work.capability import WorkCapability
 from src.core.work.importer import ready
-from src.core.work.storage import DB_NAME, LEGACY_STORAGE, folder
+from src.core.work.storage import DB_NAME, LEGACY_STORAGE, legacy_folder
 from src.plugins.host import runtime
 from src.plugins.sdk import CplugSchemaError, CplugStorage, StorageSpec
 from tests.python.cplugs.owner import turn_on
@@ -40,7 +40,7 @@ def seeded_copy(state_dir: Path, spec: StorageSpec = LEGACY_STORAGE, items: int 
             conn.execute(ITEM_SQL, ("12", "second", "claude", 2, 2))
         conn.execute(REPLY_SQL, (first,))
         conn.execute("UPDATE meta SET v = 3 WHERE k = 'seq'")
-    target = folder(state_dir) / DB_NAME
+    target = legacy_folder(state_dir) / DB_NAME
     target.parent.mkdir(parents=True)
     with closing(sqlite3.connect(scratch / DB_NAME)) as src, closing(sqlite3.connect(target)) as dst:
         src.backup(dst)
@@ -100,7 +100,7 @@ def test_the_optional_live_copy_imports_without_a_byte_changing(tmp_path: Path) 
     path = os.environ.get("WORK_LIVE_COPY")
     if not path:
         pytest.skip("WORK_LIVE_COPY is not set")
-    copy = folder(tmp_path) / DB_NAME
+    copy = legacy_folder(tmp_path) / DB_NAME
     copy.parent.mkdir(parents=True)
     shutil.copy2(path, copy)
     before = sha256(copy)
@@ -131,7 +131,7 @@ def test_a_walk_that_fails_leaves_the_server_booting_with_the_plugin_unavailable
     host = runtime.Host(tmp_path, FastAPI(), publish=lambda topic: None)
     turn_on(host)
     asyncio.run(host.start())
-    assert "huddle" in host.unavailable
+    assert "taskmanager" in host.unavailable
     assert version(copy) == 50
 
 
@@ -141,6 +141,6 @@ def test_a_healthy_file_starts_the_plugin(tmp_path: Path) -> None:
     turn_on(host)
     asyncio.run(host.start())
     try:
-        assert "huddle" not in host.unavailable
+        assert "taskmanager" not in host.unavailable
     finally:
         asyncio.run(host.stop())

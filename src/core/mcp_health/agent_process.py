@@ -11,6 +11,7 @@ from src.core.conversation_writers import ProcessTable
 
 FAMILY_CLAUDE: str = "claude"
 FAMILY_CODEX: str = "codex"
+FAMILY_AGY: str = "agy"
 _LSTART_FORMAT = "%a %b %d %H:%M:%S %Y"
 
 
@@ -27,10 +28,15 @@ def is_codex_command(command: str) -> bool:
     return any(os.path.basename(t) == FAMILY_CODEX for t in tokens)
 
 
+def is_agy_command(command: str) -> bool:
+    tokens = command.split()[:1]
+    return any(os.path.basename(t) == FAMILY_AGY for t in tokens)
+
+
 def find_agent(table: ProcessTable, pane_pid: Optional[int], family: str) -> Optional[int]:
     if pane_pid is None:
         return None
-    test = is_claude_command if family == FAMILY_CLAUDE else is_codex_command
+    test = {FAMILY_CLAUDE: is_claude_command, FAMILY_AGY: is_agy_command}.get(family, is_codex_command)
     for proc in table.descendants(pane_pid):
         if test(proc.command):
             return proc.pid

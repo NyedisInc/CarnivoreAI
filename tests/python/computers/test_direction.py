@@ -34,9 +34,10 @@ def _set(acceptor, initiator, inbound: bool) -> None:
 
 def _code(response) -> str:
     try:
-        detail = response.json().get("detail")
+        body = response.json()
     except ValueError:
         return ""
+    detail = body.get("detail") if isinstance(body, dict) else None
     return detail.get("code") if isinstance(detail, dict) else ""
 
 

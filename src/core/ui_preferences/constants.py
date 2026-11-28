@@ -157,18 +157,16 @@ the reason that file gives: ``/sessions/list`` carries no completeness
 signal to prune against)."""
 MAX_TAB_GROUPS = 64
 MAX_TABS_PER_GROUP = 64
-MAX_LAYOUT_BYTES = 16384
-"""Mirrors ``persist.ts::MAX_BYTES``, the browser's own cap on one stored
-layout, so the server never accepts a grid the client would refuse."""
+MAX_LAYOUT_BYTES = 131072
+"""Mirrors ``persist.ts::MAX_BYTES`` (128 KiB), the cap on one stored layout
+(raised from 16 KiB in #3385 Slice P3 so rich free-grid dashboards fit cleanly)."""
 MAX_TERMINAL_LAYOUTS_BYTES = 262144
 """The whole field serialised. It rides every ``preferences.changed`` frame,
 which the event socket bounds at 1 MiB, so it stays well under that."""
-MAX_HOME_LAYOUT_BYTES = 262144
+MAX_HOME_LAYOUT_BYTES = 2097152
 """The whole ``home_layout`` field serialised: up to ``MAX_HOME_BOARDS`` grids
-(each capped at ``MAX_LAYOUT_BYTES``, so 192 KiB at most) plus names and ids.
-Raised from 32 KiB when Home gained boards (the owner, 2026-09-29); it
-matches ``MAX_TERMINAL_LAYOUTS_BYTES`` and stays well under the 1 MiB the
-event socket bounds a ``preferences.changed`` frame at."""
+(each capped at ``MAX_LAYOUT_BYTES`` = 128 KiB, so 1.5 MiB at most) plus names
+and ids. Raised from 256 KiB in #3385 Slice P3 alongside ``MAX_LAYOUT_BYTES``."""
 MAX_HOME_BOARDS = 12
 """Most named Home boards one account keeps."""
 HOME_BOARD_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,32}$")
@@ -190,4 +188,22 @@ Task Manager item 1049, message 5669, 2026-10-19 (``docs/DECISIONS.md``)."""
 MAX_UNKNOWN_FIELDS = 64
 MAX_KEY_LENGTH = 128
 MAX_MENU_ORDER = 64
+MAX_LAYOUT_TABS = 64
+LAYOUT_TAB_ID_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{0,63}$")
+STATS_BAR_RATES = ("sec", "min", "hour", "day")
+STATS_BAR_WINDOWS = ("1h", "5h", "1d", "7d")
+MAX_ANALYTICS_FILTER_KEYS = 32
+MAX_ANALYTICS_FILTERS_BYTES = 4096
+MAX_ANALYTICS_TIMEZONE_CHARS = 64
+MAX_TIMELINE_FILTER_KEYS = 32
+MAX_TIMELINE_FILTERS_BYTES = 4096
+FILTER_KEY_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.-]{0,63}$")
+MAX_WIDGET_STATE_ENTRIES = 128
+MAX_WIDGET_STATE_ENTRY_BYTES = 4096
+WIDGET_STATE_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@-]{0,63}$")
 MAX_UNKNOWN_VALUE_BYTES = 8192
+
+
+COMET_LAP_MIN_SECONDS = 0.5
+COMET_LAP_MAX_SECONDS = 30
+COMET_UNREAD_COLORS = ("celestial", "green", "accent")

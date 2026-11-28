@@ -1,5 +1,6 @@
 <script lang="ts">
   import { t } from '../i18n/index.svelte';
+  import Tag from '../base/Tag.svelte';
   import type { DeepGroup } from './deepsearch-api';
   import { isRemote, type ConvState } from './result-model';
 
@@ -24,4 +25,6 @@
 {#if group.exported}
   <span class="dps__tag dps__tag--exported" title={t(group.exported.localRemoved ? 'deepsearch.tag.exported_removed_tip' : 'deepsearch.tag.exported_tip')} data-testid="deepsearch-exported">{t('deepsearch.tag.exported', { bundle })}</span>
 {/if}
-{#if host}<span class="dps__tag dps__host" data-testid="deepsearch-host">{host}</span>{/if}
+{#if host}<span class="dps__tag dps__host" data-testid="deepsearch-host">{host}</span>{/if}{#if group.offloaded && !isRemote(group)}
+  <Tag data-tag="offloaded" title={t('deepsearch.tag.offloaded_tip')}>{t('projects.page.disk.offloaded')}</Tag>
+{/if}

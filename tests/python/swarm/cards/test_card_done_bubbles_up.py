@@ -14,9 +14,9 @@ from src.core.mcp import swarm_tools
 from src.core.swarm import body, done_feed, stream, views
 from src.core.swarm.cards import effects, ops, port as card_port
 from src.core.work.storage import WorkStorage
-from src.plugins.huddle import service
-from src.plugins.huddle.cards import policy
-from src.plugins.huddle.public import TaskManagerCardPort
+from src.plugins.taskmanager import service
+from src.plugins.taskmanager.cards import policy
+from src.plugins.taskmanager.public import TaskManagerCardPort
 
 WORKER = "agent:9"
 AGENTS = {"sysop": {"id": 1, "rank": "alpha", "thread_key": "all", "company_id": None},
@@ -28,6 +28,7 @@ AGENTS = {"sysop": {"id": 1, "rank": "alpha", "thread_key": "all", "company_id":
 @pytest.fixture()
 def world(tmp_path: Path, monkeypatch) -> SimpleNamespace:
     policy.drain_kicks()
+    monkeypatch.setattr(done_feed, "_pushed", set())
     storage = WorkStorage(tmp_path / "huddle")
     ctx = SimpleNamespace(storage=storage, settings={"view": "area"}, swarm=None, notify=lambda *a, **k: None)
     service.store(ctx)

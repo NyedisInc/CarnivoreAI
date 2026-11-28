@@ -5,6 +5,7 @@
   import { onMount } from 'svelte';
   import VizSettings from './VizSettings.svelte';
   import { analytics, chartTick } from '../cells/analytics/state.svelte';
+  import { selfHostInstallId } from '../cells/analytics/host-id.svelte';
   import type { ChartConfig } from '../cells/analytics/types';
   import { layoutEditor } from '../layout-editor/editor.svelte';
   import { t } from '../../lib/i18n/index.svelte';
@@ -28,7 +29,7 @@
   let visible = $state(false);
   const preset = $derived(config.range.preset ?? VIZ_SPECS.heat.preset);
   const read = planQuery(
-    () => ({ on: config.enabled, items: heatPlan(config, { now: chartTick(config), timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions) }) }),
+    () => ({ on: config.enabled, items: heatPlan(config, { now: chartTick(config), timezone: analytics.timezone, filters: analytics.filters, quotaWindow: defaultQuotaWindow(analytics.dimensions), selfInstallId: selfHostInstallId() }) }),
     () => visible,
   );
   const outcome = $derived(read.outcomes?.[0] ?? null);

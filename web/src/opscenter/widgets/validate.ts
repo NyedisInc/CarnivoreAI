@@ -187,7 +187,7 @@ function checkLadder(value: unknown, axis: string, ceiling: unknown): void {
   }
 }
 
-const FIELD_KEYS_COMMON: readonly string[] = ['kind', 'labelKey', 'hintKey', 'keywordsKey'];
+const FIELD_KEYS_COMMON: readonly string[] = ['kind', 'labelKey', 'hintKey', 'keywordsKey', 'hidden'];
 const FIELD_KEYS_BY_KIND: Readonly<Record<string, readonly string[]>> = {
   boolean: ['default', 'disabledWhen'],
   number: ['default', 'min', 'max'],
@@ -203,6 +203,7 @@ function checkSettingField(key: string, field: unknown): void {
   need(typeof field.labelKey === 'string' && CATALOG_KEY_PATTERN.test(field.labelKey), 'settings', `${where}.labelKey must be a catalog key`);
   need(field.hintKey === undefined || (typeof field.hintKey === 'string' && CATALOG_KEY_PATTERN.test(field.hintKey)), 'settings', `${where}.hintKey must be a catalog key`);
   need(field.keywordsKey === undefined || (typeof field.keywordsKey === 'string' && CATALOG_KEY_PATTERN.test(field.keywordsKey)), 'settings', `${where}.keywordsKey must be a catalog key`);
+  need(field.hidden === undefined || typeof field.hidden === 'boolean', 'settings', `${where}.hidden must be true or false`);
   need(field.control === undefined || (field.kind === 'enum' && (field.control === 'segmented' || field.control === 'select')), 'settings', `${where}.control is not segmented or select on an enum`);
   switch (field.kind) {
     case 'boolean':

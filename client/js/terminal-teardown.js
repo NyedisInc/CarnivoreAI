@@ -17,6 +17,7 @@ console.log('[TerminalTeardown Module] Loading...');
         ctl._disposed = true;
         if (global.TerminalPaintGate) global.TerminalPaintGate.unregister(ctl);
 
+        if (global.TerminalViewerFocus) global.TerminalViewerFocus.detach(ctl);
         step('reconnect stop', function () { ctl.stopReconnecting(); });
         step('socket close', function () { ctl.pauseForHome(); });
         ctl.sessionActive = false;

@@ -45,8 +45,13 @@ class API {
     async call(endpoint, options = {}, _meta = {}) {
         const dedupe = globalThis.BootFetchDedupe;
         if (!dedupe || _meta._retrying) return this._callOnce(endpoint, options, _meta);
-        const declared = Array.isArray(options.expectedStatuses) ? [...options.expectedStatuses].sort().join(',') : '';
-        return dedupe.run(`api:${declared}:${this.baseURL}${endpoint}`, options, () => this._callOnce(endpoint, options, _meta));
+        const declared = Array.isArray(options.expectedStatuses) && options.expectedStatuses.length
+            ? `?__exp=${[...options.expectedStatuses].sort().join(',')}`
+            : '';
+        const rawUrl = `${this.baseURL}${endpoint}`;
+        const pathIdx = rawUrl.indexOf('/api/v1');
+        const canonicalKey = (pathIdx >= 0 ? rawUrl.slice(pathIdx) : rawUrl) + declared;
+        return dedupe.run(canonicalKey, options, () => this._callOnce(endpoint, options, _meta));
     }
 
     async _callOnce(endpoint, options = {}, _meta = {}) {

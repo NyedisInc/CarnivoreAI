@@ -37,6 +37,23 @@ def plan(folder: Path, plugin_id: str) -> PurgePlan:
     return PurgePlan(sorted(delete), sorted(kept))
 
 
+def previous(folder: Path, renamed_from: str) -> Optional[Path]:
+    return folder.parent / renamed_from if renamed_from and renamed_from != folder.name else None
+
+
+def plan_with_previous(folder: Path, plugin_id: str, renamed_from: str) -> PurgePlan:
+    own, old_folder = plan(folder, plugin_id), previous(folder, renamed_from)
+    old = plan(old_folder, renamed_from) if old_folder is not None else PurgePlan()
+    return PurgePlan(own.delete + old.delete, own.kept + old.kept)
+
+
+def purge_previous(folder: Path, renamed_from: str) -> Optional[PurgePlan]:
+    old_folder = previous(folder, renamed_from)
+    if old_folder is None or not old_folder.is_dir():
+        return None
+    return purge(old_folder, renamed_from, old_folder.parent)
+
+
 def purge(folder: Path, plugin_id: str, plugins_root: Path, key: Optional[str] = None) -> PurgePlan:
     if folder.resolve().parent != plugins_root.resolve() or folder.name != (key or plugin_id):
         raise PurgeRefused(f"{folder} is not the {plugin_id} folder under {plugins_root}")

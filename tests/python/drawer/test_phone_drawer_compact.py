@@ -39,9 +39,9 @@ def test_mode_select_matches_the_field_height() -> None:
 
 
 def test_search_row_bar_token_is_field_plus_padding() -> None:
-    assert "--drawer-bar-h: calc(var(--drawer-field-h) + 2 * var(--oc-space-1) + var(--oc-border))" in CSS
+    assert "--drawer-bar-h: calc(var(--drawer-field-h) + 2 * var(--oc-space-2) + var(--oc-border))" in CSS
     row = re.search(r"\.ds-row \{([^}]*)\}", SEARCH).group(1)
-    assert "padding: var(--oc-space-1)" in row and "border-bottom: var(--oc-border)" in row
+    assert "padding: var(--oc-space-2)" in row and "border-bottom: var(--oc-border)" in row
 
 
 def test_phone_tap_target_is_taller_than_the_look() -> None:

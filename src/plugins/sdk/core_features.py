@@ -3,11 +3,23 @@ from __future__ import annotations
 
 import importlib
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Any, Dict, Tuple
 
-import structlog
+try:
+    import structlog
 
-logger = structlog.get_logger()
+    logger: Any = structlog.get_logger()
+except ImportError:
+    import logging
+
+    class _FallbackLogger:
+        def __init__(self) -> None:
+            self._log = logging.getLogger(__name__)
+
+        def warning(self, event: str, **kwargs: Any) -> None:
+            self._log.warning("%s %s", event, kwargs)
+
+    logger = _FallbackLogger()
 
 NAME_KEY_PREFIX = "plugins.page.core."
 

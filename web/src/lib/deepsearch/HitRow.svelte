@@ -3,6 +3,7 @@
   import ConvLed from './ConvLed.svelte';
   import ConvTags from './ConvTags.svelte';
   import HitActions from './HitActions.svelte';
+  import RestoreAction from './RestoreAction.svelte';
   import { hitMenuNodes } from './hit-menu';
   import { pageRowMenu } from '../item-menu/page-row';
   import HitText from './HitText.svelte';
@@ -41,4 +42,4 @@
   <div class="sd-hit__top"><ConvLed kind={ledKind(conv, group)} live={live ?? undefined} title={t(stateKey(conv))} /><span class="sd-hit__name">{name}</span>{#if tags}<ConvTags {group} {conv} />{/if}<span class="sd-r__meta">{meta}</span></div>
   <div class="sd-hit__snip">{#if hit.fileKind === 'subagent'}<span class="dps__tag">{t('deepsearch.subagent')}</span>{' '}{/if}<HitText snippet={hit.snippet} /></div>
   {#if controller.showActions}<HitActions {controller} {group} {hit} {conv} {name} />{/if}
-</div>
+</div>{#if tags}<RestoreAction {group} onrestored={() => void controller.refreshExports()} />{/if}

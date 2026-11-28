@@ -13,6 +13,9 @@ MIN_WIDTH, MIN_HEIGHT = 1200, 500
 MAX_SIDE = 8192
 MAX_PIXELS = 16_000_000
 RATIO_MIN, RATIO_MAX = 1.5, 3.0
+SCREENSHOT_MIN_SIDE = 360
+SCREENSHOT_RATIO_MIN, SCREENSHOT_RATIO_MAX = 0.5, 3.2
+MAX_SCREENSHOTS = 4
 SUFFIXES = frozenset({".png", ".jpg", ".jpeg", ".webp"})
 MEDIA_TYPES = {"png": "image/png", "jpeg": "image/jpeg", "webp": "image/webp"}
 PREVIEW_PATH = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.\-]*(/[A-Za-z0-9_][A-Za-z0-9_.\-]*)*$")
@@ -81,6 +84,111 @@ def check_preview(raw: bytes) -> Tuple[str, int, int]:
     if not RATIO_MIN <= w / h <= RATIO_MAX:
         raise PreviewError(f"the preview is {w}x{h}; its width must be 1.5 to 3 times its height")
     return kind, w, h
+
+
+def check_screenshot(raw: bytes) -> Tuple[str, int, int]:
+    if not isinstance(raw, (bytes, bytearray)) or not raw:
+        raise PreviewError("the screenshot is empty")
+    if len(raw) > MAX_BYTES:
+        raise PreviewError("the screenshot is over 512 KiB")
+    if raw[:8] == b"\x89PNG\r\n\x1a\n":
+        kind, (w, h) = "png", _png(bytes(raw))
+    elif raw[:3] == b"\xff\xd8\xff":
+        kind, (w, h) = "jpeg", _jpeg(bytes(raw))
+    elif raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
+        kind, (w, h) = "webp", _webp(bytes(raw))
+    else:
+        raise PreviewError("the screenshot must be a png, jpeg or webp")
+    if min(w, h) < SCREENSHOT_MIN_SIDE or max(w, h) > MAX_SIDE or w * h > MAX_PIXELS:
+        raise PreviewError(f"the screenshot is {w}x{h}; smallest side must be at least {SCREENSHOT_MIN_SIDE}px")
+    if not SCREENSHOT_RATIO_MIN <= w / h <= SCREENSHOT_RATIO_MAX:
+        raise PreviewError(f"the screenshot is {w}x{h}; aspect ratio must be between {SCREENSHOT_RATIO_MIN} and {SCREENSHOT_RATIO_MAX}")
+    return kind, w, h
+
+
+def read_screenshot(code_root: Path, rel: object) -> Tuple[str, bytes]:
+    clean = check_preview_path(rel)
+    root = code_root.resolve()
+    cur = root
+    for part in clean.split("/"):
+        cur = cur / part
+        try:
+            st = os.lstat(cur)
+        except OSError as exc:
+            raise PreviewError("the screenshot file is missing") from exc
+        if stat.S_ISLNK(st.st_mode):
+            raise PreviewError("the screenshot must not cross a symlink")
+    if not stat.S_ISREG(st.st_mode):
+        raise PreviewError("the screenshot must be a regular file")
+    if st.st_size > MAX_BYTES:
+        raise PreviewError("the screenshot is over 512 KiB")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        fd = os.open(cur, flags)
+    except OSError as exc:
+        raise PreviewError("the screenshot could not be opened") from exc
+    try:
+        with os.fdopen(fd, "rb") as fh:
+            raw = fh.read(MAX_BYTES + 1)
+    except OSError as exc:
+        raise PreviewError("the screenshot could not be read") from exc
+    kind, _w, _h = check_screenshot(raw)
+    return kind, raw
+
+
+ICON_MAX_BYTES = 128 * 1024
+ICON_MIN_SIDE = 32
+ICON_MAX_SIDE = 512
+ICON_RATIO_MIN = 0.85
+ICON_RATIO_MAX = 1.18
+
+
+def check_icon(raw: bytes) -> Tuple[str, int, int]:
+    if not isinstance(raw, (bytes, bytearray)) or not raw:
+        raise PreviewError("the icon is empty")
+    if len(raw) > ICON_MAX_BYTES:
+        raise PreviewError("the icon is over 128 KiB")
+    if raw[:8] == b"\x89PNG\r\n\x1a\n":
+        kind, (w, h) = "png", _png(bytes(raw))
+    elif raw[:4] == b"RIFF" and raw[8:12] == b"WEBP":
+        kind, (w, h) = "webp", _webp(bytes(raw))
+    else:
+        raise PreviewError("the icon must be a png or webp")
+    if min(w, h) < ICON_MIN_SIDE or max(w, h) > ICON_MAX_SIDE:
+        raise PreviewError(f"the icon is {w}x{h}; sides must be between {ICON_MIN_SIDE}px and {ICON_MAX_SIDE}px")
+    if not ICON_RATIO_MIN <= w / h <= ICON_RATIO_MAX:
+        raise PreviewError(f"the icon is {w}x{h}; custom icons must be nearly square")
+    return kind, w, h
+
+
+def read_icon(code_root: Path, rel: object) -> Tuple[str, bytes]:
+    clean = check_preview_path(rel)
+    root = code_root.resolve()
+    cur = root
+    for part in clean.split("/"):
+        cur = cur / part
+        try:
+            st = os.lstat(cur)
+        except OSError as exc:
+            raise PreviewError("the icon file is missing") from exc
+        if stat.S_ISLNK(st.st_mode):
+            raise PreviewError("the icon must not cross a symlink")
+    if not stat.S_ISREG(st.st_mode):
+        raise PreviewError("the icon must be a regular file")
+    if st.st_size > ICON_MAX_BYTES:
+        raise PreviewError("the icon is over 128 KiB")
+    flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+    try:
+        fd = os.open(cur, flags)
+    except OSError as exc:
+        raise PreviewError("the icon could not be opened") from exc
+    try:
+        with os.fdopen(fd, "rb") as fh:
+            raw = fh.read(ICON_MAX_BYTES + 1)
+    except OSError as exc:
+        raise PreviewError("the icon could not be read") from exc
+    kind, _w, _h = check_icon(raw)
+    return kind, raw
 
 
 def check_preview_path(rel: object) -> str:

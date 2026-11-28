@@ -22,6 +22,7 @@ log = structlog.get_logger(__name__)
 TAIL_BYTES = 512 * 1024
 FILE_MAX = 64 * 1024
 CODEX_POSTURE = {"skip_all": "skip_all"}
+AGY_POSTURE = {"skip_all": "skip_all", "accept_edits": "accept-edits", "auto": "auto"}
 
 
 @dataclass
@@ -116,6 +117,9 @@ async def info_for_caller(sm: Any, caller_session: Optional[str]) -> Any:
 async def caller_launch_facts(app: Any, caller_session: Optional[str]) -> CallerFacts:
     from src.config import settings
     from src.core.account_switch import pane_account
+    from src.core.agy import accounts as agy_accounts
+    from src.core.agy.identity import info_is_agy
+    from src.core.agy.state import state_for_conversation
     from src.core.provider_ledger.login_command import PROFILE_ENV_VARS
     from src.core.session_token_usage.account_resolve import resolve_session_account
 
@@ -124,8 +128,24 @@ async def caller_launch_facts(app: Any, caller_session: Optional[str]) -> Caller
     if info is None:
         raise JobError("bad_request", "the calling session is not known, so its launch facts cannot be read", 422)
     family = info.agent_family or ""
+    if info_is_agy(info):
+        state = await asyncio.to_thread(state_for_conversation, Path(settings.get_state_dir()), getattr(info, "claude_session_uuid", None))
+        email = (state.get("email") if isinstance(state, dict) else None) or ""
+        ident = email.strip().lower() if isinstance(email, str) else ""
+        key: Optional[str] = None
+        if ident:
+            try:
+                cand = agy_accounts.account_id_for_email(ident)
+                if re.fullmatch(ACCOUNT_KEY_PATTERN, cand):
+                    key = cand
+            except agy_accounts.AgyAccountError:
+                key = None
+        state_model = (state.get("model") or {}).get("id") if isinstance(state, dict) and isinstance(state.get("model"), dict) else None
+        model = _clean_model(state_model) or _clean_model(info.running_model)
+        posture = (info.launched_with or {}).get("permissions")
+        return CallerFacts("agy", key, AGY_POSTURE.get(str(posture), "default"), model, None, ident)
     if family not in ("claude", "codex"):
-        raise JobError("bad_request", "an agent job needs a claude or codex session to copy", 422)
+        raise JobError("bad_request", "an agent job needs a claude, codex or agy session to copy", 422)
     profile_dir: Optional[str] = None
     if info.tmux_session:
         pane = await pane_account.read_pane_profile(sm.tmux_socket_name(), info.tmux_session, PROFILE_ENV_VARS[family])

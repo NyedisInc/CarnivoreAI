@@ -76,6 +76,10 @@ export function registerPluginDeclaration(row: DeclaredRow): void {
   PLUGIN_DECLARATIONS.set(row.id, declarationFromRow(row));
 }
 
+export function unregisterPluginDeclaration(key: string): boolean {
+  return PLUGIN_DECLARATIONS.delete(key);
+}
+
 export function pluginDeclarationFor(key: string): FitDeclaration | undefined {
   return PLUGIN_DECLARATIONS.get(key);
 }

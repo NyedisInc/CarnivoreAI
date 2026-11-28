@@ -37,7 +37,7 @@ class RestorePoints:
             if not points:
                 raise restore_points.NoRestorePoint(conversation_id)
             done = vault_points.restore_point(vault, conversation_id, points[0]["id"], {"claude": Path(corpus_root).parent, "claude/projects": Path(corpus_root)})
-        except (VaultUnavailable, ManifestError, restore.RestoreError, OSError) as exc:
+        except (VaultUnavailable, ManifestError, vault_points.OffloadedError, restore.RestoreError, OSError) as exc:
             raise restore_points.RestoreFailed(str(exc)) from exc
         logger.info("save_restore_newest", conversation_id=conversation_id, point_id=points[0]["id"])
         return done.transcript_path

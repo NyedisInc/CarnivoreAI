@@ -28,9 +28,9 @@ from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, owner_message, spawn, store, thread_port, watch
 from src.plugins.host import runtime
-from src.plugins.huddle import routes as huddle_routes
-from src.plugins.huddle.public import TaskManagerSwarmPort
-from tests.python.cplugs.owner import turn_on
+from src.plugins.taskmanager import routes as huddle_routes
+from src.plugins.taskmanager.public import TaskManagerSwarmPort
+from tests.python.cplugs.owner import include_task_manager_routes, turn_on
 
 CALLER = AgentCaller("ses_1", "cloude_a", "ses_1")
 FINAL = "**Done.** The models are swapped.\n\n- haiku for the scout\n- opus for review\n\n```\nswap ok\n```"
@@ -60,11 +60,11 @@ def world(tmp_path: Path, monkeypatch):
         assert store.cas_state(conn, loki["id"], loki["state"], "awake")
         loki = store.get_agent(conn, loki["id"])
     app = FastAPI()
-    app.include_router(huddle_routes.router, prefix="/api/v1")
+    include_task_manager_routes(app, huddle_routes.router)
     host = runtime.install(app, tmp_path)
     host.publish = lambda topic: None
     turn_on(host)
-    ctx = host.context("huddle")
+    ctx = host.context("taskmanager")
     port = TaskManagerSwarmPort(ctx)
     ctx.swarm.register_thread_port(port)
     app.dependency_overrides[require_auth] = lambda: {"sub": "test"}

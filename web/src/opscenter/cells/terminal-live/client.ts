@@ -80,15 +80,28 @@ export function startLiveTerminal(
   });
 
   let ended = false;
+  const hasHistoryGate = Boolean((globalThis as { TerminalHistoryGate?: { begin?: unknown } }).TerminalHistoryGate?.begin);
   const gate = acquireAttach();
-  const withHistory = gate.then(() => (ended ? session : withScrollback(session)));
+  const withHistory = hasHistoryGate
+    ? null
+    : gate.then(() => (ended ? session : withScrollback(session)));
   void (async () => {
     try {
-      await nextPaint();
+      await nextStaggeredInitFrame();
       if (ended) return;
       await client.init();
       if (ended) return;
-      const bound = await withHistory;
+      let bound: unknown;
+      if (hasHistoryGate) {
+        const pendingB64 = gate.then(async () => {
+          if (ended) return null;
+          const full = (await withScrollback(session)) as { initial_scrollback_b64?: string | null } | null;
+          return full?.initial_scrollback_b64 ?? null;
+        });
+        bound = { ...(session as Record<string, unknown>), initial_scrollback_pending: pendingB64 };
+      } else {
+        bound = await withHistory;
+      }
       if (ended) return;
       await client.reconnectToExistingSession(bound);
       if (ended) return;
@@ -123,6 +136,33 @@ export function nextPaint(): Promise<void> {
     };
     setTimeout(run, PAINT_WAIT_MS);
     if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => setTimeout(run, 0));
+  });
+}
+
+const MAX_INITS_PER_FRAME = 4;
+const initQueue: (() => void)[] = [];
+let initPumpScheduled = false;
+
+function pumpInitQueue(): void {
+  initPumpScheduled = false;
+  let budget = MAX_INITS_PER_FRAME;
+  while (budget > 0 && initQueue.length > 0) {
+    budget -= 1;
+    initQueue.shift()?.();
+  }
+  if (initQueue.length > 0) {
+    initPumpScheduled = true;
+    void nextPaint().then(pumpInitQueue);
+  }
+}
+
+function nextStaggeredInitFrame(): Promise<void> {
+  return new Promise<void>((resolve) => {
+    initQueue.push(resolve);
+    if (!initPumpScheduled) {
+      initPumpScheduled = true;
+      void nextPaint().then(pumpInitQueue);
+    }
   });
 }
 

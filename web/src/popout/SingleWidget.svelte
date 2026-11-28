@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, untrack } from 'svelte';
   import { entryFor } from '../opscenter/cells/registry';
-  import { META } from '../opscenter/engine/meta';
+  import { META, metaFor } from '../opscenter/engine/meta';
   import type { CellId } from '../opscenter/engine/types';
   import { manifestById } from '../opscenter/widgets/core-manifests';
   import { sessionScopeFor } from '../opscenter/widgets/session-scope';
@@ -11,7 +11,7 @@
   import { HOST_LOOKS } from '../lib/zone-shell/host-looks';
   import type { TabRef } from '../lib/zone-shell/zone-types';
   import PluginTab from './PluginTab.svelte';
-  import { widgetPath, type PopoutPlacement } from './popout';
+  import { parseWidgetTarget, widgetPath, type PopoutPlacement } from './popout';
   import { resolvePlacement } from '../opscenter/widgets/placement-resolve';
   import { auth, initAuth, sessions, startEvents } from '../opscenter/api';
   import { watchViewport } from '../opscenter/engine/viewport.svelte';
@@ -23,21 +23,39 @@
   import type { FrameHeader } from '../opscenter/shell/frame-header.svelte';
   import { followEnablement } from '../plugins/host/enablement.svelte';
   import { enablementKnown, popoutWidgetFor } from '../plugins/host/popout-widgets';
+  import { panelOf, panels } from '../lib/cplug-ui/panel-views.svelte';
+  import { pluginsStore } from '../lib/plugins/store.svelte';
 
   let { widget, placement = {} }: { widget: string; placement?: PopoutPlacement } = $props();
 
-  const plugin = $derived(widget.startsWith('core.') ? null : popoutWidgetFor(widget));
-  const manifest = $derived(manifestById(widget));
+  const CORE_WIDGET_PREFIX = 'core.';
+  function isCoreWidgetId(id: string): boolean {
+    return id.startsWith(CORE_WIDGET_PREFIX);
+  }
+
+  const isCore = $derived(isCoreWidgetId(widget));
+  const parsed = $derived(parseWidgetTarget(widget));
+  const plugin = $derived(isCore ? null : popoutWidgetFor(widget));
+  const panelEntry = $derived(!isCore && !plugin ? panelOf(parsed.kind) : undefined);
+  const manifest = $derived(
+    isCore
+      ? manifestById(widget)
+      : panelEntry?.popout === true
+        ? manifestById(parsed.kind)
+        : undefined
+  );
   let view = $state<string | null>(untrack(() => placement.view ?? null));
-  const cell = $derived((resolvePlacement({ widget, view })?.slot ?? widget.slice('core.'.length)) as CellId);
-  const Cell = $derived(plugin ? (plugin.enabled ? plugin.widget.component : undefined) : entryFor(cell)?.component);
-  const meta = $derived(plugin ? plugin.widget.meta : META[cell]);
+  const resolvedTarget = $derived(parsed.target ?? panelEntry?.tail ?? null);
+  const resolvedPlacement = $derived(manifest ? resolvePlacement({ widget: parsed.kind, view, target: resolvedTarget }) : null);
+  const cell = $derived((resolvedPlacement?.slot ?? (isCore ? widget.slice(CORE_WIDGET_PREFIX.length) : widget)) as CellId);
+  const Cell = $derived(plugin ? (plugin.enabled ? plugin.widget.component : undefined) : (manifest ? entryFor(cell)?.component : undefined));
+  const meta = $derived(plugin ? plugin.widget.meta : (resolvedPlacement?.family ? metaFor(cell, META) : META[cell as keyof typeof META]));
   const titleKey = $derived(plugin ? plugin.widget.meta.titleKey : manifest?.titleKey);
-  const waiting = $derived(!!plugin && !enablementKnown());
+  const waiting = $derived(!isCore && (plugin ? !enablementKnown() : !panels.loaded && (!enablementKnown() || pluginsStore.loading)));
   const key = $derived(`popout-widget:${widget}`);
   const scope = $derived(placement.sessionId ? sessionScopeFor(sessions.data, placement.sessionId) : undefined);
 
-  const locked = $derived(!!placement.pinned && resolvePlacement({ widget, view })?.cell.scope === 'session');
+  const locked = $derived(!!placement.pinned && resolvedPlacement?.cell.scope === 'session');
 
   function pickView(next: string): void {
     view = next;
@@ -53,14 +71,17 @@
     strip: 'none',
     toolbar: 'header',
     menuHost: 'popout',
-    headerId: () => HOST_LOOKS.popout.keyFor({ id: !plugin && manifest ? (resolvePlacement({ widget, view })?.cell.id ?? widget) : widget }, null, null),
+    headerId: () => HOST_LOOKS.popout.keyFor({ id: !plugin && manifest ? (resolvedPlacement?.cell.id ?? parsed.kind) : widget }, resolvedTarget, null),
   });
 
   $effect(() => watchViewport());
+  $effect(() => {
+    if (titleKey) document.title = t(titleKey);
+  });
   onMount(() => {
     initAuth();
     startEvents();
-    if (!widget.startsWith('core.')) followEnablement();
+    if (!isCoreWidgetId(widget)) followEnablement();
   });
 </script>
 
@@ -79,7 +100,7 @@
   {#if plugin}
     <PluginTab {widget} {key} Cell={Cell!} meta={meta!} label={t(titleKey!)} head={popHead} />
   {:else if manifest}
-    <PlacementBody host="popout" {manifest} {view} options={placement.options} {scope} head={popHead} />
+    <PlacementBody host="popout" {manifest} target={resolvedTarget} {view} options={placement.options} {scope} head={popHead} />
   {/if}
 {/snippet}
 

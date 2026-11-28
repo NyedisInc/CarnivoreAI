@@ -12,7 +12,7 @@ CLIENT = Path(__file__).resolve().parents[3] / "client"
 
 
 PAGE = """<!DOCTYPE html><html><head>
-<link rel="stylesheet" href="/css/layers.css"><link rel="stylesheet" href="/css/modal-glow.css">
+<link rel="stylesheet" href="/css/layers.css"><link rel="stylesheet" href="/css/animation-pause.css"><link rel="stylesheet" href="/css/modal-glow.css">
 </head><body><script src="/js/modal-ring.js"></script></body></html>"""
 
 BUILD = """() => {
@@ -35,7 +35,8 @@ PROBE = """() => {
       count: sheens.length,
       hidden: span && span.getAttribute('aria-hidden'),
       animations: span ? span.getAnimations({ subtree: true }).map((a) => a.animationName) : [],
-      name: span ? getComputedStyle(span, '::before').animationName : null,
+      hostName: span ? getComputedStyle(span).animationName : null,
+      beforeName: span ? getComputedStyle(span, '::before').animationName : null,
       after: getComputedStyle(card, '::after').content,
     };
   }
@@ -90,8 +91,8 @@ def test_every_card_gets_one_span_that_turns_on_transform(browser_page):
     for card in ("a", "b"):
         assert got[card]["count"] == 1, f"card {card} has {got[card]['count']} .mg-sheen children"
         assert got[card]["hidden"] == "true"
-        assert got[card]["name"] == "modal-glow-turn"
-        assert "modal-glow-turn" in got[card]["animations"]
+        assert got[card]["hostName"] == "amb-join-dialog-glow"
+        assert got[card]["beforeName"] == "none"
         assert got[card]["after"] in ("none", "normal"), "the old ::after ring is still drawn"
 
 
@@ -99,5 +100,6 @@ def test_reduced_motion_stops_the_turn(browser_page):
     got = _measure(browser_page, "reduce")
     for card in ("a", "b"):
         assert got[card]["count"] == 1
-        assert got[card]["name"] == "none"
+        assert got[card]["hostName"] == "none"
+        assert got[card]["beforeName"] == "none"
         assert got[card]["animations"] == []

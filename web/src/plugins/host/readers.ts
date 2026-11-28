@@ -10,7 +10,7 @@ import { thirdPartyBarIndicators } from '../../lib/cplug-ui/bar-indicators.svelt
 
 function gateTab(manifest: CplugManifest, def: DynamicTabDef): DynamicTabDef {
   const present = def.present;
-  return { ...def, nameKey: def.nameKey ?? manifest.name_key, present: () => cplugEnabled(manifest) && (present ? present() : true) };
+  return { ...def, nameKey: def.nameKey ?? manifest.name_key ?? `cplug.${manifest.id}.name`, present: () => cplugEnabled(manifest) && (present ? present() : true) };
 }
 
 export function cplugTabs(cplugs: readonly CplugWeb[] = BUILTIN_CPLUGS): DynamicTabDef[] {
@@ -92,6 +92,6 @@ export function startCplugs(): void {
 }
 
 registerPageSections(BUILTIN_CPLUGS.flatMap((a) => {
-  const s = a.manifest.surfaces;
-  return s.page_section && s.page_section_label_key ? [{ id: s.page_section, labelKey: s.page_section_label_key, icon: s.page_section_icon ?? '' }] : [];
+  const s = a.manifest.surfaces ?? a.manifest.ui;
+  return s?.page_section && s?.page_section_label_key ? [{ id: s.page_section, labelKey: s.page_section_label_key, icon: s.page_section_icon ?? '' }] : [];
 }));

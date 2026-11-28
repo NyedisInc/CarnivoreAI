@@ -10,6 +10,10 @@ import { blobForSend, dashBusy, loadDashGrid, onGridChange, SETTLE_MS } from '..
 import { STORAGE_KEYS } from './persist';
 import { cacheSeedLevel, homeSeedLevel, seedControl } from './home-seed';
 import { preferencesApi, type PreferencesApi } from './arrangement-sync.svelte';
+import { retireBoards } from './retired-stores';
+import { startAnalyticsPrefsSync } from '../cells/analytics/state.svelte';
+import { startTimelineFiltersSync } from '../cells/timeline/filters.svelte';
+import { startWidgetStateSync } from '../widgets/shell/widget-state.svelte';
 import {
   HOME_BOARD_ID,
   mergeBoards,
@@ -122,6 +126,13 @@ function referencedAnalytics(): Set<string> {
   return ids;
 }
 
+function hasSyncedBoards(): boolean {
+  if (!synced) return false;
+  if (synced.analytics_seed >= 2) return true;
+  if (synced.boards.length > 1) return true;
+  return synced.analytics_seed === 0 && referencedAnalytics().size > 0;
+}
+
 function remember(value: HomeValue): void {
   synced = value;
   seedControl.setServer(value.analytics_seed);
@@ -166,12 +177,19 @@ export function applyHome(next: HomeValue): void {
   remember(next);
   known = true;
   cacheSeedLevel(next.analytics_seed);
-  boards = next.boards;
+  boards = retireBoards(next.boards);
+  const boardsMigrated = boards !== next.boards;
   const wanted = popoutMode
     ? (wallboardId ?? next.active ?? readActiveBoard())
     : (next.active ?? (activeChosen ? activeId : readActiveBoard()));
+  const prevActive = activeId;
   const picked = pickActiveBoard(boards, wanted);
-  if (viewingId && (!boards.some((board) => board.id === viewingId) || viewingId === picked)) {
+  if (
+    viewingId
+    && (!boards.some((board) => board.id === viewingId)
+      || viewingId === picked
+      || (picked !== prevActive && viewingId === prevActive))
+  ) {
     const carried = viewDirty && viewingId === picked;
     viewingId = null;
     viewDirty = false;
@@ -193,7 +211,10 @@ export function applyHome(next: HomeValue): void {
     viewDirty = false;
   }
   const layout = boards.find((board) => board.id === shownId)!.layout;
-  if (JSON.stringify(liveLayout()) === JSON.stringify(layout)) return;
+  if (!moved && JSON.stringify(liveLayout()) === JSON.stringify(layout)) {
+    if (boardsMigrated) noteMigrated();
+    return;
+  }
   let migrated = false;
   applying = true;
   try {
@@ -203,6 +224,14 @@ export function applyHome(next: HomeValue): void {
     applying = false;
   }
   if (migrated && !popoutMode) noteLocal();
+  if (boardsMigrated) noteMigrated();
+}
+
+/* nobody is looking at */
+function noteMigrated(): void {
+  if (popoutMode || applying) return;
+  dirty = true;
+  scheduleWrite();
 }
 
 async function flush(): Promise<void> {
@@ -409,9 +438,12 @@ export function startHomeSync(options: { popout?: boolean; board?: string | null
     stops.push(() => target?.document?.removeEventListener('visibilitychange', onVisible));
     return;
   }
-  seedControl.attach(() => scheduleWrite(), referencedAnalytics);
+  seedControl.attach(() => scheduleWrite(), referencedAnalytics, hasSyncedBoards);
   stops.push(onHomeChange(noteLocal));
   stops.push(onGridChange(() => noteLocal(SETTLE_MS)));
+  stops.push(startAnalyticsPrefsSync(target));
+  stops.push(startTimelineFiltersSync(target));
+  stops.push(startWidgetStateSync(target));
   const api = preferencesApi();
   if (api) {
     stops.push(

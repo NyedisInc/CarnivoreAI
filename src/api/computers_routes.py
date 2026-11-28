@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.auth import require_auth
-from src.core.computers import add_over_ssh, add_preview, join_job, membership, runtime, store, terminal_helper, view
+from src.core.computers import add_over_ssh, add_preview, commit, join_job, membership, runtime, store, terminal_helper, view
 from src.core.computers.invites import Invite, MemberRefused, TooManyInvites
 from src.core.computers.join_link import build_link
 from src.core.federation import grants, peer_hosts, peer_links, peer_sockets
@@ -104,16 +104,28 @@ async def get_computers(request: Request) -> Dict[str, Any]:
         raise _error(503, "computers_unavailable", "the datastore could not answer") from None
 
 
+def _check_room(rt: Any) -> None:
+    with closing(rt.open_db()) as conn:
+        commit.check_room(conn, "")
+
+
 @router.post("/invites", status_code=201)
 async def post_invite(request: Request) -> Dict[str, Any]:
     """Mint an invite and open the join port. Output: ``{id, code|null, link, expires_at, addresses, fid_short}``.
 
-    409 ``joined_computer`` on a member, 409 ``setup_incomplete``, 409 ``too_many_invites`` (four live), 429 ``invite_rate``.
+    409 ``joined_computer`` on a member, 409 ``pack_full``, 409 ``setup_incomplete``, 409 ``too_many_invites`` (four live), 429 ``invite_rate``.
     ``code`` is null while code mode is paused (the link still works). Example: ``(await post_invite(request))["code"]`` -> "042917".
     """
     rt = await _inviter()
     if not _INVITE_WINDOW.hit("invites", time.monotonic()):
         raise _error(429, "invite_rate", "too many invites, wait a minute")
+    try:
+        await asyncio.to_thread(_check_room, rt)
+    except commit.JoinRefused as exc:
+        raise _error(409, exc.code, str(exc)) from None
+    except sqlite3.Error as exc:
+        logger.warning("computers_room_unreadable", error_type=type(exc).__name__)
+        raise _error(503, "computers_unavailable", "the datastore could not answer") from None
     try:
         inv = rt.invites.mint("code")
     except MemberRefused:

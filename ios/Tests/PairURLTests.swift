@@ -35,7 +35,9 @@ final class PairURLTests: XCTestCase {
         XCTAssertEqual(target.kind, .https)
         XCTAssertEqual(target.url.absoluteString, text)
         XCTAssertFalse(try parse(text, known: [target.origin]).get().needsConfirm)
-        XCTAssertFalse(try parse("https://\(host)/pair#\(secret)").get().needsConfirm)
+        let relayTarget = try parse("https://\(host)/pair#\(secret)").get()
+        XCTAssertTrue(relayTarget.needsConfirm)
+        XCTAssertFalse(try parse("https://\(host)/pair#\(secret)", known: [relayTarget.origin]).get().needsConfirm)
     }
 
     func testPunycodeHostShownAsPunycode() throws {
@@ -57,7 +59,8 @@ final class PairURLTests: XCTestCase {
         let link = Origin(url: URL(string: "https://\(host)")!)!
         let custom = Origin(url: URL(string: "https://agents.harbor.nyc")!)!
         let lan = Origin(url: URL(string: "http://192.168.1.10:8000")!)!
-        XCTAssertFalse(try PairURL.manual(link, known: []).get().needsConfirm)
+        XCTAssertTrue(try PairURL.manual(link, known: []).get().needsConfirm)
+        XCTAssertFalse(try PairURL.manual(link, known: [link]).get().needsConfirm)
         let t = try PairURL.manual(custom, known: []).get()
         XCTAssertTrue(t.needsConfirm)
         XCTAssertEqual(t.url.absoluteString, "https://agents.harbor.nyc/pair")
@@ -94,9 +97,10 @@ final class PairURLTests: XCTestCase {
         XCTAssertEqual(t.url.absoluteString, "https://\(host)/pair#\(secret)")
         XCTAssertEqual(t.origin.host, host)
         XCTAssertEqual(t.kind, .relay)
-        XCTAssertFalse(t.needsConfirm)
+        XCTAssertTrue(t.needsConfirm)
         let saved = try parse("\(custom)?link=\(linkId)#\(secret)", known: [t.origin]).get()
         XCTAssertTrue(saved.isKnown)
+        XCTAssertFalse(saved.needsConfirm)
     }
 
     func testInvalidLinkParameterFallsBackToConfirm() throws {

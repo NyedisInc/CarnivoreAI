@@ -64,13 +64,13 @@ def test_a_live_pane_is_never_read(tmp_path) -> None:
         subprocess.run(["tmux", "-L", socket, "kill-session", "-t", f"={name}"], capture_output=True)
 
 
-async def test_the_died_event_waits_for_one_capture_and_carries_it_and_details_off_drops_the_tail(dead_pane) -> None:
+async def test_the_died_event_waits_for_one_capture_and_carries_it_and_details_off_drops_the_tail(dead_pane, monkeypatch) -> None:
     socket, name = dead_pane
     registry = SimpleNamespace(sessions={"ses_1": SimpleNamespace(tmux_session=name)}, backends={"ses_1": SimpleNamespace()})
     manager = SimpleNamespace(_registry=registry, _identity_for_live_name=lambda n: {"project_name": "api"},
                               _label_for_tmux_name=lambda n: "API", tmux_socket_name=lambda: socket)
     events: list = []
-    died.session_change_notice.publish = lambda state, frame: None
+    monkeypatch.setattr(died.session_change_notice, "publish", lambda state, frame: None)
     tracker = died.DiedTracker(manager, object(), emit=events.append)
     target = SimpleNamespace(session_id="ses_1", key=f"{name}@7", generation=(1, 0))
     obs = SimpleNamespace(verdict=SimpleNamespace(reason=REASON_PANE_DEAD))

@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -21,9 +22,35 @@ class SleepHoldInfo(BaseModel):
     text: str = Field("", description="one plain sentence, e.g. 'kept awake: 2 live timers, next 18:52'")
 
 
+VERDICT_CODES = (
+    "not_agent", "status_unmeasured", "not_idle", "shell_running", "unread", "idle_waiting", "open_in_window",
+    "layout_open", "keep_awake_list", "no_conversation", "cannot_sleep", "swarm_pending", "work_running",
+    "work_unmeasured", "listening", "ports_unmeasured", "no_record", "due",
+)
+
+
+class SleepVerdict(BaseModel):
+    """What the last auto-sleep pass decided for one live session, as a stable code plus the facts to say it in words.
+
+    NOTHING IN IT TICKS: ``idle_since`` and ``threshold_minutes`` are sent and the client counts the minutes, so a pushed
+    listing delta only changes when the verdict itself does.
+    """
+
+    code: str = Field(..., description="one of VERDICT_CODES")
+    idle_since: Optional[datetime] = Field(None, description="when the idle clock started (idle_waiting, due)")
+    threshold_minutes: Optional[int] = Field(None, description="idle minutes needed (idle_waiting, due)")
+    reasons: List[str] = Field(default_factory=list, description="work_running: timers | subagents | background | parked")
+    detail: Optional[str] = Field(None, description="a plain fact behind the code, e.g. why ports could not be checked")
+
+
 class SleepHoldEntry(SleepHoldInfo):
 
     session: str = Field(..., description="tmux name of the session kept awake")
+
+
+class SleepVerdictEntry(SleepVerdict):
+
+    session: str = Field(..., description="tmux name of the session")
 
 
 class AutoSleepState(BaseModel):
@@ -63,6 +90,10 @@ class AutoSleepState(BaseModel):
             "subagent or background shell is live (or could not be measured), "
             "each with the reason; only sessions idle long enough to be slept appear"
         ),
+    )
+    verdicts: List[SleepVerdictEntry] = Field(
+        default_factory=list,
+        description="why each live agent session is still awake, from the last pass (code plus facts, nothing that ticks)",
     )
     mac_awake: bool = Field(
         ...,

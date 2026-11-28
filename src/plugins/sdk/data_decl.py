@@ -64,7 +64,10 @@ class DataDecl:
 
 
 def problems_in(raw: Any, settings_fields: Mapping[str, Any]) -> List[str]:
-    from src.plugins.sdk.sidecar import schemas  # noqa: PLC0415
+    if __package__:
+        from .schema_check import schemas  # noqa: PLC0415
+    else:
+        from schema_check import schemas  # type: ignore[no-redef]
 
     if not isinstance(raw, list):
         return ["$.data: must be array"]

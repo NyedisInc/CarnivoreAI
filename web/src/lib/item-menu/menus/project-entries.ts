@@ -1,7 +1,7 @@
 import type { Company } from '../../companies';
 import { t } from '../../i18n/index.svelte';
 import { SET_COMPANY } from '../../projects-shared/ledger-model';
-import { PROJECT_PANEL, PROJECT_SETTINGS } from '../../sessions-page/project-tools';
+import { PROJECT_PANEL, PROJECT_SETTINGS, slotPanelMenuId } from '../../sessions-page/project-tools';
 import { entryNodes, spaced, type ItemMenuEntry } from '../entries';
 import type { MenuNode } from '../../drawer-tabs/add-component-menu';
 
@@ -21,10 +21,12 @@ export interface ProjectMenuInput {
     companies: readonly Company[];
     agentOffered: boolean;
     panels: readonly { readonly id: string; readonly labelKey: string }[];
+    slotPanels?: readonly { readonly pluginId: string; readonly entryId: string; readonly label: string }[];
     color: { value: string; onPick: (key: string) => void; onPreview?: (hex: string | null) => void } | null;
     close: () => void;
     glyph: (icon: string | undefined) => string;
     run: (id: string) => void;
+    allowNewGroup?: boolean;
 }
 
 export function projectMenuEntries(input: ProjectMenuInput): ItemMenuEntry[] {
@@ -36,6 +38,7 @@ export function projectMenuEntries(input: ProjectMenuInput): ItemMenuEntry[] {
     const open: ItemMenuEntry[] = hidden ? [] : [
         leaf(t('opscenter.tabs.new_agent'), 'agent', 'new-agent', { onPick: go('new-session') }),
         leaf(t('layout.row.load_blueprint'), 'load-blueprint', 'load-blueprint'),
+        ...(input.allowNewGroup ? [leaf(t('sidebar.group.menu.new'), 'add', 'group')] : []),
     ];
 
     const identity: ItemMenuEntry[] = [leaf(t('sidebar.heading.rename'), 'rename', 'rename-project')];
@@ -60,6 +63,9 @@ export function projectMenuEntries(input: ProjectMenuInput): ItemMenuEntry[] {
     const tools: ItemMenuEntry[] = typeof project.id === 'number' ? [
         leaf(t('sessions.page.action.project_settings'), 'project-settings', PROJECT_SETTINGS),
         ...input.panels.map((panel) => leaf(t(panel.labelKey), 'project-settings', `${PROJECT_PANEL}${panel.id}`, { keyless: true })),
+        ...(input.slotPanels ?? []).map((panel) =>
+            leaf(panel.label, 'project-settings', slotPanelMenuId(panel.pluginId, panel.entryId), { keyless: true }),
+        ),
     ] : [];
 
     const state = project.storage?.state ?? 'unpacked';

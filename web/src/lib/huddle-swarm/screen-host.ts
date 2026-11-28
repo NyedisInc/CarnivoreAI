@@ -1,12 +1,12 @@
+/* the Task Manager */
 import { createOverlayHost } from '../manager-frame/overlay-host';
 import { closeMenuPagesExcept } from '../menu-page/menu-page-shell.svelte';
 import { registerCplugPage } from '../../plugins/sdk/pages';
-import { SWARM_HASH, SWARM_PAGE } from '../../plugins/huddle/swarm/swarm-page';
-import SwarmScreen from './SwarmScreen.svelte';
+import { SWARM_HASH, SWARM_PAGE } from '../../plugins/taskmanager/swarm/swarm-page';
 
 export const HUDDLE_SWARM_CONTAINER = 'huddle-swarm-screen';
 
-const host = createOverlayHost(HUDDLE_SWARM_CONTAINER, SwarmScreen, SWARM_HASH);
+const host = createOverlayHost(HUDDLE_SWARM_CONTAINER, { load: () => import('./SwarmScreen.svelte') }, SWARM_HASH);
 
 export function openHuddleSwarmScreen(): boolean {
   closeMenuPagesExcept(null);

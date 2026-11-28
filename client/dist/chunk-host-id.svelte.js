@@ -1,0 +1,1 @@
+import{vt as e}from"./chunk-index-client.js";var t=e({selfId:null});function n(e){let n=typeof e==`string`&&e.trim().length>0?e.trim():null;t.selfId!==n&&(t.selfId=n)}function r(){return t.selfId}export{n,r as t};

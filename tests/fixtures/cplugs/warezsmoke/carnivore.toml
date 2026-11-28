@@ -1,0 +1,27 @@
+schema = 2
+id = "warezsmoke"
+name = "Warez Smoke"
+version = "1.0.0"
+kind = "plugin"
+description = "A minimal plugin with one read tool, used to prove the store path end to end."
+author = "harbor"
+license = "MIT"
+min_app_version = "1.16.0"
+api_version = 1
+default_enabled = false
+
+[run]
+cmd = ["python3", "warezsmoke_main.py"]
+mode = "rpc"
+
+[permissions]
+write = ["notify"]
+
+[permissions.reasons]
+notify = "would tell you once if the smoke test needed your attention"
+
+[[mcp.tools]]
+name = "warezsmoke_ping"
+description = "Answers pong. Reads nothing and changes nothing."
+gate = "read"
+inputSchema = { type = "object", properties = {}, additionalProperties = false }

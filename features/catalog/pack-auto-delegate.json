@@ -37,7 +37,8 @@
     "Pick auto for a project that needs xcode: the session starts on the computer that has it, or the picker says why nobody can.",
     "Send a render to a Windows computer with a big graphics card that runs no carnivore, reached over ssh on port 2222: the card says it runs there over ssh, and the result files come back here.",
     "See that a computer over ssh did not answer, with its last figures shown by age, before an agent sends it a job.",
-    "See in the heavy work block that most of this week's test runs ran on the studio computer, and how many hours stayed here while this computer was busy."
+    "See in the heavy work block that most of this week's test runs ran on the studio computer, and how many hours stayed here while this computer was busy.",
+    "Place a job from one member to another with the alpha stopped."
   ],
   "how_to": [
     "Right click the project's heading, pick project settings, untick any computer that must never get a copy, then turn on auto-delegate; it copies the project at once.",
@@ -61,7 +62,8 @@
     "Add the computer in the hosts list, then turn takes-work on for it with its fingerprint: the first try shows the host key to compare, the second (with that fingerprint) pins it. A computer over ssh runs command jobs only, never an agent task, and nothing is installed on it.",
     "Open a project's settings, find what its jobs need under the auto-delegate switch, and type the words a kind of job must have or should prefer; save sends only the kinds you changed, and back to default restores the built-in words.",
     "Open a computer in the Pack page, then its allow lists: pick every project, or only the projects and companies you tick, so a computer never takes work from a project you did not allow.",
-    "Remove the copies an ssh computer holds from its block in the computers tab (it asks once)."
+    "Remove the copies an ssh computer holds from its block in the computers tab (it asks once).",
+    "Jobs go straight from the computer that places them to the member that runs them, over their direct link, and a computer with may host agents off is not offered jobs."
   ],
   "id": "pack-auto-delegate",
   "issues": [
@@ -70,7 +72,9 @@
     2990,
     2993,
     2992,
-    2991
+    2991,
+    3125,
+    3307
   ],
   "keywords": [
     "pack",
@@ -87,7 +91,7 @@
     "keep in sync",
     "delegate_stats"
   ],
-  "media_exempt": "captured at the next version bump",
+  "media_exempt": "captured at the next version bump; recaptured after the next version bump",
   "name": "Auto-delegate",
   "since": "2026-11-16",
   "status": "beta",
@@ -102,7 +106,7 @@
     "src/core/pack/jobs/ssh/",
     "src/core/mcp/ssh_targets_tools.py"
   ],
-  "updated": "2026-11-19",
+  "updated": "2026-11-23",
   "where": [
     "a project heading's menu (drawer or sessions page) > project settings > sharing this project between computers",
     "Agent tools delegate, job_reply, job_wait and job_stop, and the owner routes under /pack/jobs and /projects/{name}/auto-delegate. The approval card appears in the approvals inbox. The delegated usage shows in the terminal foot bar. The jobs have a screen: Pack page > jobs.",

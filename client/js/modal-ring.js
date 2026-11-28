@@ -27,12 +27,13 @@
 
     function start() {
         sweep(document.body);
-        new MutationObserver(function (records) {
+        var observer = new MutationObserver(function (records) {
             for (var i = 0; i < records.length; i++) {
                 var added = records[i].addedNodes;
                 for (var j = 0; j < added.length; j++) sweep(added[j]);
             }
-        }).observe(document.body, { childList: true, subtree: true });
+        });
+        observer.observe(document.body, { childList: true });
     }
 
     window.ModalRing = { attach: attach, CARD_SELECTOR: CARD_SELECTOR };

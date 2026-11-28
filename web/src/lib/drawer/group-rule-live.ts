@@ -1,3 +1,4 @@
+/* the Task Manager */
 import { isKeptAwake } from '../auto-sleep/auto-sleep-store.svelte';
 import { swarmRosterAgents } from '../../plugins/sdk/swarm-roster.svelte';
 import { memberOf } from '../swarm-membership/member-face';

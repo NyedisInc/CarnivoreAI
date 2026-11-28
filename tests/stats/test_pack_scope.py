@@ -292,3 +292,25 @@ def test_a_project_group_change_redoes_the_ownership_while_homes_exist(world, mo
                         lambda _store, **_kw: SimpleNamespace(group={**groups.group, "folder-new": "g-new"},
                                                               group_of=groups.group_of))
     assert look() != first and len(runs) == 2
+
+
+def _points(store, metric: str, resolution: str, to: int = RANGE["to"], **kwargs) -> Dict[str, Optional[float]]:
+    request = _query(metric, operation="timeline", resolution=resolution, filters={"host": STUDIO}, **kwargs)
+    request = request.model_copy(update={"to": request.to.__class__.fromtimestamp(to, request.to.tzinfo)})
+    series = queries.execute(store, request)["series"][0]["points"]
+    return {p["time"]: p["value"] for p in series if p["value"] is not None}
+
+
+def test_a_peer_hour_is_spread_over_its_buckets_and_never_into_the_future(world):
+    state, store, tmp = world
+    studio = Peer(tmp, STUDIO, state)
+    studio.conversation("conv-studio", project_key("/work/studio"), [3], tokens=25, cost=1000)
+    studio.send()
+    for metric, value in (("total_tokens", 25), ("estimated_cost_nano_usd", 1000)):
+        spread = _points(store, metric, "5minute")
+        assert len(spread) == 12 and sum(spread.values()) == value
+        assert max(spread.values()) - min(spread.values()) <= 1
+        assert list(_points(store, metric, "hour").values()) == [value]
+        assert sum(_points(store, metric, "5minute", to=BASE + 3 * HOUR + 600).values()) == value
+        assert len(_points(store, metric, "5minute", to=BASE + 3 * HOUR + 600)) == 2
+    assert _total(store, filters={"host": STUDIO}) == 25

@@ -91,7 +91,7 @@ def configured_account_dirs(config_path: Path) -> Tuple[List[Tuple[str, str]], L
         logger.warning("skills_inventory_accounts_unreadable", path=str(config_path), error=type(exc).__name__)
         return [], []
     claude = [(a.id, profile_dir_for(a)) for a in accounts if a.provider == "claude"]
-    other = [profile_dir_for(a) for a in accounts if a.provider != "claude"]
+    other = [profile_dir_for(a) for a in accounts if a.provider == "codex"]
     return claude, other
 
 

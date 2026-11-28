@@ -24,6 +24,7 @@ export function staleChartIds(charts: readonly ChartConfig[], referenced: Readon
 
 export const PRUNE_DONE_KEY = 'cloudecode.opscenter.charts-pruned.v1';
 
+/* cannot be read */
 export function pruneAlreadyDone(): boolean {
   try {
     return localStorage.getItem(PRUNE_DONE_KEY) === 'done';

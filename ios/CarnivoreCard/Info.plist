@@ -20,6 +20,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CarnivoreMacKeychainGroup</key>
+	<string>$(AppIdentifierPrefix)ai.carnivore.notify-mac</string>
 	<key>NSExtension</key>
 	<dict>
 		<key>NSExtensionAttributes</key>

@@ -12,10 +12,11 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api import projects_service
+from src.api.federation_pack_transport_routes import is_member
 from src.api.peer_auth import Principal, require_peer
 from src.config import settings
 from src.core.pack.identity import home, replicas
-from src.core.pack.jobs import copies
+from src.core.pack.jobs import copies, host_admit
 from src.core.pack.jobs.store import JobStore
 from src.core.pack.machines import capabilities as pack_capabilities
 from src.core.pack.trust_carry import wire as trust_wire
@@ -58,13 +59,16 @@ async def register_replica(body: ReplicaBody, principal: Principal = Depends(_re
     Raises: HTTPException 403 not a peer, 409 ``project_uid_is_home`` or ``project_name_taken``.
     """
     home_install_id = _peer_only(principal)
+    member = is_member(principal)
+    if member:
+        await run_in_threadpool(host_admit.enforce_member_hosting, body.project_uid, body.company_uid)
 
     def write() -> Dict[str, Any]:
         with closing(projects_service.open_db_or_503(settings)) as conn:
             try:
                 answer = replicas.accept_replica(conn, home_install_id=home_install_id, project_uid=body.project_uid,
                                                  name=body.name, root=body.root, company_uid=body.company_uid,
-                                                 company_name=body.company_name, source_trusted=body.source_trusted, source_imports_ok=body.source_imports_ok)
+                                                 company_name=body.company_name, source_trusted=body.source_trusted, source_imports_ok=body.source_imports_ok, member_caller=member)
             except replicas.ReplicaRefused as exc:
                 raise HTTPException(exc.status, {"code": exc.code, "detail": str(exc)}) from exc
             home.notify_changed()

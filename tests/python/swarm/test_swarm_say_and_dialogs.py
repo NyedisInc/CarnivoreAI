@@ -28,9 +28,9 @@ from src.core.mcp.caller import AgentCaller
 from src.core.swarm import body, body_create, definition, delivery, owner_message, say, spawn, store, thread_port
 from src.core.swarm.facade import SwarmFacade
 from src.plugins.host import runtime
-from src.plugins.huddle import routes as huddle_routes
-from src.plugins.huddle.public import TaskManagerSwarmPort
-from tests.python.cplugs.owner import turn_on
+from src.plugins.taskmanager import routes as huddle_routes
+from src.plugins.taskmanager.public import TaskManagerSwarmPort
+from tests.python.cplugs.owner import include_task_manager_routes, turn_on
 
 BASE = "/api/v1/cplugs/huddle"
 CALLER = AgentCaller("ses_1", "cloude_a", "ses_1")
@@ -48,11 +48,11 @@ def world(tmp_path: Path, monkeypatch):
         loki = store.create_agent(conn, slug="loki", rank="project", job="j", display_name="Loki", repo_dir=str(tmp_path),
                                   effort="high", parent_id=alpha["id"])
     app = FastAPI()
-    app.include_router(huddle_routes.router, prefix="/api/v1")
+    include_task_manager_routes(app, huddle_routes.router)
     host = runtime.install(app, tmp_path)
     host.publish = lambda topic: None
     turn_on(host)
-    ctx = host.context("huddle")
+    ctx = host.context("taskmanager")
     port = TaskManagerSwarmPort(ctx)
     ctx.swarm.register_thread_port(port)
     app.dependency_overrides[require_auth] = lambda: {"sub": "test"}

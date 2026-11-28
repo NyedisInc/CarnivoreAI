@@ -10,14 +10,19 @@ from src.core.sessions.errors import SessionCreateFailed, TmuxError
 _NOT_INSTALLED_CODES = {"claude": "agent_not_installed_claude", "codex": "agent_not_installed_codex"}
 
 
-def classify_launch_failure(exc: BaseException, agent_type: Optional[str]) -> str:
+def classify_launch_failure(
+    exc: BaseException,
+    agent_type: Optional[str],
+    *,
+    resolved_harness: Optional[str] = None,
+) -> str:
     text = str(exc)
     if isinstance(exc, TmuxError) and text.startswith("tmux was not found"):
         return "tmux_missing"
     if isinstance(exc, SessionCreateFailed) and isinstance(exc.__cause__, OSError):
         return "workdir_unusable"
     if isinstance(exc, TmuxError) and text.startswith("agent failed to launch"):
-        harness = agent_type or "claude"
+        harness = resolved_harness or agent_type or "claude"
         if harness in AGENT_FAMILY_BY_NAME and not harness_installed(harness):
             return _NOT_INSTALLED_CODES.get(harness, "agent_not_installed")
         return "agent_exited"

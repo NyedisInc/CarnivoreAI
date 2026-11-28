@@ -11,7 +11,9 @@ HELPER = REPO / "scripts" / "lib" / "release-dmg-name.sh"
 ASSETS = {
     "Carnivore-1.16.3-arm64.dmg",
     "Carnivore-1.16.4-universal.dmg",
-    "Carnivore-1.16.10-universal.dmg",
+    "Carnivore-1.16.9-universal.dmg",
+    "Carnivore-1.16.10-arm64.dmg",
+    "Carnivore-1.16.10-x64.dmg",
     "Carnivore-1.15.0-arm64.dmg",
 }
 
@@ -41,9 +43,12 @@ def test_resolved_name_is_in_the_fake_asset_list(version: str) -> None:
     assert _name(version) in ASSETS
 
 
-def test_old_release_stays_arm64_and_new_is_universal() -> None:
+def test_old_release_stays_arm64_universal_range_kept_and_split_from_1_16_10() -> None:
     assert _name("1.16.3") == "Carnivore-1.16.3-arm64.dmg"
     assert _name("1.16.4") == "Carnivore-1.16.4-universal.dmg"
+    assert _name("1.16.9") == "Carnivore-1.16.9-universal.dmg"
+    assert _run("1.16.10", "RELEASE_HOST_ARCH=arm64;").stdout == "Carnivore-1.16.10-arm64.dmg"
+    assert _run("1.16.10", "RELEASE_HOST_ARCH=x86_64;").stdout == "Carnivore-1.16.10-x64.dmg"
 
 
 def test_arch_comes_from_release_arch_json_not_a_literal(tmp_path: Path) -> None:

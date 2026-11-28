@@ -28,8 +28,8 @@ function showAboutDialog({ app, BrowserWindow, shell }) {
   });
 
   const iconPath = app.isPackaged
-    ? path.join(app.getAppPath(), 'assets', 'AppIcon-1024.png')
-    : path.join(__dirname, 'assets', 'AppIcon-1024.png');
+    ? path.join(app.getAppPath(), 'assets', 'AppIcon-256.png')
+    : path.join(__dirname, 'assets', 'AppIcon-256.png');
 
   const fs = require('fs');
   const iconBuffer = fs.readFileSync(iconPath);

@@ -1,0 +1,30 @@
+schema = 2
+api_version = 1
+id = "timemachine"
+name = "time machine check"
+description = "checks every 15 minutes that time machine made a backup in the last 24 hours, and raises one alert when it did not or cannot tell"
+name_key = "cplug.timemachine.name"
+description_key = "cplug.timemachine.description"
+version = "1.0.0"
+kind = "plugin"
+icon = "database"
+author = "Alex (example-owner)"
+license = "MIT"
+min_app_version = "1.16.4"
+tier = "builtin"
+default_enabled = false
+data = []
+
+[permissions]
+write = ["notify"]
+
+[permissions.reasons]
+notify = "raises one alert when time machine has not backed up in 24 hours or cannot be read"
+
+[ui]
+routes = true
+
+[owns]
+routes = ["/check"]
+strings = ["cplug.timemachine."]
+tests = ["tests/python/cplugs/timemachine/", "web/src/cplugs/timemachine/"]

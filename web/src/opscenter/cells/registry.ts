@@ -1,5 +1,6 @@
 
 import type { Component } from 'svelte';
+import { SvelteMap } from 'svelte/reactivity';
 import { META } from '../engine/meta';
 import { openFeatures, openLedger, openThemes } from '../api';
 import { openSessionsScreen } from '../../lib/sessions-page/screen-host';
@@ -28,10 +29,6 @@ import WarRoom from './warroom/Cell.svelte';
 import MachineStats from './machine-stats/Cell.svelte';
 import Changes from './changes/Cell.svelte';
 import Shell from './shell/Cell.svelte';
-import TaskManagerCell from './task-manager/Cell.svelte';
-import TaskManagerMk2 from './task-manager-mk2/Cell.svelte';
-import TaskManagerMk2All from './task-manager-mk2-all/Cell.svelte';
-import TaskManagerAll from './task-manager-all/Cell.svelte';
 import Crosstalk from './crosstalk/Cell.svelte';
 import Tasks from './tasks/Cell.svelte';
 import TasksAll from './tasks-all/Cell.svelte';
@@ -43,13 +40,10 @@ import Bookmarks from './bookmarks/Cell.svelte';
 import BookmarksAll from './bookmarks-all/Cell.svelte';
 import { titleCount as keepAwakeCount, phoneTotal as keepAwakeTotal } from './keep-awake/meta';
 import Questions from './questions/Cell.svelte';
-import TaskManagerList from './task-list/Cell.svelte';
 import Developer from './developer/Cell.svelte';
 import SessionContents from './session-contents/Cell.svelte';
 import { titleCount as sessionContentsCount, phoneTotal as sessionContentsTotal } from './session-contents/meta';
 import { titleCount as questionsCount, phoneTotal as questionsTotal } from './questions/meta';
-import { titleCount as taskManagerListCount, phoneTotal as taskManagerListTotal } from './task-list/meta';
-import { listCount as taskManagerListCountFor } from './task-list/state.svelte';
 
 import { titleCount as runningCount, phoneSummary as runningSummary, phoneTotal as runningTotal } from './running-sessions/meta';
 import {
@@ -89,7 +83,11 @@ export interface RegisteredCell extends CellBinding {
   meta: CellMeta;
 }
 
-export const REGISTRY: Readonly<Record<CellId, RegisteredCell>> = {
+export const PLUGIN_CELL_IDS = ['task-manager-mk2', 'task-manager-mk2-all'] as const;
+
+export type PluginCellId = (typeof PLUGIN_CELL_IDS)[number];
+
+export const REGISTRY: Readonly<Record<Exclude<CellId, PluginCellId>, RegisteredCell>> = {
   ...(Object.fromEntries(STAT_TILE_IDS.map((id) => [id, { meta: META[id], component: StatTile }])) as Record<
     (typeof STAT_TILE_IDS)[number],
     RegisteredCell
@@ -172,10 +170,7 @@ export const REGISTRY: Readonly<Record<CellId, RegisteredCell>> = {
   warroom: { meta: META.warroom, component: WarRoom },
   'machine-stats': { meta: META['machine-stats'], component: MachineStats },
   changes: { meta: META.changes, component: Changes },
-  'task-manager': { meta: META['task-manager'], component: TaskManagerCell },
-  'task-manager-all': { meta: META['task-manager-all'], component: TaskManagerAll },
-  'task-manager-mk2': { meta: META['task-manager-mk2'], component: TaskManagerMk2 },
-  'task-manager-mk2-all': { meta: META['task-manager-mk2-all'], component: TaskManagerMk2All },
+  // the Task Manager
   crosstalk: { meta: META.crosstalk, component: Crosstalk },
   tasks: { meta: META.tasks, component: Tasks },
   'tasks-all': { meta: META['tasks-all'], component: TasksAll },
@@ -193,13 +188,6 @@ export const REGISTRY: Readonly<Record<CellId, RegisteredCell>> = {
     count: questionsCount,
     phoneTotal: questionsTotal,
   },
-  'task-list': {
-    meta: META['task-list'],
-    component: TaskManagerList,
-    count: taskManagerListCount,
-    countFor: taskManagerListCountFor,
-    phoneTotal: taskManagerListTotal,
-  },
   'session-contents': {
     meta: META['session-contents'],
     component: SessionContents,
@@ -215,16 +203,28 @@ export const INSTANCE_REGISTRY: Readonly<Partial<Record<InstanceKind, CellBindin
   analytics: { component: AnalyticsCell },
 };
 
+/* the Task Manager */
+const PLUGIN_CELLS = new SvelteMap<PluginCellId, RegisteredCell>();
+
+export function registerPluginCell(id: PluginCellId, component: Component<any>): void {
+  PLUGIN_CELLS.set(id, { meta: META[id], component });
+}
+
 const PLUGIN_BINDINGS = new Map<InstanceKind, CellBinding>();
 
 export function registerPluginBinding(kind: InstanceKind, binding: CellBinding): void {
   PLUGIN_BINDINGS.set(kind, binding);
 }
 
+export function unregisterPluginBinding(kind: string): boolean {
+  return PLUGIN_BINDINGS.delete(kind as InstanceKind);
+}
+
 export function entryFor(slotId: SlotId): CellBinding | undefined {
   const kind = kindOf(slotId);
   if (kind) return INSTANCE_REGISTRY[kind] ?? PLUGIN_BINDINGS.get(kind);
-  return REGISTRY[slotId as CellId];
+  const id = slotId as CellId;
+  return (REGISTRY as Partial<Record<CellId, RegisteredCell>>)[id] ?? PLUGIN_CELLS.get(id as PluginCellId);
 }
 
 export function registeredInstanceKinds(): InstanceKind[] {

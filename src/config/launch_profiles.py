@@ -7,6 +7,7 @@ from typing import List, Literal, Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from src.config.mcp_launch import CLAUDE_MCP_CONFIG_FLAG
+from src.core.agy.identity import is_agy_profile
 from src.core.agent_wrappers import WRAPPER_ID_PATTERN
 from src.core.debug_trace import is_secret_name
 
@@ -252,8 +253,8 @@ class LaunchProfile(BaseModel):
 
     @model_validator(mode="after")
     def _cross_field_rules(self) -> "LaunchProfile":
-        if self.account.mode == "pinned" and self.harness != "claude":
-            raise ValueError("an account can be pinned only for claude")
+        if self.account.mode == "pinned" and self.harness != "claude" and not is_agy_profile(self):
+            raise ValueError("an account can be pinned only for claude or an agy profile")
         if self.harness not in STRUCTURED_HARNESSES:
             if self.custom_command is None:
                 raise ValueError(f"a {self.harness} profile needs a custom command")

@@ -43,4 +43,4 @@ def test_stored_key_sets_are_pinned():
     assert set(dumped["keyboard_rule"]) == {"enabled", "idle_minutes"}
     assert set(Restrictions().model_dump()) == {
         "allowed_companies", "allowed_projects", "max_agents", "may_host_agents", "may_install_tools", "may_receive_credentials",
-        "may_receive_global_setup", "may_receive_projects", "may_update_carnivore"}
+        "may_receive_global_setup", "may_receive_pack_ui", "may_receive_projects", "may_update_carnivore"}

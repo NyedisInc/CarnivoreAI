@@ -555,6 +555,41 @@ test('codex: a dialog in place of the composer keeps the last sent prompt', () =
     assert.deepEqual(plain(Scan.scan(makeBuf(rows), { family: 'codex' })).map((p) => p.text), ['edit the file']);
 });
 
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+const RULE = '\u2500'.repeat(60);
+const AGY_SESSION = [
+    RULE, '> please go ahead and swap them all out', '  and push it to main.', '',
+    '\u25cb Thought for 3m 44s', '\u25cf Ran 3 commands', '',
+    RULE, '> continue', '', '\u25b8 Thought for 12s', '  Hit smoking guns.', '',
+    RULE, '>', RULE, 'auto \u00b7 Gemini 4 Neon (High) \u00b7 35% \u00b7 quota 96%',
+];
+
+test('agy: finds submitted > prompts under a rule and drops the live composer between rules', () => {
+    const got = plain(Scan.scan(makeBuf(rowsOf(AGY_SESSION)), { family: 'agy' }));
+    assert.deepEqual(got.map((p) => p.text), ['please go ahead and swap them all out and push it to main.', 'continue']);
+    assert.deepEqual(got.map((p) => p.line), [1, 8]);
+});
+
+test('agy: NEGATIVE: a draft in the composer is not a prompt, and claude scans find nothing', () => {
+    const rows = rowsOf([RULE, '> half typed', '  draft', RULE, 'auto']);
+    assert.equal(Scan.scan(makeBuf(rows), { family: 'agy' }).length, 0);
+    assert.equal(Scan.scan(makeBuf(rowsOf(AGY_SESSION)), {}).length, 0);
+});
+
+const COPILOT_SESSION = [
+    ' \u25cf MCP Servers reloaded', '',
+    ' \u276f reply with the single word OK' + ' '.repeat(40) + '22:11', '   second line of it', '',
+    ' \u25cf Copilot Fusion selected GPT-6 Luna', '',
+    RULE, '\u276f continue draft', RULE,
+];
+
+test('copilot: finds submitted column-1 prompts, strips the clock, ignores the column-0 composer', () => {
+    const got = plain(Scan.scan(makeBuf(rowsOf(COPILOT_SESSION)), { family: 'copilot' }));
+    assert.deepEqual(got.map((p) => p.text), ['reply with the single word OK second line of it']);
+    assert.equal(Scan.scan(makeBuf(rowsOf(COPILOT_SESSION)), {}).length, 0);
+});
+
 test('the module stays under the 500-line guideline', () => {
     const lines = fs.readFileSync(
         path.join(CLIENT_JS, 'terminal-prompt-scan.js'), 'utf8').split('\n').length;

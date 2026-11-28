@@ -826,6 +826,7 @@
 .sg-review__bar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--oc-space-2); }
 .sg-review__panel { display: flex; flex-direction: column; gap: var(--oc-space-5); min-width: 0; padding: var(--oc-space-3); background: var(--oc-surface-base); border-radius: var(--oc-radius-panel); color: var(--oc-text-primary); }
 
+/* the Task Manager */
 .sg-qc-compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: var(--oc-space-4); align-items: start; }
 .sg-qc-col { display: flex; flex-direction: column; gap: var(--oc-space-2); min-width: 0; }
 .sg-review-shells { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: var(--oc-space-4); align-items: start; }

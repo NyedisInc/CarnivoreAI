@@ -73,23 +73,36 @@ async def paint_on_attach(
             logger.warning("ws_paint_remote_stream_failed", error=str(exc))
 
     alternate_known: Optional[bool] = None
-    try:
-        alternate = await asyncio.to_thread(backend.pane_in_alternate_screen)
-        alternate_known = bool(alternate)
-    except Exception as exc:
-        logger.warning("ws_paint_alt_probe_failed", error=str(exc))
-        alternate = True
+    snap_fn = getattr(backend, "capture_attach_snapshot", None)
+    if callable(snap_fn) and not remote:
+        try:
+            alternate_known, screen = await asyncio.to_thread(snap_fn)
+        except Exception as exc:
+            logger.warning("ws_paint_capture_failed", error=str(exc))
+            return "none"
+        alternate = True if alternate_known is None else bool(alternate_known)
+        try:
+            await websocket.send_text(json.dumps({"type": "pane_screen", "alternate": alternate_known}))
+        except Exception as exc:
+            logger.warning("ws_paint_pane_screen_send_failed", error=str(exc))
+    else:
+        try:
+            alternate = await asyncio.to_thread(backend.pane_in_alternate_screen)
+            alternate_known = bool(alternate)
+        except Exception as exc:
+            logger.warning("ws_paint_alt_probe_failed", error=str(exc))
+            alternate = True
 
-    try:
-        await websocket.send_text(json.dumps({"type": "pane_screen", "alternate": alternate_known}))
-    except Exception as exc:
-        logger.warning("ws_paint_pane_screen_send_failed", error=str(exc))
+        try:
+            await websocket.send_text(json.dumps({"type": "pane_screen", "alternate": alternate_known}))
+        except Exception as exc:
+            logger.warning("ws_paint_pane_screen_send_failed", error=str(exc))
 
-    try:
-        screen = await asyncio.to_thread(backend.capture_visible_screen)
-    except Exception as exc:
-        logger.warning("ws_paint_capture_failed", error=str(exc))
-        return "none"
+        try:
+            screen = await asyncio.to_thread(backend.capture_visible_screen)
+        except Exception as exc:
+            logger.warning("ws_paint_capture_failed", error=str(exc))
+            return "none"
 
     if not screen:
         if not alternate and await asyncio.to_thread(_looks_stalled, backend):

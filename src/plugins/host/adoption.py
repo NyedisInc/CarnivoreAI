@@ -15,12 +15,12 @@ from src.core.skills.consent_via_ddl import CONSENT_ONE_CLICK
 from src.core.skills.installer import iso_from
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, InstalledItem, LedgerError
 from src.plugins.host.dependencies import app_version
+from src.plugins.host.ledger_names import NAME_PREFIX
 
 logger = structlog.get_logger()
 
 BUILTIN_SOURCE = "builtin"
 KIND_CPLUG = kinds.KIND_CPLUG
-NAME_PREFIX = "cplug-"
 
 
 @dataclass

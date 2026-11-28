@@ -34,6 +34,9 @@ def poke_after_login() -> None:
     refresh.poke()
 
 
+DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code"
+
+
 class LoginRefused(ValueError):
 
     def __init__(self, code: str, message: str) -> None:
@@ -61,7 +64,7 @@ class DeviceLogin:
             raise LoginRefused("server_url_empty", "set the argent server address first")
         await self.cancel()
         try:
-            reply = await ArgentClient(server_url, transport=self._transport).post("/v1/my/cli/device", auth=False)
+            reply = await ArgentClient(server_url, transport=self._transport).post("/v1/my/cli/device", auth=False, json={})
         except Unreachable as exc:
             raise LoginRefused("server_unreachable", "argent did not answer") from exc
         except ArgentError as exc:
@@ -95,7 +98,7 @@ class DeviceLogin:
         while self._clock() < deadline:
             await self._sleep(interval)
             try:
-                body = (await client.post("/v1/my/cli/token", json={"device_code": device_code}, auth=False)).body
+                body = (await client.post("/v1/my/cli/token", json={"grant_type": DEVICE_GRANT, "device_code": device_code}, auth=False)).body
                 code = error_code(body)
             except Unreachable:
                 silent += 1
@@ -106,7 +109,7 @@ class DeviceLogin:
                 body, code = {}, exc.code
             silent = 0
             if not code and body.get("access_token"):
-                return await self._finish(body)
+                return await self._finish(body, server_url)
             if code == "authorization_pending":
                 continue
             if code == "slow_down":
@@ -115,17 +118,27 @@ class DeviceLogin:
             return self._set(state={"expired_token": EXPIRED, "access_denied": DENIED}.get(code, FAILED), reason=code or "login_failed")
         self._set(state=EXPIRED, reason="expired_token")
 
-    async def _finish(self, body: Dict[str, Any]) -> None:
-        token, tenant = body.get("access_token"), body.get("tenant_id")
-        if not (isinstance(token, str) and isinstance(tenant, str) and tenant):
+    async def _finish(self, body: Dict[str, Any], server_url: str) -> None:
+        token = body.get("access_token")
+        if not (isinstance(token, str) and token):
             return self._set(state=FAILED, reason="login_unusable")
+        tenant, name = body.get("tenant_id"), body.get("display_name") or body.get("identity_display")
+        if not (isinstance(tenant, str) and tenant):
+            try:
+                conf = (await ArgentClient(server_url, lambda: token, transport=self._transport).get("/v1/my/cli/config")).body
+            except (Unreachable, ArgentError) as exc:
+                logger.warning("argent_login_config_failed", error_type=type(exc).__name__)
+                return self._set(state=FAILED, reason="login_unusable")
+            tenant, name = conf.get("tenant_id") or conf.get("tenant_slug"), name or conf.get("identity_display")
+            if not (isinstance(tenant, str) and tenant):
+                return self._set(state=FAILED, reason="login_unusable")
         refresh.forget_unsaved()
         await Delegates(self._store, self._tokens).revoke_all()
         try:
             await asyncio.to_thread(self._tokens.write, tenant, token)
         except TokenUnavailable:
             return self._set(state=FAILED, reason="keychain_unavailable")
-        previous = await asyncio.to_thread(self._store.set_login, tenant, str(body.get("identity_id") or ""), str(body.get("display_name") or ""), int(body.get("expires_in") or 0))
+        previous = await asyncio.to_thread(self._store.set_login, tenant, str(body.get("identity_id") or ""), str(name or ""), int(body.get("expires_in") or 0))
         await asyncio.to_thread(settings_module.update, lambda block: block.update(tokenPointer=self._tokens.pointer(tenant)))
         poke_after_login()
         from src.core.argent import pair_sync  # noqa: PLC0415

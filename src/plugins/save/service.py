@@ -9,7 +9,8 @@ from src.plugins.save.vault import constants as K
 from src.plugins.save.vault import legacy, location
 from src.plugins.save.vault.follow import Engine
 from src.plugins.save.vault.store import Vault
-from src.plugins.save.vault.units import Sources
+from src.plugins.save.vault.manifest import codex_account_home_key
+from src.plugins.save.vault.units import CodexHome, Sources
 from src.plugins.sdk import transcript_files as tf, vault_sources
 from src.plugins.sdk.blob_codec import Throttle
 
@@ -30,7 +31,8 @@ class Runtime:
 
     @staticmethod
     def sources() -> Sources:
-        return Sources(vault_sources.claude_roots(), vault_sources.codex_home(), Path(tf.state_dir()))
+        accounts = tuple(CodexHome(codex_account_home_key(path, account_id), path) for account_id, path in vault_sources.codex_account_homes())
+        return Sources(vault_sources.claude_roots(), vault_sources.codex_home(), Path(tf.state_dir()), accounts)
 
     def engine(self) -> Engine:
         with self._lock:

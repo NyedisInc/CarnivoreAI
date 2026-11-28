@@ -803,3 +803,121 @@ def test_a_session_with_no_resolvable_pane_binds_nothing():
     manager, effects, _calls = _fresh()
     effects._bind_conversation(SESSION_ID, None, registry_ok())
     assert manager.lifecycle_events == []
+
+
+def test_watched_means_focused_not_merely_on_screen(wired, tmp_path):
+    from src.core.attention.viewer_focus import get_tracker
+    from src.core.terminal_size import TerminalSizeNegotiator
+    from src.core.unread_store import UnreadStore
+
+    manager, effects, _calls = wired
+    store = UnreadStore(tmp_path / "unread.json")
+    manager._unread_store = store
+    neg = TerminalSizeNegotiator()
+    manager._terminal_size_negotiator = neg
+    tracker = get_tracker(manager)
+    sid = TARGET.session_id
+    key = f"{TMUX_NAME}@{EPOCH}"
+    neg.set_client_size(sid, "ws", 80, 24, voting=True)
+
+    tracker.report(sid, "ws", False)
+    effects.set_unread(TARGET)
+    assert store.raw[key]["auto"] is True
+    store.set_flag(TMUX_NAME, "auto", True, epoch=EPOCH)
+    store.set_flag(TMUX_NAME, "manual", True, epoch=EPOCH)
+    effects.clear_unread_while_watched(TARGET, observation())
+    assert store.raw[key] == {"auto": True, "manual": True}
+
+    tracker.report(sid, "ws", True)
+    effects.clear_unread_while_watched(TARGET, observation())
+    assert store.raw[key] == {"auto": False, "manual": True}
+
+    tracker.forget(sid, "ws")
+    store.clear_auto(TMUX_NAME, EPOCH)
+    effects.set_unread(TARGET)
+    assert store.raw[key]["auto"] is False
+    tracker.report(sid, "ws", False)
+    tracker.forget(sid, "ws")
+    assert tracker.state(sid, "ws") is None
+
+
+def _viewing_manager(store, row_id):
+    from src.core import session_view_clears
+
+    backend = types.SimpleNamespace(tmux_session=TMUX_NAME)
+    mgr = types.SimpleNamespace(
+        _unread_store=store,
+        _unread_rows={f"{TMUX_NAME}@{EPOCH}": row_id},
+        _unread_epoch=lambda name: EPOCH,
+        _attention_watcher=None,
+        _registry=types.SimpleNamespace(
+            backends={SESSION_ID: backend}, get_backend=lambda sid: backend),
+    )
+    mgr.mark_session_viewed = lambda sid: session_view_clears.clear_on_view(mgr, session_id=sid)
+    return mgr
+
+
+def test_a_focus_report_clears_a_flag_already_set_on_the_row(tmp_path):
+    from src.core.attention.viewer_focus import get_tracker, report_focus
+    from src.core.unread_store import UnreadStore
+
+    store = UnreadStore(tmp_path / "unread.json")
+    mgr = _viewing_manager(store, 26)
+    store.set_follow_up(26, TMUX_NAME, EPOCH)
+    store.set_flag(TMUX_NAME, "auto", True, epoch=EPOCH)
+    assert store.is_unread(TMUX_NAME, EPOCH, row_id=26)
+
+    report_focus(mgr, SESSION_ID, "ws-other", False)
+    report_focus(mgr, SESSION_ID, "ws-observer", True, marks_viewed=False)
+    assert store.is_unread(TMUX_NAME, EPOCH, row_id=26)
+
+    report_focus(mgr, SESSION_ID, "ws-clicked", True)
+    assert not store.is_unread(TMUX_NAME, EPOCH, row_id=26)
+    assert get_tracker(mgr).state(SESSION_ID, "ws-clicked") is True
+    assert get_tracker(mgr).state(SESSION_ID, "ws-other") is False
+
+
+def test_agy_rename_triggers_title_sync_after_uuid_is_already_bound(wired, tmp_path, monkeypatch):
+    from src.core.agy import title as agy_title
+    from src.core.attention.evidence import EvidenceIdentity
+
+    cid = "411aebfa-36d8-4e4b-827e-ca0a3bffaa41"
+    note = tmp_path / "annotations" / f"{cid}.pbtxt"
+    note.parent.mkdir()
+    note.write_text('title:"Cv-MobileApp"', encoding="utf-8")
+    monkeypatch.setattr(agy_title, "AGY_HOME", tmp_path)
+    agy_title._SEEN.pop(cid, None)
+
+    _manager, effects, calls = wired
+    synced = []
+
+    def fake_sync(_manager, sid):
+        synced.append(sid)
+        agy_title.read_title(cid)
+        return types.SimpleNamespace(broadcast_title="Cv-MobileApp")
+
+    monkeypatch.setattr(
+        side_effects_module.claude_title_sync_apply, "sync_claude_title", fake_sync
+    )
+
+    obs = Observation(
+        verdict=verdict(),
+        evidence=Evidence(
+            tmux_liveness=LIVENESS_LIVE,
+            agent_family="custom",
+            registry=registry_unreadable(),
+            transcript=facts(),
+            pane=None,
+            now=NOW,
+            identity=EvidenceIdentity("cloude", TMUX_NAME, EPOCH, 1234, cid),
+            agent_bind_uuid=None,
+        ),
+        new_user_prompt_at=None,
+        transcript_appended=False,
+    )
+    effects.on_observation(TARGET, obs)
+    assert synced == [SESSION_ID]
+    assert calls["rename_frames"] == [(SESSION_ID, "Cv-MobileApp")]
+
+    effects.on_observation(TARGET, obs)
+    assert synced == [SESSION_ID]

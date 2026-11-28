@@ -6,19 +6,22 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, Dict, FrozenSet, Mapping, Optional, Tuple
+from typing import Any, Callable, Dict, FrozenSet, List, Mapping, Optional, Tuple
 
 import structlog
 
 from src.core.agent_families import DEFAULT_FAMILY
 from src.core.attention.output_holders import HELD, UNMEASURED, probe_output_holders
 from src.core.attention.registry_record import REG_IDLE, REG_OK, REG_SHELL
-from src.core.attention.turn_counts import KIND_SHELL
+from src.core.attention.turn_counts import KIND_MONITOR, KIND_SHELL
+from src.core.background_work.listing import SNAPSHOT_MARK, eval_text
 from src.core.subagents.parent_index import read_completion_index
 from src.core.subagents.reader import subagents_dir_for
 from src.core.subagents.scan_inputs import agent_files_signature, index_snapshot
 from src.core.subagents.parked_launches import (
+    OpenLaunch,
     OpenLaunches,
+    command_digest,
     find_open_launches,
     newest_real_prompt,
 )
@@ -78,6 +81,7 @@ class ParkedWork:
     live: int = 0
     unmeasured: int = 0
     detail: str = ""
+    stalled: int = 0
 
     entries: Tuple[ParkedEntry, ...] = ()
 
@@ -103,10 +107,12 @@ def judge(
     claude_pid: Optional[int],
     process_parents: Callable[[], Optional[Mapping[int, int]]],
     skip_task_ids: FrozenSet[str] = frozenset(),
+    process_commands: Optional[Callable[[], Optional[Mapping[int, str]]]] = None,
 ) -> ParkedWork:
+    stalled = open_launches.stalled_agents
     launches = tuple(l for l in open_launches.launches if l.task_id not in skip_task_ids)
     if not launches:
-        return NOTHING
+        return ParkedWork(PARKED_NONE, stalled=stalled) if stalled else NOTHING
     shells = [l for l in launches if l.kind == KIND_SHELL and l.output_path]
     answers: Dict[str, str] = {}
     if shells:
@@ -115,8 +121,10 @@ def judge(
             process_parents=process_parents(),
         )
     live = [l for l in shells if answers.get(l.output_path) == HELD]
-    unmeasured = [l for l in launches if l.kind != KIND_SHELL or not l.output_path
-                  or answers.get(l.output_path) == UNMEASURED]
+    matched = _live_monitors(launches, claude_pid, process_parents, process_commands)
+    live += matched
+    unmeasured = [l for l in launches if l not in matched and (
+        l.kind != KIND_SHELL or not l.output_path or answers.get(l.output_path) == UNMEASURED)]
     since = _stamp(open_launches.since)
     entries = tuple(
         ParkedEntry(agent_id=l.agent_id, task_id=l.task_id, kind=l.kind,
@@ -127,12 +135,14 @@ def judge(
     )[:MAX_WIRE_ENTRIES]
     if live:
         first = live[0]
+        proof = ("whose output file a live child of this claude holds open"
+                 if first.kind == KIND_SHELL else
+                 "whose command a live tool shell of this claude is running")
         return ParkedWork(PARKED_LIVE, len(live), len(unmeasured), (
             "sub-agent %s acted at %s, after the last prompt at %s, and is parked "
-            "on background shell %s, whose output file a live child of this "
-            "claude holds open (%d such task(s))"
-            % (first.agent_id, _stamp(first.owner_active_at), since,
-               first.task_id, len(live))), entries=entries)
+            "on background %s %s, %s (%d such task(s))"
+            % (first.agent_id, _stamp(first.owner_active_at), since, first.kind,
+               first.task_id, proof, len(live))), entries=entries, stalled=stalled)
     if unmeasured:
         first = unmeasured[0]
         why = ("a Monitor keeps its output on pipes to claude, so no process "
@@ -142,8 +152,37 @@ def judge(
             "sub-agent %s acted at %s, after the last prompt at %s, and left "
             "background %s %s open, which could not be measured running or "
             "ended: %s" % (first.agent_id, _stamp(first.owner_active_at), since,
-                           first.kind, first.task_id, why)), entries=entries)
+                           first.kind, first.task_id, why)), entries=entries, stalled=stalled)
     return NOTHING
+
+
+def _live_monitors(
+    launches: Tuple[OpenLaunch, ...],
+    claude_pid: Optional[int],
+    process_parents: Callable[[], Optional[Mapping[int, int]]],
+    process_commands: Optional[Callable[[], Optional[Mapping[int, str]]]],
+) -> List[OpenLaunch]:
+    wanted = [l for l in launches if l.kind == KIND_MONITOR and l.command_digest]
+    if not wanted or claude_pid is None or process_commands is None:
+        return []
+    parents, commands = process_parents(), process_commands()
+    if not parents or not commands:
+        return []
+    below = {claude_pid}
+    grew = True
+    while grew:
+        grew = False
+        for pid, parent in parents.items():
+            if parent in below and pid not in below:
+                below.add(pid)
+                grew = True
+    running = set()
+    for pid in below - {claude_pid}:
+        command = commands.get(pid) or ""
+        text = eval_text(command) if SNAPSHOT_MARK in command else None
+        if text:
+            running.add(command_digest(text))
+    return [l for l in wanted if l.command_digest in running]
 
 
 @dataclass
@@ -174,6 +213,7 @@ class ParkedWorkReader:
         process_started_at: Optional[datetime],
         process_parents: Callable[[], Optional[Mapping[int, int]]],
         skip_task_ids: FrozenSet[str] = frozenset(),
+        process_commands: Optional[Callable[[], Optional[Mapping[int, str]]]] = None,
     ) -> Optional[ParkedWork]:
         if family is not None and family != DEFAULT_FAMILY:
             return None
@@ -184,7 +224,8 @@ class ParkedWorkReader:
         try:
             launches = self._launches(parent_path, facts, process_started_at, now)
             result = judge(launches, claude_pid=getattr(registry, "pid", None),
-                           process_parents=process_parents, skip_task_ids=skip_task_ids)
+                           process_parents=process_parents, skip_task_ids=skip_task_ids,
+                           process_commands=process_commands)
         except OSError as exc:
             logger.warning("parked_work_unreadable", path=str(parent_path), error=str(exc))
             return None

@@ -6,6 +6,7 @@ import type { CplugRow } from '../../../lib/plugins-page/cplugs-adapter';
 vi.mock('../../../lib/cplug-ui/api', () => ({
     fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/hello/view/game/t/index.html' })),
     callViewRoute: vi.fn(),
+    callViewTool: vi.fn(),
 }));
 
 import PanelHost from './fixtures/PanelHost.svelte';

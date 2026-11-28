@@ -366,6 +366,10 @@ class TestTheSessionNeverReachesTheBrowser:
         }
 
 
+def _top(body):
+    return {k: v for k, v in body.items() if k not in ("client", "computer")}
+
+
 class TestWhatTheSignedInSessionReports:
 
     def test_an_email_login_reads_as_the_email_provider(self, tmp_path):
@@ -373,7 +377,7 @@ class TestWhatTheSignedInSessionReports:
             flow_id = open_flow(app)
             app.client.post(VERIFY_URL, json={"flow_id": flow_id, "code": "12345678"})
             answer = app.client.get("/catalog/auth/session")
-        assert answer.json() == {
+        assert _top(answer.json()) == {
             "signed_in": True,
             "login": "ada@example.test",
             "provider": "email",
@@ -394,7 +398,7 @@ class TestWhatTheSignedInSessionReports:
                     )
                 )
             answer = app.client.get("/catalog/auth/session")
-        assert answer.json() == {
+        assert _top(answer.json()) == {
             "signed_in": True,
             "login": "example-owner",
             "provider": "github",
@@ -404,7 +408,7 @@ class TestWhatTheSignedInSessionReports:
     def test_signed_out_names_no_provider_either(self, tmp_path):
         with hosted_proxy_app(tmp_path, responder=email_responder()) as app:
             answer = app.client.get("/catalog/auth/session")
-        assert answer.json() == {"signed_in": False, "login": None, "provider": None, "email": None}
+        assert _top(answer.json()) == {"signed_in": False, "login": None, "provider": None, "email": None}
 
 
 class TestNothingDownstreamHadToChange:

@@ -43,6 +43,8 @@ def canonical_path(path: str) -> Optional[str]:
 
 
 def pointer_of(account: ProviderAccount) -> str:
+    if account.provider == "antigravity":
+        return ""
     return (
         account.claude_config_dir
         if account.provider == "claude"

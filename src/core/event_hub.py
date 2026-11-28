@@ -26,7 +26,8 @@ EVENTS_OVERFLOW_CLOSE_CODE = OVERFLOW_CLOSE_CODE
 
 class EventClient:
 
-    def __init__(self, client_id: str, stream: BoundedStream, reduced: bool = False) -> None:
+    def __init__(self, client_id: str, stream: BoundedStream, reduced: bool = False, family: Optional[str] = None) -> None:
+        self.family = family
         self.client_id = client_id
         self.stream = stream
         self.reduced = reduced
@@ -47,14 +48,14 @@ class EventHub:
         self._listeners: List[Callable[[Optional[str]], None]] = []
 
 
-    def register(self, reduced: bool = False) -> EventClient:
+    def register(self, reduced: bool = False, family: Optional[str] = None, max_bytes: Optional[int] = None) -> EventClient:
         client_id = f"evt_{next(self._ids)}"
         stream = BoundedStream(
             max_items=self._max_items,
-            max_bytes=self._max_bytes,
+            max_bytes=self._max_bytes if max_bytes is None else max_bytes,
             label=f"events {client_id}",
         )
-        client = EventClient(client_id, stream, reduced)
+        client = EventClient(client_id, stream, reduced, family)
         self._clients[client_id] = client
         logger.info("event_client_registered", client_id=client_id,
                     total_clients=len(self._clients))
@@ -87,7 +88,7 @@ class EventHub:
         return any(not c.reduced for c in self._clients.values())
 
 
-    def publish(self, frame: Dict[str, Any], reduced: Optional[Dict[str, Any]] = None) -> int:
+    def publish(self, frame: Dict[str, Any], reduced: Optional[Dict[str, Any]] = None, only_family: Optional[str] = None) -> int:
         if self._listeners:
             self._notify_listeners(frame)
         if not self._clients:
@@ -113,6 +114,8 @@ class EventHub:
         size_reduced = len(encoded_reduced.encode("utf-8")) if reduced is not None else size
         delivered = 0
         for client in list(self._clients.values()):
+            if only_family is not None and client.family != only_family:
+                continue
             result = client.stream.offer(encoded_reduced, size_reduced) if client.reduced else client.stream.offer(encoded, size)
             if result == OFFER_ACCEPTED:
                 delivered += 1

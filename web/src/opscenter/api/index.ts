@@ -34,13 +34,14 @@ export {
   elapsedSeconds,
   STATUS_KEYS,
   SESSIONS_POLL_MS,
+  reachWokenSession,
   type StatusHue,
 } from './sessions.svelte';
 export { paneFacts, releasePaneFacts, PANE_FACTS_POLL_MS } from './pane-facts.svelte';
 export { sessionGit, releaseSessionGit, SESSION_GIT_POLL_MS } from './session-git.svelte';
 export { recent, outcome, RECENT_NOTICE_KEYS, RECENT_POLL_MS, type RecentOutcome } from './recent.svelte';
 export {
-  asleep, wakeSession, wakeOrPick, sleepSession, WAKE_WRAPPER_NEEDED, ASLEEP_POLL_MS,
+  asleep, wakeSession, wakeOrPick, sleepSession, WAKE_WRAPPER_NEEDED, WAKE_NOT_ASLEEP, ASLEEP_POLL_MS,
   type WakeResult, type SleepResult,
 } from './asleep.svelte';
 export { projects, PROJECTS_POLL_MS } from './projects.svelte';

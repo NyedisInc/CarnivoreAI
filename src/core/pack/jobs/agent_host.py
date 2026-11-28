@@ -131,7 +131,8 @@ class AgentHost:
         pick = await asyncio.to_thread(self.check, caller, spec.family, spec.account_key, spec.account_identity)
         plan = agent_launch.build_launch(spec, Path(real), job_id, pick)
         await asyncio.to_thread(agent_launch.write_task_file, Path(real), spec)
-        root = pick.extra_env.get(_PROFILE_VARS[spec.family])
+        profile_var = _PROFILE_VARS.get(spec.family)
+        root = pick.extra_env.get(profile_var) if profile_var else None
         meta = await asyncio.to_thread(self.host._meta_read, job_id)
         await asyncio.to_thread(self.host._meta_write, job_id, {**meta, "profile_root": root})
         session_id = f"ses_{uuid.uuid4().hex[:8]}"

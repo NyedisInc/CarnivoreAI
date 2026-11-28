@@ -29,6 +29,8 @@ export interface PublishPreview {
     total_bytes: number;
     files: { path: string; size: number | null }[];
     refusals: { code: string; detail?: string | null; path?: string | null }[];
+    script_files?: string[];
+    warnings?: string[];
     lint: LintBlock;
     cost: { description_tokens_est?: number };
     compat: { harness?: string; compatibility?: string | null };

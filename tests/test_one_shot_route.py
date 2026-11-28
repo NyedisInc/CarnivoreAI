@@ -299,7 +299,17 @@ def test_no_record_anywhere_but_a_proven_foreground_claude_passes(monkeypatch) -
     response = _post(client, "hello")
     assert response.status_code == 200, response.text
     assert seen["claude_session_uuid"] is None
+    assert seen["agent_type"] is None
     assert backend.pastes == ["hello"]
+
+
+def test_the_rows_agent_type_reaches_the_foreground_proof(monkeypatch) -> None:
+    seen: Dict[str, Any] = {}
+    monkeypatch.setattr(guarded_paste, "registered_agent_in_foreground", lambda **kw: seen.update(kw) or True)
+    client, backend = _client(backend=FakeBackend(pane_command=SHELL_PANE_COMMAND), agent_type="antigravity")
+    response = _post(client, "hello")
+    assert response.status_code == 200, response.text
+    assert seen["agent_type"] == "antigravity"
 
 
 def test_no_record_and_no_proof_still_refuses(monkeypatch) -> None:

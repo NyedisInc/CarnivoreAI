@@ -63,7 +63,7 @@ def test_only_xhigh_max_and_ultracode_move():
 
 def test_only_ultracode_has_sparkles():
     outside, _ = _split_reduced(CSS)
-    sparkle_rules = re.findall(r"([^{}]*)\{[^}]*animation:\s*effort-twinkle", outside)
+    sparkle_rules = re.findall(r"([^{}]*)\{[^}]*opacity:\s*var\(--amb-uc-sp-", outside)
     assert sparkle_rules, "the twinkle rule exists"
     owners = set(re.findall(r"\.effort--(\w+)::(?:before|after)", " ".join(sparkle_rules)))
     assert owners == {"ultracode"}

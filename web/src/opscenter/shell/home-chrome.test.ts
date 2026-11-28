@@ -43,7 +43,7 @@ afterEach(async () => {
   homeBoards.list = [{ id: 'home', name: 'home' }];
   homeBoards.active = 'home';
   homeBoards.ready = false;
-  delete cplugEnablement.enabled['huddle'];
+  delete cplugEnablement.enabled['taskmanager'];
   closeAccountMenu();
   Bar.reset();
   delete (globalThis as { App?: unknown }).App;
@@ -92,7 +92,7 @@ test('the pop-out menu lists the home screen, its wallboard, every other dashboa
   homeBoards.list = [{ id: 'home', name: 'main' }, { id: 'b-1a2b', name: 'wall' }];
   homeBoards.active = 'home';
   homeBoards.ready = true;
-  cplugEnablement.enabled['huddle'] = true;
+  cplugEnablement.enabled['taskmanager'] = true;
   const open = vi.spyOn(window, 'open').mockReturnValue(null);
   const root = home(false);
   const btn = root.querySelector<HTMLButtonElement>('[data-home-open]')!;

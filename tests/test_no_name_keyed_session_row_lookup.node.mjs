@@ -124,9 +124,9 @@ const ALLOWED_MATCHES = {
         "NOT A SESSION LOOKUP: matches a skill group by the skill's own name.",
     'web/src/lib/skills-page/skill-actions.svelte.ts::.find((g) => g.name === item':
         "NOT A SESSION LOOKUP: matches a skill group by the skill's own name.",
-    'web/src/plugins/huddle/style-guide/ExpressionBoard.svelte::.findIndex((x) => x.name === current':
+    'web/src/plugins/taskmanager/style-guide/ExpressionBoard.svelte::.findIndex((x) => x.name === current':
         'NOT A SESSION LOOKUP: matches a Swarm character eye expression by its own name (style guide specimen).',
-    'web/src/plugins/huddle/style-guide/ExpressionBoard.svelte::.find((e) => e.name === cell':
+    'web/src/plugins/taskmanager/style-guide/ExpressionBoard.svelte::.find((e) => e.name === cell':
         'NOT A SESSION LOOKUP: matches a Swarm character eye expression by its own name (style guide specimen).',
     'web/src/lib/widgets-page/preview-sizes.ts::.find((one) => one.name === name':
         'NOT A SESSION LOOKUP: matches a widget preview size by its configuration name.',
@@ -246,12 +246,6 @@ const ALLOWED_MATCHES = {
         "this task's constraints forbid fixing any flagged site - guard",
         'only.',
     ].join(' '),
-    'web/src/lib/sidebar-shell/group-assign.ts::.find((g) => g.name === String': [
-        'NOT a session identity lookup: matches a GROUP by its user-given',
-        'name right after creating it, to read back the server-assigned',
-        "uuid. Groups are named entities in this app's data model, not",
-        'sessions.',
-    ].join(' '),
     'web/src/opscenter/api/activity.svelte.ts::.find((r) => r.tmux_session === key': [
         'NOT UNANCHORED: the tmux-name comparison is the FIRST half of an',
         'OR whose SECOND half, `r.session.id === key`, already matches on',
@@ -270,6 +264,11 @@ const ALLOWED_MATCHES = {
     'web/src/lib/skills-page/skills-adapter.ts::.find((g) => g.name === id': [
         'NOT A SESSION IDENTITY: a skill group in the last inventory, by its',
         'own name.',
+    ].join(' '),
+    'web/src/lib/drawer/nested-groups.ts::.find((r) => r.name === parentKey': [
+        'NOT A SESSION LOOKUP: matches a synthetic layout container row by its',
+        'layout:<uuid> key (guarded by parentKey.startsWith(\'layout:\')) to read',
+        'its _members list; never matches a tmux session name.',
     ].join(' '),
 };
 

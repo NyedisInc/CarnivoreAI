@@ -106,6 +106,8 @@ class Door:
             yield await self._await_code(req)
         elif op == "login":
             yield await self._do_login()
+        elif op == "cli_token":
+            yield await self._do_cli_token()
         else:
             yield {"error": "bad_request"}
 
@@ -196,4 +198,12 @@ class Door:
         except RuntimeError:
             return {"error": "login_failed"}
         log.info("door_login")
+        return tokens
+
+    async def _do_cli_token(self) -> Dict[str, Any]:
+        try:
+            tokens = await self._login(self._refresh_store())
+        except RuntimeError:
+            return {"error": "login_failed"}
+        log.info("door_cli_token")
         return tokens

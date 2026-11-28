@@ -21,7 +21,7 @@ afterEach(() => {
 
 describe('the global mark', () => {
   test('a global sibling shows a globe badge over its own icon, by cell id or manifest id', () => {
-    for (const id of ['task-manager-all', 'core.task-manager-all']) {
+    for (const id of ['task-manager-mk2-all', 'core.task-manager-mk2-all']) {
       const box = draw(id);
       expect(box.querySelector('[data-widget-globe]')).not.toBeNull();
       expect(box.querySelector('[data-widget-globe] svg')?.getAttribute('data-icon')).toBe('globe');
@@ -30,7 +30,7 @@ describe('the global mark', () => {
   });
 
   test('the local variant, and an icon with no widget, are drawn bare', () => {
-    for (const id of ['huddle', 'core.task-manager', null]) {
+    for (const id of ['huddle', 'core.task-manager-mk2', null]) {
       const box = draw(id);
       expect(box.querySelector('[data-widget-globe]')).toBeNull();
       expect(box.querySelectorAll('svg')).toHaveLength(1);

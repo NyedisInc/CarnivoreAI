@@ -10,7 +10,7 @@ from src.core import resource_push
 from src.core.resource_push import topics
 from src.core.sessions import launch_overlay, session_events
 from src.plugins.sdk import ports
-from src.core.argent import refresh, cards_sync, commits, cost_poller, fallback_spend, gateway_reach, health, poll_relay, outage, rollout, timeline, upstream_registry, work_items, writeback
+from src.core.argent import cleanup, refresh, cards_sync, commits, cost_poller, fallback_spend, gateway_reach, health, poll_relay, outage, rollout, timeline, upstream_registry, work_items, writeback
 from src.core.argent.overlay import ArgentOverlay
 from src.core.argent.registration import Registrar, follow_rename
 from src.core.argent.runtime import get_runtime
@@ -129,6 +129,7 @@ async def _shutdown() -> None:
         gateway_reach.set_reach(None)
     poll_relay.forget()
     await health.stop()
+    await asyncio.to_thread(cleanup.scrub_live_install)
 
 
 def install() -> None:

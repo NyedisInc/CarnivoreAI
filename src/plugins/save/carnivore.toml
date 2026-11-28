@@ -1,0 +1,150 @@
+schema = 2
+api_version = 1
+id = "save"
+name = "conversation backups"
+description = "keeps a checked copy of each conversation's transcript when a session closes, sleeps, restarts, clears or forks, and every 30 minutes while it is being written, up to 8 GB, so a lost one can be put back. it copies the conversation only, never your project files. off by default."
+name_key = "cplug.save.name"
+description_key = "cplug.save.description"
+version = "1.1.0"
+kind = "plugin"
+icon = "archive"
+author = "Carnivore"
+license = "MIT"
+min_app_version = "1.12.20"
+tier = "builtin"
+default_enabled = false
+css_prefix = "rpt"
+requires_core = ["pipeline"]
+
+[permissions]
+read = ["sessions.read"]
+write = ["sessions.create"]
+
+[permissions.reasons]
+"sessions.read" = "after a restore, find the session the restored conversation belongs to"
+"sessions.create" = "after a restore, start that session again on the restored conversation (a restore without it only puts the transcript back)"
+
+[ui]
+routes = true
+plugins = ["settings-panel"]
+topics = ["offload"]
+
+[mcp]
+tools = [
+  "save_offload_list",
+  "save_offload_restore",
+  "save_offload_batch_start",
+  "save_offload_batch_status",
+  "save_offload_restore_batch_start",
+  "save_offload_restore_batch_status",
+  "save_import_preview",
+  "save_import",
+  "save_import_remove",
+  "save_import_check",
+  "save_imports_list",
+  "save_import_decide",
+]
+
+[owns]
+routes = [
+  "/capture-scope",
+  "/conversations/{conversation_id}/points",
+  "/conversations/{conversation_id}/points/{point_id}",
+  "/conversations/{conversation_id}/points/{point_id}/pin",
+  "/conversations/{conversation_id}/points/{point_id}/restore",
+  "/folders",
+  "/folders/{unit}/points",
+  "/folders/{unit}/restore",
+  "/health",
+  "/imports",
+  "/imports/apply",
+  "/imports/preview",
+  "/imports/review",
+  "/imports/{run_id}",
+  "/imports/{run_id}/undo",
+  "/imports/{run_id}/verify",
+  "/location",
+  "/mass-gone/clear",
+  "/offload",
+  "/offload/batch",
+  "/offload/batch/{batch_id}",
+  "/offload/batch/{batch_id}/stop",
+  "/offload/candidates",
+  "/offload/conversations/{conversation_id}/restore",
+  "/offload/restore-batch",
+  "/offload/restore-batch/{batch_id}",
+  "/offload/restore-batch/{batch_id}/stop",
+  "/offload/sessions/{session_uuid}",
+  "/offload/sessions/{session_uuid}/restore",
+  "/sessions/{session_uuid}/points",
+  "/sessions/{session_uuid}/points/{point_id}",
+  "/sessions/{session_uuid}/points/{point_id}/pin",
+  "/sessions/{session_uuid}/points/{point_id}/restore",
+  "/settings",
+  "/summary",
+]
+strings = ["cplug.save."]
+style_guide = [
+  "web/src/cplugs/save/RestorePoints.svelte",
+  "web/src/cplugs/save/SaveSettings.svelte",
+  "web/src/cplugs/save/StoragePanel.svelte",
+  "web/src/cplugs/save/ScopePanel.svelte",
+  "web/src/cplugs/save/LocationPanel.svelte",
+  "web/src/cplugs/save/FolderUnits.svelte",
+  "web/src/cplugs/save/OffloadedList.svelte",
+]
+tests = ["tests/python/cplugs/save/", "web/src/cplugs/save/"]
+contributions = ["settings.panel"]
+
+[settings_schema]
+version = 1
+
+[settings_schema.fields.vaultLocation]
+kind = "string"
+labelKey = "cplug.save.settings.location_label"
+hintKey = "cplug.save.settings.location_hint"
+maxLength = 4096
+default = ""
+hidden = true
+
+[settings_schema.fields.vaultFolderOptOut]
+kind = "string"
+labelKey = "cplug.save.settings.folder_optout_label"
+hintKey = "cplug.save.settings.folder_optout_hint"
+maxLength = 4096
+default = ""
+hidden = true
+
+[settings_schema.fields.offloadEnabled]
+kind = "boolean"
+labelKey = "cplug.save.offload.setting_label"
+hintKey = "cplug.save.offload.setting_hint"
+default = false
+hidden = true
+
+[[data]]
+id = "vault"
+kind = "folder"
+root_setting = "vaultLocation"
+default = "vault"
+scope_by = "session_uuid"
+role = "backup_destination"
+provides = "backup_points"
+
+[data.policy]
+own = "excluded"
+share = "excluded"
+purge = "kept"
+reason = "the backup vault: checked copies of every conversation, and of every plugin folder marked for the vault. Copies meant to outlive the original, so a purge never touches it; it moves only when the owner sets a new location (nothing is copied, the old folder stays)"
+
+[[data]]
+id = "legacy_points"
+kind = "folder"
+state_path = "time-machine"
+scope_by = "session_uuid"
+
+[data.policy]
+own = "excluded"
+share = "excluded"
+purge = "kept"
+reason = "the old restore point tree: read and migrated into the vault, never deleted by the plugin. It may hold the only copy of a point (migration unfinished, or the vault moved), so a purge always keeps it"

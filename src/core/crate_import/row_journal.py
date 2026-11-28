@@ -70,7 +70,7 @@ def start(conn: sqlite3.Connection) -> List[Table]:
     for t in tables:
         if len(t.cols) > _MAX_COLUMNS:
             raise JournalError(f"table {t.name} has {len(t.cols)} columns")
-        ins = f"INSERT INTO temp.{LOG_TABLE} (op, tbl, key, old) VALUES"
+        ins = f"INSERT INTO {LOG_TABLE} (op, tbl, key, old) VALUES"
         literal = t.name.replace("'", "''")
         conn.execute(f"CREATE TEMP TRIGGER IF NOT EXISTS {quote('_cu_i_' + t.name)} AFTER INSERT ON main.{quote(t.name)} "
                      f"BEGIN {ins} ('i', '{literal}', {_key_expr(t, 'NEW')}, NULL); END")

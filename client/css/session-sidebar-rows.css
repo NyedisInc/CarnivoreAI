@@ -2,18 +2,18 @@
 
 @layer components {
 .session-sidebar-row {
+    position: relative;
     display: flex;
     align-items: center;
     gap: var(--oc-space-2);
     padding: 10px 10px;
     margin-bottom: var(--oc-space-1);
-    border-radius: var(--oc-radius-sm);
+    border-radius: var(--oc-radius);
     container-name: sidebar-row;
     container-type: inline-size;
     cursor: default;
     background: transparent;
-    /* the home screen */
-    border: 1px solid var(--oc-line-panel);
+    border: 1px solid transparent;
     transition: background 120ms ease, border-color 120ms ease;
 }
 
@@ -21,10 +21,20 @@
     background: var(--oc-ground-hover);
 }
 
-/* the home screen */
 .session-sidebar-row[aria-selected="true"] {
     background: var(--oc-orange-tint);
-    border-color: var(--oc-orange);
+    border-color: transparent;
+}
+
+.session-sidebar-row[aria-selected="true"]::before {
+    content: "";
+    position: absolute;
+    inset-block: var(--oc-space-1);
+    left: 0;
+    width: 2px;
+    border-radius: var(--oc-radius-round);
+    background: var(--oc-orange);
+    pointer-events: none;
 }
 
 .session-sidebar-row-name {
@@ -36,8 +46,13 @@
     color: var(--oc-text-primary);
 }
 
+.session-sidebar-row[aria-selected="true"] .session-sidebar-row-name,
+.session-sidebar-row[data-kind="layout"][data-band="layouts"] .session-sidebar-row-name {
+    font-weight: 500;
+}
+
 .session-sidebar-row[aria-selected="true"] .session-sidebar-row-name {
-    font-weight: bold;
+    color: var(--oc-text-bright);
 }
 
 .session-sidebar-row-badge {
@@ -100,8 +115,8 @@
     opacity: 0.72;
 }
 
-.session-sidebar-row[data-asleep="1"] .session-sidebar-row-main {
-    opacity: 0.55;
+.session-sidebar-row[data-asleep="1"] .session-sidebar-row-name {
+    color: var(--oc-text-muted);
 }
 
 .session-sidebar-row[data-wake-armed] {
@@ -247,17 +262,14 @@
     flex-shrink: 0;
     line-height: 0;
     color: var(--oc-cyan);
-    animation: session-sidebar-workflow-pulse 2.4s ease-in-out infinite;
-}
-
-@keyframes session-sidebar-workflow-pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
+    animation: amb-join-busy-pulses 1ms;
+    opacity: var(--amb-pulse-op);
 }
 
 @media (prefers-reduced-motion: reduce) {
     .session-sidebar-row-workflow-icon {
         animation: none;
+        opacity: 1;
     }
 }
 

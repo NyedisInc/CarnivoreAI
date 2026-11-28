@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import threading
@@ -44,7 +45,10 @@ _OUTPUT_PATH_RE = re.compile(r"Output is being written to: (\S+?\.output)")
 
 _AGENT_FILE_RE = re.compile(r"^agent-([0-9a-f]+)\.jsonl$")
 
-_LAUNCH_MARKS: Tuple[bytes, ...] = (b'"backgroundTaskId"', b'"persistent"', b'"task_type"')
+_LAUNCH_MARKS: Tuple[bytes, ...] = (b'"backgroundTaskId"', b'"persistent"', b'"task_type"',
+                                    b'"name":"Monitor"')
+
+MAX_PENDING_COMMANDS: int = 64
 _PROMPT_MARK = b'"type":"user"'
 _PROMPT_REJECTS: Tuple[bytes, ...] = (b'"toolUseResult"', b'"isMeta":true', b'"isSidechain":true')
 
@@ -65,6 +69,11 @@ class OpenLaunch:
     owner_active_at: Optional[datetime] = None
     agent_type: Optional[str] = None
     description: Optional[str] = None
+    command_digest: Optional[str] = None
+
+
+def command_digest(command: str) -> str:
+    return hashlib.sha256(" ".join(command.split()).encode("utf-8")).hexdigest()
 
 
 @dataclass
@@ -72,9 +81,10 @@ class _Ledger:
 
     launches: Dict[str, OpenLaunch] = field(default_factory=dict)
     stopped: Set[str] = field(default_factory=set)
+    uses: Dict[str, str] = field(default_factory=dict)
 
     def copy(self) -> "_Ledger":
-        return _Ledger(dict(self.launches), set(self.stopped))
+        return _Ledger(dict(self.launches), set(self.stopped), dict(self.uses))
 
 
 @dataclass(frozen=True)
@@ -95,30 +105,36 @@ def _opt_str(value: Any) -> Optional[str]:
 def _encode_ledger(ledger: _Ledger) -> Dict[str, Any]:
     rows = [[task_id, launch.agent_id, launch.kind, encode_instant(launch.launched_at),
              launch.output_path, encode_instant(launch.deadline),
-             encode_instant(launch.owner_active_at), launch.agent_type, launch.description]
+             encode_instant(launch.owner_active_at), launch.agent_type, launch.description,
+             launch.command_digest]
             for task_id, launch in ledger.launches.items()]
-    return {"l": rows, "s": sorted(ledger.stopped)}
+    return {"l": rows, "s": sorted(ledger.stopped), "u": dict(ledger.uses)}
 
 
 def _decode_ledger(value: Any) -> _Ledger:
-    if not isinstance(value, dict) or set(value) != {"l", "s"}:
-        raise ValueError("ledger payload must hold exactly l and s")
+    if not isinstance(value, dict) or set(value) != {"l", "s", "u"}:
+        raise ValueError("ledger payload must hold exactly l, s and u")
     if not isinstance(value["l"], list) or not isinstance(value["s"], list):
         raise TypeError("ledger l and s must be lists")
+    if not isinstance(value["u"], dict) or not all(
+            isinstance(k, str) and isinstance(v, str) for k, v in value["u"].items()):
+        raise TypeError("ledger u must map strings to strings")
     launches: Dict[str, OpenLaunch] = {}
     for row in value["l"]:
-        if not (isinstance(row, list) and len(row) == 9):
-            raise ValueError("a launch row must hold nine values")
-        task_id, agent_id, kind, launched, output, deadline, active, agent_type, description = row
+        if not (isinstance(row, list) and len(row) == 10):
+            raise ValueError("a launch row must hold ten values")
+        (task_id, agent_id, kind, launched, output, deadline, active, agent_type,
+         description, digest) = row
         if not all(isinstance(item, str) for item in (task_id, agent_id, kind, launched)):
             raise TypeError("a launch id, agent, kind and time must be strings")
         launches[task_id] = OpenLaunch(
             agent_id, kind, task_id, decode_instant(launched), output_path=_opt_str(output),
             deadline=decode_instant(deadline), owner_active_at=decode_instant(active),
-            agent_type=_opt_str(agent_type), description=_opt_str(description))
+            agent_type=_opt_str(agent_type), description=_opt_str(description),
+            command_digest=_opt_str(digest))
     if not all(isinstance(item, str) for item in value["s"]):
         raise TypeError("a stopped task id must be a string")
-    return _Ledger(launches, set(value["s"]))
+    return _Ledger(launches, set(value["s"]), dict(value["u"]))
 
 
 def _encode_prompt(mark: _PromptMark) -> Dict[str, Optional[str]]:
@@ -143,7 +159,7 @@ _LEDGER_SOURCES: Tuple[str, ...] = tuple(sorted({
 }))
 
 _LEDGERS = IncrementalCache(max_entries=FILE_CACHE_MAX_ENTRIES, persist=PersistSpec(
-    "subagents.launch_ledger", 1, _LEDGER_SOURCES, _encode_ledger, _decode_ledger))
+    "subagents.launch_ledger", 2, _LEDGER_SOURCES, _encode_ledger, _decode_ledger))
 _PROMPTS = IncrementalCache(persist=PersistSpec(
     "subagents.prompt_mark", 1, _LEDGER_SOURCES, _encode_prompt, _decode_prompt))
 _AGENT_NOTICES = IncrementalCache(max_entries=FILE_CACHE_MAX_ENTRIES,
@@ -157,6 +173,7 @@ class OpenLaunches:
     fresh_agents: int = 0
     since: Optional[datetime] = None
     earliest_deadline: Optional[datetime] = None
+    stalled_agents: int = 0
 
 
 def _launch_from(record: Dict[str, Any], agent_id: str) -> Optional[OpenLaunch]:
@@ -198,11 +215,33 @@ def _unmeasured_launch(record: Dict[str, Any], agent_id: str) -> Optional[OpenLa
     return OpenLaunch(agent_id, KIND_SHELL, "shape_unrecognized:" + key, at)
 
 
+def _tool_use_id(record: Dict[str, Any]) -> str:
+    for block in content_blocks(record, "tool_result"):
+        candidate = block.get("tool_use_id")
+        if isinstance(candidate, str):
+            return candidate
+    return ""
+
+
+def _remember_monitor_commands(record: Dict[str, Any], ledger: _Ledger) -> None:
+    for block in content_blocks(record, "tool_use"):
+        data = block.get("input")
+        command = data.get("command") if isinstance(data, dict) else None
+        if block.get("name") == "Monitor" and isinstance(command, str) and command \
+                and isinstance(block.get("id"), str):
+            ledger.uses[block["id"]] = command_digest(command)
+    while len(ledger.uses) > MAX_PENDING_COMMANDS:
+        ledger.uses.pop(next(iter(ledger.uses)))
+
+
 def _scan_launches(handle: LineSource, ledger: _Ledger, agent_id: str) -> Tuple[_Ledger, int]:
     scan = LineScan(handle, _LAUNCH_MARKS)
     for line in scan:
         record = decode_object(line)
         if record is None:
+            continue
+        if record.get("type") == "assistant":
+            _remember_monitor_commands(record, ledger)
             continue
         broken = check_window((record,))
         stopped = stopped_task_id(record)
@@ -213,6 +252,8 @@ def _scan_launches(handle: LineSource, ledger: _Ledger, agent_id: str) -> Tuple[
         if launch is None and broken:
             launch = _unmeasured_launch(record, agent_id)
         if launch is not None:
+            if launch.kind == KIND_MONITOR:
+                launch = replace(launch, command_digest=ledger.uses.pop(_tool_use_id(record), None))
             ledger.launches[launch.task_id] = launch
     return ledger, scan.offset
 
@@ -346,6 +387,7 @@ def find_open_launches(
         logger.debug("parked_launch_dir_unreadable", error=str(exc))
         return OpenLaunches(since=since)
     found: List[OpenLaunch] = []
+    stalled: Set[str] = set()
     fresh = 0
     for agent_id in sorted(candidates):
         active = _owner_activity(directory, agent_id, index)
@@ -364,11 +406,14 @@ def find_open_launches(
             if process_started_at is not None and launch.launched_at < process_started_at:
                 continue
             if launch.deadline is not None and launch.deadline <= now:
+                if active < launch.deadline:
+                    stalled.add(agent_id)
                 continue
             found.append(replace(launch, owner_active_at=active,
                                   agent_type=agent_type, description=description))
     deadlines = [launch.deadline for launch in found if launch.deadline is not None]
-    return OpenLaunches(tuple(found), fresh, since, min(deadlines) if deadlines else None)
+    return OpenLaunches(tuple(found), fresh, since, min(deadlines) if deadlines else None,
+                        len(stalled))
 
 
 def conversation_launches(parent_path: Path) -> Optional[List[Tuple[OpenLaunch, bool]]]:

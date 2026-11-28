@@ -52,7 +52,8 @@ const READERS = Object.freeze({
   desktopPrefs: async (api) => classify(await api.getAuthed(ROUTES.preferences)),
   account: async (api) => {
     const result = await api.getAuthed(ROUTES.account);
-    const acct = result.reachable && result.data;
+    const data = result.reachable && result.data;
+    const acct = data && data.computer ? data.computer : data;
     return acct && acct.signed_in && acct.login ? String(acct.login) : null;
   },
 });

@@ -8,7 +8,6 @@
 <script lang="ts">
   import type { CellProps } from '../../lib/cell';
   import { t } from '../../../lib/i18n/index.svelte';
-  import Tag from '../../../lib/base/Tag.svelte';
   import ViewFrame from '../../../lib/cplug-ui/ViewFrame.svelte';
   import { declaredViewActions, type ViewAction } from '../../../lib/cplug-ui/view-actions';
   import { declareWidgetActions } from '../../widgets/menu/declared-actions.svelte';
@@ -51,24 +50,13 @@
   });
 </script>
 
-{#snippet mark()}
-  {#if entry}
-    <Tag tone={entry.plugin.unverified ? 'warn' : 'accent'} data-cplug-mark data-unverified={entry.plugin.unverified ? '' : undefined}>{t(entry.plugin.unverified ? 'cplug_ui.mark.unverified' : 'cplug_ui.mark.third_party')}</Tag>
-  {/if}
-{/snippet}
-
 <div class="cu-panelcell" data-panel-cell bind:this={root}>
-  <WidgetShell {widget} status={entry ? 'ready' : 'none'} note={t('cplug_ui.panel_off')} controls={entry ? mark : undefined}>
-    {#if entry}
-      {#if widget.frame?.suppressed}
-        <div class="cu-panelcell__mark" data-widget-controls="body">{@render mark()}</div>
-      {/if}
-      {#if !parked}
+  <WidgetShell {widget} status={entry ? 'ready' : 'none'} note={t('cplug_ui.panel_off')}>
+    {#if entry && !parked}
       {#key entry.key}
         <ViewFrame plugin={entry.plugin} view={entry.view} surface="panel" bar={false} fill visible={seen} {t}
           bind:this={view} onActions={(list) => (viewActions = list)} onMenu={openWidgetMenu} />
       {/key}
-      {/if}
     {/if}
   </WidgetShell>
 </div>
@@ -81,10 +69,6 @@
       height: 100%;
       min-height: 0;
       min-width: 0;
-    }
-    .cu-panelcell__mark {
-      flex: 0 0 auto;
-      padding: var(--oc-space-1) var(--oc-space-1) 0;
     }
   }
 </style>

@@ -60,6 +60,12 @@ def _record(router: APIRouter, method: str, path: str, reason: str) -> None:
         _PUBLIC_ROUTES[(method, f"{router.prefix}{path}")] = reason
 
 
+def mirror_public_route(method: str, path: str, old_path: str) -> None:
+    reason = _PUBLIC_ROUTES.get((method, path))
+    if reason:
+        _PUBLIC_ROUTES[(method, old_path)] = f"alias of {path}, which is public: {reason}"
+
+
 async def has_valid_bearer(request: Request) -> bool:
     credentials = await security(request)
     if not credentials:

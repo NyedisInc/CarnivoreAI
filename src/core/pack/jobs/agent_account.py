@@ -94,10 +94,32 @@ def _codex(account_key: Optional[str], caller_install_id: Optional[str], config_
     return AccountPick(followed, {}, followed or DEFAULT_LABEL, "fallback")
 
 
+def _agy(account_key: Optional[str], _caller_install_id: Optional[str], config_path: Path, identity: Optional[str] = None) -> AccountPick:
+    from src.core.agy import accounts as agy_accounts
+
+    if agy_accounts.read_live() is None:
+        raise _not_usable("agy")
+    active_id: Optional[str] = None
+    local_ident: Optional[str] = None
+    try:
+        all_accts = session_pin.all_accounts(config_path)
+        active_id = effective_active(all_accts, store.read_switch(config_path), agy_accounts.PROVIDER).account_id
+        if active_id:
+            acct = find_account(all_accts, active_id, agy_accounts.PROVIDER)
+            raw = getattr(acct, "identity", None) if acct is not None else None
+            local_ident = raw.strip().lower() if isinstance(raw, str) and raw.strip() else None
+    except (FileNotFoundError, ValueError, OSError) as exc:
+        log.debug("pack_jobs_agy_account_unreadable", error=type(exc).__name__)
+    label = active_id or DEFAULT_LABEL
+    same = bool(identity and local_ident and identity == local_ident) or (bool(account_key) and account_key == active_id and identity is None)
+    return AccountPick(None, {}, label, "same" if same else "fallback")
+
+
 def resolve_target_account(family: str, account_key: Optional[str], caller_install_id: Optional[str], config_path: Path,
                            caller_identity: Optional[str] = None) -> AccountPick:
-    if family not in ("claude", "codex"):
-        raise JobError("bad_family", "the worker family must be claude or codex", 422)
+    if family not in ("claude", "codex", "agy"):
+        raise JobError("bad_family", "the worker family must be claude, codex or agy", 422)
     if account_key is not None and not _KEY.fullmatch(account_key):
         raise JobError(move_account.NOT_USABLE_CODE, "the account key is not a valid account name", 409)
-    return (_claude if family == "claude" else _codex)(account_key, caller_install_id, config_path, caller_identity)
+    fn = _claude if family == "claude" else _codex if family == "codex" else _agy
+    return fn(account_key, caller_install_id, config_path, caller_identity)

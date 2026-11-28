@@ -5,8 +5,15 @@ import json
 import os
 import re
 import sqlite3
+import threading
 from datetime import datetime, timezone
 from typing import Dict, Iterable, List, Mapping, Optional, Set, Tuple
+
+try:
+    import orjson as _orjson
+    _json_loads = _orjson.loads
+except ImportError:
+    _json_loads = json.loads
 
 import structlog
 
@@ -149,26 +156,14 @@ def _parse_ts(value) -> Optional[datetime]:
     return dt
 
 
-def read_codex_transcript(
-    rollout_path, *, now: datetime
-) -> CodexTranscriptFacts:
-    lines = _read_tail_lines(rollout_path)
-    if lines is None:
-        return CodexTranscriptFacts(
-            readable=False, detail="codex rollout could not be read"
-        )
-    return codex_transcript_facts(lines, now=now)
+_TRANSCRIPT_CACHE_MAX = 256
+_TRANSCRIPT_CACHE: Dict[str, Tuple[int, int, Tuple[int, bool, Optional[datetime], Optional[datetime], Optional[UsageLimit]]]] = {}
+_TRANSCRIPT_CACHE_LOCK = threading.Lock()
 
 
-def _codex_usage_limit(payload: Dict, ts: Optional[datetime]) -> Optional[UsageLimit]:
-    error = payload.get("error")
-    if not isinstance(error, dict) or error.get("codex_error_info") != "usage_limit_exceeded":
-        return None
-    message = error.get("message")
-    return UsageLimit(KIND_OTHER, None, message.strip() if isinstance(message, str) else "", ts)
-
-
-def codex_transcript_facts(lines: List[str], *, now: datetime) -> CodexTranscriptFacts:
+def _parse_rollout_summary(
+    lines: List[str],
+) -> Tuple[int, bool, Optional[datetime], Optional[datetime], Optional[UsageLimit]]:
     open_questions: Set[str] = set()
     open_waits: Dict[str, Optional[datetime]] = {}
     last_append_at: Optional[datetime] = None
@@ -179,7 +174,7 @@ def codex_transcript_facts(lines: List[str], *, now: datetime) -> CodexTranscrip
         if len(line.encode("utf-8")) > MAX_DECISION_LINE_BYTES:
             continue
         try:
-            record = json.loads(line)
+            record = _json_loads(line)
         except (ValueError, TypeError):
             continue
         if not isinstance(record, dict):
@@ -214,9 +209,24 @@ def codex_transcript_facts(lines: List[str], *, now: datetime) -> CodexTranscrip
                 open_questions.discard(call_id)
                 open_waits.pop(call_id, None)
 
-    subagents_waiting = _waits_are_live(open_waits, last_append_at, now)
+    return (
+        len(open_questions),
+        bool(open_waits),
+        last_append_at,
+        newest_user_prompt_at,
+        limit_hit,
+    )
+
+
+def _facts_from_summary(
+    summary: Tuple[int, bool, Optional[datetime], Optional[datetime], Optional[UsageLimit]],
+    *,
+    now: datetime,
+) -> CodexTranscriptFacts:
+    num_questions, has_open_waits, last_append_at, newest_user_prompt_at, limit_hit = summary
+    subagents_waiting = _waits_are_live({"_": last_append_at} if has_open_waits else {}, last_append_at, now)
     return CodexTranscriptFacts(
-        question_open=bool(open_questions),
+        question_open=num_questions > 0,
         subagents_waiting=subagents_waiting,
         last_append_at=last_append_at,
         newest_user_prompt_at=newest_user_prompt_at,
@@ -225,11 +235,54 @@ def codex_transcript_facts(lines: List[str], *, now: datetime) -> CodexTranscrip
         detail=(
             "codex rollout tail: %d open question(s), %s"
             % (
-                len(open_questions),
+                num_questions,
                 "sub-agents running" if subagents_waiting else "no live waits",
             )
         ),
     )
+
+
+def read_codex_transcript(
+    rollout_path, *, now: datetime
+) -> CodexTranscriptFacts:
+    path_key = os.fspath(rollout_path)
+    try:
+        st = os.stat(path_key)
+    except OSError:
+        with _TRANSCRIPT_CACHE_LOCK:
+            _TRANSCRIPT_CACHE.pop(path_key, None)
+        return CodexTranscriptFacts(
+            readable=False, detail="codex rollout could not be read"
+        )
+    mtime_ns, size = st.st_mtime_ns, st.st_size
+    with _TRANSCRIPT_CACHE_LOCK:
+        cached = _TRANSCRIPT_CACHE.get(path_key)
+    if cached is not None and cached[0] == mtime_ns and cached[1] == size:
+        return _facts_from_summary(cached[2], now=now)
+
+    lines = _read_tail_lines(path_key)
+    if lines is None:
+        return CodexTranscriptFacts(
+            readable=False, detail="codex rollout could not be read"
+        )
+    summary = _parse_rollout_summary(lines)
+    with _TRANSCRIPT_CACHE_LOCK:
+        if len(_TRANSCRIPT_CACHE) >= _TRANSCRIPT_CACHE_MAX:
+            _TRANSCRIPT_CACHE.pop(next(iter(_TRANSCRIPT_CACHE)))
+        _TRANSCRIPT_CACHE[path_key] = (mtime_ns, size, summary)
+    return _facts_from_summary(summary, now=now)
+
+
+def _codex_usage_limit(payload: Dict, ts: Optional[datetime]) -> Optional[UsageLimit]:
+    error = payload.get("error")
+    if not isinstance(error, dict) or error.get("codex_error_info") != "usage_limit_exceeded":
+        return None
+    message = error.get("message")
+    return UsageLimit(KIND_OTHER, None, message.strip() if isinstance(message, str) else "", ts)
+
+
+def codex_transcript_facts(lines: List[str], *, now: datetime) -> CodexTranscriptFacts:
+    return _facts_from_summary(_parse_rollout_summary(lines), now=now)
 
 
 def _waits_are_live(

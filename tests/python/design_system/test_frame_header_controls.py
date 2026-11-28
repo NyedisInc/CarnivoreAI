@@ -7,13 +7,7 @@ import pytest
 from scripts.design import frame_header_controls as fhc
 from scripts.design import raw_controls as rc
 
-KNOWN_FRAME_HEADER_CONTROLS: list[str] = [
-    'web/src/lib/catalog/CatalogToolbar.svelte::<button type="button" class="oc-seg__item bar__flag" role="radio" aria-checked={current ==',
-    'web/src/lib/catalog/CatalogToolbar.svelte::<button type="button" class="oc-seg__item bar__flag" role="radio" aria-checked={current ==#2',
-    'web/src/lib/catalog/CatalogToolbar.svelte::<button type="button" class="oc-seg__item bar__kind" role="radio" aria-checked={filters.ki',
-    'web/src/lib/catalog/CatalogToolbar.svelte::<button type="button" class="oc-seg__item bar__kind" role="radio" aria-checked={filters.ki#2',
-    'web/src/lib/info-tip/InfoTip.svelte::<button type="button" class="info-tip__btn" aria-label={label} aria-expanded={open} aria-c',
-]
+KNOWN_FRAME_HEADER_CONTROLS: list[str] = []
 
 
 def test_scan_sees_the_tree() -> None:

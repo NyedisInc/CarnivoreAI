@@ -7,7 +7,8 @@ from typing import Any, Optional
 import structlog
 
 from src.core import db
-from src.core.swarm import body, body_create, store
+from src.core.swarm.types import BodyIdentity, CreateRefused
+from src.core.swarm import body, store
 
 logger = structlog.get_logger()
 
@@ -31,10 +32,10 @@ async def adopt(app_state: Any, session_uuid: str, session_id: Optional[str], fr
         return None
     if wake_id is None:
         return None
-    ident = body_create.BodyIdentity(session_id, row_id, session_uuid, str(info.tmux_session), info.session.tmux_created_epoch)
+    ident = BodyIdentity(session_id, row_id, session_uuid, str(info.tmux_session), info.session.tmux_created_epoch)
     try:
         await body.finish_start(app_state, agent, wake_id, ident)
-    except (body_create.CreateRefused, db.DatastoreUnreadableError, sqlite3.Error, OSError, RuntimeError) as exc:
+    except (CreateRefused, db.DatastoreUnreadableError, sqlite3.Error, OSError, RuntimeError) as exc:
         logger.warning("swarm_plain_wake_finish_failed", agent_id=agent["id"], error=str(exc)[:200])
         await body._unwind(agent["id"], wake_id)
         return None

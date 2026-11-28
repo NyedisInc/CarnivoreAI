@@ -7,11 +7,14 @@ export interface KindField {
     readonly type: 'url' | 'secret' | 'text' | 'int' | 'enum' | 'list' | string;
     readonly required: boolean;
     readonly choices: readonly string[];
+    readonly label?: string;
 }
 
 export interface Kind {
     readonly id: string;
     readonly label_key: string;
+    readonly label?: string;
+    readonly plugin_id?: string;
     readonly sms_like: boolean;
     readonly details_allowed: boolean;
     readonly virtual: boolean;

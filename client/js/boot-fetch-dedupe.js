@@ -49,6 +49,7 @@
             flights.delete(key);
             entry = undefined;
         }
+        let isFirst = false;
         if (!entry) {
             let flight;
             try {
@@ -60,8 +61,9 @@
             flight.then(() => { mine.doneAt = clock(); }, () => { if (flights.get(key) === mine) flights.delete(key); });
             flights.set(key, mine);
             entry = mine;
+            isFirst = true;
         }
-        return entry.flight.then(copyOf);
+        return isFirst ? entry.flight : entry.flight.then(copyOf);
     }
 
     function run(key, init, start) {

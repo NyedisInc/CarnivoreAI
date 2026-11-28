@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 
 import pytest
 
-from src.plugins.host import gate, runtime, state as owner_state
+from src.plugins.host import gate, registry_store, runtime, state as owner_state
 from src.plugins.host.split_migration import effective_switches, migrate
 
 
@@ -61,18 +61,22 @@ def test_migration_keeps_an_install_that_ran_nothing_off(tmp_path: Path) -> None
 
 
 def test_a_stored_summarize_entry_from_the_killed_plugin_is_ignored_and_never_crashes(tmp_path: Path) -> None:
-    state_file = tmp_path / "cplugs" / "state.json"
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    state_file.write_text(json.dumps({"summarize": {"enabled": True, "grants": [], "revision": 1}}))
+    reg = registry_store.registry_path(tmp_path)
+    reg.parent.mkdir(parents=True, exist_ok=True)
+    doc = registry_store.new_document()
+    doc["items"]["summarize"] = {"kind": "feature", "enabled": True, "grants": [], "revision": 1}
+    reg.write_text(json.dumps(doc))
     assert migrate(tmp_path, _config(tmp_path, {})) == {"save": True}
     assert gate.is_on("summarize", tmp_path) is False
     assert runtime.find("summarize") is None
 
 
 def test_a_stored_backup_entry_from_the_retired_plugin_is_ignored_and_never_crashes(tmp_path: Path) -> None:
-    state_file = tmp_path / "cplugs" / "state.json"
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    state_file.write_text(json.dumps({"backup": {"enabled": True, "grants": [], "revision": 1}}))
+    reg = registry_store.registry_path(tmp_path)
+    reg.parent.mkdir(parents=True, exist_ok=True)
+    doc = registry_store.new_document()
+    doc["items"]["backup"] = {"kind": "feature", "enabled": True, "grants": [], "revision": 1}
+    reg.write_text(json.dumps(doc))
     config = _config(tmp_path, {"message_archive": {"enabled": True}})
     assert migrate(tmp_path, config) == {"save": True}
     assert gate.is_on("backup", tmp_path) is False
@@ -109,7 +113,7 @@ JOE_PRE_SPLIT_CONFIG = {
 
 def test_joes_pre_split_install_keeps_save_and_leaves_the_handoff_summary_and_retired_archive_off(tmp_path: Path) -> None:
     config = _config(tmp_path, JOE_PRE_SPLIT_CONFIG)
-    owner_state.update(tmp_path, runtime.find("huddle").manifest, None, lambda st: replace(st, enabled=True))
+    owner_state.update(tmp_path, runtime.find("taskmanager").manifest, None, lambda st: replace(st, enabled=True))
     assert migrate(tmp_path, config) == {"save": True}
     assert _stored(tmp_path) == {"save": True}
-    assert owner_state.stored_enabled(tmp_path, "huddle") is True
+    assert owner_state.stored_enabled(tmp_path, "taskmanager") is True

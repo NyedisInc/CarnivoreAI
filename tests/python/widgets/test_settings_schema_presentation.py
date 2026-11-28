@@ -26,6 +26,20 @@ def test_a_field_may_carry_keywords_the_settings_search_matches():
     assert parse_schema(raw).as_wire() == raw
 
 
+def test_a_field_may_declare_optional_boolean_hidden():
+    raw = {
+        "version": 1,
+        "fields": {
+            "a": {"kind": "string", "labelKey": "x.a", "default": "", "maxLength": 64, "hidden": True},
+            "b": {"kind": "boolean", "labelKey": "x.b", "default": False, "hidden": False},
+            "c": {"kind": "number", "labelKey": "x.c", "default": 1},
+        },
+    }
+    wire = parse_schema(raw).as_wire()
+    assert wire == raw
+    assert "hidden" not in wire["fields"]["c"]
+
+
 def test_a_schema_without_groups_answers_none():
     raw = {"version": 1, "fields": {"a": {"kind": "boolean", "labelKey": "x.a", "default": True}}}
     assert parse_schema(raw).as_wire() == raw
@@ -43,6 +57,10 @@ def test_a_schema_without_groups_answers_none():
      "hintKey must be a catalog key"),
     ({"version": 1, "fields": {"a": {"kind": "boolean", "labelKey": "x.a", "default": True, "keywordsKey": "Not A Key"}}},
      "keywordsKey must be a catalog key"),
+    ({"version": 1, "fields": {"a": {"kind": "boolean", "labelKey": "x.a", "default": True, "hidden": "yes"}}},
+     "hidden must be true or false"),
+    ({"version": 1, "fields": {"a": {"kind": "string", "labelKey": "x.a", "default": "", "maxLength": 10, "hidden": 1}}},
+     "hidden must be true or false"),
     ({"version": 1, "fields": {"a": {"kind": "boolean", "labelKey": "x.a", "default": True, "control": "select"}}},
      "unknown field: control"),
     ({"version": 1, "fields": {"a": {"kind": "enum", "labelKey": "x.a", "default": "p", "options": ["p"], "control": "dial"}}},

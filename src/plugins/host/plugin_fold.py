@@ -15,6 +15,9 @@ logger = structlog.get_logger()
 def migrate(state_dir: Path) -> Dict[str, Dict[str, Any]]:
     written: Dict[str, Dict[str, Any]] = {}
     for definition in runtime.definitions():
+        if owner_state.carry_blocked(state_dir, definition.manifest):
+            logger.warning("cplug_fold_deferred", into=definition.id, reason="renamed entry not carried yet")
+            continue
         fields = definition.manifest.settings_schema.get("fields", {})
         for old, switch in definition.manifest.legacy_ids.items():
             entry = owner_state.stored_entry(state_dir, old)

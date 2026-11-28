@@ -44,3 +44,21 @@ def test_pane_path_gets_the_native_install_dirs(tmp_path, monkeypatch):
     out = installed.path_with_install_dirs("/usr/bin:/bin")
     assert out.split(":")[:2] == ["/usr/bin", "/bin"] and str(tmp_path / ".local" / "bin") in out.split(":")
     assert installed.path_with_install_dirs(out) == out
+
+
+def test_profile_id_uses_resolved_harness_for_not_installed(monkeypatch):
+    monkeypatch.setattr(launch_failure, "harness_installed", lambda harness: False)
+    assert launch_failure.classify_launch_failure(DEAD, "claude-default", resolved_harness="claude") == "agent_not_installed_claude"
+    assert launch_failure.classify_launch_failure(DEAD, "codex-yolo", resolved_harness="codex") == "agent_not_installed_codex"
+
+
+def test_locate_checks_codex_install_candidates(tmp_path, monkeypatch):
+    from src.core.launch_profiles import installed
+
+    fake_bin = tmp_path / ".local" / "bin" / "codex"
+    fake_bin.parent.mkdir(parents=True)
+    fake_bin.write_text("#!/bin/sh\n")
+    fake_bin.chmod(0o755)
+    monkeypatch.setattr(installed.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(installed, "CODEX_INSTALL_CANDIDATES", (str(fake_bin),))
+    assert installed._locate("codex") == str(fake_bin)

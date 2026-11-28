@@ -1,7 +1,7 @@
 import { matchParts } from '../drawer/search-match';
 import { folderName, matchedField, matchesRow, type MatchField } from '../drawer/search';
 import type { SidebarRow } from './legacy';
-import { searchRowFacts } from './search-row-facts';
+import { pinAttrs } from './row-chips';
 import type { BrowserRowPlan, RowPlan, SearchHitPlan, SessionRowPlan } from './row-plan';
 
 export const SEARCH_AGENTS_BAND = 'search:agents';
@@ -12,6 +12,7 @@ export interface SearchAgentsPlan {
     key: string;
     count: number;
     rows: RowPlan[];
+    hidden: number;
 }
 
 export interface SearchConversationsPlan {
@@ -20,6 +21,8 @@ export interface SearchConversationsPlan {
     agents: number;
     query: string;
 }
+
+export const MAX_SEARCH_HITS = 50;
 
 const FIELD_RANK: Record<MatchField, number> = { name: 0, project: 1, folder: 2 };
 
@@ -47,20 +50,21 @@ export function hitPlan(row: SidebarRow, q: string, name: string): SearchHitPlan
             folder: folder ? matchParts(folder, q) : null,
         },
         conversationId: typeof row.claude_session_uuid === 'string' && row.claude_session_uuid ? row.claude_session_uuid : null,
-        facts: searchRowFacts(row),
     };
 }
 
 export function searchParts(
     list: readonly SidebarRow[], q: string, planRow: (row: SidebarRow) => RowPlan,
 ): Array<SearchAgentsPlan | SearchConversationsPlan> {
-    const hits = searchHitRows(list, q);
+    const all = searchHitRows(list, q);
+    const hits = all.slice(0, MAX_SEARCH_HITS);
     const rows = hits.map((row) => {
         const plan = planRow(row);
         if (plan.type === 'session') {
             const session = plan as SessionRowPlan;
             session.search = hitPlan(row, q, plan.name.text);
-            session.pin = null;
+            session.pin = pinAttrs(row.name, !!row.is_pinned, plan.name.text);
+            session.attrs = { ...session.attrs, 'data-search-hit': '1' };
         } else if (plan.type === 'browser') {
             (plan as BrowserRowPlan).pin = null;
         } else if (plan.type === 'layout') {
@@ -70,7 +74,7 @@ export function searchParts(
         return plan;
     });
     const parts: Array<SearchAgentsPlan | SearchConversationsPlan> = [];
-    if (rows.length) parts.push({ type: 'search-agents', key: SEARCH_AGENTS_BAND, count: rows.length, rows });
-    parts.push({ type: 'search-conversations', key: SEARCH_CONVERSATIONS_KEY, agents: rows.length, query: q.trim() });
+    if (rows.length) parts.push({ type: 'search-agents', key: SEARCH_AGENTS_BAND, count: all.length, rows, hidden: all.length - rows.length });
+    parts.push({ type: 'search-conversations', key: SEARCH_CONVERSATIONS_KEY, agents: all.length, query: q.trim() });
     return parts;
 }

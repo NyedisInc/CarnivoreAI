@@ -4,6 +4,8 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { fileURLToPath } from 'node:url';
 import { popupFocusLast } from './vite.widget-harness.shared';
+import { dedupeI18nPlugin } from './vite.i18n-shared';
+import { tomlPlugin } from './vite.toml-plugin';
 
 const root = fileURLToPath(new URL('./src/widget-harness', import.meta.url));
 
@@ -12,7 +14,7 @@ const outDir = fileURLToPath(new URL('../client/dist/widget-lab', import.meta.ur
 export default defineConfig({
     root,
     base: '/static/dist/widget-lab/',
-    plugins: [svelte(), tailwindcss(), popupFocusLast()],
+    plugins: [tomlPlugin(), dedupeI18nPlugin(), svelte(), tailwindcss(), popupFocusLast()],
     build: {
         outDir,
         emptyOutDir: true,

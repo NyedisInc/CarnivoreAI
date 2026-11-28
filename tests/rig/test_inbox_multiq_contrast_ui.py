@@ -63,6 +63,7 @@ def test_card_text_is_the_pinned_theme_foreground(rig_slot: RigSlot, tmp_path, p
         open_questions(page)
         cell = page.locator("[data-dq-cell]").first
         expect(cell).to_be_visible(timeout=20000)
+        expect(cell).to_have_attribute("data-session-theme", pinned, timeout=10000)
         expect(cell.locator("[data-approval-step]")).to_have_text("question 1 of 3")
         labels = cell.locator(".ap-opt-label")
         expect(labels).to_have_count(4)

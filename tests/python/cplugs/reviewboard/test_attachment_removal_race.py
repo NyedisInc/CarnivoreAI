@@ -7,8 +7,8 @@ import threading
 import time
 from pathlib import Path
 
-from src.plugins.huddle import files as huddle_files, store_files
-from src.plugins.huddle.public import Located, TaskManagerError
+from src.plugins.taskmanager import files as huddle_files, store_files
+from src.plugins.taskmanager.public import Located, TaskManagerError
 from tests.python.cplugs.reviewboard.harness import BASE, task_manager_store
 from tests.python.cplugs.reviewboard.test_attachment_removal import _message, two  # noqa: F401
 from tests.python.cplugs.reviewboard.test_attachments import board, client, env  # noqa: F401
@@ -17,7 +17,7 @@ from tests.python.cplugs.failing_commit import FailingCommit
 
 def test_a_reply_posted_while_the_removal_is_paused_before_the_unlink_never_dangles(env, client, board, two, monkeypatch):
     item, victim = board["item"], two[0]["file_id"]
-    storage, store = env.host.storage("huddle"), task_manager_store(env)
+    storage, store = env.host.storage("taskmanager"), task_manager_store(env)
     attached = huddle_files.parts_of(huddle_files.attach(storage, item, [victim]))
     at_unlink, resume = threading.Event(), threading.Event()
     real_unlink = Path.unlink
@@ -51,7 +51,7 @@ def test_a_reply_posted_while_the_removal_is_paused_before_the_unlink_never_dang
 
 def test_a_commit_that_fails_after_the_rename_puts_the_bytes_back(env, client, board, two, monkeypatch):
     item, mid, victim = board["item"], two[0]["message_id"], two[0]["file_id"]
-    storage, store = env.host.storage("huddle"), task_manager_store(env)
+    storage, store = env.host.storage("taskmanager"), task_manager_store(env)
     path = huddle_files.locate(storage, item, victim)
     before, names = _message(env, item, mid), sorted(p.name for p in path.parent.iterdir())
     real = type(store)._connect
@@ -68,7 +68,7 @@ def test_a_commit_that_fails_after_the_rename_puts_the_bytes_back(env, client, b
 
 def test_a_leftover_set_aside_file_is_unlinked_by_a_retried_removal(env, client, board, two):
     item, victim = board["item"], two[0]["file_id"]
-    storage = env.host.storage("huddle")
+    storage = env.host.storage("taskmanager")
     path = huddle_files.locate(storage, item, victim)
     leftover = huddle_files.aside_name(path)
     path.rename(leftover)
@@ -78,7 +78,7 @@ def test_a_leftover_set_aside_file_is_unlinked_by_a_retried_removal(env, client,
 
 def test_the_sweep_leaves_a_fresh_set_aside_copy_and_takes_an_old_one(env, client, board, two, monkeypatch):
     item = board["item"]
-    storage = env.host.storage("huddle")
+    storage = env.host.storage("taskmanager")
     first, second = (huddle_files.locate(storage, item, t["file_id"]) for t in two)
     fresh, old = huddle_files.aside_name(first), huddle_files.aside_name(second)
     first.rename(fresh)
@@ -110,7 +110,7 @@ def test_the_sweep_leaves_a_fresh_set_aside_copy_and_takes_an_old_one(env, clien
 def test_a_retry_that_waits_on_a_failed_first_removal_still_deletes_the_bytes(env, client, board, two, monkeypatch):
     item, mid, victim = board["item"], two[0]["message_id"], two[0]["file_id"]
     store = task_manager_store(env)
-    storage = env.host.storage("huddle")
+    storage = env.host.storage("taskmanager")
     path = huddle_files.locate(storage, item, victim)
     asided, go = threading.Event(), threading.Event()
     real_aside, real_connect, opened = store_files._set_aside, type(store)._connect, []

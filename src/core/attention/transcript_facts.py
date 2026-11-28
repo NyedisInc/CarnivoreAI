@@ -44,6 +44,7 @@ class TranscriptFacts:
     turn_end_at: Optional[datetime] = None
     newest_assistant_at: Optional[datetime] = None
     newest_append_at: Optional[datetime] = None
+    newest_activity_at: Optional[datetime] = None
     blocked_on_tool: Optional[str] = None
     queued_reinvoke: bool = False
     queued_reinvoke_at: Optional[datetime] = None
@@ -228,6 +229,7 @@ def classify_transcript_records(
         turn_end_at=turn_end_at,
         newest_assistant_at=newest_assistant_at,
         newest_append_at=newest_append_at,
+        newest_activity_at=walk.newest_activity_at,
         blocked_on_tool=blocked_on_tool,
         queued_reinvoke=queued_reinvoke,
         queued_reinvoke_at=newest_enqueue_at if queued_reinvoke else None,

@@ -40,19 +40,37 @@ describe('a verdict this build can take at face value', () => {
         expect(flaggedOnCard(block)).toBe(true);
     });
 
-    test('all five blocking kinds permit blocked', () => {
+    test('all three active blocking kinds permit blocked and refuse flagged', () => {
         for (const kind of [
             'prompt_injection',
             'credential_access',
-            'obfuscation',
-            'opaque_payload',
             'settings_write',
         ]) {
-            const block = reviewed({
+            const asBlocked = reviewed({
                 verdict: 'blocked',
                 warnings: [{ kind, detail: 'd', file: 'SKILL.md' }],
             });
-            expect(reviewView(block).verdict, kind).toBe('blocked');
+            expect(reviewView(asBlocked).verdict, kind).toBe('blocked');
+            const asFlagged = reviewed({
+                verdict: 'flagged',
+                warnings: [{ kind, detail: 'd', file: 'SKILL.md' }],
+            });
+            expect(reviewView(asFlagged).verdict, kind).toBe('unreadable');
+        }
+    });
+
+    test('legacy blocking kinds (obfuscation, opaque_payload) permit flagged on new reviews and blocked on historical ones (#3395)', () => {
+        for (const kind of ['obfuscation', 'opaque_payload']) {
+            const asFlagged = reviewed({
+                verdict: 'flagged',
+                warnings: [{ kind, detail: 'd', file: 'app.js' }],
+            });
+            expect(reviewView(asFlagged).verdict, kind).toBe('flagged');
+            const asBlocked = reviewed({
+                verdict: 'blocked',
+                warnings: [{ kind, detail: 'd', file: 'app.js' }],
+            });
+            expect(reviewView(asBlocked).verdict, kind).toBe('blocked');
         }
     });
 

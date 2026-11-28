@@ -378,3 +378,104 @@ def test_an_unexpected_error_after_the_claim_does_not_strand_the_row(monkeypatch
     with pytest.raises(sqlite3.OperationalError):
         asyncio.run(Dispatcher(app)._drain('u'))
     assert finished == [('failed', 'delivery uncertain; manual review required')]
+
+
+def _gate_fixture(monkeypatch, info, finished):
+    from src.core.crosstalk import directory
+    from src.core.mcp import protocol
+    from src.core.sessions import guarded_paste
+    message = {'id': 'm1', 'source': 'crosstalk', 'receiver_id': 'ses_x', 'receiver_epoch': 7, 'receiver_uuid': 'u',
+               'receiver_key': 'u', 'text': 'go', 'sender_name': 's', 'sender_provider': 'p', 'sender_model': None,
+               'thread': 't', 'reason': None, 'created_at': time.time()}
+
+    class Manager:
+        async def get_session_info(self, session_id):
+            return info
+
+    class View:
+        def __init__(self, *_):
+            pass
+
+        async def list_session_infos(self):
+            return [info]
+
+        async def list_peer_infos(self):
+            return []
+
+    async def cards(*_a, **_k):
+        return [{'id': 'ses_x', 'session_uuid': 'u'}]
+
+    async def paste(app_state, session_id, text, options=None):
+        finished.append(('pasted', session_id))
+
+    async def no_swarm(*_a):
+        return None
+
+    monkeypatch.setattr(protocol, 'BatchView', View)
+    monkeypatch.setattr(directory, 'list_cards', cards)
+    claims = [message]
+    monkeypatch.setattr(store, 'claim_for', lambda key: claims.pop() if claims else None)
+    monkeypatch.setattr(store, 'finish', lambda mid, status, reason=None: finished.append((status, reason)))
+    monkeypatch.setattr(guarded_paste, 'paste_through_gates', paste)
+    from src.core.crosstalk.delivery import dispatcher as module
+    monkeypatch.setattr(module, '_record_swarm', no_swarm)
+    return SimpleNamespace(state=SimpleNamespace(session_manager=Manager())), message
+
+
+def test_gate_ready_wake_delivers_held_custom_family_message_without_status_change(monkeypatch):
+    from src.core.crosstalk.delivery.dispatcher import gate_ready_ids
+    from src.core.mcp.federated import LOCAL_HOST_KEY
+    finished = []
+    info = SimpleNamespace(session=SimpleNamespace(id='ses_x', tmux_created_epoch=7), activity_status='idle',
+                           startup_gate='awaiting', agent_family='custom', agent_type='antigravity', host_key=LOCAL_HOST_KEY)
+    app, message = _gate_fixture(monkeypatch, info, finished)
+
+    async def run():
+        dispatcher = Dispatcher(app)
+        await dispatcher._drain('u')
+        assert finished == [('held', 'receiver has an open dialog or startup gate')]
+        dispatcher.close()
+        message['reason'] = None
+        store_claims = [message]
+        monkeypatch.setattr(store, 'claim_for', lambda key: store_claims.pop() if store_claims else None)
+        info.startup_gate = 'ready'
+        dispatcher = Dispatcher(app)
+        for sid in gate_ready_ids({'list': {'upsert': [{'key': 'ses_x', 'nested': {}, 'fields': {'startup_gate': 'ready'}}]}}):
+            dispatcher.on_startup_ready(sid)
+        for _ in range(20):
+            await asyncio.sleep(0)
+        await asyncio.gather(*dispatcher._tasks.values())
+        dispatcher.close()
+
+    asyncio.run(run())
+    assert finished[-2:] == [('pasted', 'ses_x'), ('delivered', None)]
+
+
+def test_gate_ready_wake_leaves_an_open_dialog_held(monkeypatch):
+    from src.core.mcp.federated import LOCAL_HOST_KEY
+    finished = []
+    info = SimpleNamespace(session=SimpleNamespace(id='ses_x', tmux_created_epoch=7), activity_status='question',
+                           startup_gate='ready', agent_family='custom', agent_type='antigravity', host_key=LOCAL_HOST_KEY)
+    app, _ = _gate_fixture(monkeypatch, info, finished)
+
+    async def run():
+        dispatcher = Dispatcher(app)
+        dispatcher.on_startup_ready('ses_x')
+        for _ in range(20):
+            await asyncio.sleep(0)
+        await asyncio.gather(*dispatcher._tasks.values())
+        dispatcher.close()
+
+    asyncio.run(run())
+    assert finished == [('held', 'receiver has an open dialog or startup gate')]
+
+
+def test_timed_startup_retry_covers_a_non_codex_receiver():
+    async def check():
+        dispatcher = Dispatcher(SimpleNamespace())
+        message = {'id': 'm', 'source': 'crosstalk', 'receiver_key': 'u', 'created_at': time.time()}
+        dispatcher._retry_native_startup(SimpleNamespace(agent_family='custom'), message)
+        assert len(dispatcher._startup_retries['m']) == 3
+        dispatcher.close()
+
+    asyncio.run(check())

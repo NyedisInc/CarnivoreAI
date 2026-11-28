@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.federation.peer_ledger import identity_key
 from src.core.hosts.identity import remote_session_id
@@ -59,14 +59,16 @@ def _not_after(fetched_at: Optional[datetime], received_at: float) -> Optional[d
 
 def decorate_local(rows: List[AccountUsage]) -> List[AccountUsage]:
     names = directory()
+    by_acct = store.all_sessions_reports()
     out: List[AccountUsage] = []
     for row in rows:
-        found = [e for r in store.sessions_reports(row.provider, row.id) for e in elsewhere(r.body.sessions, names, r.sender)]
+        found = [e for r in by_acct.get((row.provider, row.id), ()) for e in elsewhere(r.body.sessions, names, r.sender)]
         out.append(row.model_copy(update={"sessions_elsewhere": found}) if found else row)
     return out
 
 
-def identity_keys(rows: List[AccountUsage]) -> Dict[str, Optional[str]]:
-    pushed = store.statuses_by_profile()
+def identity_keys(rows: List[AccountUsage], *, pushed: Optional[Dict[str, Any]] = None) -> Dict[str, Optional[str]]:
+    if pushed is None:
+        pushed = store.statuses_by_profile()
     return {r.id: (pushed[r.id].body.identity_key if r.relayed and r.id in pushed else identity_key(r.provider, r.identity))
             for r in rows}

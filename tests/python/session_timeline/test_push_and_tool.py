@@ -74,7 +74,7 @@ def test_restore_point_writes_pins_deletes_and_sweeps_each_name_the_topic(env, p
 
 
 def _call(args):
-    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), tmux_session="cloude_fixture", session_row_id=7, host_key="local")
+    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), label=None, claude_title=None, tmux_session="cloude_fixture", session_row_id=7, host_key="local")
 
     class View:
         app = None

@@ -40,9 +40,9 @@
     "src/plugins/tmdevtools/mcp.py",
     "src/plugins/tmdevtools/service.py",
     "src/plugins/tmdevtools/commands.py",
-    "src/plugins/huddle/devtools_port.py",
+    "src/plugins/taskmanager/devtools_port.py",
     "web/src/plugins/tmdevtools/commands.ts",
-    "web/src/plugins/huddle/task-manager-view-commands.ts"
+    "web/src/plugins/taskmanager/task-manager-view-commands.ts"
   ],
   "updated": "2026-10-13",
   "where": [

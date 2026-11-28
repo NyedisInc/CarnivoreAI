@@ -14,7 +14,12 @@ from src.core.db import db_path_for
 from src.core.session_change_notice import publish
 from . import activity, changes, config, events, observations, pack_scope, rules, tripwires
 from .plugin import PLUGIN_ID, ingest
-from .account_owner import AccountAttribution
+from .account_owner import (
+    AccountAttribution,
+    ProjectAttribution,
+    backfill_subagent_parents,
+    backfill_unattributed_accounts,
+)
 from .store import StatsStore
 from src.core.product_identity import test_mode_enabled
 
@@ -31,7 +36,10 @@ class StatsScheduler:
     def __init__(self, store: StatsStore, manager: Any, app_state: Any, config_path: Path) -> None:
         self.store, self.manager, self.app_state = store, manager, app_state
         self.config_path = config_path
-        ingest.set_account_resolver(AccountAttribution(config_path))
+        self._account_resolver = AccountAttribution(config_path, state_dir=store.state_dir)
+        self._project_resolver = ProjectAttribution(store.state_dir)
+        ingest.set_account_resolver(self._account_resolver)
+        ingest.set_project_resolver(self._project_resolver)
         self.activity = activity.ActivityRecorder(store)
         self.rules = rules.RuleObserver(store)
         self._cancel = threading.Event()
@@ -39,6 +47,7 @@ class StatsScheduler:
         self._wake = asyncio.Event()
         self._task: asyncio.Task | None = None
         self._last_projects = 0.0
+        self._last_account_backfill = 0.0
         self._last_rules = 0.0
         self._last_notice = 0.0
         self._last_chart_notice = 0.0
@@ -144,6 +153,13 @@ class StatsScheduler:
             return {'state': 'stopping'}
         if time.monotonic() - self._last_projects >= 900:
             self._refresh_projects()
+        if self._last_account_backfill == 0.0 or time.monotonic() - self._last_account_backfill >= 1800:
+            try:
+                backfill_unattributed_accounts(self.store, self._account_resolver)
+                backfill_subagent_parents(self.store, self._project_resolver)
+            except _EXPECTED_FAILURES as exc:
+                logger.debug('stats_account_backfill_skipped', error_type=type(exc).__name__)
+            self._last_account_backfill = time.monotonic()
         self.rules.add_projects([cwd for _, _, cwd in hints if cwd])
         if self._reset_observations.is_set():
             self.activity.reset()

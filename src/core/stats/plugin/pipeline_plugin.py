@@ -18,4 +18,5 @@ def on_events(conn: sqlite3.Connection, events: Sequence[C.Event]) -> None:
 
 
 STATS = C.Plugin(id=PLUGIN_ID, db_name=DB_NAME, schema_version=schema.SCHEMA_VERSION, migrate=schema.migrate,
-                 on_events=on_events, carry_over=carry.carry_over, export_rollup=pack_rollup.export_rollup)
+                 on_events=on_events, carry_over=carry.carry_over, export_rollup=pack_rollup.export_rollup,
+                 families=frozenset({C.FAMILY_CLAUDE, C.FAMILY_CODEX, C.FAMILY_AGY}))

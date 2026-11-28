@@ -51,6 +51,7 @@ class ConversationPresence:
     path: Optional[Path] = None
     detail: Optional[str] = None
     unreadable: bool = False
+    unreadable_folder: Optional[Path] = None
 
     @property
     def missing(self) -> bool:
@@ -150,8 +151,8 @@ def root_children(root: Path) -> Tuple[Tuple[Path, ...], bool]:
 
 def _scan_children(
     children: Tuple[Path, ...], filename: str, root: Path
-) -> Tuple[Optional[Path], bool]:
-    unreadable = False
+) -> Tuple[Optional[Path], Optional[Path]]:
+    unreadable: Optional[Path] = None
     for child in children:
         candidate = child / filename
         try:
@@ -161,7 +162,7 @@ def _scan_children(
         except (FileNotFoundError, NotADirectoryError):
             continue
         except OSError:
-            unreadable = True
+            unreadable = unreadable or child
     return None, unreadable
 
 
@@ -185,6 +186,7 @@ def _measure_presence(
     roots = corpus_roots(corpus_root)
     unchecked: Optional[ConversationPresence] = None
     unreadable = False
+    unreadable_folder: Optional[Path] = None
     for root in roots:
         found = measure_in_root(root, str(claude_session_uuid), working_dir)
         if found.outcome == CONVERSATION_PRESENT:
@@ -192,6 +194,7 @@ def _measure_presence(
         if found.outcome == CONVERSATION_UNCHECKED and unchecked is None:
             unchecked = found
         unreadable = unreadable or found.unreadable
+        unreadable_folder = unreadable_folder or found.unreadable_folder
     if unchecked is not None:
         return unchecked
     where = ", ".join(str(r) for r in roots)
@@ -202,6 +205,7 @@ def _measure_presence(
             f"exists under {where}, so it cannot be resumed"
         ),
         unreadable=unreadable,
+        unreadable_folder=unreadable_folder,
     )
 
 
@@ -246,6 +250,22 @@ def codex_rollout_presence(
     )
 
 
+def agy_conversation_presence(
+    conversation_id: Optional[str], *, agy_home: Optional[str] = None
+) -> ConversationPresence:
+    from src.core.agy import transcripts as agy_transcripts
+
+    if not agy_transcripts.valid_id(conversation_id):
+        return ConversationPresence(CONVERSATION_UNCHECKED, detail="no canonical agy conversation id to look for, so agy's store was not searched")
+    home = Path(agy_home) if agy_home else agy_transcripts.AGY_HOME
+    if not os.access(home / "brain", os.R_OK | os.X_OK):
+        return ConversationPresence(CONVERSATION_UNCHECKED, detail=f"agy's store at {home} could not be read, so whether this conversation still exists could not be determined")
+    found = agy_transcripts.transcript_path(str(conversation_id), home)
+    if found is not None:
+        return ConversationPresence(CONVERSATION_PRESENT, path=found)
+    return ConversationPresence(CONVERSATION_ABSENT, detail=f"no transcript for agy conversation {conversation_id} exists under {home}, so it cannot be resumed")
+
+
 def family_conversation_presence(
     family: Optional[str],
     conversation_uuid: Optional[str],
@@ -253,11 +273,18 @@ def family_conversation_presence(
     working_dir: Optional[str] = None,
     corpus_root: Optional[Path] = None,
     codex_home: Optional[str] = None,
+    agent_is_agy: bool = False,
+    agy_home: Optional[str] = None,
 ) -> ConversationPresence:
     from src.core.attention.evidence import FAMILY_CODEX
 
     if family == FAMILY_CODEX:
         return codex_rollout_presence(conversation_uuid, codex_home=codex_home)
+    if family == "agy" or (family == "custom" and agent_is_agy):
+        return agy_conversation_presence(conversation_uuid, agy_home=agy_home)
+    if family == "custom":
+        return ConversationPresence(
+            CONVERSATION_UNCHECKED, detail="a custom agent's conversation is not in claude's transcript store, so it was not checked")
     return conversation_presence(
         conversation_uuid, working_dir=working_dir, corpus_root=corpus_root
     )

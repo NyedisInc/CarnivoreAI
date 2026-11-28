@@ -17,17 +17,20 @@
   "examples": [
     "Carry a laptop to a coffee shop: it falls off the home network, finds its main again through the relay, and the pack page says via relay until it is back on a direct link.",
     "Turn off the machine that is main for a few minutes and the first computer you opted in steps up, limited, until the original is back.",
-    "Reorder who steps up first and opt a computer out of ever taking over."
+    "Reorder who steps up first and opt a computer out of ever taking over.",
+    "Take over from a stopped alpha on a member among the first 16 computers."
   ],
   "how_to": [
     "Open pack, computers, then the pack settings panel on the right: the reconnect and takeover section holds the switches and the successor order.",
     "Turn on use the relay when the direct link is gone to let a computer reach its main through carnivore.ai when the direct link is down (the weaker protection note sits at that switch).",
     "Turn on take over when main is gone on a computer, then opt computers in with the switch beside each name and move them up or down; only main edits the order.",
-    "When this computer follows a takeover main it says read only until you confirm; press confirm new main on each computer that should follow it. The original main takes the role back by itself once it is linked and stable for 5 minutes."
+    "When this computer follows a takeover main it says read only until you confirm; press confirm new main on each computer that should follow it. The original main takes the role back by itself once it is linked and stable for 5 minutes.",
+    "A takeover is read from the signed v2 computer list; only the first 16 computers can claim a takeover, the rest follow it."
   ],
   "id": "pack-reconnect",
   "issues": [
-    2980
+    2980,
+    3307
   ],
   "keywords": [
     "pack",
@@ -40,7 +43,7 @@
     "alpha",
     "failover"
   ],
-  "media_exempt": "The section needs a live pack of two or more computers, one of them cut off from its main, to show the state lines and the order; the capture is recorded with the release run.",
+  "media_exempt": "The section needs a live pack of two or more computers, one of them cut off from its main, to show the state lines and the order; the capture is recorded with the release run; recaptured after the next version bump",
   "name": "Pack reconnect and takeover",
   "since": "2026-11-13",
   "status": "beta",
@@ -52,7 +55,7 @@
     "src/core/mcp/pack_machines_tools.py",
     "src/api/pack_machines_routes.py"
   ],
-  "updated": "2026-11-13",
+  "updated": "2026-11-23",
   "where": [
     "Pack, computers tab, pack settings panel (the gear in the title strip), section reconnect and takeover."
   ]

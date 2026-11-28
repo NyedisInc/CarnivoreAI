@@ -58,6 +58,8 @@ def slots_for(home: Path, accounts: Iterable[Any], harnesses: Iterable[str]) -> 
     if "codex" in chosen:
         add("codex.default", "codex", home / ".codex")
         add("agents.default", "agents", home / ".agents")
+    if "agy" in chosen:
+        add("agy.default", "agy", home / ".gemini" / "config")
     for account in accounts:
         if account.provider == "claude" and "claude" in chosen and account.claude_config_dir:
             add(f"claude.{account.id}", "claude", Path(os.path.expanduser(account.claude_config_dir)))
@@ -73,7 +75,7 @@ def _entries(slot: Slot) -> Iterator[Tuple[str, Path]]:
         logger.info("pack_global_slot_unreadable", slot=slot.id, errno=exc.errno)
         return
     for name in names:
-        if rules.is_denied(name) or rules.is_litter(name) or rules.is_machine_local(name) or (slot.kind == "agents" and name != "skills"):
+        if rules.is_denied(name) or rules.is_litter(name) or rules.is_machine_local(name) or (slot.kind in rules.ONLY_ITEMS and name not in rules.ONLY_ITEMS[slot.kind]):
             continue
         if name == "plugins" and slot.kind == "claude":
             for rel in (*rules.PLUGIN_FILES, *rules.PLUGIN_DIRS):

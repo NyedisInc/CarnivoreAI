@@ -3,19 +3,44 @@ import { open as openGroupRule } from '../../drawer/group-rule-popup';
 import { bandKeyFor } from '../../drawer/group-store';
 import { addToNodes } from '../../add-to-menu/host';
 import { createGroupThenAssign } from '../../sidebar-shell/group-assign';
-import { deleteGroup, moveGroup, renameGroup } from '../../sidebar-shell/heading-group-actions';
+import { groupContainerOptions } from '../../sidebar-shell/group-containers';
+import { deleteGroup, moveGroup, moveGroupToParent, renameGroup } from '../../sidebar-shell/heading-group-actions';
 import { sleepGroup } from '../../sidebar-shell/heading-project-actions';
 import { hg, usableGroups } from '../../sidebar-shell/interaction-globals';
 import { entryNodes, spaced, type ItemMenuEntry } from '../entries';
 import { defineItemMenu } from '../registry';
 import { foldInsideEntry } from './fold-inside';
+import type { MenuNode } from '../../drawer-tabs/add-component-menu';
+
+function moveToNodes(
+    groupUuid: string,
+    currentParent: string | null,
+    env: { glyph: (icon: string | undefined) => string; close: () => void },
+): MenuNode[] {
+    const options = groupContainerOptions(groupUuid);
+    const entries: ItemMenuEntry[] = [];
+    let lastSection: string | null = null;
+    for (const opt of options) {
+        const sep = lastSection !== null && opt.section !== lastSection;
+        lastSection = opt.section;
+        entries.push({
+            label: opt.label,
+            id: `move-parent:${opt.key ?? 'top'}`,
+            checked: opt.key === currentParent,
+            separatorBefore: sep,
+            onPick: () => { void moveGroupToParent(groupUuid, opt.key, opt.label); },
+        });
+    }
+    return entryNodes(entries, env.glyph, env.close);
+}
 
 defineItemMenu('group', {
     build({ key: groupUuid, anchor }, env) {
         const G = usableGroups();
         const group = G?.groupByUuid(groupUuid);
         if (!G || !group) return null;
-        const order = G.current().groups.map((g) => g.group_uuid);
+        const parent = group.parent_key ?? null;
+        const order = G.current().groups.filter((g) => (g.parent_key ?? null) === parent).map((g) => g.group_uuid);
         const at = order.indexOf(groupUuid);
         const customize: ItemMenuEntry[] = [
             { label: t('sidebar.heading.rename'), icon: 'rename', id: 'rename-group', onPick: () => { renameGroup(groupUuid); } },
@@ -28,8 +53,15 @@ defineItemMenu('group', {
             [{ label: t('sidebar.group.menu.customize'), icon: 'colour', id: 'customize', children: () => entryNodes(customize, env.glyph, env.close), onPick: () => undefined }],
             [foldInsideEntry(bandKeyFor(groupUuid))],
             [{ label: t('sidebar.heading.sleep'), icon: 'sleep', id: 'sleep', onPick: () => { void sleepGroup(groupUuid); } }],
-            [{ label: t('sidebar.group.menu.new'), icon: 'add', id: 'group', onPick: () => { void createGroupThenAssign(null); } }],
             [
+                { label: t('sidebar.group.menu.new_subgroup'), icon: 'add', id: 'new-subgroup', onPick: () => { void createGroupThenAssign(null, undefined, bandKeyFor(groupUuid)); } },
+                { label: t('sidebar.group.menu.new'), icon: 'add', id: 'group', onPick: () => { void (parent ? createGroupThenAssign(null, undefined, parent) : createGroupThenAssign(null)); } },
+            ],
+            [
+                {
+                    label: t('sidebar.group.menu.move_to'), icon: 'send-to', id: 'move-to-group',
+                    children: () => moveToNodes(groupUuid, parent, env), onPick: () => undefined,
+                },
                 {
                     label: t('sidebar.group.menu.move_up'), icon: 'move-up', id: 'move-up',
                     ...(at === 0 ? { blocked: t('widgets.menu.already_first') } : {}),

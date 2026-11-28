@@ -1,0 +1,21 @@
+  [/Users/demo/sample-proj/.claude/agent-memory/x/facts/f_2440ec3102dc.md]
+  - f_64a1ac5fcd2f (Demo View, rule, last used 2026-11-01): sample-proj: detail page shared by parallel agents
+  Called carnivore (ctrl+o to expand)
+⏺ I checked the 6 saved rules again and kept all of them. Each still holds.
+✻ Cogitated for 6s · done Wednesday, Nov 11 at 3:04 AM
+────────────────────────────────────────────────────────────────────────────────────────────────────
+  Allow external CLAUDE.md file imports?
+
+  This project's CLAUDE.md or .claude/rules imports files outside the current working directory. Never allow this for third-party
+  repositories.
+
+  External imports:
+    /Users/demo/.claude/RTK.md
+
+  Important: Only use Claude Code with files you trust. Accessing untrusted files may pose security risks
+  https://code.claude.com/docs/en/security
+
+  ❯ No, disable external imports
+    Yes, allow external imports
+
+  Enter to confirm · Esc to cancel

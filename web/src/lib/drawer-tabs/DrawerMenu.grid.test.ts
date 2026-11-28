@@ -8,10 +8,11 @@ import FlyoutBodyFixture from '../sidebar-widgets/fixtures/FlyoutBodyFixture.sve
 import { registerTab, tabRegistry } from '../dynamic-tabs/registry';
 import { agentsTab, menuTab, questionsTab } from './core-tabs';
 import { registerCoreSidebarWidgets } from '../sidebar-widgets/core-widgets';
-import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/taskmanager/swarm-flyout';
 import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
-cplugEnablement.enabled = { huddle: true };
+cplugEnablement.enabled = { taskmanager: true };
+// the Task Manager
 for (const def of [menuTab, agentsTab, questionsTab]) if (!tabRegistry.get(def.id)) registerTab(def);
 if (!tabRegistry.get('huddle')) registerTab({ id: 'huddle', labelKey: 'cplug.huddle.tab', icon: 'swarm', order: 35, persist: false, widgetArea: 'glance', body: { component: FlyoutBodyFixture } });
 registerCoreSidebarWidgets();

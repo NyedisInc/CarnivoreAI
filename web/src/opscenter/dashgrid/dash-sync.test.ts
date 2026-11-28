@@ -131,16 +131,25 @@ test('a board past the grid item limit sends its rows alone', () => {
   warn.mockRestore();
 });
 
-test('a board whose rows fit the byte cap but whose grid does not sends its rows alone and warns with the sizes', () => {
+test('a rich free-grid board over 16 KiB (e.g. >24 KiB) keeps its grid under the 128 KiB cap (#3385)', () => {
   const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-  const cap = 16384;
-  let n = 1;
-  let withGrid = 0;
-  for (; n < 240; n++) {
-    withGrid = bytesOf(blobWithGrid(manyRows(n), dashGridFor(manyRows(n))));
-    if (withGrid > cap) break;
-  }
-  const board = manyRows(n);
+  const rich = manyRows(140);
+  const withGrid = bytesOf(blobWithGrid(rich, dashGridFor(rich)));
+  expect(withGrid).toBeGreaterThan(24 * 1024);
+  expect(withGrid).toBeLessThan(131072);
+  const out = blobForSend(rich);
+  expect('grid' in out).toBe(true);
+  expect(warn).not.toHaveBeenCalled();
+  warn.mockRestore();
+});
+
+test('a board whose rows fit the 128 KiB byte cap but whose grid does not sends its rows alone and warns with the sizes', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  const cap = 131072;
+  const base = manyRows(180);
+  const hidden = Array.from({ length: 1800 }, (_, k) => `analytics:11111111-1111-4111-8111-${String(k).padStart(12, '0')}`);
+  const board = { ...base, hidden } as unknown as Layout;
+  const withGrid = bytesOf(blobWithGrid(board, dashGridFor(board)));
   expect(bytesOf(board)).toBeLessThan(cap);
   expect(withGrid).toBeGreaterThan(cap);
   warn.mockClear();

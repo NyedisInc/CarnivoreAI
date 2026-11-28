@@ -26,7 +26,7 @@ STATE: dict = {}
 
 def _info(name: str, **kw) -> SimpleNamespace:
     base = dict(activity_status="idle", status_source="registry", subagents_running=None, background_open=None, tmux_session=name,
-                host_key="local", session_row_id=1, host_label="here",
+                host_key="local", label=None, claude_title=None, session_uuid=None, session_row_id=1, host_label="here",
                 session=SimpleNamespace(id=f"ses_{name.removeprefix('cloude_')}", tmux_created_epoch=7, agent_type="claude",
                                         last_activity=datetime.utcnow()))
     base.update(kw)

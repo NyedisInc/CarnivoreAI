@@ -7,7 +7,7 @@ vi.mock('../drawer/row-menu-sleep', async (orig) => ({
 }));
 import * as GroupStore from '../drawer/group-store';
 import { deleteGroup } from './heading-group-actions';
-import { archiveProject, sleepGroup, sleepProject } from './heading-project-actions';
+import { archiveProject, projectNameFor, projectRows, sleepGroup, sleepProject } from './heading-project-actions';
 
 type Win = Record<string, any>;
 const win = globalThis as unknown as Win;
@@ -139,6 +139,34 @@ describe('project and group bulk actions', () => {
         expect(calls.some((c) => c[0] === 'archive')).toBe(false);
         expect(reported).toHaveLength(1);
         expect(reported[0]).toContain('c_b: tmux said no');
+    });
+
+    it('already-archived rows are skipped so archiving a project never fails on them (#3358)', async () => {
+        standUp();
+        win.SessionSidebar._rows = [
+            row({ name: 'c_old', session_uuid: 'uold', project_id: 3, project_name: 'Api', archived: true }),
+            row({ name: 'c_z', session_uuid: 'uz', project_id: 3, project_name: 'Api', asleep: true }),
+        ];
+        expect(await archiveProject('p:3')).toBe(true);
+        expect(writes()).toEqual([['deleteRecord', 'uz'], ['archive', 'Api']]);
+        expect(reported).toEqual([]);
+    });
+
+    it('terminal-only project (#3023) resolves rows and name, and archive closes the live shell before archiving (#3358)', async () => {
+        standUp();
+        win.SessionSidebar._rows = [
+            row({ name: 'carnivore_demo-shell', agent_family: 'shell', session_id: 'ses_sh', project_id: 107, project_name: 'demo-shell' }),
+            row({ name: 'c_home', agent_family: 'shell', session_id: 'ses_home', project_id: 108, project_name: 'console-1', working_dir: '~' }),
+            row({ name: 'c_mixed_agent', session_id: 'ses_ma', project_id: 109, project_name: 'Mixed' }),
+            row({ name: 'c_mixed_shell', agent_family: 'shell', session_id: 'ses_ms', project_id: 109, project_name: 'Mixed' }),
+        ];
+        expect(projectRows('p:107').map((r) => r.name)).toEqual(['carnivore_demo-shell']);
+        expect(projectNameFor('p:107')).toBe('demo-shell');
+        expect(projectRows('p:108')).toEqual([]);
+        expect(projectRows('p:109').map((r) => r.name)).toEqual(['c_mixed_agent']);
+        expect(await archiveProject('p:107')).toBe(true);
+        expect(writes()).toEqual([['destroySession', 'ses_sh'], ['archive', 'demo-shell']]);
+        expect(reported).toEqual([]);
     });
 
     it('sleep on a project sleeps awake non-browser rows only', async () => {

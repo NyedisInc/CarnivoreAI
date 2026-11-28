@@ -27,7 +27,7 @@ const RESERVED_CHORDS = Object.freeze([
   { chord: 'Shift+Cmd+G', owner: 'web/src/lib/terminal-search/search-keys.ts:174' },
   { chord: 'Cmd+S', owner: 'web/src/lib/open-files/FileScreen.svelte:205' },
   { chord: 'Shift+Cmd+Enter', owner: 'web/src/opscenter/engine/layout-zoom.svelte.ts:146' },
-  { chord: 'Cmd+Enter', owner: 'web/src/plugins/huddle/HuddleBody.svelte:416, TaskManagerAskForm.svelte:85, DrawerSearch.svelte:242' },
+  { chord: 'Cmd+Enter', owner: 'web/src/plugins/taskmanager/HuddleBody.svelte:416, TaskManagerAskForm.svelte:85, DrawerSearch.svelte:242' },
   { chord: 'Cmd+,', owner: 'web/src/lib/settings-page/settings-shortcut.ts:27 (same destination: Settings)', shared: { id: 'carnivore.settings' } },
   { chord: 'Cmd+[', owner: 'web/src/lib/app-keys/chords.ts (history back)', shared: { id: 'go.back' } },
   { chord: 'Cmd+]', owner: 'web/src/lib/app-keys/chords.ts (history forward)', shared: { id: 'go.forward' } },
@@ -40,6 +40,16 @@ const RESERVED_CHORDS = Object.freeze([
   { chord: 'Ctrl+Cmd+=', owner: 'web/src/lib/app-keys/chords.ts (terminal text bigger)' },
   { chord: 'Ctrl+Cmd+-', owner: 'web/src/lib/app-keys/chords.ts (terminal text smaller)' },
   { chord: 'Ctrl+Cmd+0', owner: 'web/src/lib/app-keys/chords.ts (terminal text reset)' },
+  { chord: 'Cmd+N', owner: 'macOS/app-menu/file.js (new session)', shared: { id: 'file.new_session' } },
+  { chord: 'Cmd+Shift+N', owner: 'macOS/app-menu/file.js (new window)', shared: { id: 'file.new_window' } },
+  { chord: 'Cmd+O', owner: 'macOS/app-menu/file.js (open project)', shared: { id: 'file.open_project' } },
+  { chord: 'Ctrl+Alt+Cmd+C', owner: 'macOS/hotkey.js (global summon)' },
+  { chord: 'Cmd+T', owner: 'client/js/keymap/protected.js (browser/OS reserved)' },
+  { chord: 'Cmd+L', owner: 'client/js/keymap/protected.js (browser/OS reserved)' },
+  { chord: 'Cmd+D', owner: 'client/js/keymap/protected.js (browser/OS reserved)' },
+  { chord: 'Shift+Cmd+T', owner: 'client/js/keymap/protected.js (browser/OS reserved)' },
+  { chord: 'Cmd+Space', owner: 'client/js/keymap/protected.js (macOS Spotlight)' },
+  { chord: 'Cmd+Tab', owner: 'client/js/keymap/protected.js (macOS app switcher)' },
   { chord: 'Ctrl+<any>', owner: 'xterm: control codes (rule 1)' },
   { chord: 'Alt+<any>', owner: 'xterm: Meta-b/f/d and word movement when macOptionIsMeta is on (rule 1)' },
   { chord: 'Shift+Enter', owner: 'client/js/terminal.js:582 (sends ESC+CR) (rule 1)' },
@@ -86,11 +96,17 @@ function refusalFor(item, accelerator, taken) {
   return builtIn ? `the built-in accelerator of the ${builtIn[0]} role` : null;
 }
 
+function itemHolderKey(item, idx) {
+  return item.id || (item.role ? `${item.role}:${idx}` : `anon:${idx}`);
+}
+
 function explicitAccelerators(template) {
   const taken = new Map();
+  let idx = 0;
   const walk = (items) => {
     for (const item of items || []) {
-      if (item.accelerator && item.id) taken.set(normalize(item.accelerator).canon, item.id);
+      const holder = itemHolderKey(item, idx++);
+      if (item.accelerator) taken.set(normalize(item.accelerator).canon, holder);
       walk(item.submenu);
     }
   };
@@ -99,11 +115,15 @@ function explicitAccelerators(template) {
 }
 
 function auditAccelerators(template) {
+  const taken = explicitAccelerators(template);
   const found = [];
+  let idx = 0;
   const walk = (items) => {
     for (const item of items || []) {
+      const holder = itemHolderKey(item, idx++);
       const accelerator = item.accelerator || (item.role ? ROLE_ACCELERATORS[item.role] : undefined);
-      const reason = accelerator ? refusalFor(item, accelerator) : null;
+      const checked = item.id ? item : { ...item, id: holder };
+      const reason = accelerator ? refusalFor(checked, accelerator, taken) : null;
       if (reason) found.push({ id: item.id || item.role || String(accelerator), chord: accelerator, reason });
       walk(item.submenu);
     }

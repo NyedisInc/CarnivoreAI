@@ -1,0 +1,1 @@
+function e(e,t,n,r){for(let i=t;i>=0&&i<e.length;i+=n)if(r(i))return i;return-1}function t(e,t,n){let r=n.toLowerCase();if(!r||e.length===0)return-1;let i=r.length>1&&[...r].every(e=>e===r[0]),a=i?r[0]:r,o=i||r.length===1?t+1:Math.max(0,t);for(let t=0;t<e.length;t+=1){let n=(o+t)%e.length;if(e[n].toLowerCase().startsWith(a))return n}return-1}export{t as n,e as t};

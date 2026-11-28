@@ -25,7 +25,8 @@
   ],
   "examples": [
     "Start the day by seeing every agent that is working, stopped or waiting on you, on one page.",
-    "Compare model token usage and estimated project cost over the same week without retaining any prompts."
+    "Compare model token usage and estimated project cost over the same week without retaining any prompts.",
+    "A Pack member's usage chart over 24 hours shows other computers' usage spread across each hour, not a tall spike at the top of every hour."
   ],
   "how_to": [
     "Scan the stat tiles (one figure each), then running sessions, recently closed, projects, skills, themes and the provider ledger.",
@@ -36,7 +37,8 @@
   ],
   "id": "home-screen",
   "issues": [
-    1101
+    1101,
+    3123
   ],
   "keywords": [
     "home",
@@ -60,7 +62,7 @@
     "web/src/opscenter/cells/analytics/Controls.svelte",
     "web/src/opscenter/cells/analytics/DetailsModal.svelte"
   ],
-  "updated": "2026-10-27",
+  "updated": "2026-11-21",
   "where": [
     "The first screen after you sign in.",
     "The Carnivore logo at the top of the drawer always returns to it."

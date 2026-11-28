@@ -158,6 +158,8 @@
   {#each entries as entry (entry.section)}
     <div class="rail-out__section" data-rail-out-section={entry.section} data-rail-out-widget={entry.manifest.id}
       role="group" aria-label={nameOf(entry)}
+      data-seam-before={shownSections.indexOf(entry.section) > 0 ? '' : undefined}
+      data-seam-after={shownSections.indexOf(entry.section) < shownSections.length - 1 && split ? '' : undefined}
       style={sectionStyle(axis, shownSections.indexOf(entry.section), seams)}>
       {#key `${entry.key}:${pinOf(entry.section)?.row ?? ''}`}
         <ZoneShell zone={zones[entry.section]!} mount="active" tab={body} />
@@ -213,6 +215,22 @@
 
     .rail-out--bottom .rail-out__section {
       margin-top: 2px;
+    }
+
+    .rail-out--side .rail-out__section[data-seam-before] {
+      margin-top: calc(var(--oc-section-line) / 2);
+    }
+
+    .rail-out--side .rail-out__section[data-seam-after] {
+      margin-bottom: calc(var(--oc-section-line) / 2);
+    }
+
+    .rail-out--bottom .rail-out__section[data-seam-before] {
+      margin-left: calc(var(--oc-section-line) / 2);
+    }
+
+    .rail-out--bottom .rail-out__section[data-seam-after] {
+      margin-right: calc(var(--oc-section-line) / 2);
     }
 
   }

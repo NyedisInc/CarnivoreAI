@@ -6,6 +6,7 @@
 
   let { mic }: { mic: ReturnType<typeof createMic> } = $props();
   const s = $derived(mic.state);
+  const stopped = $derived(s.reason === 'dropping' || s.reason === 'paused');
 </script>
 
 {#if s.phase !== 'idle'}
@@ -21,7 +22,9 @@
         <span class="pmic__label">{s.phase === 'working' ? t('phone.mic.working') : s.live ? t('phone.mic.listening') : t('phone.mic.recording')}</span>
       </div>
       <p class="pmic__text" aria-live="polite">{s.transcript || (s.live ? t('phone.mic.speak_now') : t('phone.mic.recording_hint'))}</p>
+      {#if stopped}<p class="pmic__text pmic__text--note" role="status">{t(`phone.mic.reason.${s.reason}`)}</p>{/if}
       <div class="pmic__row">
+        {#if stopped}<Button onclick={mic.retry}>{t('phone.mic.retry')}</Button>{/if}
         <Button onclick={mic.cancel}>{t('phone.mic.cancel')}</Button>
         <Button variant="confirm" disabled={s.phase === 'working'} onclick={mic.done}>{t('phone.mic.done')}</Button>
       </div>

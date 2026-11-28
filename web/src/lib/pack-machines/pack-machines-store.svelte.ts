@@ -87,10 +87,12 @@ export interface PressureBlock {
   throttled?: number;
 }
 
+/* its link is down */
 export interface MachineSnapshot {
   load: {
     cores: number | null;
     load_1: number | null;
+    busy_cores?: number | null;
     memory_percent: number | null;
     mem_total_gb?: number | null;
     disk_percent: number | null;
@@ -119,8 +121,10 @@ export interface PackMachine {
   specs: { model?: string | null; cores?: number | null; mem_total_gb?: number | null } | null;
   snapshot: MachineSnapshot | null;
   age_seconds: number | null;
-  roster_v1?: boolean;
+  roster_v1?: boolean | null;
   eligible?: boolean;
+  link_peers?: boolean | null;
+  mesh_capable?: boolean | null;
   is_home?: boolean;
   rank?: number | null;
   can_claim?: boolean;
@@ -141,12 +145,15 @@ export interface PackMachinesView {
   };
   disagreement: string[] | null;
   machines: PackMachine[];
+  link_switches_unknown?: boolean;
+  link_switch_refused?: { signer: string; computers: string[] };
   generation?: number | null;
   roster_issued_at?: number | null;
   home_install_id?: string | null;
   interim?: boolean;
   takeover_available?: { ok: boolean; reason: TakeoverReason };
   reconnect?: { relay_on: boolean; takeover_on: boolean };
+  roster_refusal?: { code: string; count: number; limit: number } | null;
 }
 
 /* the push topic */

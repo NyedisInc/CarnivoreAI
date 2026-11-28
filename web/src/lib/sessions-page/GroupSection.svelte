@@ -17,6 +17,7 @@
     import { companies, type Company } from '../companies';
     import { packTag } from '../projects-shared/pack-model';
     import { projectPanels } from '../../plugins/sdk/project-panels';
+    import { resolveProjectPanelEntries } from '../plugins/slot-actions';
     import { entryNodes } from '../item-menu/entries';
     import { projectMenuEntries } from '../item-menu/menus/project-entries';
     import { ITEM_MENU_ENV } from '../item-menu/open.svelte';
@@ -67,6 +68,7 @@
             companies: companies.list,
             agentOffered: agentOffered(project),
             panels: projectPanels(),
+            slotPanels: resolveProjectPanelEntries().map((p) => ({ pluginId: p.pluginId, entryId: p.entryId, label: p.label })),
             color: project.id != null ? { value: projectColorOf(project.id) ?? '', onPick: (key) => onProjectAction?.(`${SET_COLOR}${key}`, group) } : null,
             close: ITEM_MENU_ENV.close,
             glyph: ITEM_MENU_ENV.glyph,

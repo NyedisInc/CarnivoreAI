@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Literal, Optional
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from starlette.concurrency import run_in_threadpool
 
 from src.api.auth import require_auth
-from src.core.argent import health, refresh, settings as settings_module
+from src.core.argent import cleanup, health, refresh, settings as settings_module
 from src.core.argent import store as store_module
 from src.core.argent.device_login import PENDING, LoginRefused
 from src.core.argent.lifecycle import PORT_NAME
@@ -35,6 +35,7 @@ class ArgentSettingsPatch(BaseModel):
     ca_path: Optional[str] = None
     enabled: Optional[bool] = None
     refuse_direct_launch: Optional[bool] = None
+    codex_auth_mode: Optional[Literal["token", "passthrough"]] = None
 
 
 def feature_on() -> bool:
@@ -119,12 +120,16 @@ async def put_settings(body: ArgentSettingsPatch) -> Dict[str, Any]:
         block.update(serverUrl=server, gatewayUrl=gateway, caPath=ca_path, enabled=enabled)
         if body.refuse_direct_launch is not None:
             block["refuseDirectLaunch"] = body.refuse_direct_launch
+        if body.codex_auth_mode is not None:
+            block["codexAuthMode"] = body.codex_auth_mode
 
     try:
         await run_in_threadpool(settings_module.update, mutate)
     except (OSError, ValueError) as exc:
         logger.error("argent_settings_unwritable", error_type=type(exc).__name__)
         raise HTTPException(status_code=500, detail="config.json could not be updated") from exc
+    if current.enabled and not enabled:
+        await run_in_threadpool(cleanup.scrub_live_install, current)
     health.poke()
     return await get_status()
 
@@ -179,5 +184,6 @@ async def delete_login() -> Dict[str, Any]:
         block["enabled"] = False
 
     await run_in_threadpool(settings_module.update, mutate)
+    await run_in_threadpool(cleanup.scrub_live_install, cfg)
     health.poke()
     return await get_status()

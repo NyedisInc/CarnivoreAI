@@ -13,12 +13,16 @@ from src.core.computers.link_listener import DEFAULT_LINK_PORT, AlertingSSLObjec
 from src.core.computers.mux import frames as mf
 from src.core.computers.mux.session import MuxError, MuxSession
 from src.core.computers.tls_identity import LinkCert, LinkIdentity, server_link_ctx
+from src.core.computers.mesh_link import MESH_ALPN
 from src.core.federation.pairing import PROTOCOL_MAJOR
+from src.core.pack.machines import capabilities
 
 log = structlog.get_logger(__name__)
 
 PER_SOURCE_HANDSHAKES = 2
 TOTAL_HANDSHAKES = 8
+MESH_PER_SOURCE = 4
+MESH_TOTAL = 32
 HOLD_SECONDS = 10.0
 MEMBER_HANDSHAKE_TIMEOUT = 2.0
 RESERVE_SPAN = range(2, 12)
@@ -96,7 +100,9 @@ class MemberListener:
         self._identity, self._rv, self._host, self._on_state = identity, rendezvous, host, on_state
         self._follow_hello = follow_hello
         self._follow_shas: frozenset = frozenset()
-        self._gate = _HandshakeGate(PER_SOURCE_HANDSHAKES, TOTAL_HANDSHAKES)
+        self._gate = _HandshakeGate(MESH_PER_SOURCE, MESH_TOTAL) if capabilities.mesh_on() else _HandshakeGate(PER_SOURCE_HANDSHAKES, TOTAL_HANDSHAKES)
+        self._mesh_accept: Optional[Callable[[asyncio.StreamReader, asyncio.StreamWriter, str], Awaitable[None]]] = None
+        self._mesh_iid: Optional[Callable[[str], Optional[str]]] = None
         self._ctx: Optional[ssl.SSLContext] = None
         self._shas: frozenset = frozenset()
         self._server: Optional[asyncio.AbstractServer] = None
@@ -133,11 +139,22 @@ class MemberListener:
         self._set_state(LISTENING)
         return True
 
+    def attach_mesh(self, accept: Callable[[asyncio.StreamReader, asyncio.StreamWriter, str], Awaitable[None]],
+                    iid_for_sha: Callable[[str], Optional[str]]) -> None:
+        self._mesh_accept, self._mesh_iid = accept, iid_for_sha
+        if self._ctx is not None:
+            self._ctx.set_alpn_protocols([MESH_ALPN])
+
+    def detach_mesh(self) -> None:
+        self._mesh_accept = self._mesh_iid = None
+
     async def set_pins(self, pins: Sequence[LinkCert], follow_pins: Sequence[LinkCert] = ()) -> None:
         shas = frozenset(c.cert_sha256 for c in pins)
         extra = [c for c in follow_pins if c.cert_sha256 not in shas]
         ctx = await asyncio.to_thread(server_link_ctx, self._identity, [*pins, *extra]) if (pins or extra) else None
         if ctx is not None:
+            if self._mesh_accept is not None:
+                ctx.set_alpn_protocols([MESH_ALPN])
             ctx.sslobject_class = AlertingSSLObject
         self._ctx = ctx
         self._shas = shas
@@ -155,6 +172,19 @@ class MemberListener:
         ssl_obj = writer.get_extra_info("ssl_object")
         der = ssl_obj.getpeercert(binary_form=True) if ssl_obj is not None else None
         sha = hashlib.sha256(der).hexdigest() if der else ""
+        if self._mesh_accept is not None and self._mesh_iid is not None:
+            try:
+                alpn = ssl_obj.selected_alpn_protocol() if ssl_obj is not None else None
+            except ValueError:
+                alpn = None
+            if alpn == MESH_ALPN:
+                iid = self._mesh_iid(sha) if der else None
+                if iid is None:
+                    log.info("member_listener_mesh_refused", sha=sha[:12])
+                    writer.close()
+                    return
+                await self._mesh_accept(reader, writer, iid)
+                return
         if sha in self._follow_shas and sha not in self._shas:
             await self._answer_follow(reader, writer)
             return

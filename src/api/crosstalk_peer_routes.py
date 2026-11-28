@@ -14,6 +14,7 @@ from src.api import peer_auth
 from src.core.crosstalk import directory, peer_create, store
 from src.core.crosstalk.delivery import dispatcher
 from src.core.federation import peer_hosts, shadow_rows
+from src.core.federation.mesh_grants import MeshGrant
 from src.core.hosts.identity import remote_session_id
 from src.core.mcp.protocol import BatchView
 from src.core.mcp.common import ToolError
@@ -78,7 +79,7 @@ async def peer_deliver(body: PeerDelivery, request: Request,
            (body.sender_name, body.sender_provider, body.sender_model or '', body.thread)):
         raise _refuse('invalid_peer_identity')
     with closing(peer_auth.open_db()) as conn:
-        host = peer_hosts.get(conn, grant.peer_install_id)
+        host = peer_hosts.get(conn, grant.peer_install_id, include_mesh=isinstance(grant, MeshGrant))
         local_install_id = peer_auth.read_install_id(conn)
     if host is None:
         raise _refuse('peer_unpaired', 401)
@@ -147,7 +148,7 @@ async def peer_control(body: PeerControl, request: Request,
         raise _refuse('not_local')
     with closing(peer_auth.open_db()) as conn:
         local_install_id = peer_auth.read_install_id(conn)
-        host = peer_hosts.get(conn, principal.grant.peer_install_id)
+        host = peer_hosts.get(conn, principal.grant.peer_install_id, include_mesh=isinstance(principal.grant, MeshGrant))
     if not local_install_id or host is None:
         raise _refuse('peer_unpaired', 401)
     view = BatchView(request.app.state.session_manager, request.app)
@@ -185,7 +186,8 @@ async def peer_spawn(body: PeerSpawn, request: Request,
         folder = await _folder(body, None)
         target_dir = await _worktree(folder, body.name or body.provider) if body.worktree else folder
     except (ValueError, ToolError) as exc:
-        raise _refuse(str(exc)) from exc
+        text = str(exc)
+        raise _refuse('working_dir_missing' if text == 'working_dir is not an existing directory' else text) from exc
     try:
         made = await peer_create.create_pane(request, target_dir=target_dir, agent_type=body.provider,
                                              label=body.name, model=body.model, extra_args=peer_spawn_flags(body.provider, body.effort, body.beast))

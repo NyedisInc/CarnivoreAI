@@ -53,6 +53,16 @@ def _wake(call: ra.Call) -> Any:
 def _reopen_closed(call: ra.Call, agent_type: Any, account: Any = None, pin: bool = False) -> Any:
     import importlib
 
+    from src.core.session_recreate import has_tmux_identity
+
+    row = (call.target.row if call.target is not None else None) or {}
+    if row and not has_tmux_identity(row):
+        if account or pin:
+            raise ToolError("an imported session reopens on the project's default account: leave account out")
+        if agent_type:
+            raise ToolError("an imported session reopens on the project's default agent: leave agent_type out")
+        apply_routes = importlib.import_module("src.api.session_restart_apply_routes")
+        return apply_routes.restart_session(call.request, call.session_uuid)
     recreate_routes = importlib.import_module("src.api.recreate_routes")
     chosen = agent_type or (call.target.row or {}).get("agent_type")
     if not chosen:

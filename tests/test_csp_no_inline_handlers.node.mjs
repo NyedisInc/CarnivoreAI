@@ -69,7 +69,7 @@ test('the CSP that makes this matter is still in force', () => {
     const main = fs.readFileSync(path.join(ROOT, 'src', 'main.py'), 'utf8');
     assert.ok(/from\s+src\.security_headers\s+import\s+stamp_security_headers/
         .test(main), 'src/main.py no longer imports stamp_security_headers');
-    assert.ok(/stamp_security_headers\(\s*response\.headers/.test(main),
+    assert.ok(/stamp_security_headers\(\s*headers\s*,\s*path/.test(main),
         'src/main.py no longer stamps the security headers onto responses');
 });
 

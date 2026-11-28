@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 
 import { ApiError } from '../sdk';
@@ -11,6 +11,11 @@ import ImportResult from './ImportResult.svelte';
 import plans from './import-plans.fixture.json';
 
 setLocale('en');
+
+vi.mock('../../opscenter/api/sessions.svelte', async (orig) => ({
+    ...(await orig<object>()),
+    reachWokenSession: vi.fn(async () => ({ session_row_id: 9, session: { id: 'ses_live' } })),
+}));
 
 const RECEIPT = {
     import_id: 'imp-20261018T120000Z-1a2b3c4d', state: 'done', project: { id: 4, name: 'Proj One', root: '/Users/me/proj1', action: 'create' },
@@ -77,6 +82,14 @@ describe('import result', () => {
         expect(target.querySelector('[data-crt-result-status]')!.textContent).not.toBe(t('cplug.crate.import.result.awake'));
         expect(target.querySelector('[data-crt-result-status]')!.textContent).not.toBe(t('cplug.crate.import.result.waking'));
         expect(wake.disabled).toBe(false);
+    });
+
+    test('a not-asleep 409 with the row in the list says awake (#3271)', async () => {
+        const fetcher = (async () => { throw new ApiError('not asleep', 409, 'session_not_asleep'); }) as unknown as Fetcher;
+        const target = show(ImportResult, { receipt: parseImportReceipt(RECEIPT)!, fetcher });
+        (target.querySelector('[data-crt-result-wake]') as HTMLButtonElement).click();
+        await settle();
+        expect(target.querySelector('[data-crt-result-status]')!.textContent).toBe(t('cplug.crate.import.result.awake'));
     });
 
     test('a restore with nothing left to write says so', () => {

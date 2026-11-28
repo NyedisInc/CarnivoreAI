@@ -41,6 +41,7 @@ export interface EditRequest {
     projectDescription?: string | null;
     projectDefaultLaunchProfile?: string | null;
     projectColor?: string | null;
+    /* the Task Manager */
     projectId?: number | null;
 }
 

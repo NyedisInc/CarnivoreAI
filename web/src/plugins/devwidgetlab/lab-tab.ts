@@ -1,8 +1,9 @@
-import { openTabFlyout } from '../sdk';
+import { lazyComponent, openTabFlyout } from '../sdk';
 import type { DynamicTabDef } from '../sdk';
 import { listenForMenuRequests } from './menu-request';
-import LabMenu from './LabMenu.svelte';
-import LabViewer from './LabViewer.svelte';
+
+const LabMenu = lazyComponent(() => import('./LabMenu.svelte'));
+const LabViewer = lazyComponent(() => import('./LabViewer.svelte'));
 
 export const devwidgetlabTab: DynamicTabDef = {
   id: 'devwidgetlab',

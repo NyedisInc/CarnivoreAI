@@ -80,7 +80,7 @@ def test_the_hook_delivers_nothing_and_builds_no_frame_while_off(tmp_path: Path,
 
 
 def _call(name: str, args: dict) -> dict:
-    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), tmux_session="cloude_fixture", session_row_id=7, host_key="local")
+    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), label=None, claude_title=None, tmux_session="cloude_fixture", session_row_id=7, host_key="local")
 
     class View:
 

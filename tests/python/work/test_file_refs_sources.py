@@ -91,4 +91,4 @@ def test_file_home_copies_a_good_source_and_refuses_each_bad_one(tmp_path: Path)
                      {"id": ID, "name": "secret.txt", "path": str(task / "pastes" / f"{ID}-secret.txt")}]}
     home.rewrite(doc, 1, 2)
     assert [e["path"] for e in doc["files"]] == [f"files/2/{NAME}"] and home.dropped == ["secret.txt"]
-    assert list(home.copied) == [str(tmp_path / "state" / "cplugs" / "huddle" / "files" / "2" / NAME)]
+    assert list(home.copied) == [str(tmp_path / "state" / "cplugs" / "taskmanager" / "files" / "2" / NAME)]

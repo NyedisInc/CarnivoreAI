@@ -23,6 +23,7 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value);
 }
 
+/* cannot be read */
 function gridOf(raw: unknown): Layout | null {
   if (!isObject(raw)) return null;
   const stored = readStoredGrid(raw, 'terminal');
@@ -31,6 +32,7 @@ function gridOf(raw: unknown): Layout | null {
   return raw as unknown as Layout;
 }
 
+/* cannot be read */
 export function parseArrangement(value: unknown): Arrangement | null {
   if (value === undefined || value === null) return null;
   const out = emptyArrangement();

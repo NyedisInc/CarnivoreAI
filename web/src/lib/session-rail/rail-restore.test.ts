@@ -36,7 +36,7 @@ beforeEach(() => {
   localStorage.removeItem('carnivore.session.rail.out.bottom');
   railOutSizes.reload();
   follow(RAIL_FIELD, { v: 2, ratio: 0.5, sections: [items('core.changes', 'core.files'), items('core.notes')] });
-  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }, { widget: 'core.ledger' }] });
+  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager-mk2' }, { widget: 'core.ledger' }] });
 });
 afterEach(() => unmountRails());
 

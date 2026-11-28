@@ -28,7 +28,7 @@ from src.api import (
     catalog_routes,
 )
 
-EXPECTED_ROUTES = 11
+EXPECTED_ROUTES = 12
 
 VALID_BODY = {
     "item_id": "alex/sme",
@@ -80,6 +80,7 @@ def test_the_route_list_is_the_one_this_file_was_written_against():
     assert ("DELETE", "/catalog/installed/i1") in cases
     assert ("PATCH", "/catalog/installed/i1") in cases
     assert ("POST", "/catalog/installed/i1/update") in cases
+    assert ("POST", "/catalog/revocations/refresh") in cases
 
 
 @pytest.mark.parametrize("method,path", route_cases())

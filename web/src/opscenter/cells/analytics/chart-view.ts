@@ -1,5 +1,7 @@
 import { saveChartView } from './state.svelte';
 import type { RangePreset, Resolution, StatsFilters } from './types';
+import { explicitHostId } from '../../viz/plan';
+import { selfHostInstallId } from './host-id.svelte';
 
 export interface TimeWindow { from: string; to: string }
 
@@ -20,7 +22,10 @@ export function setResolution(id: string, value: string): void {
 }
 
 export function setWidgetFilter(id: string, key: keyof StatsFilters, value: string): void {
-  saveChartView(id, (chart) => ({ ...chart, filters: { ...chart.filters, [key]: value || undefined } }));
+  const next = key === 'host'
+    ? (explicitHostId(value || undefined, selfHostInstallId()) ?? undefined)
+    : (value || undefined);
+  saveChartView(id, (chart) => ({ ...chart, filters: { ...chart.filters, [key]: next } }));
 }
 
 export function zoomStep(range: TimeWindow, base: TimeWindow, scale: number, pan = 0): TimeWindow {

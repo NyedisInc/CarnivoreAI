@@ -9,6 +9,7 @@ from typing import Callable, Deque, Dict, Optional, Tuple
 
 from src.core.swarm.cards import cpu as cards_cpu
 
+FAST_WINDOW_S = 15.0
 SHORT_WINDOW_S = 60.0
 LONG_WINDOW_S = 300.0
 SAMPLE_GAP_S = 5.0
@@ -66,10 +67,12 @@ class CpuMeter:
 
     def busy_cores(self, cores: Optional[int] = None) -> Dict[str, object]:
         count = cores or os.cpu_count() or 0
+        fast = self.busy_fraction(FAST_WINDOW_S)
         short, long_ = self.busy_fraction(SHORT_WINDOW_S), self.busy_fraction(LONG_WINDOW_S)
         if not count or short is None:
-            return {"busy_1": None, "busy_5": None, "source": SOURCE_LOAD}
-        return {"busy_1": round(short * count, 2), "busy_5": round((long_ if long_ is not None else short) * count, 2),
+            return {"busy_15s": None, "busy_1": None, "busy_5": None, "source": SOURCE_LOAD}
+        return {"busy_15s": round((fast if fast is not None else short) * count, 2),
+                "busy_1": round(short * count, 2), "busy_5": round((long_ if long_ is not None else short) * count, 2),
                 "source": SOURCE_TICKS}
 
 

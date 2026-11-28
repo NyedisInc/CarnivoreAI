@@ -74,7 +74,7 @@ async def test_keys_typed_in_the_browser_reach_the_members_pane_and_its_output_r
 
         monkeypatch.setattr(peer_links, "LINKS", SimpleNamespace(connected_clients=lambda: [("member-install-bbbb", Client())]))
         monkeypatch.setattr(proxy.peer_auth, "open_db", lambda: SimpleNamespace(close=lambda: None))
-        monkeypatch.setattr(proxy.peer_hosts, "get", lambda _c, iid: SimpleNamespace(key=HOST_KEY))
+        monkeypatch.setattr(proxy.peer_hosts, "get", lambda _c, iid, **_k: SimpleNamespace(key=HOST_KEY))
         app = FastAPI()
         app.include_router(router)
         app.state.session_manager = SimpleNamespace()

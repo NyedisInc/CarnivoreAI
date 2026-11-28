@@ -23,7 +23,7 @@ from fastapi.testclient import TestClient
 
 from src.api import recreate_routes, session_sleep_routes
 from src.api.auth import require_auth
-from src.core import session_sleep
+from src.core import restart_live_gate, session_sleep
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.session_ops import row_probe
@@ -178,7 +178,7 @@ def client(state_dir, monkeypatch):
     monkeypatch.setattr(row_probe, "socket_name", lambda: "cloude", raising=True)
     closes = []
 
-    async def _close(manager, *, name, socket):
+    async def _close(manager, *, name, socket, session_id=None):
         closes.append((name, socket))
         return {"closed_registrations": 1, "external": None}
 
@@ -205,6 +205,7 @@ def _presence(monkeypatch, *outcomes):
         return TmuxPresence(outcome=outcome, detail="test")
 
     monkeypatch.setattr(row_probe, "measure_presence", _measure, raising=True)
+    monkeypatch.setattr(restart_live_gate, "probe_line", lambda name, socket: f"0|{EPOCH}|{name}|$1", raising=True)
 
 
 def test_sleep_closes_a_present_session_and_keeps_its_row_asleep(state_dir, client, monkeypatch):
@@ -312,6 +313,7 @@ def test_wake_refuses_a_row_that_is_not_asleep(state_dir, client, monkeypatch):
     monkeypatch.setattr("src.api.recreate_action.recreate_by_uuid", _recreate)
     r = c.post(f"/api/v1/sessions/{ROW_UUID}/wake")
     assert r.status_code == 409
+    assert r.json()["detail"]["code"] == "session_not_asleep"
     assert called == []
 
 

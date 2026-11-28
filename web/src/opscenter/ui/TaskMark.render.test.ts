@@ -4,8 +4,8 @@ import { mount, unmount } from 'svelte';
 
 import enCatalog from '../../../../client/js/i18n/catalog.en.js';
 import { t } from '../../lib/i18n/index.svelte';
-import { markRankOf } from '../../plugins/huddle/swarm/node-look';
-import type { FloorItem } from '../../plugins/huddle/swarm/floor';
+import { markRankOf } from '../../plugins/taskmanager/swarm/node-look';
+import type { FloorItem } from '../../plugins/taskmanager/swarm/floor';
 import TaskMark from './TaskMark.svelte';
 
 let mounted: Record<string, unknown> | null = null;

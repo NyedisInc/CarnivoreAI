@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import sqlite3
 from typing import Any, Dict, List, Optional, TypeVar
 
@@ -90,17 +91,41 @@ async def _live_fields(agents: List[Dict[str, Any]]) -> Dict[int, Dict[str, Any]
     return {a["id"]: {**rungs[a["id"]], **activity.current(a["id"]), "question_waiting": a["id"] in waiting} for a in agents}
 
 
-async def roster(manager: Any) -> Dict[str, Any]:
-    def read(conn: sqlite3.Connection) -> tuple:
-        return store.list_agents(conn), store.live_body_count(conn)
+def _read_roster_db(conn: sqlite3.Connection) -> tuple:
+    agents = store.list_agents(conn)
+    live_count = store.live_body_count(conn)
+    live_questions = owner_wait.live_questions(conn)
+    row_ids = sorted({a["session_row_id"] for a in agents if a.get("session_row_id") is not None})
+    uuids: Dict[int, str] = {}
+    if row_ids:
+        marks = ",".join("?" for _ in row_ids)
+        uuids = {int(r[0]): str(r[1]) for r in conn.execute(
+            f"SELECT id, session_uuid FROM sessions WHERE id IN ({marks}) AND session_uuid IS NOT NULL", row_ids).fetchall()}
+    host_keys = sorted({a.get("host_key") or "local" for a in agents} - {"local"})
+    labels: Dict[str, str] = {}
+    if host_keys:
+        marks = ",".join("?" for _ in host_keys)
+        labels = {str(r[0]): str(r[1]) for r in conn.execute(
+            f"SELECT key, label FROM hosts WHERE kind = 'peer' AND key IN ({marks})", host_keys).fetchall() if r[1]}
+    agent_ids = sorted({a["id"] for a in agents})
+    reasons: Dict[int, str] = {}
+    if agent_ids:
+        marks = ",".join("?" for _ in agent_ids)
+        reasons = {int(r[0]): str(r[1]) for r in conn.execute(
+            f"SELECT agent_id, reason FROM pack_placements WHERE agent_id IN ({marks}) AND chosen_install_id IS NOT NULL "
+            "ORDER BY id", agent_ids).fetchall() if r[1]}
+    return agents, live_count, live_questions, uuids, labels, reasons
 
-    agents, live = await body.run_db(read)
+
+async def roster(manager: Any) -> Dict[str, Any]:
+    (agents, live, live_questions, uuids, labels, reasons), bodies = await asyncio.gather(
+        body.run_db(_read_roster_db),
+        _bodies(manager),
+    )
     cfg = swarm_settings.read_current()
-    bodies = await _bodies(manager)
-    fields = await _live_fields(agents)
-    uuids = await _uuids(agents)
-    labels = await _host_labels(agents)
-    reasons = await _placement_reasons(agents)
+    rungs = await alerts.roster_alerts(agents, live_questions)
+    waiting = owner_wait.asking_agents(live_questions)
+    fields = {a["id"]: {**rungs[a["id"]], **activity.current(a["id"]), "question_waiting": a["id"] in waiting} for a in agents}
     return {"agents": [{**summarize(a, bodies, uuids, labels, reasons), **fields[a["id"]]} for a in agents],
             "threads_ready": thread_port.get() is not None,
             "limits": {"max_children_per_parent": cfg.max_children_per_parent, "max_live_bodies": cfg.max_live_bodies,

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import json
+import tomllib
 from dataclasses import replace
 from pathlib import Path
 
@@ -10,22 +11,22 @@ import pytest
 
 from src.plugins.host import runtime
 from tests.helpers.catalog_text import catalog_text
-from src.plugins.sdk import ManifestError
-from src.plugins.sdk.manifest import parse_manifest, version_tuple
+from src.plugins.sdk.manifest import version_tuple
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, parse_manifest_v2
 
 ROOT = Path(__file__).resolve().parents[3]
-TASK_MANAGER = json.loads((ROOT / "src/plugins/huddle/cplug.json").read_text())
+TASK_MANAGER = tomllib.loads((ROOT / "src/plugins/taskmanager/carnivore.toml").read_text())
 
 
 def test_every_shipped_cplug_validates_and_matches_its_code():
     defs = runtime.definitions()
-    shipped = ["huddle", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "sessionchat", "timemachine"]
+    shipped = ["taskmanager", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "sessionchat", "timemachine"]
     assert [d.id for d in defs] == [i for i in shipped if (ROOT / "src/plugins" / i).is_dir()]
     runtime.check_definitions(defs)
     app_version = json.loads((ROOT / "macOS/package.json").read_text())["version"]
     for d in defs:
         assert version_tuple(d.manifest.min_app_version) <= version_tuple(app_version), d.id
-        assert (ROOT / "src/plugins" / d.id / "cplug.json").is_file()
+        assert (ROOT / "src/plugins" / d.id / "carnivore.toml").is_file() or (ROOT / "src/plugins" / d.id / "cplug.json").is_file()
 
 
 def test_every_manifest_string_key_is_in_the_one_catalog():
@@ -40,22 +41,22 @@ def test_every_manifest_string_key_is_in_the_one_catalog():
     (lambda m: m.update(id="session"), "reserved"),
     (lambda m: m.update(name_key="huddle.name"), "name_key"),
     (lambda m: m.update(tier="plugin"), "tier"),
-    (lambda m: m["permissions"].update(app=["root"]), "unknown app permission"),
-    (lambda m: m["surfaces"].update(mcp_tools=["list_huddle"]), "huddle_<verb>"),
-    (lambda m: m["surfaces"].update(tabs=["other"]), "start with huddle-"),
+    (lambda m: m["permissions"].update(app=["root"]), "non-declarable permission"),
+    (lambda m: m["mcp"].update(tools=["list_huddle"]), "task_manager_<verb>"),
+    (lambda m: m["ui"].update(tabs=["other"]), "start with taskmanager-"),
     (lambda m: m.update(extra=1), "unknown field"),
     (lambda m: m.update(settings_schema={"version": 0, "fields": {}}), "settings_schema"),
 ])
 def test_a_broken_manifest_is_refused(mutate, message):
     raw = copy.deepcopy(TASK_MANAGER)
-    parse_manifest(raw)
+    parse_manifest_v2(raw, tier="builtin")
     mutate(raw)
-    with pytest.raises(ManifestError, match=message):
-        parse_manifest(raw)
+    with pytest.raises(ManifestV2Error, match=message):
+        parse_manifest_v2(raw, tier="builtin")
 
 
 def test_a_surface_used_but_not_declared_or_the_reverse_refuses_the_whole_list():
-    task_manager = runtime.find("huddle")
+    task_manager = runtime.find("taskmanager")
     runtime.check_definitions((task_manager,))
     with pytest.raises(runtime.RegistryError, match="two plugins"):
         runtime.check_definitions((task_manager, task_manager))

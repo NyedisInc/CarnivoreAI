@@ -25,6 +25,8 @@ RESPAWN_CANNOT_DETERMINE: str = "cannot_determine"
 
 RESPAWN_TRANSCRIPT_MISSING: str = "transcript_missing"
 
+RESPAWN_OFFLOADED: str = "offloaded"
+
 ALL_RESPAWN_KINDS: frozenset[str] = frozenset(
     {
         RESPAWN_AGENT,
@@ -33,6 +35,7 @@ ALL_RESPAWN_KINDS: frozenset[str] = frozenset(
         RESPAWN_NOT_DEAD,
         RESPAWN_CANNOT_DETERMINE,
         RESPAWN_TRANSCRIPT_MISSING,
+        RESPAWN_OFFLOADED,
     }
 )
 
@@ -244,7 +247,7 @@ def project_restart_rung(
 
 
 _RESUME_RE = re.compile(
-    r"(?:--resume['\"]?[=\s]+|(?<![\w-])resume\s+)['\"]?"
+    r"(?:--(?:resume|conversation)['\"]?[=\s]+|(?<![\w-])resume\s+)['\"]?"
     r"([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}"
     r"-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"
 )
@@ -255,27 +258,6 @@ def resume_uuid_in(command: Optional[str]) -> Optional[str]:
         return None
     found = _RESUME_RE.search(command)
     return found.group(1) if found else None
-
-
-def refuse_if_transcript_missing(
-    plan: RespawnPlan, presence_outcome: Optional[str], detail: str = ""
-) -> RespawnPlan:
-    if presence_outcome != "absent" or not plan.resume_uuid:
-        return plan
-    return RespawnPlan(
-        kind=RESPAWN_TRANSCRIPT_MISSING,
-        command=None,
-        conversation=CONVERSATION_UNKNOWN,
-        detail=(
-            detail
-            or (
-                f"the conversation this session would resume "
-                f"({plan.resume_uuid}) has no transcript on this machine, "
-                f"so restarting it would open a pane that exits at once"
-            )
-        ),
-        resume_uuid=plan.resume_uuid,
-    )
 
 
 PANE_DEAD: str = "dead"

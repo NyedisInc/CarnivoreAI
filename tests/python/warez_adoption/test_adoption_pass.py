@@ -20,14 +20,14 @@ from src.core.composition import build_services
 from src.core.db import connect, db_path_for
 from src.core.db_migration import ensure_db_migrated
 from src.core.ui_preferences_store import UiPreferencesStore
-from src.plugins.host import adoption, state as cplug_state
+from src.plugins.host import adoption, registry_store
 from src.plugins.registry import PLUGINS_ROOT, plugin_folders
 from tests.helpers.catalog_app import StateOnlySettings
 from tests.helpers.catalog_surface import FrozenClock
 from tests.test_skill_installer import FakeInstallRoots
 
 SHIPPED = plugin_folders(PLUGINS_ROOT)
-EXPECTED_SHIPPED = ["huddle", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "sessionchat", "timemachine"]
+EXPECTED_SHIPPED = ["taskmanager", "unread", "share", "save", "flow", "reviewboard", "tmdevtools", "crate", "devwidgetlab", "argent", "sessionchat", "timemachine"]
 
 
 class Env:
@@ -41,7 +41,15 @@ class Env:
         (cplugs / "huddle" / "items.db").write_bytes(b"owner data")
         (cplugs / "save" / "vault").mkdir(parents=True)
         (cplugs / "save" / "vault" / "point").write_bytes(b"the only copy")
-        (cplugs / cplug_state.STATE_FILE).write_text(json.dumps({"cplugs": {"huddle": {"enabled": True}, "flow": {"enabled": False}}}))
+        reg = registry_store.registry_path(self.state)
+        reg.parent.mkdir(parents=True, exist_ok=True)
+        doc = registry_store.new_document()
+        doc["items"] = {
+            "huddle": {"kind": "feature", "enabled": True},
+            "flow": {"kind": "feature", "enabled": False},
+        }
+        reg.write_text(json.dumps(doc))
+        self._reg_before = reg.read_text()
         roots = FakeInstallRoots(tmp_path / "roots")
         roots.make_roots()
         clock = FrozenClock()
@@ -84,7 +92,7 @@ def test_every_compiled_in_plugin_gets_one_builtin_row_and_nothing_else_is_writt
         assert (row.source_index_url, row.publisher_key_id, row.auto_update, row.consent_via, row.scope) == ("builtin", "builtin", False, "one_click", "global")
         assert row.digest.startswith("builtin:")
     assert env.tree_hash() == before
-    assert cplug_state.state_path(env.state).read_text() == json.dumps({"cplugs": {"huddle": {"enabled": True}, "flow": {"enabled": False}}})
+    assert registry_store.registry_path(env.state).read_text() == env._reg_before
 
 
 def test_a_second_pass_writes_nothing(env: Env) -> None:

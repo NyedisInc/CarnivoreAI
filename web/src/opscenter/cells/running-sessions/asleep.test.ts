@@ -52,4 +52,13 @@ describe('asleep sessions in the running table (issue #537)', () => {
     const live = { ...asleepRows([rec()], new Set())[0]!, asleep: undefined };
     expect(isAsleepRow(live as never)).toBe(false);
   });
+
+  test('an asleep custom agent carries its agent_wrapper_icon onto the shaped row', () => {
+    const row = asleepRows(
+      [rec({ agent_type: 'antigravity', agent_family: 'custom', agent_wrapper_icon: 'logo-antigravity' })],
+      new Set(),
+    )[0]!;
+    expect(row.agent_family).toBe('custom');
+    expect(row.agent_wrapper_icon).toBe('logo-antigravity');
+  });
 });

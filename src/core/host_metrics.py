@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+import ctypes
+import ctypes.util
 import os
 import platform
 import shutil
@@ -94,7 +96,109 @@ def _vm_stat_shared() -> Optional[str]:
         return out
 
 
+_DEFAULT_RUN = _run
+
+
+class _VMStats64(ctypes.Structure):
+
+    _fields_ = [
+        ("free_count", ctypes.c_uint32),
+        ("active_count", ctypes.c_uint32),
+        ("inactive_count", ctypes.c_uint32),
+        ("wire_count", ctypes.c_uint32),
+        ("zero_fill_count", ctypes.c_uint64),
+        ("reactivations", ctypes.c_uint64),
+        ("pageins", ctypes.c_uint64),
+        ("pageouts", ctypes.c_uint64),
+        ("faults", ctypes.c_uint64),
+        ("cow_faults", ctypes.c_uint64),
+        ("lookups", ctypes.c_uint64),
+        ("hits", ctypes.c_uint64),
+        ("purges", ctypes.c_uint64),
+        ("purgeable_count", ctypes.c_uint32),
+        ("speculative_count", ctypes.c_uint32),
+        ("decompressions", ctypes.c_uint64),
+        ("compressions", ctypes.c_uint64),
+        ("swapins", ctypes.c_uint64),
+        ("swapouts", ctypes.c_uint64),
+        ("compressor_page_count", ctypes.c_uint32),
+        ("throttled_count", ctypes.c_uint32),
+        ("external_page_count", ctypes.c_uint32),
+        ("internal_page_count", ctypes.c_uint32),
+        ("total_uncompressed_pages_in_compressor", ctypes.c_uint64),
+    ]
+
+
+_HOST_VM_INFO64 = 4
+_MACH_VM: Optional[Tuple[ctypes.CDLL, int]] = None
+_MACH_VM_FAILED = False
+_PAGEOUTS_LOCK = threading.Lock()
+_LAST_PAGEOUTS: Optional[Tuple[float, int]] = None
+
+
+def _pageouts_rate(total_pageouts: int) -> Optional[float]:
+    global _LAST_PAGEOUTS
+    now = _clock()
+    with _PAGEOUTS_LOCK:
+        prev = _LAST_PAGEOUTS
+        _LAST_PAGEOUTS = (now, total_pageouts)
+    if prev is None or now - prev[0] <= 0 or total_pageouts < prev[1]:
+        return None
+    return round((total_pageouts - prev[1]) / (now - prev[0]), 2)
+
+
+def _mach_vm_memory() -> Optional[Dict[str, Any]]:
+    global _MACH_VM, _MACH_VM_FAILED
+    if _MACH_VM_FAILED:
+        return None
+    if _MACH_VM is None:
+        try:
+            path = ctypes.util.find_library("System")
+            if not path:
+                _MACH_VM_FAILED = True
+                return None
+            lib = ctypes.CDLL(path)
+            lib.mach_host_self.restype = ctypes.c_uint32
+            lib.mach_host_self.argtypes = []
+            lib.host_statistics64.restype = ctypes.c_int
+            lib.host_statistics64.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
+            _MACH_VM = (lib, int(lib.mach_host_self()))
+        except (OSError, AttributeError, TypeError):
+            _MACH_VM_FAILED = True
+            return None
+    try:
+        page_size = int(os.sysconf("SC_PAGE_SIZE"))
+        total = int(os.sysconf("SC_PHYS_PAGES")) * page_size
+    except (ValueError, OSError, AttributeError):
+        return None
+    if total <= 0 or page_size <= 0:
+        return None
+    lib, port = _MACH_VM
+    st = _VMStats64()
+    count = ctypes.c_uint32(ctypes.sizeof(st) // 4)
+    if lib.host_statistics64(port, _HOST_VM_INFO64, ctypes.byref(st), ctypes.byref(count)) != 0:
+        return None
+    reclaimable = int(st.free_count) + int(st.inactive_count) + int(st.purgeable_count)
+    avail = min(reclaimable * page_size, total)
+    used = total - avail
+    return {
+        "available": True,
+        "error": None,
+        "total_bytes": total,
+        "used_bytes": used,
+        "available_bytes": avail,
+        "used_percent": round(used * 100.0 / total, 1),
+        "compressed_bytes": int(st.compressor_page_count) * page_size,
+        "wired_bytes": int(st.wire_count) * page_size,
+        "pageouts_per_s": _pageouts_rate(int(st.pageouts)),
+    }
+
+
 def _memory_darwin() -> Dict[str, Any]:
+    if _run is _DEFAULT_RUN:
+        fast = _mach_vm_memory()
+        if fast is not None:
+            return fast
     total = _static_sysctl_int("hw.memsize")
     if not total:
         return unavailable("sysctl hw.memsize unreadable")
@@ -203,6 +307,7 @@ def collect_load() -> Dict[str, Any]:
         "load_5": round(five, 2),
         "load_15": round(fifteen, 2),
         "cpu_count": cores,
+        "busy_cores_15s": busy.get("busy_15s"),
         "busy_cores_1": busy["busy_1"],
         "busy_cores_5": busy["busy_5"],
         "cpu_source": busy["source"],

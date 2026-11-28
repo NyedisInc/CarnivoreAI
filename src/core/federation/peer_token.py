@@ -15,9 +15,11 @@ from src.core.federation.grants import Grant, GrantError, decode_public_key
 from src.core.relay_identity.device_key import unb64url
 
 PEER_TYP = "peer"
+MESH_KIND = "mesh"
 TOKEN_TTL_SECONDS = 15 * 60
 CHALLENGE_FRESHNESS_SECONDS = 60
 CHALLENGE_PREFIX = b"carnivore federation v1 token\x00"
+MESH_CHALLENGE_PREFIX = b"carnivore mesh v1 token\x00"
 
 _SIGNING_KEY = secrets.token_bytes(32)
 
@@ -26,8 +28,9 @@ class PeerTokenError(Exception):
     pass
 
 
-def challenge_message(grant_id: str, issuer_install_id: str, ts: int, nonce: bytes) -> bytes:
-    return (CHALLENGE_PREFIX + grant_id.encode() + b"\x00" + issuer_install_id.encode()
+def challenge_message(grant_id: str, issuer_install_id: str, ts: int, nonce: bytes, *,
+                      prefix: bytes = CHALLENGE_PREFIX) -> bytes:
+    return (prefix + grant_id.encode() + b"\x00" + issuer_install_id.encode()
             + b"\x00" + struct.pack(">q", ts) + nonce)
 
 
@@ -53,7 +56,7 @@ NONCES = NonceCache()
 
 def verify_challenge(grant: Grant, issuer_install_id: str, ts: object, nonce: object,
                      signature: object, *, now: Optional[float] = None,
-                     nonces: NonceCache = NONCES) -> None:
+                     nonces: NonceCache = NONCES, prefix: bytes = CHALLENGE_PREFIX) -> None:
     now = time.time() if now is None else now
     if not isinstance(ts, int) or isinstance(ts, bool) or abs(now - ts) > CHALLENGE_FRESHNESS_SECONDS:
         raise PeerTokenError("challenge stale")
@@ -62,17 +65,19 @@ def verify_challenge(grant: Grant, issuer_install_id: str, ts: object, nonce: ob
         raise PeerTokenError("challenge malformed")
     try:
         Ed25519PublicKey.from_public_bytes(decode_public_key(grant.public_key)).verify(
-            raw_sig, challenge_message(grant.grant_id, issuer_install_id, ts, raw_nonce))
+            raw_sig, challenge_message(grant.grant_id, issuer_install_id, ts, raw_nonce, prefix=prefix))
     except (InvalidSignature, ValueError, GrantError) as exc:
         raise PeerTokenError("challenge refused") from exc
     if not nonces.accept(grant.grant_id, str(nonce), now):
         raise PeerTokenError("challenge replayed")
 
 
-def mint(grant: Grant, issuer_install_id: str, *, now: Optional[float] = None) -> Tuple[str, int]:
+def mint(grant: Grant, issuer_install_id: str, *, now: Optional[float] = None, kind: Optional[str] = None) -> Tuple[str, int]:
     issued = int(time.time() if now is None else now)
     claims = {"typ": PEER_TYP, "sub": grant.grant_id, "iid": issuer_install_id,
               "iat": issued, "exp": issued + TOKEN_TTL_SECONDS, "jti": secrets.token_hex(8)}
+    if kind is not None:
+        claims["k"] = kind
     return jwt.encode(claims, _SIGNING_KEY, algorithm="HS256"), TOKEN_TTL_SECONDS
 
 

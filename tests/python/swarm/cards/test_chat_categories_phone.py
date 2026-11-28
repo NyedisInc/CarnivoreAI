@@ -19,7 +19,7 @@ from src.core import ui_preferences
 from src.core.notifications import contracts, engine as engine_mod, routing_view, types as notify_types
 from src.core.notifications.sources import open_checks, toast as toast_source
 from src.core.swarm import alerts, reports, routing, stream, thread_port, views, watch
-from src.plugins.huddle import swarm_port
+from src.plugins.taskmanager import swarm_port
 from src.core.work.storage import WorkStorage
 from src.plugins.sdk import chat_category
 from src.plugins.sdk.chat_category import CATEGORIES, card_ref, derive, is_shown

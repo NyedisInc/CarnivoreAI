@@ -5,7 +5,8 @@
     "src/api/skill_usage_routes.py",
     "src/api/skill_watch_routes.py",
     "src/api/catalog_contents_routes.py",
-    "src/api/catalog_media_routes.py"
+    "src/api/catalog_media_routes.py",
+    "POST /api/v1/catalog/revocations/refresh"
   ],
   "area": "skills-catalog",
   "docs": [
@@ -30,7 +31,8 @@
     "If an installed copy was edited, the pane says which files changed; restore puts the installed version back, uninstall removes it, and keep as fork stops auto-update from overwriting it.",
     "Open a card and press show files and SKILL.md to read the signed version's file list and SKILL.md before installing; the app verifies the download against the signed digest first and shows nothing if it does not match.",
     "When an update changes a skill's own text, the consent sheet lists which files were added, removed or changed with a text diff of the small ones; a deprecated item is marked and names its replacement, and auto-update never moves you onto it.",
-    "When a skill has a hero image in the signed catalog, the card's top band and the pane's banner show it (the middle of the same picture); skills without one keep the letter or icon."
+    "When a skill has a hero image in the signed catalog, the card's top band and the pane's banner show it (the middle of the same picture); skills without one keep the letter or icon.",
+    "Refresh revocations immediately via POST /api/v1/catalog/revocations/refresh; revoked plugins are stopped across processes and Tier 0 state, flagged installs require explicit acknowledgment, and updates enforce a pre-swap permission and provenance diff guard."
   ],
   "id": "skills-catalog-browse",
   "issues": [
@@ -74,7 +76,7 @@
     "web/src/lib/manager-frame/ViewToggle.svelte",
     "web/src/lib/skills-hub/SkillsHighlights.svelte"
   ],
-  "updated": "2026-10-21",
+  "updated": "2026-11-25",
   "where": [
     "Menu tab, Warez (hotkey r), then INSTALLED, skills: the tabs installed, stats and pack sit above the filter row. The signed catalog is the Warez store.",
     "Also at /#warez, or /#catalog (its older link), and /#catalog/<handle>/<name> to open one item. /#skills opens Warez on INSTALLED, skills."

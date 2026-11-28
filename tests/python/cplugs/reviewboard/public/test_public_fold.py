@@ -6,15 +6,16 @@ from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict
 
-from src.plugins.host import plugin_fold, runtime, state as owner_state
+from src.plugins.host import plugin_fold, registry_store, runtime, state as owner_state
 from tests.python.cplugs.reviewboard.harness import make_env
 
 
 def store_old(state_dir: Path, enabled: bool, saved: Dict[str, Any]) -> None:
-    path = owner_state.state_path(state_dir)
-    document = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {"cplugs": {}}
-    document.setdefault("cplugs", {})["publicboard"] = {"enabled": enabled, "grants": ["agent_writes", "notify"], "settings": saved, "revision": 4}
-    path.write_text(json.dumps(document), encoding="utf-8")
+    path = registry_store.registry_path(state_dir)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    doc = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else registry_store.new_document()
+    doc.setdefault("items", {})["publicboard"] = {"kind": "feature", "enabled": enabled, "grants": ["agent_writes", "notify"], "settings": saved, "revision": 4}
+    path.write_text(json.dumps(doc), encoding="utf-8")
 
 
 def saved_settings(env: Any) -> Dict[str, Any]:

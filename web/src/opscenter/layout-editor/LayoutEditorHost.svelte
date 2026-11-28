@@ -6,8 +6,6 @@
   import { storeFor } from '../../lib/drawer-tabs/drawer-surface.svelte';
   import { homeLayout } from '../engine/layout.svelte';
   import { checkLayoutEditor, closeWidgetDrawer, editingStore, finishLayoutEditor, layoutEditor, openWidgetDrawer, surfaceDrawer } from './editor.svelte';
-  import EditOverlay from './EditOverlay.svelte';
-  import WidgetDrawer from './WidgetDrawer.svelte';
 
   $effect(() => {
     const open = (event: Event): void => {
@@ -62,9 +60,13 @@
 <svelte:window onkeydown={onKey} onpointerdowncapture={onFocusCell} onfocusincapture={onFocusCell} />
 
 {#if layoutEditor.active && store && layoutEditor.page}
-  <EditOverlay />
+  {#await import('./EditOverlay.svelte') then mod}
+    <mod.default />
+  {/await}
 {/if}
 
 {#if surfaceDrawer.surface && !layoutEditor.active}
-  <WidgetDrawer store={drawerStore} page={drawerPage} surface={surfaceDrawer.surface} />
+  {#await import('./WidgetDrawer.svelte') then mod}
+    <mod.default store={drawerStore} page={drawerPage} surface={surfaceDrawer.surface} />
+  {/await}
 {/if}

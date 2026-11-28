@@ -1,4 +1,5 @@
 import { ledHtml, ledStateFor, normalizeInner, normalizeOuter } from './led';
+import { t } from './i18n/index.svelte';
 
 export const STATUS_LABELS: Record<string, string> = {
     dead: 'dead - process exited',
@@ -55,6 +56,10 @@ export function normalizeStatus(status: unknown): string {
         : 'unknown';
 }
 
+export function backgroundLabel(): string {
+    return t('session.status.background');
+}
+
 function questionLabel(status: unknown, activityHint: unknown): string {
     if (normalizeStatus(status) !== 'question' || typeof activityHint !== 'string') return '';
     if (activityHint === 'question') return 'your turn - question waiting';
@@ -69,7 +74,10 @@ export function labelWithSource(
     parkedSummary?: unknown,
 ): string {
     const label =
-        questionLabel(status, activityHint) || (STATUS_LABELS[normalizeStatus(status)] as string);
+        questionLabel(status, activityHint) ||
+        (normalizeStatus(status) === 'working_subagent' && activityHint === 'background'
+            ? backgroundLabel()
+            : (STATUS_LABELS[normalizeStatus(status)] as string));
     const suffix = Object.prototype.hasOwnProperty.call(
         SOURCE_SUFFIX,
         statusSource as string,
@@ -143,6 +151,7 @@ export function ledHtmlForStatus(
         host_offline: s.host_offline,
         usage_limit: s.usage_limit,
         login_expired: s.login_expired,
+        activity_hint: s.activity_hint,
     });
     return ledHtml({
         inner: led.inner,
@@ -168,6 +177,7 @@ export function ledAttrsForStatus(
         host_offline: s.host_offline,
         usage_limit: s.usage_limit,
         login_expired: s.login_expired,
+        activity_hint: s.activity_hint,
     });
     return {
         class: `status-dot status-dot--${STATUS_DOT_CLASS[key] as string} status-led`,

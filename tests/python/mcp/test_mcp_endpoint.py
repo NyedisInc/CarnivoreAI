@@ -129,8 +129,8 @@ def test_tools_list_names_every_swarm_tool_and_no_swarm_tool(env):
     names = {t["name"] for t in r.json()["result"]["tools"]}
     assert len(names) > len(SWARM_TOOLS)
     assert SWARM_TOOLS <= names
-    from src.core.mcp import pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools, pack_global_sync_tools
-    machine_tools = {n for mod in (pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools, pack_global_sync_tools) for n in (*mod.READ_TOOLS, *mod.WRITE_TOOLS)}
+    from src.core.mcp import pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools, pack_global_sync_tools, pack_leftovers_tools, pack_jobs_metrics_tools
+    machine_tools = {n for mod in (pack_machines_tools, pack_placement_tools, pack_relay_tools, pack_skills_tools, pack_span_tools, pack_transport_tools, pack_migrate_tools, pack_move_tools, pack_global_sync_tools, pack_leftovers_tools, pack_jobs_metrics_tools) for n in (*mod.READ_TOOLS, *mod.WRITE_TOOLS)}
     from src.core.mcp import merged_tools
 
     machine_tools |= set(merged_tools.MERGED)

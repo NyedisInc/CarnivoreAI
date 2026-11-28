@@ -24,6 +24,8 @@ export interface BridgeOptions {
     readonly frame: () => { postMessage: (message: unknown, targetOrigin: string) => void } | null;
     readonly declared: Declared;
     readonly callRoute: (route: string, payload: unknown) => Promise<unknown>;
+    readonly callTool?: (tool: string, args: unknown) => Promise<unknown>;
+    readonly armed?: () => boolean;
     readonly viewport: () => { w: number; h: number };
     readonly onState?: (state: string) => void;
     readonly onHitRegions?: (rects: Rect[]) => void;
@@ -58,11 +60,12 @@ export function createBridge(options: BridgeOptions): { handle: (event: InboundM
     const held: Array<() => Promise<void>> = [];
 
     const run = async (verb: 'route.call' | 'tool.call', msg: Record<string, unknown>, id: unknown): Promise<void> => {
+        if (verb === 'tool.call' && options.armed && !options.armed()) return reply(id, { ok: false, error: 'not_armed' });
         const name = verb === 'route.call' ? msg.route : msg.tool;
         const known = verb === 'route.call' ? options.declared.routes : options.declared.tools;
         if (typeof name !== 'string' || !known.includes(name)) return reply(id, { ok: false, error: 'undeclared' });
-        if (verb === 'tool.call') return reply(id, { ok: false, error: 'tool_action_unavailable' });
-        let payload: unknown = msg.payload ?? {};
+        if (verb === 'tool.call' && !options.callTool) return reply(id, { ok: false, error: 'tool_action_unavailable' });
+        let payload: unknown = (verb === 'tool.call' ? (msg.args ?? msg.payload) : msg.payload) ?? {};
         try {
             if (JSON.stringify(payload).length > MAX_PAYLOAD_CHARS) return reply(id, { ok: false, error: 'payload_too_large' });
             payload = JSON.parse(JSON.stringify(payload));
@@ -70,8 +73,12 @@ export function createBridge(options: BridgeOptions): { handle: (event: InboundM
             return reply(id, { ok: false, error: 'payload_not_json' });
         }
         const send = async (): Promise<void> => {
+            if (verb === 'tool.call' && options.armed && !options.armed()) return reply(id, { ok: false, error: 'not_armed' });
             try {
-                reply(id, { ok: true, result: await options.callRoute(name, payload) });
+                const result = verb === 'tool.call'
+                    ? await options.callTool!(name, payload)
+                    : await options.callRoute(name, payload);
+                reply(id, { ok: true, result });
             } catch (error) {
                 reply(id, { ok: false, error: (error as { code?: unknown } | null)?.code === 'rate_limited' ? 'rate_limited' : 'failed' });
             }

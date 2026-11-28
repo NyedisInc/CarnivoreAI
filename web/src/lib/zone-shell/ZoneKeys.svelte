@@ -1,5 +1,9 @@
 <script lang="ts">
   import { halveAt, percent, sectionStyle } from '../session-rail/rail-cuts';
+  import { cutBounds, centreOf } from '../session-rail/rail-cuts';
+  import { RAIL_RATIO_STEP } from '../session-rail/rail-model';
+  import { t } from '../i18n/index.svelte';
+  import SplitDivider from '../split-divider/SplitDivider.svelte';
   import TabKey from './TabKey.svelte';
   import EditCell from './EditCell.svelte';
   import { nextKey } from './key-nav';
@@ -31,6 +35,8 @@
     hiddenKey,
     ontoggle,
     motion = null,
+    oncut,
+    oncutsave,
   }: {
     zones: readonly Zone[];
     axis: 'x' | 'y';
@@ -54,6 +60,8 @@
     ondragstart?: (event: PointerEvent, key: string, title: string) => void;
     hiddenKey?: (key: string) => boolean;
     ontoggle?: (key: string, hide: boolean) => void;
+    oncut?: (index: number, value: number) => void;
+    oncutsave?: () => void;
     motion?: { cell(node: HTMLElement, key: string): { update?(key: string): void; destroy?(): void } | void } | null;
   } = $props();
 
@@ -176,6 +184,11 @@
   {#if shownCuts.length > 0 && !flow}
     {#each shownCuts as cut, c (c)}
       <div class="rail__split" data-rail-split={percent(cut)} data-preview={ghostAfter === c ? '' : undefined} style={axis === 'x' ? `left: ${percent(cut)}` : `top: ${percent(cut)}`}></div>
+      
+      {#if oncut && !editing}
+        <SplitDivider {axis} ratio={cut} min={cutBounds(shownCuts, c).min} max={cutBounds(shownCuts, c).max} step={RAIL_RATIO_STEP} reset={centreOf(shownCuts, c)}
+          label={t(axis === 'y' ? 'session_rail.divider' : 'session_rail.divider_bottom')} onpreview={(next) => oncut(c, next)} oncommit={() => oncutsave?.()} />
+      {/if}
     {/each}
   {/if}
 </div>
@@ -292,7 +305,7 @@
       position: absolute;
       left: 0;
       right: 0;
-      height: 2px;
+      height: var(--oc-grip-line);
       background: var(--oc-line-frame);
       pointer-events: none;
     }
@@ -301,7 +314,7 @@
       top: 0;
       bottom: 0;
       right: auto;
-      width: 2px;
+      width: var(--oc-grip-line);
       height: auto;
     }
 

@@ -1,5 +1,6 @@
 import { authFetch } from '../api/auth.svelte';
 import { labelResult } from './dimension-label';
+import { getShared, publishShared } from './stats-bus';
 import type { AnswerMeta, QueryBody, QueryResult } from '../cells/analytics/types';
 
 export type BatchItem = { ok: true; result: QueryResult; answer?: AnswerMeta } | { ok: false; error: { code: string; message: string } };
@@ -101,11 +102,40 @@ export function createQueryClient(deps: ClientDeps): { runQueries: (items: Query
   return { runQueries };
 }
 
-/* and the real */
+const SHARED_ITEM_TTL_MS = 10_000;
+
 export const queryClient = createQueryClient({
   post: async (items, signal) => {
-    const response = await authFetch<{ results: BatchItem[] }>('/stats/query-batch', { method: 'POST', body: JSON.stringify({ items }), signal });
-    return response.results.map((item, at) => (item.ok && items[at] ? { ...item, result: labelResult(items[at], item.result) } : item));
+    const out: (BatchItem | undefined)[] = new Array(items.length);
+    const missIdx: number[] = [];
+    const missBodies: QueryBody[] = [];
+    const keys = items.map((item) => `qb:${keyOf(item)}`);
+    for (let i = 0; i < items.length; i++) {
+      const hit = getShared<BatchItem>(keys[i]!, SHARED_ITEM_TTL_MS);
+      if (hit !== null) {
+        out[i] = hit;
+      } else {
+        missIdx.push(i);
+        missBodies.push(items[i]!);
+      }
+    }
+    if (missBodies.length > 0) {
+      const response = await authFetch<{ results: BatchItem[] }>('/stats/query-batch', {
+        method: 'POST',
+        body: JSON.stringify({ items: missBodies }),
+        signal,
+      });
+      for (let j = 0; j < missIdx.length; j++) {
+        const idx = missIdx[j]!;
+        const raw = response.results[j] ?? { ok: false as const, error: { code: 'missing_result', message: 'missing_result' } };
+        const labeled = raw.ok && missBodies[j] ? { ...raw, result: labelResult(missBodies[j]!, raw.result) } : raw;
+        out[idx] = labeled;
+        if (labeled.ok && !labeled.answer?.stale) {
+          publishShared(keys[idx]!, labeled);
+        }
+      }
+    }
+    return out as BatchItem[];
   },
   hidden: () => typeof document !== 'undefined' && document.visibilityState === 'hidden',
   onVisible: (cb) => {

@@ -8,6 +8,7 @@ export interface MenuPage {
     readonly closer: string;
     readonly railItem: string | null;
     readonly hashes: readonly string[];
+    /* the Task Manager */
     readonly keepDrawerTab?: boolean;
     readonly frame: PageFrame;
 }
@@ -22,7 +23,7 @@ export const MENU_PAGES: readonly MenuPage[] = [
     { id: 'elite', containerId: 'elite-screen', closer: 'closeEliteScreen', railItem: 'warez', hashes: ['#elite'], frame: 'column' },
     { id: 'settings', containerId: 'settings-screen', closer: 'closeSettingsScreen', railItem: 'settings', hashes: ['#settings', '#wrappers', '#launch-profiles', '#shortcuts'], frame: 'nav' },
     { id: 'account', containerId: 'account-screen', closer: 'closeAccountScreen', railItem: null, hashes: ['#account'], frame: 'column' },
-    { id: 'widgets', containerId: 'widgets-screen', closer: 'closeWidgetsScreen', railItem: null, hashes: ['#widgets'], frame: 'nav' },
+    { id: 'widgets', containerId: 'widgets-screen', closer: 'closeWidgetsScreen', railItem: 'widgets', hashes: ['#widgets'], frame: 'nav' },
     { id: 'ledger', containerId: 'ledger-screen', closer: 'closeLedgerScreen', railItem: 'providers', hashes: ['#ledger'], frame: 'column' },
     { id: 'blueprints', containerId: 'blueprints-screen', closer: 'closeBlueprintsScreen', railItem: 'blueprints', hashes: ['#blueprints'], frame: 'column' },
     { id: 'docs', containerId: 'docs-screen', closer: 'closeDocsScreen', railItem: 'docs', hashes: ['#docs'], frame: 'column' },

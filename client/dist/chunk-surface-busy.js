@@ -1,0 +1,1 @@
+import{Mi as e}from"./chunk-editor.svelte.js";var t=new Set;function n(e){return t.add(e),()=>t.delete(e)}function r(){if(e())return!0;for(let e of t)if(e())return!0;return!1}export{r as n,n as t};

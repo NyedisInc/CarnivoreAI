@@ -61,11 +61,11 @@ beforeEach(() => {
 });
 
 describe('a company heading kebab', () => {
-    it('offers rename, the shared color row, fold everything inside and delete, and nothing for an unknown company', async () => {
+    it('offers rename, the shared color row, fold everything inside, new group and delete, and nothing for an unknown company', async () => {
         expect(await nodesOf('company', 'c:99')).toBeNull();
         const nodes = (await nodesOf('company', 'c:7'))!;
-        expect(nodes.map((e) => e.glyphHtml)).toEqual(['rename', undefined, 'fold', 'close']);
-        expect(nodes.map((e) => !!e.sep), 'delete sits alone behind a hairline').toEqual([false, false, true, true]);
+        expect(nodes.map((e) => e.glyphHtml)).toEqual(['rename', undefined, 'fold', 'add', 'close']);
+        expect(nodes.map((e) => !!e.sep), 'delete sits alone behind a hairline').toEqual([false, false, true, true, true]);
         expect(nodes.at(-1)!.danger).toBe(true);
         expect(nodes.filter((e) => e.swatches)).toHaveLength(1);
     });

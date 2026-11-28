@@ -13,12 +13,13 @@ from src.api import recreate_routes as rr
 from src.core.pack.identity import home as project_home
 from src.core.pack.move import account as account_launch
 from src.core.session_recreate import RECREATE
-from src.core.session_respawn import RESPAWN_TRANSCRIPT_MISSING
+from src.core.session_respawn import RESPAWN_OFFLOADED, RESPAWN_TRANSCRIPT_MISSING
 from src.api.error_response import api_error
 from src.core.db import DatastoreUnreadableError
 from src.core.session_ops import row_probe
 
 TRANSCRIPT_MISSING_CODE = "transcript_missing"
+OFFLOADED_CODE = "offloaded"
 
 logger = structlog.get_logger()
 
@@ -56,7 +57,7 @@ async def _recreate_claimed(
     config_dir = (extra_env or {}).get("CLAUDE_CONFIG_DIR")
     corpus = Path(config_dir) / "projects" if config_dir else None
     facts = await run_in_threadpool(rr._gather, session_uuid, row_overrides, fresh=fresh, corpus_root=corpus)
-    if fresh_if_transcript_absent and not fresh and facts["directory"].refuses:
+    if fresh_if_transcript_absent and not fresh and facts["directory"].refuses and not facts["directory"].offloaded:
         fresh = True
         facts = await run_in_threadpool(rr._gather, session_uuid, row_overrides, fresh=True, corpus_root=corpus)
     if not fork and not fresh and facts.get("extra_args"):
@@ -89,6 +90,7 @@ async def _recreate_claimed(
     )
     if plan.kind != RECREATE or not plan.actionable:
         missing = plan.kind == RESPAWN_TRANSCRIPT_MISSING
+        offloaded = plan.kind == RESPAWN_OFFLOADED
         logger.info(
             "recreate_refused",
             name=name,
@@ -106,6 +108,7 @@ async def _recreate_claimed(
             working_dir=plan.working_dir,
             detail=plan.detail,
             **({"code": TRANSCRIPT_MISSING_CODE, "codes": [TRANSCRIPT_MISSING_CODE]} if missing
+               else {"code": OFFLOADED_CODE, "codes": [OFFLOADED_CODE]} if offloaded
                else unknown_profile_codes(settings, agent_type, choice.verdict)),
         )
 

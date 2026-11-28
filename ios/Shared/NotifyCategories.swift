@@ -1,6 +1,8 @@
 import UserNotifications
 
 enum NotifyCategories {
+    private static let lockScreenProtectedIds: Set<String> = ["copy_link", "play"]
+
     static func label(_ key: String) -> String {
         switch key {
         case "notify.card.act.yes": return Strings.cardActYes
@@ -31,7 +33,7 @@ enum NotifyCategories {
 
     static func action(_ a: NotifyAction, title: String) -> UNNotificationAction {
         var options: UNNotificationActionOptions = []
-        if a.faceId { options.insert(.authenticationRequired) }
+        if a.faceId || lockScreenProtectedIds.contains(a.id) { options.insert(.authenticationRequired) }
         if a.foreground { options.insert(.foreground) }
         if a.textInput {
             return UNTextInputNotificationAction(identifier: a.id, title: title, options: options,
@@ -43,13 +45,18 @@ enum NotifyCategories {
     static func contractAction(kind: NotifyKind, id: String) -> NotifyAction? {
         let list = NotifyContract.actions[kind] ?? []
         if let hit = list.first(where: { $0.id == id }) { return hit }
-        if id.hasPrefix("opt."), let first = list.first(where: { $0.id == "opt.1" }) { return NotifyAction(id: id, labelKey: first.labelKey, faceId: first.faceId, textInput: false, foreground: false) }
+        if id.hasPrefix("opt."), let first = list.first(where: { $0.id == "opt.1" }) {
+            return NotifyAction(id: id, labelKey: first.labelKey, faceId: first.faceId, textInput: false, foreground: false)
+        }
         return nil
     }
 
     static func actions(kind: NotifyKind, acts: [[String]]) -> [UNNotificationAction] {
         if acts.isEmpty { return (NotifyContract.actions[kind] ?? []).map { action($0, title: label($0.labelKey)) } }
-        return acts.compactMap { pair in contractAction(kind: kind, id: pair[0]).map { action($0, title: pair[1]) } }
+        return acts.compactMap { pair in
+            guard pair.count >= 2 else { return nil }
+            return contractAction(kind: kind, id: pair[0]).map { action($0, title: pair[1]) }
+        }
     }
 
     static func all() -> Set<UNNotificationCategory> {

@@ -13,7 +13,7 @@ from websockets.asyncio.server import serve
 
 from src.tui.api_client import ApiClient
 from src.tui.events_client import EventsClient, backoff_delay
-from src.tui.token_store import TokenPair, TokenStore
+from src.core.cli_command.token_store import TokenPair, TokenStore
 
 
 def row(sid: str, status: str) -> dict[str, Any]:

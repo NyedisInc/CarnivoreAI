@@ -5,21 +5,23 @@ import json
 import sqlite3
 import threading
 
-from src.plugins.host import activity_log, state
+from src.plugins.host import activity_log, registry_store, state
 
 
 def _write(state_dir, enabled: bool) -> None:
-    path = state.state_path(state_dir)
+    path = registry_store.registry_path(state_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"version": 1, "cplugs": {"x": {"enabled": enabled, "grants": [], "revision": 1}}}))
+    doc = registry_store.new_document()
+    doc["items"]["x"] = {"kind": "feature", "enabled": enabled, "grants": [], "revision": 1}
+    path.write_text(json.dumps(doc))
 
 
 def test_state_file_is_parsed_once_and_again_only_after_it_changes(tmp_path, monkeypatch):
     _write(tmp_path, True)
     parses: list = []
-    real_loads = json.loads
-    monkeypatch.setattr(state.json, "loads", lambda text: parses.append(1) or real_loads(text))
-    state._file_cache.clear()
+    real_loads = registry_store.json.loads
+    monkeypatch.setattr(registry_store.json, "loads", lambda text: parses.append(1) or real_loads(text))
+    registry_store._cache.clear()
     for _ in range(5):
         assert state.stored_enabled(tmp_path, "x") is True
     assert len(parses) == 1

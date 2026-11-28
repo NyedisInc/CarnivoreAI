@@ -328,6 +328,10 @@
       overflow: visible;
     }
 
+    .oc-frame[data-oc-focus]:not(.oc-frame-terminal) {
+      animation: amb-join-terminal-ring var(--oc-amb-join-dur);
+    }
+
     .oc-frame[data-oc-focus]:not(.oc-frame-terminal)::before {
       content: '';
       position: absolute;
@@ -338,27 +342,21 @@
       pointer-events: none;
       border: 1px solid var(--oc-focus-edge);
       box-shadow: inset 0 0 9px -4px var(--oc-focus-glow);
-      opacity: 0.75;
+      opacity: var(--amb-focus-op);
       will-change: opacity;
-      animation: oc-focus-breathe var(--oc-focus-breathe) ease-in-out infinite;
-    }
-
-    @keyframes oc-focus-breathe {
-      0%, 100% { opacity: 0.65; }
-      50% { opacity: 0.95; }
-    }
-
-    :global([data-oc-still]) .oc-frame[data-oc-focus]:not(.oc-frame-terminal)::before {
-      animation-play-state: paused;
     }
 
     @media (prefers-reduced-motion: reduce) {
+      .oc-frame[data-oc-focus]:not(.oc-frame-terminal) {
+        animation: none;
+      }
+
       .oc-frame[data-oc-focus]:not(.oc-frame-terminal)::before {
         animation: none;
         opacity: 0.85;
         will-change: auto;
       }
-  }
+    }
 
     .oc-frame[data-oc-focus]:not(.oc-frame-terminal) {
       border-color: var(--oc-orange);

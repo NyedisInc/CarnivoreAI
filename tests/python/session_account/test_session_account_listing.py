@@ -89,3 +89,47 @@ async def test_a_restart_invalidates_the_cached_account(_clean):
     assert row.account_id is None
     await _settle()
     assert len(_clean) == 2
+
+
+@pytest.mark.asyncio
+async def test_agy_session_resolves_to_captured_antigravity_account(monkeypatch):
+    from src.config.provider_accounts import ProviderAccount
+    from src.core.agy import identity as agy_identity, state as agy_state
+    from src.core.provider_ledger import accounts_store
+
+    monkeypatch.setattr(
+        accounts_store,
+        "list_accounts",
+        lambda _p: [ProviderAccount(id="agy-alice-example-com", name="alice", provider="antigravity")],
+    )
+    monkeypatch.setattr(agy_identity, "info_is_agy", lambda info, _p=None: getattr(info, "agent_type", None) == "antigravity")
+    monkeypatch.setattr(
+        agy_state,
+        "state_for_conversation",
+        lambda _sd, cid: {"email": "alice@example.com"} if cid == "conv-agy-1" else None,
+    )
+    from src.config import settings as app_settings
+
+    monkeypatch.setattr(type(app_settings), "get_launch_profiles", lambda _self: [])
+
+    state = SimpleNamespace(
+        session_manager=SimpleNamespace(
+            tmux_socket_name=lambda: "cloude",
+            claude_uuid_for_tmux_name=lambda name: "conv-agy-1" if name == "carnivore_agy" else None,
+        )
+    )
+    row = SimpleNamespace(
+        tmux_session="carnivore_agy",
+        agent_family="custom",
+        agent_type="antigravity",
+        claude_session_uuid=None,
+        activity_status="working",
+        host_key="local",
+        account_id=None,
+        session=SimpleNamespace(tmux_created_epoch=11),
+    )
+    sal.mark_session_account(state, [row])
+    assert row.account_id is None
+    await _settle()
+    sal.mark_session_account(state, [row])
+    assert row.account_id == "agy-alice-example-com"

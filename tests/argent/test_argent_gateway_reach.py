@@ -174,7 +174,7 @@ async def test_tls_verification_stays_on_end_to_end(sockdir, switch) -> None:
     await reach.ensure("studio")
     carried = overlay.preamble(GATEWAY, "/ca.pem", reach.exports_for("studio"))
     assert not any(insecure(s) for s in side.scripts) and not insecure(carried)
-    assert f"ANTHROPIC_BASE_URL={GATEWAY}" in carried and "NODE_EXTRA_CA_CERTS=/ca.pem" in carried
+    assert 'ANTHROPIC_BASE_URL="$_cb"' in carried and GATEWAY in carried and "NODE_EXTRA_CA_CERTS=/ca.pem" in carried
     assert carried.index("HTTPS_PROXY") > carried.index('if [ -n "$_ak" ]')
     assert insecure(carried + " export NODE_TLS_REJECT_UNAUTHORIZED=0;")
     assert insecure("curl -k https://x ")

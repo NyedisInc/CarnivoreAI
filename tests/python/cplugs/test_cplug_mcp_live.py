@@ -14,17 +14,30 @@ from fastapi import FastAPI
 from src.core.mcp import channel, protocol, tools, write_tools
 from src.core.mcp.caller import AgentCaller
 from src.core.resource_push import topics
-from src.plugins.host import mcp as cplug_mcp, runtime, sidecar_registry, state as owner_state
-from src.plugins.host.sidecar_manifest import load_sidecar_manifest, with_sidecar_facts
+from src.plugins.host import runtime, sidecar_registry, state as owner_state
+from src.plugins.host.plugin_manifest import load_sidecar_manifest
 
 NAME = "clock"
 PANE = AgentCaller("ses_1", "cloude_a", "ses_1")
 READ_TOKEN = AgentCaller("x", "x", "x", "tok", "read")
-CPLUG = {"schema": 1, "id": NAME, "name": "Clock", "description": "Tells the time.", "version": "1.0.0", "entry": "main.py",
-         "permissions": {"app": ["notify"]},
-         "tools": [{"name": "ping", "description": "Pinned: answer pong.", "gate": "read",
-                    "inputSchema": {"type": "object", "properties": {"n": {"type": "integer"}}, "required": ["n"]}},
-                   {"name": "alarm", "description": "Pinned: set an alarm.", "gate": "inbox", "inputSchema": {"type": "object"}}]}
+CPLUG = {
+    "schema": 2,
+    "id": NAME,
+    "name": "Clock",
+    "description": "Tells the time.",
+    "version": "1.0.0",
+    "kind": "plugin",
+    "author": "acme",
+    "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    "permissions": {"write": ["notify"], "reasons": {"notify": "Tells the time."}},
+    "mcp": {
+        "tools": [
+            {"name": "ping", "description": "Pinned: answer pong.", "gate": "read",
+             "inputSchema": {"type": "object", "properties": {"n": {"type": "integer"}}, "required": ["n"]}},
+            {"name": "alarm", "description": "Pinned: set an alarm.", "gate": "inbox", "inputSchema": {"type": "object"}},
+        ]
+    },
+}
 
 def _async(fn):
     async def call(name):
@@ -52,9 +65,9 @@ class FakeProc:
 def world(tmp_path: Path):
     root = tmp_path / "plugins" / NAME
     root.mkdir(parents=True)
-    (root / "cplug.json").write_text(json.dumps(CPLUG))
+    (root / "carnivore.json").write_text(json.dumps(CPLUG))
     (root / "main.py").write_text("")
-    manifest = with_sidecar_facts(load_sidecar_manifest(root, NAME), root)
+    manifest = load_sidecar_manifest(root, NAME)
     definition = sidecar_registry.SidecarDefinition(manifest, "acme/clock", "0" * 32, root, tmp_path / "data")
     installed: List[Any] = []
     procs: Dict[str, FakeProc] = {}

@@ -9,6 +9,7 @@ _LINE = re.compile(
     r"""^\s*'(?P<key>[a-z0-9_.]+)':\s*(?:'(?P<single>(?:[^'\\]|\\.)*)'|"(?P<double>(?:[^"\\]|\\.)*)"),\s*$"""
 )
 _ESCAPE = re.compile(r"\\(.)")
+_CONTROL = {"n": "\n", "t": "\t"}
 
 DEFAULT_CATALOG_PATH = Path(__file__).resolve().parents[3] / "client" / "js" / "i18n" / "catalog.en.js"
 PLUGINS_ROOT = Path(__file__).resolve().parents[2] / "plugins"
@@ -26,12 +27,15 @@ def read_prefixed(prefixes: Iterable[str], path: Path = DEFAULT_CATALOG_PATH) ->
             if not match:
                 raise ValueError(f"{path}:{number}: unparseable catalog line under a requested prefix")
             raw = match.group("single") if match.group("single") is not None else match.group("double")
-            found[match.group("key")] = _ESCAPE.sub(r"\1", raw)
+            found[match.group("key")] = _ESCAPE.sub(lambda m: _CONTROL.get(m.group(1), m.group(1)), raw)
     return found
 
 
 def plugin_slice_paths(root: Path = PLUGINS_ROOT) -> List[Path]:
-    return sorted(p for p in root.glob(f"*/{PLUGIN_SLICE_NAME}") if (p.parent / "cplug.json").is_file())
+    return sorted(
+        p for p in root.glob(f"*/{PLUGIN_SLICE_NAME}")
+        if (p.parent / "carnivore.toml").is_file()
+    )
 
 
 def read_plugin_slices(suffixes: Iterable[str], root: Path = PLUGINS_ROOT) -> Dict[str, str]:

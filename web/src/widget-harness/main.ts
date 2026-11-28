@@ -10,6 +10,7 @@ import DefectProbe from './DefectProbe.svelte';
 import { harnessWidget, harnessWidgets } from './catalog';
 import { registerDrafts } from './draft-entry';
 import { registerPluginViewFixture } from './plugin-view-fixture';
+import { bootPluginCells } from '../plugins/host/cell-boot';
 import { fitCheck, unavailableFindings } from './fit-probe';
 import { layoutDefects, type DefectReport } from './layout-defects';
 import { menuConformance, type MenuDrawFinding } from './menu-conformance';
@@ -44,6 +45,7 @@ applyHarnessHostOptions();
 
 registerDrafts();
 registerPluginViewFixture(fixtureKind !== 'empty' || params.get('widget') !== 'core.plugin-view');
+bootPluginCells();
 startIdleTracking(params.get('idle') === '1');
 
 function railDock(): 'side' | 'bottom' | null {

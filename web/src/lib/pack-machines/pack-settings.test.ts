@@ -23,8 +23,8 @@ describe('the meter and link arithmetic', () => {
 });
 
 describe('the tab and hash mapping', () => {
-  test('four tabs; #pack, #hosts and the old settings addresses reach the Pack page; old slugs map to the new tabs (ssh ones open the ssh filter)', () => {
-    expect([...PACK_TABS]).toEqual(['computers', 'work', 'logins', 'skills']);
+  test('five tabs; #pack, #hosts and the old settings addresses reach the Pack page; old slugs map to the new tabs (ssh ones open the ssh filter)', () => {
+    expect([...PACK_TABS]).toEqual(['computers', 'work', 'jobs', 'logins', 'skills']);
     expect(packTabOf('#pack')).toEqual({ tab: null, ssh: false });
     expect(packTabOf('#hosts')).toEqual({ tab: null, ssh: false });
     expect(packTabOf('#pack/skills')).toEqual({ tab: 'skills', ssh: false });

@@ -25,6 +25,7 @@ class ModEntry(BaseModel):
     is_mod: bool
     present: bool
     removable: bool
+    restored: bool = False
 
 
 class ModGroup(BaseModel):

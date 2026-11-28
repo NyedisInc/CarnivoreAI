@@ -206,3 +206,19 @@ def test_prune_and_drop_ref(repo, jobs_root):
     assert side_repo.prune(side, older_than_s=1, keep=set(), now=snap.taken_at + 99999) == 1
     assert gitio.run(["rev-parse", "--verify", "-q", f"refs/heads/job-{JOB}"], git_dir=side, check=False).returncode != 0
     side_repo.drop_ref(side, "refs/heads/nothing")
+
+
+def test_commit_ref_snapshots_that_commits_tree_and_none_of_the_dirty_working_tree(repo, jobs_root):
+    (repo / "a.txt").write_text("v2\n")
+    g(repo, "commit", "-qam", "second")
+    fixed = g(repo, "rev-parse", "HEAD")
+    g(repo, "reset", "-q", "--hard", "HEAD~1")
+    (repo / "a.txt").write_text("dirty\n")
+    (repo / "untracked.txt").write_text("u\n")
+    snap = snapshot.take(str(repo), UID, JOB, jobs_root=jobs_root, commit_ref=fixed)
+    assert snap.tree == g(repo, "rev-parse", f"{fixed}^{{tree}}")
+    assert "untracked.txt" not in tree_files(snap)
+    assert g(Path(snap.side_git_dir), "show", f"{snap.commit}:a.txt") == "v2"
+    with pytest.raises(JobError) as bad:
+        snapshot.take(str(repo), UID, "job_0123456789ac", jobs_root=jobs_root, commit_ref="0" * 40)
+    assert bad.value.code == "bad_request"

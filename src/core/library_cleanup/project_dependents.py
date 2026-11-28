@@ -42,7 +42,11 @@ REFUSED_WHEN_PRESENT: Tuple[Tuple[str, str], ...] = REFUSED_BY_ID + REFUSED_BY_U
 LEFT_ALONE: Dict[str, str] = {
     "installed_items": "project_path is a folder path, not a project row id",
     "pack_rollups": "project is a peer machine's opaque hash of ITS project, never this machine's row id",
+    "pack_rollups_5m": "project is a peer machine's opaque hash of ITS project, never this machine's row id",
+    "pack_rollup_activity": "project is a peer machine's opaque hash of ITS project, never this machine's row id",
+    "pack_rollup_conversations": "project is a peer machine's opaque hash of ITS project, never this machine's row id",
     "pack_rollup_counters": "project is a peer machine's opaque hash of ITS project, never this machine's row id",
+    "pack_rollup_projects": "project is a peer machine's opaque hash of ITS project (name beside it), never this machine's row id",
     "work_write_actors": "cross_project is a yes/no flag on a write, not a project id",
     "message_transcripts": "dormant archive schema; project_id references message_projects (a corpus slug, its own id space), history only, read by nothing that acts on a project",
     "message_projects": "dormant archive schema: a corpus-and-slug record of where Claude wrote, never this machine's project row",

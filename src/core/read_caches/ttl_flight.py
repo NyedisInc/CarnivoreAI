@@ -18,13 +18,13 @@ def invalidate_all() -> None:
 class TtlFlight(Generic[T]):
 
     def __init__(self, name: str, ttl: float = 1.0) -> None:
+        self.name = name
         self.ttl = ttl
         self.computations = 0
-        self._flight: SingleFlight[Any] = SingleFlight(name)
+        self._flights: dict[int, SingleFlight[Any]] = {}
         self._value: Optional[T] = None
         self._at = float("-inf")
         self._generation = 0
-        self._flight_generation = 0
         _ALL.append(self)
 
     def invalidate(self) -> None:
@@ -46,8 +46,12 @@ class TtlFlight(Generic[T]):
                 self._value, self._at = value, started
             return value
 
-        if not self._flight.in_flight:
-            self._flight_generation = generation
-        elif self._flight_generation != generation:
-            return await run()
-        return await self._flight.run(run)
+        flight = self._flights.get(generation)
+        if flight is None:
+            flight = SingleFlight(f"{self.name}@{generation}")
+            self._flights[generation] = flight
+        try:
+            return await flight.run(run)
+        finally:
+            if not flight.in_flight and self._flights.get(generation) is flight:
+                self._flights.pop(generation, None)

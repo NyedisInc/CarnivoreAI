@@ -10,7 +10,8 @@ from fastapi.concurrency import run_in_threadpool
 from src.core import restart_inflight, session_change_notice, session_sleep, unread_follow_up
 from src.core.db import connect
 from src.core.pipeline import triggers as save_triggers
-from src.core.session_ops import row_probe
+from src.core.hosts.ddl import LOCAL_HOST_KEY
+from src.core.session_ops import close_intent, row_probe
 from src.core.session_recreate_presence import TMUX_GONE, TMUX_PRESENT, TMUX_UNKNOWN
 from src.core.sessions.errors import SessionError
 
@@ -54,10 +55,11 @@ def _record_sleep(row: dict, source: str) -> int:
         return moved
 
 
-async def _close_and_confirm(app_state: Any, name: str, socket: str) -> None:
+async def _close_and_confirm(app_state: Any, name: str, socket: str, session_id: Optional[str]) -> None:
     await app_state.local_servers.clear_session(name)
     try:
-        await session_sleep.close_for_sleep(app_state.session_manager, name=name, socket=socket)
+        await session_sleep.close_for_sleep(app_state.session_manager, name=name, socket=socket,
+                                          session_id=session_id)
     except RuntimeError as exc:
         logger.error("session_sleep_close_failed", tmux_name=name, error=str(exc))
         raise SleepFailed(f"failed to close {name!r} for sleep: {exc}", tmux_name=name) from exc
@@ -74,17 +76,16 @@ async def _stop_under_claim(app_state: Any, session_uuid: str, source: str, fres
         return _refused(row, refusal), row, "", "", 0
     name = row_probe.safe_name(str(row.get("tmux_name") or ""))
     socket = str(row.get("tmux_socket") or row_probe.socket_name())
-    presence = await run_in_threadpool(row_probe.measure_presence, name, socket)
+    presence = await run_in_threadpool(row_probe.measure_row_presence, row, name, socket, require_known_epoch=True)
     if presence.outcome == TMUX_UNKNOWN:
         unknown = session_sleep.SleepRefusal(
-            session_sleep.REFUSED_PRESENCE_UNKNOWN,
-            "cannot sleep: the tmux socket could not be listed, so whether this session is running was not evaluated. nothing was stopped")
+            session_sleep.REFUSED_PRESENCE_UNKNOWN, f"cannot sleep: {presence.detail.rstrip('. ')}. nothing was stopped")
         return _refused(row, unknown), row, name, presence.outcome, 0
     unread_follow_up.carry_into_sleep(app_state.session_manager, row)
     if presence.outcome == TMUX_PRESENT:
-        await _close_and_confirm(app_state, name, socket)
+        await _close_and_confirm(app_state, name, socket, presence.session_id)
     moved = await run_in_threadpool(_record_sleep, row, source)
-    return None, row, name, presence.outcome, moved
+    return None, row, name, "gone_other_instance" if presence.other_instance else presence.outcome, moved
 
 
 async def sleep_session(app_state: Any, session_uuid: str, *, source: str = session_sleep.LIFECYCLE_SOURCE_SLEPT,
@@ -95,6 +96,9 @@ async def sleep_session(app_state: Any, session_uuid: str, *, source: str = sess
         return refusal
     session_change_notice.publish(app_state, session_change_notice.build_structural_notice("slept"))
     if not moved:
+        if presence == TMUX_PRESENT:
+            close_intent.keep_stopped(LOCAL_HOST_KEY, str(row.get("tmux_socket") or row_probe.socket_name()), name,
+                                      row.get("tmux_created_epoch"))
         return _refused(row, session_sleep.SleepRefusal(
             session_sleep.REFUSED_ROW_MOVED,
             "the session was closed, but its record changed while it was being put to sleep, so it was not marked asleep"))

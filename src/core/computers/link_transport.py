@@ -31,7 +31,7 @@ HELLO_TIMEOUT = 5.0
 def _back_path(hello: Dict[str, Any]) -> str:
     path = hello.get("back_path")
     if not isinstance(path, str) or not path or len(path) > 1024 or not path.isprintable():
-        raise LinkDown("main sent no usable back path")
+        raise LinkDown("alpha sent no usable back path")
     return path
 
 
@@ -76,10 +76,10 @@ class TlsInitiatorTransport:
         await self._teardown(f.GO_NORMAL)
         link = self._get_link()
         if link is None or link.cert_der is None:
-            raise LinkDown("no link to main on record")
+            raise LinkDown("no link to alpha on record")
         conn = self._rv.take()
         if conn is None:
-            raise LinkDown("waiting for main")
+            raise LinkDown("waiting for alpha")
         reader, writer = conn
         relayed = self._rv.taken_via_relay
         session = MuxSession(reader, writer, dialer=True, on_open=inbound_handler(self._listener))
@@ -124,10 +124,10 @@ class TlsInitiatorTransport:
         try:
             hello = await asyncio.wait_for(session.hello(), HELLO_TIMEOUT)
         except asyncio.TimeoutError:
-            raise LinkDown("main did not answer the link hello") from None
+            raise LinkDown("alpha did not answer the link hello") from None
         except MuxError:
-            reasons = {f.GO_VERSION: "main speaks another link version", f.GO_REMOVED: "main removed this computer"}
-            raise LinkDown(reasons.get(session.goaway_reason, "main closed the link during hello")) from None
+            reasons = {f.GO_VERSION: "alpha speaks another link version", f.GO_REMOVED: "alpha removed this computer"}
+            raise LinkDown(reasons.get(session.goaway_reason, "alpha closed the link during hello")) from None
         self._body = {"kind": "unix", "path": _back_path(hello)}
         relay_id = hello.get("relay_id")
         if self._on_relay_id is not None and isinstance(relay_id, str):

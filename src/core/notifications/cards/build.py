@@ -32,6 +32,8 @@ def _title(kind: str, ctx: Ctx, fixed: str) -> str:
 
 
 def _sub(kind: str, ctx: Ctx) -> str:
+    if kind in ("yesno", "choice"):
+        return ""
     word = say(f"notify.card.word.{kind}")
     if kind in _SUBS:
         return say(f"notify.card.sub.{_SUBS[kind]}", agent=ctx.agent, computer=ctx.computer, provider=ctx.hint.get("provider", "claude"))

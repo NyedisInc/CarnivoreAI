@@ -137,7 +137,7 @@ def _claude_plugin_rows(ledger: LedgerRows) -> List[HealthRow]:
 
 def _first_party_keys() -> Tuple[set, set]:
     shipped = {d.id for d in runtime.definitions()}
-    legacy = {old for d in runtime.definitions() for old in d.manifest.legacy_ids}
+    legacy = {old for d in runtime.definitions() for old in d.manifest.legacy_ids} | runtime.renamed_ids()
     return shipped, legacy
 
 

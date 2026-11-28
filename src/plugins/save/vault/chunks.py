@@ -45,6 +45,9 @@ class BlobStore:
             return None
         return st.st_dev, st.st_ino
 
+    def folder_identity(self) -> Optional[Tuple[int, int]]:
+        return self._identity()
+
     def revalidate(self) -> None:
         now = self._identity()
         with self._lock:

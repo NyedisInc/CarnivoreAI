@@ -56,7 +56,7 @@
 {#if list.length < MAX_LABELS}
   <form class="pp-tools" onsubmit={(e) => { e.preventDefault(); void add(); }}>
     <Field aria-label={t('roster.can.labels.field')} placeholder={t('roster.can.labels.placeholder')} maxlength={32} bind:value={draft} disabled={busy} data-act="label-field" />
-    <Button type="submit" variant="quiet" size="sm" disabled={busy || draft.trim() === ''} data-act="add-label">{t('roster.can.labels.add')}</Button>
+    <Button type="submit" size="sm" disabled={busy || draft.trim() === ''} data-act="add-label">{t('roster.can.labels.add')}</Button>
   </form>
 {:else}<p class="pp-hint">{t('roster.can.labels.full')}</p>{/if}
 {#if error}<p class="pp-warn" role="alert" data-act="labels-error">{error}</p>{/if}

@@ -52,7 +52,7 @@ describe('task-manager-dev-tools commands', () => {
   test('another plugin topic does nothing', async () => {
     startCommands();
     await vi.waitFor(() => expect(server.paths.length).toBe(1));
-    server.listener?.(['cplug.huddle.focus']);
+    server.listener?.(['cplug.taskmanager.focus']);
     expect(server.paths.length).toBe(1);
   });
 

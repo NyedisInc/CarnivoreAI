@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
-from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List
 
@@ -16,8 +15,11 @@ from src.plugins.runtime.process import ProcessEnded
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 
 NAME, ITEM = "clock", "acme/clock"
-CPLUG = {"schema": 1, "id": NAME, "name": "Clock", "description": "Tells the time.", "version": "1.0.0", "entry": "main.py",
-         "permissions": {"app": []}, "tools": [], "routes": ["ping", "fire"]}
+CARNIVORE = {
+    "schema": 2, "kind": "plugin", "id": NAME, "name": "Clock", "description": "Tells the time.",
+    "version": "1.0.0", "author": "acme", "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    "permissions": {}, "mcp": {"tools": []}, "ui": {"routes": ["ping", "fire"]},
+}
 
 def _async(fn):
     async def call(name):
@@ -48,7 +50,7 @@ def world(tmp_path, monkeypatch):
     state = tmp_path / "state"
     root = state / "plugins" / NAME
     root.mkdir(parents=True)
-    (root / "cplug.json").write_text(json.dumps(CPLUG))
+    (root / "carnivore.json").write_text(json.dumps(CARNIVORE))
     (root / "main.py").write_text("x = 1\n")
     record = identity.register_install(state, NAME, ITEM, {d.id for d in runtime.definitions()})
     rows = [SimpleNamespace(item_id=ITEM, kind="cplug", source_index_url="https://index.example/v1", publisher_key_id="K")]

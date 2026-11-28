@@ -116,8 +116,8 @@ def test_every_kind_carries_a_sentence_the_ui_can_show():
 
     from src.core.session_respawn import (
         RESPAWN_REPLAY,
-        refuse_if_transcript_missing,
     )
+    from src.core.respawn.transcript_guard import refuse_if_transcript_missing
 
     replayed = RespawnPlan(
         kind=RESPAWN_REPLAY,
@@ -127,6 +127,15 @@ def test_every_kind_carries_a_sentence_the_ui_can_show():
     refused = refuse_if_transcript_missing(replayed, "absent")
     seen.add(refused.kind)
     assert refused.detail.strip(), "transcript_missing has no detail sentence"
+
+    from src.core.backup_health import offload_guard
+
+    offloaded = offload_guard.OffloadedInfo(replayed.resume_uuid, (), 0, plugin_on=True)
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(offload_guard, "lookup", lambda _cid: offloaded)
+        offloaded_plan = refuse_if_transcript_missing(replayed, "absent")
+    seen.add(offloaded_plan.kind)
+    assert offloaded_plan.detail.strip(), "offloaded has no detail sentence"
 
     assert seen == ALL_RESPAWN_KINDS
 

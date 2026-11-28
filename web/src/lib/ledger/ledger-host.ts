@@ -28,6 +28,8 @@ export interface LedgerHost {
 
     loginProviderAccount(id: string): Promise<LoginStarted>;
 
+    captureAgyLogin?(): Promise<{ account_id: string; name: string; created: boolean }>;
+
     /* the built-in login */
     renameBuiltInLogin?(label: string | null): Promise<void>;
 
@@ -61,6 +63,7 @@ export function browserLedgerHost(): LedgerHost {
         saveAccount: (id, body) => api().saveProviderAccount(id, body),
         removeAccount: (id) => api().deleteProviderAccount(id),
         loginProviderAccount: (id) => api().loginProviderAccount(id),
+        captureAgyLogin: () => authFetch('/provider-ledger/agy/capture', { method: 'POST' }),
         renameBuiltInLogin: async (label) => {
             const prefs = legacyGlobal<LegacyPreferences>('Preferences');
             if (!prefs) throw new Error(t('ledger.account.rename_unavailable'));

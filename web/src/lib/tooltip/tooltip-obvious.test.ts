@@ -3,10 +3,10 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { flushSync, mount, unmount } from 'svelte';
 
 import { tooltipTargetFor } from './tooltip';
-import SwarmOrg from '../../plugins/huddle/swarm/SwarmOrg.svelte';
-import { AGENTS, COMPANIES, NOW, PROJECTS, SESSIONS, rowOf } from '../../plugins/huddle/style-guide/swarm-fixture';
-import { buildFloor } from '../../plugins/huddle/swarm/floor';
-import { buildTree } from '../../plugins/huddle/swarm/swarm-tree';
+import SwarmOrg from '../../plugins/taskmanager/swarm/SwarmOrg.svelte';
+import { AGENTS, COMPANIES, NOW, PROJECTS, SESSIONS, rowOf } from '../../plugins/taskmanager/style-guide/swarm-fixture';
+import { buildFloor } from '../../plugins/taskmanager/swarm/floor';
+import { buildTree } from '../../plugins/taskmanager/swarm/swarm-tree';
 import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 

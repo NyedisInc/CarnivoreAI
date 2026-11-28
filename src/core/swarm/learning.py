@@ -5,7 +5,7 @@ import asyncio
 import re
 import sqlite3
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -113,7 +113,32 @@ async def _wake_for_learning(app_state: Any, agent_id: int) -> bool:
     return True
 
 
+_FAILURE_BACKOFF_S: Tuple[float, ...] = (300.0, 900.0, 3600.0, 21600.0)
+_PERMANENT_REFUSAL_HINTS = ("cannot_determine", "transcript_missing", "unknown_profile", "project_moved_away", "recreate_refused", "is gone")
+_wake_backoff: Dict[int, Tuple[int, float]] = {}
+
+
+def clear_backoff(agent_id: Optional[int] = None) -> None:
+    if agent_id is None:
+        _wake_backoff.clear()
+    else:
+        _wake_backoff.pop(agent_id, None)
+
+
+def _record_wake_failure(agent_id: int, error: str, now_mono: float) -> float:
+    prev_count = _wake_backoff.get(agent_id, (0, 0.0))[0]
+    count = prev_count + 1
+    lower = error.lower()
+    if any(hint in lower for hint in _PERMANENT_REFUSAL_HINTS):
+        delay = _FAILURE_BACKOFF_S[-1]
+    else:
+        delay = _FAILURE_BACKOFF_S[min(count - 1, len(_FAILURE_BACKOFF_S) - 1)]
+    _wake_backoff[agent_id] = (count, now_mono + delay)
+    return delay
+
+
 async def sweep(app_state: Any) -> int:
+    import time as _time  # noqa: PLC0415
     from src.core.swarm import body
 
     try:
@@ -123,9 +148,18 @@ async def sweep(app_state: Any) -> int:
         logger.warning("swarm_learning_sweep_unreadable", error_type=type(exc).__name__)
         return 0
     woken = 0
+    now_mono = _time.monotonic()
     for agent_id in tiers:
+        state = _wake_backoff.get(agent_id)
+        if state is not None and now_mono < state[1]:
+            continue
         try:
-            woken += 1 if await _wake_for_learning(app_state, agent_id) else 0
+            did_wake = await _wake_for_learning(app_state, agent_id)
+            _wake_backoff.pop(agent_id, None)
+            woken += 1 if did_wake else 0
         except (body.BodyError, sqlite3.Error, db.DatastoreUnreadableError, OSError) as exc:
-            logger.warning("swarm_learning_wake_failed", agent_id=agent_id, error_type=type(exc).__name__, error=str(exc)[:200])
+            err_text = str(exc)[:200]
+            delay = _record_wake_failure(agent_id, err_text, now_mono)
+            logger.warning("swarm_learning_wake_failed", agent_id=agent_id, error_type=type(exc).__name__,
+                           error=err_text, retry_in_s=delay)
     return woken

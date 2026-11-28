@@ -93,7 +93,7 @@ async def test_route_answers_pass_through_redacted_and_token_free(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_session_git_status_resolves_the_target_calls_the_route_and_redacts(monkeypatch):
-    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), tmux_session="cloude_a", host_key="local")
+    info = SimpleNamespace(session=SimpleNamespace(id="ses_1"), label=None, claude_title=None, tmux_session="cloude_a", host_key="local")
     seen = []
 
     async def infos(manager):

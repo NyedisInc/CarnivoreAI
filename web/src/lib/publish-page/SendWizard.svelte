@@ -179,6 +179,9 @@
                         <div><dt>{t('publish.page.next.send.sum_files')}</dt><dd>{preview?.file_count ?? 0}</dd></div>
                         <div><dt>{t('publish.page.next.send.sum_image')}</dt><dd>{ownImage ? t('publish.page.next.send.image_yours') : t('publish.new.hero_made')}</dd></div>
                     </dl>
+                    {#if preview?.script_files?.length}
+                        <p class="d-reason" data-tone="yellow" role="status">{t('publish.page.local.scripts_warn', { count: preview.script_files.length })}</p>
+                    {/if}
                     <div class="d-fields">
                         <Field label={t('skill.publish.version')} value={version} oninput={typed} autocomplete="off" spellcheck={false} />
                     </div>

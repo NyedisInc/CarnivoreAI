@@ -9,7 +9,6 @@
     import SwitchAccountButton from '../account-switch/SwitchAccountButton.svelte';
     import { providerMark } from '../sessions/agent-marks';
     import type { Translate } from '../sessions/types';
-    import LedgerRowSwatch from './LedgerRowSwatch.svelte';
     import LedgerRowActions from './LedgerRowActions.svelte';
     import LedgerRowEditor from './LedgerRowEditor.svelte';
     import LedgerUsageCell from './LedgerUsageCell.svelte';
@@ -119,15 +118,6 @@
                 headingLevel={2}
             >
                 {#snippet lead()}
-                    
-                    <LedgerRowSwatch
-                        color={account.color ?? null}
-                        name={account.name ?? account.id}
-                        busy={editingId === account.id}
-                        {editing}
-                        {t}
-                        onEdit={edit}
-                    />
                     <span data-ledger="provider-mark" data-agent-family={mark.key} role="img" aria-label={mark.label} title={mark.label}>{@html mark.svg}</span>
                 {/snippet}
                 {#snippet actions()}
@@ -215,7 +205,7 @@
                             provider: account.provider,
                             setup_complete: account.setup_complete,
                         }}
-                        onLogin={onLogin && account.relayed !== true ? () => onLogin(account) : undefined}
+                        onLogin={onLogin && account.relayed !== true && account.provider !== 'antigravity' ? () => onLogin(account) : undefined}
                     />
 
                     {#if isBuiltInLogin(account)}
@@ -270,7 +260,7 @@
                                 {account}
                                 {t}
                                 {onRemove}
-                                {onLogin}
+                                onLogin={account.provider === 'antigravity' ? undefined : onLogin}
                                 onEdit={edit}
                                 {editing}
                                 confirming={confirmingId === account.id}

@@ -60,7 +60,7 @@ describe('the GROUPS part of the plan', () => {
         const part = groupsPart(planWith([]))!;
         expect(part.key).toBe('groups');
         expect(part.heading).toMatchObject({ key: 'groups', label: 'groups', bandKind: 'reserved', expanded: true });
-        expect(part.sections.map((s) => s.key)).toEqual(['g:x', 'g:y']);
+        expect(part.sections.map((s) => s.key)).toEqual(['g:x', 'g:y', 'g:z']);
         expect(planWith([]).parts.filter((p) => p.key.startsWith('g:'))).toEqual([]);
     });
 
@@ -81,19 +81,19 @@ describe('the GROUPS part of the plan', () => {
         expect(part.sections.map((s) => s.key)).toEqual(['g:x', 'g:y', 'g:z']);
     });
 
-    it('draws no GROUPS heading when no group exists or none holds a row', () => {
+    it('draws no GROUPS heading when no group exists, and keeps it for empty groups (#3373)', () => {
         GroupStore.apply({ status: 'ok', groups: [] });
         expect(groupsPart(planWith([]))).toBeUndefined();
         GroupStore.apply({ status: 'ok', groups: [GROUPS[2]!] });
-        expect(groupsPart(planWith([]))).toBeUndefined();
+        expect(groupsPart(planWith([]))?.sections.map((s) => s.key)).toEqual(['g:z']);
     });
 
-    it('with hide empty sections off, GROUPS draws over groups that are all empty', () => {
+    it('with hide empty sections off or on, GROUPS draws over groups that are all empty', () => {
         EmptySections.setEmptySectionsHidden(false);
         GroupStore.apply({ status: 'ok', groups: [GROUPS[2]!] });
         expect(groupsPart(planWith([]))?.sections.map((s) => s.key)).toEqual(['g:z']);
         EmptySections.setEmptySectionsHidden(true);
-        expect(groupsPart(planWith([]))).toBeUndefined();
+        expect(groupsPart(planWith([]))?.sections.map((s) => s.key)).toEqual(['g:z']);
     });
 
     it('a search narrows the groups under it and drops GROUPS when nothing matches', () => {
@@ -165,7 +165,7 @@ describe('moving a group and moving the GROUPS section', () => {
         const block = listEl.querySelector(':scope > [data-section="groups"]')!;
         expect(block).toBeTruthy();
         const bands = Array.from(block.querySelectorAll(':scope > .session-sidebar-group__body > .session-sidebar-group'));
-        expect(bands.map((b) => b.getAttribute('data-group'))).toEqual(['g:x', 'g:y']);
+        expect(bands.map((b) => b.getAttribute('data-group'))).toEqual(['g:x', 'g:y', 'g:z']);
         expect(bands.every((b) => !b.hasAttribute('data-section'))).toBe(true);
     });
 

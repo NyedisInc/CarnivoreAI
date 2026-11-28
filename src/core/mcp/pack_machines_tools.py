@@ -116,7 +116,7 @@ SPECS = (
     ),
     ra.RouteTool(
         name="pack_restrictions_get", route="src.api.pack_machines_routes:get_restrictions", gate=ra.READ,
-        description="One computer's restrictions: may_install_tools, may_receive_credentials, may_receive_global_setup, may_update_carnivore, may_host_agents, "
+        description="One computer's restrictions: may_install_tools, may_receive_credentials, may_receive_global_setup, may_receive_pack_ui, may_update_carnivore, may_host_agents, "
                     "may_receive_projects, max_agents, allowed_projects, allowed_companies.",
         properties=_MACHINE, required=("machine",), invoke=_get, example={"machine": "self"},
     ),
@@ -125,7 +125,7 @@ SPECS = (
         description="Change a computer's restrictions. On this computer any change; on another computer only a tightening "
                     "(that computer refuses a loosening: only its own owner loosens).",
         properties={**_MACHINE, "may_install_tools": {"type": "boolean"}, "may_receive_credentials": {"type": "boolean"},
-                    "may_receive_global_setup": {"type": "boolean"}, "may_update_carnivore": {"type": "boolean"}, "may_host_agents": {"type": "boolean"},
+                    "may_receive_global_setup": {"type": "boolean"}, "may_receive_pack_ui": {"type": "boolean"}, "may_update_carnivore": {"type": "boolean"}, "may_host_agents": {"type": "boolean"},
                     "may_receive_projects": {"type": "boolean"}, "max_agents": {"type": ["integer", "null"], "minimum": 0},
                     "allowed_projects": {"type": "array", "items": {"type": "string"}},
                     "allowed_companies": {"type": "array", "items": {"type": "string"}}},

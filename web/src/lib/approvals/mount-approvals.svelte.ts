@@ -56,6 +56,7 @@ function sayAlreadyAnswered(): void {
 
 type ListingSurface = { listSessions?(): Promise<unknown> };
 
+/* cannot be read */
 async function sessionStillWaits(sessionId: string): Promise<boolean> {
   try {
     const rows = await (hostWindow() as { API?: ListingSurface } | null)?.API?.listSessions?.();
@@ -68,6 +69,7 @@ async function sessionStillWaits(sessionId: string): Promise<boolean> {
   }
 }
 
+/* cannot be read */
 export async function openApprovalFor(sessionId: string): Promise<OpenApprovalOutcome> {
   startApprovals();
   await refreshApprovals();

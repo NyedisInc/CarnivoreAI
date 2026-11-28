@@ -7,10 +7,15 @@ vi.mock('../plugins/session-card-actions', () => ({
     runSessionCardAction: vi.fn(async () => true),
 }));
 
+import { flushSync, mount, unmount } from 'svelte';
+import CascadeMenu from '../drawer-tabs/CascadeMenu.svelte';
+import { installPopoverPolyfill } from '../popover-jsdom-polyfill';
 import { registeredKey } from '../menu-keys/menu-keys';
 import { contextFromRow, contextFromTrigger, triggerHtml } from './row-context';
 import { runSessionCardAction } from '../plugins/session-card-actions';
 import { bench, ctxOf, idsOf, itemsOf, loadRunTable, nodesOf, triggerFrom, win } from './row-test-env';
+
+installPopoverPolyfill();
 
 beforeEach(() => {
     plugins.items = [];
@@ -342,5 +347,73 @@ describe('the destructive item wears the danger tone from its declaration', () =
             expect(nodes.find((n) => n.id === 'close')?.danger, `${ctx.kind}: close is danger`).toBe(true);
             expect(nodes.filter((n) => n.danger).map((n) => n.id)).toEqual(['close']);
         }
+    });
+
+    test('forwards keyless, disabled, danger, and reason from session.row_actions items', async () => {
+        plugins.items = [
+            {
+                id: 'cplug-slot:acme:purge',
+                label: 'Purge Cache',
+                order: 650,
+                shortcut: '',
+                locked: false,
+                keyless: true,
+                danger: true,
+            } as (typeof plugins.items)[number],
+            {
+                id: 'cplug-slot:acme:locked',
+                label: 'Locked Op',
+                order: 660,
+                shortcut: '',
+                locked: false,
+                keyless: true,
+                disabled: true,
+                reason: 'Offline',
+            } as (typeof plugins.items)[number],
+        ];
+        const ctx = ctxOf({ name: 'cloude_x', pluginItems: 'cplug-slot:acme:purge,cplug-slot:acme:locked' });
+        const nodes = nodesOf(ctx);
+        const purge = nodes.find((n) => n.id === 'cplug-slot:acme:purge')!;
+        const locked = nodes.find((n) => n.id === 'cplug-slot:acme:locked')!;
+        expect(purge.keyless).toBe(true);
+        expect(purge.danger).toBe(true);
+        expect(locked.keyless).toBe(true);
+        expect(locked.blocked).toBe('Offline');
+        await purge.run!();
+        expect(vi.mocked(runSessionCardAction).mock.calls.at(-1)?.[0]).toBe('cplug-slot:acme:purge');
+    });
+
+    test('disabled plugin item without reason gets non-empty blocked text, aria-disabled, and blocks click in CascadeMenu (Probe 3A)', () => {
+        plugins.items = [
+            {
+                id: 'cplug-slot:acme:no_tip',
+                label: 'Disabled No Tip',
+                order: 665,
+                shortcut: '',
+                locked: false,
+                keyless: true,
+                disabled: true,
+            } as (typeof plugins.items)[number],
+        ];
+        const ctx = ctxOf({ name: 'cloude_x', pluginItems: 'cplug-slot:acme:no_tip' });
+        const nodes = nodesOf(ctx);
+        const disabledNode = nodes.find((n) => n.id === 'cplug-slot:acme:no_tip')!;
+        expect(disabledNode.blocked).toBe('Unavailable');
+
+        const target = document.createElement('div');
+        document.body.append(target);
+        const runSpy = vi.spyOn(disabledNode, 'run');
+        const handle = mount(CascadeMenu, {
+            target,
+            props: { root: nodes, anchor: null, label: 'row menu', onClose: () => {} },
+        });
+        flushSync();
+        const btn = target.querySelector<HTMLButtonElement>('[data-node="cplug-slot:acme:no_tip"]')!;
+        expect(btn.getAttribute('aria-disabled')).toBe('true');
+        btn.click();
+        expect(runSpy).not.toHaveBeenCalled();
+        expect(runSessionCardAction).not.toHaveBeenCalled();
+        void unmount(handle);
+        target.remove();
     });
 });

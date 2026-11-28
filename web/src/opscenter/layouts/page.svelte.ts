@@ -115,6 +115,16 @@ function returnToExistingTerminal(session: unknown): void {
 }
 
 async function bindAnchor(row: unknown, nav: NavToken): Promise<void> {
+  const hasHistoryGate = Boolean((globalThis as { TerminalHistoryGate?: { begin?: unknown } }).TerminalHistoryGate?.begin);
+  if (hasHistoryGate && row && typeof row === 'object') {
+    const pendingB64 = withScrollback(row).then((full) => {
+      if (currentNav() !== nav) return null;
+      return (full as { initial_scrollback_b64?: string | null } | null)?.initial_scrollback_b64 ?? null;
+    });
+    if (currentNav() !== nav) return;
+    returnToExistingTerminal({ ...(row as Record<string, unknown>), initial_scrollback_pending: pendingB64 });
+    return;
+  }
   const bound = await withScrollback(row);
   if (currentNav() !== nav) return;
   returnToExistingTerminal(bound);

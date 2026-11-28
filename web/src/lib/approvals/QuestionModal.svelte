@@ -1,27 +1,21 @@
 <script lang="ts">
-  import { onDestroy, type Snippet } from 'svelte';
+  import type { Snippet } from 'svelte';
   import '../ledger/ledger-chrome.css';
   import ModalShell from '../dialog-frame/ModalShell.svelte';
-  import { Button, IconButton } from '../base';
+  import { Button } from '../base';
   import { t } from '../i18n/index.svelte';
-  import { approvals, inboxFocus, noticeKey, refreshApprovals } from './approvals.svelte';
+  import { approvals, inboxFocus, noticeKey } from './approvals.svelte';
   import ApprovalCard from './ApprovalCard.svelte';
   import AskForm from './AskForm.svelte';
   import { isWholeAsk, oldestFirst, type ApprovalItem } from './approvals-model';
 
-  const SETTLE_MS = 1500;
-  const SETTLE_TRIES = 3;
-  const SETTLE_RETRY_MS = 600;
   let { onClose, onJump }: { onClose: () => void; onJump: (item: ApprovalItem) => void } = $props();
 
   const items = $derived(oldestFirst(approvals.items));
   let here = $state<string | null>(null);
   let lastIndex = 0;
-  let hadItems = false;
-  let spell = 0;
-  let spells = 0;
-  let destroyed = false;
-  onDestroy(() => { destroyed = true; });
+  let hadItems = $state(false);
+  let closed = false;
   // svelte-ignore state_referenced_locally
   let seenSeq = inboxFocus.seq;
 
@@ -46,32 +40,12 @@
     if (current) here = noticeKey(current);
     if (items.length > 0) {
       hadItems = true;
-      spell = 0;
-      return undefined;
+      return;
     }
-    if (!hadItems || spell !== 0) return undefined;
-    spells += 1;
-    spell = spells;
-    void settle(spell);
-    return undefined;
+    if (!hadItems || closed) return;
+    closed = true;
+    onClose();
   });
-
-  const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
-
-  async function settle(mine: number): Promise<void> {
-    try {
-      for (let attempt = 0; attempt < SETTLE_TRIES; attempt += 1) {
-        await wait(attempt === 0 ? SETTLE_MS : SETTLE_RETRY_MS);
-        if (destroyed || spell !== mine || approvals.items.length > 0) return;
-        await refreshApprovals();
-        if (destroyed || spell !== mine || approvals.items.length > 0) return;
-        if (approvals.status === 'ok') break;
-      }
-      onClose();
-    } finally {
-      if (spell === mine) spell = 0;
-    }
-  }
 
   let foot = $state.raw<Snippet | null>(null);
   const registerFoot = (next: Snippet | null): void => { foot = next; };
@@ -99,7 +73,7 @@
       {#key `${noticeKey(current)}|${current.questions_fingerprint}`}<AskForm item={current} {onJump} {registerFoot} />{/key}
     {:else if current}
       {#key current.id}<ApprovalCard item={current} {onJump} strip={false} large {registerFoot} />{/key}
-    {:else}
+    {:else if !hadItems}
       <p class="aq-empty" data-approval-empty>{approvals.status === 'error' ? t('approvals.load_failed') : t('approvals.empty')}</p>
     {/if}
   </div>

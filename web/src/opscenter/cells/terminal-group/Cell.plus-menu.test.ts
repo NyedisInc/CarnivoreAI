@@ -40,6 +40,7 @@ vi.mock('../../api/host', async (importOriginal) => {
 vi.mock('../../../lib/cplug-ui/api', () => ({
   fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/hello/view/game/t/index.html' })),
   callViewRoute: vi.fn(),
+  callViewTool: vi.fn(),
 }));
 vi.mock('../terminal-live/theme', () => ({ bindTerminalTheme: () => () => {} }));
 vi.mock('../../api', async (importOriginal) => {

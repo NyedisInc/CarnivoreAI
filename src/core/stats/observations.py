@@ -52,7 +52,10 @@ async def sample(manager: Any, state_dir: Any) -> tuple[list[ActivityPoint], dic
     for info in infos:
         row = info.session
         conversation = conversations.get(info.session_row_id, '')
-        provider = info.agent_family or ''
+        if getattr(row, 'agent_type', None) == 'antigravity' or info.agent_family == 'agy':
+            provider = 'antigravity'
+        else:
+            provider = info.agent_family or ''
         project = project_key(row.working_dir) if row.working_dir else ''
         observation = manager._attention_watcher.observation_for(row.id, now=now) if manager._attention_watcher else None
         fresh = observation is not None and not observation.stale and info.host_state == 'up'
@@ -82,7 +85,7 @@ async def sample(manager: Any, state_dir: Any) -> tuple[list[ActivityPoint], dic
             state=state, observed_at=observation.observed_at.timestamp() if fresh else now.timestamp(),
             running=running, created_at=_epoch(row.created_at),
             subagents=info.subagents_running if fresh else None))
-        if info.host_key == 'local' and conversation and provider in ('claude', 'codex'):
+        if info.host_key == 'local' and conversation and provider in ('claude', 'codex', 'antigravity'):
             hints.append((provider, conversation, row.working_dir))
     quota = []
     ledger = poller.snapshot()

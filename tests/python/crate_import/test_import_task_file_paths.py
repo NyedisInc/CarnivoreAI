@@ -15,6 +15,7 @@ from src.core.crate_import import apply as ap
 from src.core.crate_import import ledger
 from src.core.crate_import.env import StoreHome
 from src.core.crate_import.model import ImportFailed, new_import_id
+from src.core.work import folders
 from src.plugins.crate.handle import JobHandle
 from src.plugins.crate.plan import build_plan as build_export_plan
 from src.plugins.crate.writer import run_export
@@ -72,7 +73,7 @@ def file_refs(install: Install) -> List[Dict[str, Any]]:
 
 
 def files_root(install: Install) -> Path:
-    return install.state / "cplugs" / "huddle" / "files"
+    return install.state / "cplugs" / folders.CURRENT_ID / "files"
 
 
 def test_two_items_that_named_one_file_each_get_their_own_copy(tmp_path: Path) -> None:
@@ -85,7 +86,7 @@ def test_two_items_that_named_one_file_each_get_their_own_copy(tmp_path: Path) -
     assert len(refs) == 2 and refs[0]["item_id"] != refs[1]["item_id"] and refs[0]["path"] != refs[1]["path"]
     for ref in refs:
         assert ref["path"] == f"files/{ref['item_id']}/{NAME}"
-        assert (install.state / "cplugs" / "huddle" / ref["path"]).read_bytes() == BYTES
+        assert (install.state / "cplugs" / folders.CURRENT_ID / ref["path"]).read_bytes() == BYTES
     assert paste.read_bytes() == BYTES, "the source file is never touched"
 
 
@@ -97,7 +98,7 @@ def test_a_file_reference_resolves_under_the_importing_stores_root(tmp_path: Pat
     root = files_root(install).resolve()
     for ref in file_refs(install):
         assert not Path(ref["path"]).is_absolute(), "never the source machine's absolute path"
-        assert root in (install.state / "cplugs" / "huddle" / ref["path"]).resolve().parents
+        assert root in (install.state / "cplugs" / folders.CURRENT_ID / ref["path"]).resolve().parents
 
 
 def test_undo_removes_the_copied_files_and_nothing_else(tmp_path: Path) -> None:
@@ -106,7 +107,7 @@ def test_undo_removes_the_copied_files_and_nothing_else(tmp_path: Path) -> None:
     install = with_task_folder(target_install(tmp_path, crate), tmp_path)
     hooks, import_id = RecordingHooks(), new_import_id()
     run(crate, install, hooks=hooks, import_id=import_id)
-    copies = [install.state / "cplugs" / "huddle" / r["path"] for r in file_refs(install)]
+    copies = [install.state / "cplugs" / folders.CURRENT_ID / r["path"] for r in file_refs(install)]
     assert all(c.is_file() for c in copies)
     report = ap.recover_files(hooks.log, install.env, import_id)
     assert not any(c.exists() for c in copies) and not any(c.parent.exists() for c in copies)

@@ -58,7 +58,12 @@ async def list_view(request: Any, store: Any, with_last_run: Any, project_id: in
     rows = await asyncio.to_thread(store.list_all, project_id or None)
     rows = [r for r in rows if (enabled is None or r["enabled"] == enabled) and (target_kind is None or r["target"].get("kind") == target_kind)
             and (wanted is None or session_tree.matches_session(r, *wanted))]
-    full = [await with_last_run(store, r) for r in rows]
+    batch_fn = getattr(store, "latest_runs", None)
+    if callable(batch_fn) and getattr(with_last_run, "_accepts_batch_latest", False):
+        latest_by_id = await asyncio.to_thread(batch_fn)
+        full = [with_last_run._attach_summary(r, latest_by_id.get(r["automation_id"])) for r in rows]
+    else:
+        full = [await with_last_run(store, r) for r in rows]
     if group_by != GROUP_BY_SESSION:
         return {"automations": full}
     tree = session_tree.build_tree(inputs["projects"], inputs["sessions"], full)

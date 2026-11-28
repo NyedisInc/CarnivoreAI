@@ -108,7 +108,7 @@ async def test_a_task_manager_shaped_grant_set_may_still_call_asleep_and_the_met
     from src.plugins.host import audit, state as owner_state
     from src.plugins.sdk.context import GrantRevoked
 
-    d = next(x for x in CPLUGS if x.id == "huddle")
+    d = next(x for x in CPLUGS if x.id == "taskmanager")
     owner_state.update(tmp_path, d.manifest, None, lambda st: replace(st, enabled=True, grants=("sessions.read", "sessions.message")))
 
     async def infos() -> List[Any]:

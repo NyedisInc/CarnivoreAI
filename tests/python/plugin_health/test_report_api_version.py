@@ -25,7 +25,10 @@ def world(tmp_path):
 
 def test_feature_and_sidecar_rows_carry_api_version(world):
     code = world.install_catalog(CATALOG_ID, enabled=True)
-    (code / api_contract.MANIFEST_FILE).write_text(json.dumps({api_contract.API_VERSION_KEY: 1}))
+    manifest_path = code / api_contract.MANIFEST_FILE
+    doc = json.loads(manifest_path.read_text(encoding="utf-8"))
+    doc[api_contract.API_VERSION_KEY] = 1
+    manifest_path.write_text(json.dumps(doc), encoding="utf-8")
     world.settle()
     rows = {r.id: r for r in build_report(world.host, world.rt).rows}
     assert rows[SHIPPED_FEATURE].api_version == 1

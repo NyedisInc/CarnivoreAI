@@ -1,10 +1,12 @@
 
 from __future__ import annotations
 
+import json
 import os
 import shlex
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple
 
@@ -34,11 +36,45 @@ def shim_content(root: Path, python: str, flags: Sequence[str] = ()) -> str:
     return "\n".join([
         "#!/bin/sh",
         "# Written by the Carnivore server at every start. Do not edit.",
+        'if [ -n "${CARNIVORE_PLUGIN_SOCK:-}" ] && [ -n "${CARNIVORE_SOCK_CLIENT:-}" ] && [ -n "${CARNIVORE_SOCK_PYTHON:-}" ]; then',
+        '    exec "$CARNIVORE_SOCK_PYTHON" -I -B "$CARNIVORE_SOCK_CLIENT" "$@"',
+        "fi",
         f"PYTHONPATH={shlex.quote(str(root))}${{PYTHONPATH:+:$PYTHONPATH}}",
         "export PYTHONPATH",
         f"exec {shlex.quote(python)}{extra} -m src.tui \"$@\"",
         "",
     ])
+
+
+def runtime_info_path(state: Path) -> Path:
+    return Path(state) / "cli-runtime.json"
+
+
+def write_runtime_info(state: Path, port: int, *, door_sock: Optional[str] = None) -> Path:
+    if door_sock is None:
+        from src.core.computers.join_helper import fed_dir  # noqa: PLC0415
+        from src.core.hosts.ssh_master import default_instance_tag  # noqa: PLC0415
+
+        door_sock = str(fed_dir() / f"door-{default_instance_tag()}.sock")
+    target = runtime_info_path(state)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(
+        {"host": "127.0.0.1", "port": int(port), "pid": os.getpid(), "door_sock": door_sock},
+        separators=(",", ":"),
+    ).encode("utf-8")
+    fd, tmp = tempfile.mkstemp(dir=target.parent, prefix=".cli-runtime.", suffix=".tmp")
+    try:
+        os.fchmod(fd, 0o600)
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(payload)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, target)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+    return target
 
 
 def write_shim(state: Path, root: Optional[Path] = None, python: Optional[str] = None) -> Path:

@@ -42,8 +42,8 @@ interface SearchGlobals {
 
 export function scannerForFamily(family: string | null, api: PromptScanApi | null): PromptScanApi | null {
     if (family === 'claude') return api;
-    if (family === 'codex' && api) {
-        return { ...api, scan: (buffer, opts) => api.scan(buffer, { ...opts, family: 'codex' }) };
+    if ((family === 'codex' || family === 'agy' || family === 'copilot') && api) {
+        return { ...api, scan: (buffer, opts) => api.scan(buffer, { ...opts, family }) };
     }
     return null;
 }
@@ -63,13 +63,18 @@ export function onAlternateScreen(term: TermLike | null): boolean {
 export function browserSearchHost(controller?: ControllerLike): SearchHost {
     const ctl = (): ControllerLike | null => controller ?? globals().TerminalController ?? null;
     let cellEngine: SearchEngineApi | null = null;
+    const familyOf = (w: { agent_family?: unknown; agent_type?: unknown }): string | null => {
+        if (typeof w.agent_family !== 'string') return null;
+        if (w.agent_family !== 'custom') return w.agent_family;
+        return w.agent_type === 'antigravity' ? 'agy' : w.agent_type === 'copilot' ? 'copilot' : w.agent_family;
+    };
     const agentFamily = (): string | null => {
-        const s = ctl()?._currentSession as { agent_family?: unknown; id?: unknown } | null | undefined;
-        if (s && typeof s.agent_family === 'string') return s.agent_family;
+        const s = ctl()?._currentSession as { agent_family?: unknown; agent_type?: unknown; id?: unknown } | null | undefined;
+        if (s && typeof s.agent_family === 'string') return familyOf(s);
         const id = s && typeof s.id === 'string' ? s.id : null;
         const rows = id ? globals().ListingPush?.rows?.('list') : null;
         const row = rows?.find((r) => (r.session as { id?: unknown } | undefined)?.id === id);
-        return row && typeof row.agent_family === 'string' ? row.agent_family : null;
+        return row ? familyOf(row) : null;
     };
     return {
         term: () => ctl()?.term ?? null,

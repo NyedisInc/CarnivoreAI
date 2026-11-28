@@ -4,7 +4,6 @@ import base64
 import os
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.concurrency import run_in_threadpool
 from src.api import session_rejoin_capture
 from src.api import (
     agent_update_listing, asleep_brief, codex_helpers_listing, automation_listing, automation_timers_listing, description_listing, mcp_health_listing, swarm_member_listing, messaging_listing, parked_work_listing, session_account_listing, session_roles_listing, skill_fire_listing, spectator_listing,
@@ -17,16 +16,19 @@ from src.core.federation import peer_listing
 from src.config import settings
 from src.core import session_change_notice
 from src.core import single_flight
+from src.core.session_ops import close_record
 from src.core.read_caches.ttl_flight import TtlFlight
 from src.core.pack.relay import runtime as relay_runtime
 from src.core.account_switch import create_account
 from src.core.launch_profiles import create_seam
 from src.core.launch_profiles.launch_failure import classify_launch_failure
+from src.core.sessions import disposable as disposable_sessions
 from src.core.sessions.errors import SessionCreateFailed, TmuxError
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_profiles.secrets import SecretError
 from src.core.pipeline import triggers as save_triggers
 from src.core.hosts.ddl import LOCAL_HOST_KEY
+from src.api.offloaded_launch_guard import refuse_offloaded_resume
 from src.core.hosts.identity import RemoteRootConflict, backend_host_key, resolve_create_target
 from src.core.hosts.registry import HostUnavailable
 from src.models import (
@@ -77,6 +79,19 @@ def _refuse_unsafe_project_root(settings, path: str) -> None:
         raise api_error(409, "project_root_refused", exc, path=path) from exc
 
 
+def _resolve_failure_harness(agent_type: Optional[str]) -> Optional[str]:
+    if not agent_type:
+        return None
+    try:
+        from src.core.launch_profiles.resolve import LaunchRequest, pick_profile
+
+        return pick_profile(
+            LaunchRequest(profiles=tuple(settings.get_launch_profiles()), agent_type=agent_type)
+        ).harness
+    except Exception:  # noqa: BLE001
+        return None
+
+
 @router.post("/sessions", response_model=Session, status_code=201, dependencies=[Depends(require_peer_sessions)])
 async def create_session(request: Request, body: CreateSessionRequest):
     """Public create route; no caller-supplied CLI arguments are accepted."""
@@ -93,6 +108,7 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
     except RemoteRootConflict as exc:
         raise api_error(400, "remote_root_conflict", exc, step="resolve_create_target") from exc
     host_key = body.host_key or LOCAL_HOST_KEY
+    refuse_offloaded_resume(host_key, agent_extra_args)
     if body.account_id and claude_account:
         raise HTTPException(status_code=400, detail="account_id and claude_account are two ways to name one account; pass one")
     try:
@@ -123,6 +139,12 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
         if host_key != LOCAL_HOST_KEY and body.project_parent_dir:
             raise HTTPException(status_code=400, detail=(
                 "a new folder cannot be created on a remote host; choose an existing one"))
+
+        if body.disposable and host_key == LOCAL_HOST_KEY:
+            if not body.working_dir and not body.project_parent_dir:
+                body.working_dir = disposable_sessions.mint_scratch_dir(session_id)
+            if not body.project_name:
+                body.project_name = "Disposable"
 
         if body.working_dir and host_key == LOCAL_HOST_KEY:
             body.working_dir = os.path.expanduser(body.working_dir)
@@ -242,11 +264,23 @@ async def create_session_with_extra(request: Request, body: CreateSessionRequest
         logger.warning("session_creation_launch_secret_unavailable", error=str(e))
         raise api_error(409, "launch_secret_unavailable", e)
     except SessionCreateFailed as e:
-        raise api_error(502, classify_launch_failure(e, body.agent_type), e, step="spawn", session_id=session_id) from e
+        raise api_error(
+            502,
+            classify_launch_failure(e, body.agent_type, resolved_harness=_resolve_failure_harness(body.agent_type)),
+            e,
+            step="spawn",
+            session_id=session_id,
+        ) from e
     except ValueError as e:
         raise api_error(400, "session_create_invalid", e, step="validation") from e
     except TmuxError as e:
-        raise api_error(502, classify_launch_failure(e, body.agent_type), e, step="backend", session_id=session_id) from e
+        raise api_error(
+            502,
+            classify_launch_failure(e, body.agent_type, resolved_harness=_resolve_failure_harness(body.agent_type)),
+            e,
+            step="backend",
+            session_id=session_id,
+        ) from e
     except Exception as e:  # noqa: BLE001
         raise api_error(500, "session_create_failed", e, session_id=session_id) from e
 
@@ -330,17 +364,34 @@ async def get_session(
     response_model=List[SessionInfo],
     dependencies=[Depends(require_peer_sessions)],
 )
-async def list_sessions(request: Request):
+async def list_sessions(
+    request: Request,
+    include_swarm: bool = False,
+    include_relayed: bool = False,
+) -> List[SessionInfo]:
     """List ALL live sessions (oldest first).
 
     Multi-session: two browser tabs can each be attached to a different
     session. The launchpad's "Running Sessions" list uses this to surface
     every owned-and-live session (in addition to ``/sessions/attachable``
-    for external/detached ones).
+    for external/detached ones). Peer callers default to strict 1-hop owned
+    non-Swarm rows and may opt into read-only Swarm summaries
+    (``include_swarm=true``) or 1-hop relayed summaries
+    (``include_relayed=true``) (#3385).
+    Inputs: request (Request); include_swarm (bool); include_relayed (bool).
+    Output: list[SessionInfo].
     """
     infos = await build_owner_listing(request.app.state)
+    grant = getattr(request.state, "peer_grant", None)
+    caller_iid = getattr(grant, "peer_install_id", None)
     return await peer_listing.for_caller(
-        infos, is_peer=getattr(request.state, "peer_grant", None) is not None, open_db=peer_auth.open_db)
+        infos,
+        is_peer=grant is not None,
+        open_db=peer_auth.open_db,
+        include_swarm=include_swarm,
+        include_relayed=include_relayed,
+        caller_install_id=caller_iid,
+    )
 
 
 OWNER_LISTING_CACHE: TtlFlight = TtlFlight("owner_listing", 1.0)
@@ -368,7 +419,7 @@ async def _assemble_owner_listing(app_state: Any) -> List[SessionInfo]:
     asleep = await asleep_brief.for_listing_ports()
     await automation_timers_listing.mark_automation_timers(app_state, infos, asleep=asleep)
     await session_roles_listing.mark_session_roles(app_state, infos, asleep=asleep)
-    sleep_hold_listing.mark_sleep_hold(session_manager, infos)
+    sleep_hold_listing.mark_sleep_hold(session_manager, infos, getattr(app_state, "auto_sleeper", None))
     skill_fire_listing.mark_skill_fires(session_manager, infos)
     parked_work_listing.mark_parked_work(session_manager, infos)
     agent_update_listing.mark_agent_update(session_manager, infos)
@@ -383,56 +434,6 @@ async def _assemble_owner_listing(app_state: Any) -> List[SessionInfo]:
     description_listing.mark_descriptions(app_state, infos)
     await swarm_member_listing.mark_swarm_members(infos)
     return infos
-
-
-async def _instance_epoch(backend: Any) -> Optional[int]:
-    reader = getattr(backend, "session_created_epoch", None) if backend else None
-    if reader is None:
-        return None
-    try:
-        return await reader()
-    except (OSError, RuntimeError, ValueError) as exc:
-        logger.warning("close_instance_epoch_unread", error=str(exc))
-        return None
-
-
-async def _mark_closed_in_datastore(
-    socket: Optional[str], name: Optional[str], epoch: Optional[int] = None,
-    host_key: str = LOCAL_HOST_KEY,
-) -> int:
-    from contextlib import closing
-
-    from src.core import session_close_lifecycle
-    from src.core.db import DatastoreUnreadableError, connect, db_path_for
-
-    if not socket or not name:
-        return 0
-    db_path = db_path_for(settings.get_state_dir())
-    if not db_path.exists():
-        return 0
-
-    def _write() -> int:
-        with closing(connect(db_path, create=False)) as conn:
-            moved = session_close_lifecycle.mark_closed(
-                conn, socket=socket, name=name, epoch=epoch, host_key=host_key
-            )
-            conn.commit()
-            return moved
-
-    try:
-        return await run_in_threadpool(_write)
-    except DatastoreUnreadableError as exc:
-        logger.warning(
-            "close_lifecycle_not_recorded",
-            tmux_socket=socket,
-            tmux_name=name,
-            error=str(exc),
-            note=(
-                "the session WAS destroyed; only the row's lifecycle "
-                "write did not land, and the reconciler still covers it"
-            ),
-        )
-        return 0
 
 
 @router.delete("/sessions", response_model=SuccessResponse, dependencies=[Depends(require_peer_sessions)])
@@ -466,15 +467,19 @@ async def destroy_session(request: Request, session_id: Optional[str] = None, co
             getattr(backend, "socket_name", None) if backend else None
         )
         active_host = backend_host_key(backend)
+        active_working_dir = getattr(backend, "working_dir", None) if backend else None
         if active_name and active_host == LOCAL_HOST_KEY:
             await swarm_leaders.require_confirm(tmux_name=active_name, confirm_name=confirm_name)
             await local_servers.clear_session(active_name)
 
-        active_epoch = await _instance_epoch(backend) if active_name else None
+        active_epoch = await close_record.instance_epoch(backend) if active_name else None
 
-        await session_manager.destroy_session(session_id=session_id)
+        await close_record.stop_and_record(
+            lambda: session_manager.destroy_session(session_id=session_id),
+            socket=active_socket, name=active_name, epoch=active_epoch, host=active_host)
 
-        await _mark_closed_in_datastore(active_socket, active_name, active_epoch, active_host)
+        if active_working_dir and active_host == LOCAL_HOST_KEY:
+            disposable_sessions.cleanup_scratch_dir_best_effort(str(active_working_dir))
 
         save_triggers.schedule_for_instance(
             active_socket, active_name, active_epoch, save_triggers.EVENT_KILL, host_key=active_host)

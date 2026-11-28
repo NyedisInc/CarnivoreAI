@@ -25,7 +25,7 @@ export interface JoinStatus {
 
 export type JoinErrorKey =
     | 'wrong_code_many' | 'used_up' | 'no_code' | 'expired' | 'no_pack' | 'unreachable' | 'local_network_blocked'
-    | 'main_mismatch' | 'helper_not_started' | 'incompatible' | 'busy' | 'rate_limited' | 'refused' | 'paused' | 'needs_owner' | 'bad_link';
+    | 'main_mismatch' | 'helper_not_started' | 'incompatible' | 'busy' | 'rate_limited' | 'refused' | 'paused' | 'needs_owner' | 'bad_link' | 'pack_full';
 
 const ERROR_KEYS: Readonly<Record<string, JoinErrorKey>> = {
     wrong_code: 'wrong_code_many',
@@ -44,6 +44,7 @@ const ERROR_KEYS: Readonly<Record<string, JoinErrorKey>> = {
     paused: 'paused',
     needs_owner: 'needs_owner',
     bad_link: 'bad_link',
+    pack_full: 'pack_full',
     join_has_peers: 'refused',
     join_failed: 'refused',
 };

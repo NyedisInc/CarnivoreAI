@@ -74,7 +74,7 @@ class Dispatcher:
             task.cancel()
 
     def _retry_native_startup(self, info: Any, message: dict) -> None:
-        if (info.agent_family != 'codex' or message.get('source') not in ('crosstalk', 'peer')
+        if (message.get('source') not in ('crosstalk', 'peer')
                 or message['id'] in self._startup_retries
                 or time.time() - message['created_at'] >= 30):
             return
@@ -127,6 +127,23 @@ class Dispatcher:
             return
         task = asyncio.create_task(self._on_idle(session_id, notify_watch=notify_watch))
         task.add_done_callback(self._task_error)
+
+    def on_startup_ready(self, session_id: str) -> None:
+        if self._closed:
+            return
+        task = asyncio.create_task(self._on_startup_ready(session_id))
+        task.add_done_callback(self._task_error)
+
+    async def _on_startup_ready(self, session_id: str) -> None:
+        from src.core.crosstalk import directory
+        from src.core.mcp.protocol import BatchView
+        info = await self.app.state.session_manager.get_session_info(session_id=session_id)
+        if info is None or info.startup_gate != 'ready':
+            return
+        cards = await directory.list_cards(BatchView(self.app.state.session_manager, self.app), include_remote=False)
+        card = next((c for c in cards if c['id'] == info.session.id), None)
+        if card is not None:
+            self.wake(str(card.get('session_uuid') or card['id']))
 
     def on_peer_change(self, session_id: str | None = None) -> None:
         if self._closed:
@@ -334,6 +351,11 @@ async def _discard_swarm(row: Optional[int]) -> None:
     if row is not None:
         from src.core.swarm import delivery
         await asyncio.to_thread(delivery.discard, row)
+
+
+def gate_ready_ids(changes: dict) -> list[str]:
+    upserts = (changes.get('list') or {}).get('upsert', [])
+    return [u['key'] for u in upserts if (u.get('fields') or {}).get('startup_gate') == 'ready']
 
 
 def wake(app: Any, receiver_key: str) -> None:

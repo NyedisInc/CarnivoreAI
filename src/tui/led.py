@@ -6,18 +6,18 @@ from dataclasses import dataclass
 from typing import Any, Mapping, Optional
 
 from src.tui.strings import t
-from src.core.session_status import STATUS_DEAD, STATUS_FINISHED_UNREAD, STATUS_IDLE, STATUS_NOTICE, STATUS_QUESTION
+from src.core.session_status import STATUS_DEAD, STATUS_WORKING_SUBAGENT, STATUS_FINISHED_UNREAD, STATUS_IDLE, STATUS_NOTICE, STATUS_QUESTION
 from src.models.activity_status import BUSY
 
 INNER_STATES = (
     "working", "waiting-permission", "waiting-input", "notice", "idle", "done", "dead", "disconnected", "limit",
-    "unknown",
+    "background", "unknown",
 )
 OUTER_STATES = ("active", "steady", "unread", "off", "dim")
 
 HUE = {
     "working": "green", "waiting-permission": "yellow", "waiting-input": "yellow", "notice": "light-blue",
-    "idle": "gray", "done": "green", "dead": "dark-gray", "disconnected": "red", "limit": "red", "unknown": "gray",
+    "idle": "gray", "done": "green", "dead": "dark-gray", "disconnected": "red", "limit": "red", "background": "gray", "unknown": "gray",
 }
 HUE_STYLE = {
     "green": "ansi_green", "yellow": "ansi_yellow", "light-blue": "ansi_bright_blue", "gray": "ansi_white",
@@ -26,7 +26,7 @@ HUE_STYLE = {
 DOT = {
     "working": ("●", "@"), "waiting-permission": ("▲", "!"), "waiting-input": ("▲", "!"), "notice": ("◆", "*"),
     "idle": ("●", "o"), "done": ("○", "O"), "dead": ("✕", "x"), "disconnected": ("⊘", "-"), "limit": ("☠", "%"),
-    "unknown": ("○", "?"),
+    "background": ("◌", "~"), "unknown": ("○", "?"),
 }
 RING = {
     "active": (("‹", "›"), ("<", ">")), "steady": (("(", ")"), ("(", ")")), "unread": (("[", "]"), ("[", "]")),
@@ -37,7 +37,7 @@ _INNER_KEY = {
     "waiting-permission": "session.status.question", "waiting-input": "tui.led.awaiting_startup",
     "notice": "session.status.notice", "working": "session.status.working", "done": "session.status.finished_unread",
     "idle": "session.status.idle", "dead": "session.status.dead", "disconnected": "tui.led.disconnected",
-    "limit": "session.status.usage_limit", "unknown": "session.status.unknown",
+    "limit": "session.status.usage_limit", "background": "session.status.background", "unknown": "session.status.unknown",
 }
 
 
@@ -70,6 +70,7 @@ def host_offline(row: Mapping[str, Any]) -> Optional[str]:
 def led_states(
     status: Optional[str], *, unread: bool = False, startup_gate: Optional[str] = None,
     transport: Optional[str] = None, host_offline_label: Optional[str] = None, usage_limit: bool = False,
+    activity_hint: Optional[str] = None,
 ) -> tuple[str, str]:
     if transport == "disconnected" or host_offline_label:
         return "disconnected", "off"
@@ -83,6 +84,8 @@ def led_states(
         return "waiting-permission", "active"
     if status == STATUS_NOTICE:
         return "notice", "active"
+    if status == STATUS_WORKING_SUBAGENT and activity_hint == "background":
+        return "background", "steady"
     if status in (*BUSY, "running"):
         return "working", "active"
     if status == STATUS_FINISHED_UNREAD or (status == STATUS_IDLE and unread):
@@ -98,7 +101,7 @@ def led_for(row: Mapping[str, Any], *, transport: Optional[str] = None) -> Led:
     inner, outer = led_states(
         status, unread=bool(row.get("unread")), startup_gate=row.get("startup_gate"),
         transport=transport, host_offline_label=offline,
-        usage_limit=bool(row.get("usage_limit")),
+        usage_limit=bool(row.get("usage_limit")), activity_hint=row.get("activity_hint"),
     )
     if offline:
         label = t("session.status.host_offline").replace("{host}", offline)

@@ -76,7 +76,7 @@ def test_every_family_member_is_a_registered_tool_and_the_table_is_sane() -> Non
         assert any(family.has(n) for n in registered), family.key
     for name in registered:
         assert sum(f.has(name) for f in tool_families.FAMILIES) <= 1, name
-    assert len(tool_families.BY_KEY["pack"].names) == 43 and len(tool_families.BY_KEY["messaging"].names) == 6
+    assert len(tool_families.BY_KEY["pack"].names) == 46 and len(tool_families.BY_KEY["messaging"].names) == 6
     assert len(tool_families.BY_KEY["ai"].names) == 3 and len(tool_families.BY_KEY["app_settings"].names) == 24
     joes = {"dashboards_list", "widgets_list", "item_settings_get", "item_settings_update", "dashboard_create", "dashboard_rename",
             "dashboard_layout_set", "dashboard_activate", "dashboard_delete", "widget_bars_reset", "board_export", "board_import"}

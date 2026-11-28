@@ -28,11 +28,13 @@ const account = (id: string, name: string): AccountUsage => ({
 const SNAPSHOT = {
   accounts: [account('a', 'alpha'), account('b', 'bravo')],
   total: {
-    accounts: 2,
+    accounts: 3,
     windows: [
       { provider: 'claude', kind: 'five_hour', label: '5h', used_pct: 4, resets_at: null, accounts: 2 },
       { provider: 'claude', kind: 'seven_day', label: '7d', used_pct: 48, resets_at: null, accounts: 2 },
       { provider: 'codex', kind: 'primary', window_seconds: 604800, label: '7d', used_pct: 11, resets_at: null, accounts: 1 },
+      { provider: 'antigravity', kind: 'gemini-5h', window_seconds: 18000, label: '5h', used_pct: 22, resets_at: null, accounts: 1 },
+      { provider: 'antigravity', kind: 'gemini-weekly', window_seconds: 604800, label: '7d', used_pct: 50, resets_at: null, accounts: 1 },
     ],
   },
   loop: { alive: true, last_pass_at: null },
@@ -80,10 +82,10 @@ describe('DrawerLedger density', () => {
     flushSync();
     seen.push(foldOf(el));
     expect(el.querySelectorAll('.ldp-account')).toHaveLength(0);
-    expect(el.querySelector('.ldp-total-label')?.textContent).toBe('all accounts total');
-    expect(el.querySelector('.ldp-total .ldp-dim')?.textContent).toBe('2 accounts');
+    expect(el.querySelector('.ldp-accounts-count')?.textContent).toBe('3 accounts');
+    expect(el.querySelector('.ldp-total .ldp-mini--stacked')).not.toBeNull();
     const meters = [...el.querySelectorAll('.ldp-total .ldp-mini .ldp-meter')];
-    expect(meters.map((m) => m.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['5h 4%', '7d 48%', '7d 11%']);
+    expect(meters.map((m) => m.textContent?.replace(/\s+/g, ' ').trim())).toEqual(['7d 48%', '7d 11%', '7d 50%']);
     expect(el.querySelectorAll('.ldp-total .ldp-mini .ldp-meter .oc-gauge').length).toBe(3);
     expect(el.querySelectorAll('.ldp-total .ldp-meter .ldp-provider-mark[role="img"]').length).toBe(3);
     expect(el.querySelector('.ldp-window, table')).toBeNull();

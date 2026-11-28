@@ -1,12 +1,22 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cellTearOffTarget, pastWindowEdge, releaseTearOff, tabTearOffTarget, tearOffCell } from './tearoff';
+import { setPanels } from '../cplug-ui/panel-views.svelte';
+import { setPluginTabs } from '../cplug-ui/plugin-tabs.svelte';
+import { cplugEnablement } from '../../plugins/host/enablement.svelte';
+import type { CplugRow } from '../plugins-page/cplugs-adapter';
 
 function fakeWindow(tearOff?: (...args: unknown[]) => Promise<boolean>): Window {
   return { innerWidth: 1000, innerHeight: 700, carnivoreDesktop: tearOff ? { tearOff } : {} } as unknown as Window;
 }
 const at = (clientX: number, clientY: number) => ({ clientX, clientY, screenX: clientX + 300, screenY: clientY + 120 });
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  setPanels([]);
+  setPluginTabs([]);
+  cplugEnablement.read = false;
+  cplugEnablement.enabled = {};
+});
 
 describe('what is torn out', () => {
   it('keeps a terminal tab on its row key', () => {
@@ -18,6 +28,86 @@ describe('what is torn out', () => {
     expect(tabTearOffTarget('widget:core.tasks')).toEqual({ kind: 'widget', id: 'core.tasks' });
     expect(cellTearOffTarget('core.tasks')).toEqual({ kind: 'widget', id: 'core.tasks' });
     expect(cellTearOffTarget('terminal:row:7')).toBeNull();
+  });
+  it('allows popout:true plugin widget tabs/cells and runtime popout:true sidebar tabs while blocking popout:false', () => {
+    const rows: CplugRow[] = [
+      {
+        id: 'my-plug',
+        install_key: '12345678',
+        runtime: 'sidecar',
+        kind: 'sidecar',
+        enabled: true,
+        state: 'active',
+        name: 'My Plug',
+        version: '1.0.0',
+        trust_tier: 'verified',
+        views: [
+          { name: 'panel', surfaces: ['panel'], popout: true },
+          { name: 'private', surfaces: ['panel'], popout: false },
+        ],
+        sidebar_tab: {
+          id: 'board',
+          title: 'Board',
+          popout: true,
+        },
+      },
+    ];
+    setPanels(rows);
+    setPluginTabs(rows);
+    expect(tabTearOffTarget('widget:my-plug.panel@panel-12345678')).toEqual({ kind: 'widget', id: 'my-plug.panel:panel-12345678' });
+    expect(tabTearOffTarget('widget:my-plug.private@panel-12345678')).toBeNull();
+    expect(cellTearOffTarget('my-plug.panel:panel-12345678')).toEqual({ kind: 'widget', id: 'my-plug.panel:panel-12345678' });
+    expect(cellTearOffTarget('my-plug.private:panel-12345678')).toBeNull();
+    expect(tabTearOffTarget('cplug-my-plug-board')).toEqual({ kind: 'tab', id: 'cplug-my-plug-board' });
+
+    const longPlug = 'a'.repeat(24);
+    const longTab = 'b'.repeat(40);
+    const longTabId = `cplug-${longPlug}-${longTab}`;
+    const longRows: CplugRow[] = [
+      {
+        id: longPlug,
+        install_key: '12345678',
+        runtime: 'sidecar',
+        kind: 'sidecar',
+        enabled: true,
+        state: 'active',
+        name: 'Long Plug',
+        version: '1.0.0',
+        trust_tier: 'verified',
+        sidebar_tab: { id: longTab, title: 'Long', popout: true },
+      },
+    ];
+    setPluginTabs(longRows);
+    expect(tabTearOffTarget(longTabId)).toEqual({ kind: 'tab', id: longTabId });
+
+    setPanels([]);
+    setPluginTabs([]);
+    expect(cellTearOffTarget('my-plug.panel:panel-12345678')).toBeNull();
+    expect(cellTearOffTarget('my-plug.private:panel-12345678')).toBeNull();
+    expect(cellTearOffTarget('unknown.widget:panel-12345678')).toBeNull();
+    expect(tabTearOffTarget('widget:my-plug.panel@panel-12345678')).toBeNull();
+    expect(tabTearOffTarget('widget:my-plug.open')).toBeNull();
+
+    cplugEnablement.enabled = { huddle: true };
+    cplugEnablement.read = true;
+    expect(cellTearOffTarget('huddle.chat:agent:7')).toEqual({ kind: 'widget', id: 'huddle.chat:agent:7' });
+    expect(tabTearOffTarget('widget:huddle.chat@agent-7')).toEqual({ kind: 'widget', id: 'huddle.chat:agent-7' });
+    cplugEnablement.enabled = { huddle: false };
+    expect(cellTearOffTarget('huddle.chat:agent:7')).toBeNull();
+    expect(tabTearOffTarget('widget:huddle.chat@agent-7')).toBeNull();
+
+    cplugEnablement.enabled = { reviewboard: false, huddle: false, flow: false };
+    cplugEnablement.read = true;
+    expect(tabTearOffTarget('reviewboard')).toBeNull();
+    expect(tabTearOffTarget('huddle')).toBeNull();
+    expect(tabTearOffTarget('flow')).toBeNull();
+    expect(tabTearOffTarget('devwidgetlab')).toBeNull();
+
+    cplugEnablement.enabled = { reviewboard: true, huddle: true, flow: true, devwidgetlab: true };
+    expect(tabTearOffTarget('reviewboard')).toEqual({ kind: 'tab', id: 'reviewboard' });
+    expect(tabTearOffTarget('huddle')).toEqual({ kind: 'tab', id: 'huddle' });
+    expect(tabTearOffTarget('flow')).toEqual({ kind: 'tab', id: 'flow' });
+    expect(tabTearOffTarget('devwidgetlab')).toEqual({ kind: 'tab', id: 'devwidgetlab' });
   });
 });
 

@@ -9,8 +9,8 @@ from typing import Any, Dict, Optional, Tuple
 import structlog
 from cryptography.hazmat.primitives.asymmetric import ec
 
-from src.core import resource_push
-from src.core.phone_link import acme, certs, dns01
+from src.core import resource_push, setup_state
+from src.core.phone_link import acme, certs, dns01, link_status
 from src.core.phone_link.custom_domain.repair import RepairGate
 from src.core.phone_link.custom_domain.service import CustomDomainService
 from src.core.phone_link.gate import LinkGate, StreamTable
@@ -27,6 +27,7 @@ from src.core.resource_push import topics
 logger = structlog.get_logger()
 
 RETRY_SECONDS = 300.0
+HEARTBEAT_SECONDS = 300.0
 NONE, PACK, PHONE = "none", "pack", "phone"
 
 
@@ -37,6 +38,7 @@ class PhoneLinkManager:
                  account: Optional[RelayAccount] = None) -> None:
         self._account = account
         self._account_task: Optional["asyncio.Task[None]"] = None
+        self._beat_task: Optional["asyncio.Task[None]"] = None
         self._app, self._config, self._version = app, config, version
         self._state_dir, self._db_path = Path(state_dir), Path(db_path)
         self.pairing = pairing or PairingStore(path=self._state_dir / "phone_link.db")
@@ -144,8 +146,15 @@ class PhoneLinkManager:
     def device_id(self) -> Optional[str]:
         return self._session.device_id if self._session is not None else None
 
+    def is_pack_member(self) -> bool:
+        try:
+            return (self._state_dir / setup_state.JOINED_MARKER_NAME).exists()
+        except OSError:
+            return False
+
     def status(self) -> Dict[str, Any]:
         return {"available": self.available, "enabled": self.pairing.enabled,
+                "pack_member": self.is_pack_member(),
                 "running": self._tunnel is not None,
                 "tunnel": self._tunnel.status if self._tunnel is not None else "stopped",
                 "hostname": self.hostname, "devices": self.pairing.device_count(),
@@ -193,6 +202,7 @@ class PhoneLinkManager:
 
     async def _account_changed(self, signed_in: bool) -> None:
         if self._session is not None:
+            await self.report_link_status("up" if signed_in else "signed_out")
             if not signed_in:
                 self._session.drop_token()
                 return
@@ -202,6 +212,26 @@ class PhoneLinkManager:
             if self._retry_timer is not None:
                 self._retry_timer.cancel()
             await self.reconcile()
+
+    async def report_link_status(self, status: Optional[str] = None) -> None:
+        if self._session is None:
+            return
+        word = status or ("up" if catalog_auth.device_session(self._state_dir) is not None else "signed_out")
+        try:
+            await link_status.report(self._session, word)
+        except (RelayAuthError, ValueError) as exc:
+            logger.info("link_status_report_failed", error_type=type(exc).__name__)
+
+    async def _heartbeat(self) -> None:
+        while True:
+            try:
+                await self.report_link_status()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("link_status_heartbeat_failed", error_type=type(exc).__name__)
+            await asyncio.sleep(HEARTBEAT_SECONDS)
+
+    async def issue_status_key(self) -> str:
+        return await link_status.issue_key(await self._session_for())
 
     async def _boot(self) -> None:
         try:
@@ -236,6 +266,8 @@ class PhoneLinkManager:
                 await self._attach_phone(tunnel)
             tunnel.start()
             self._running = mode
+            if self._beat_task is None:
+                self._beat_task = asyncio.get_running_loop().create_task(self._heartbeat(), name="phone-link-heartbeat")
             self.error = ""
             logger.info("phone_link_started", mode=mode)
         except (RelayAuthError, acme.AcmeError, dns01.Dns01Error, RuntimeError, OSError, ValueError) as exc:
@@ -312,6 +344,9 @@ class PhoneLinkManager:
             self._tunnel = None
             self.announce()
         await self._drop_phone()
+        if self._beat_task is not None:
+            self._beat_task.cancel()
+            self._beat_task = None
         self._running = None
         logger.info("phone_link_stopped")
 

@@ -8,7 +8,9 @@
     "PATCH /api/v1/hosts/{key}",
     "DELETE /api/v1/hosts/{key}",
     "PUT /api/v1/pack/master",
-    "GET /api/v1/federation/discovered"
+    "GET /api/v1/federation/discovered",
+    "GET /api/v1/pack/leftovers",
+    "DELETE /api/v1/pack/leftovers/{install_id}"
   ],
   "area": "settings",
   "docs": [
@@ -17,7 +19,8 @@
   "examples": [
     "See every computer in the pack and every ssh host in one list, with the ones that need a look pulled into a red group.",
     "Open a computer you reach over ssh and read its ssh facts, copy the ssh command and say which computer an ssh host belongs to.",
-    "Find the computer with the most free cpu before you start a big job."
+    "Find the computer with the most free cpu before you start a big job.",
+    "Open the pack page on a member with the alpha stopped and read each other member's link state."
   ],
   "how_to": [
     "Open pack, computers: the rail filters the list, the find field searches name, ssh login and tools, and sort and the cards or list switch sit in the bar.",
@@ -25,11 +28,13 @@
     "On the ssh tab, pick the computer an ssh host belongs to; the pack keeps your pick instead of guessing from the name.",
     "Press the wolf button on a computer, then confirm, to make it the pack leader.",
     "Press add a computer: one entry with four routes (a code, over ssh, an ssh host only, pair an older computer).",
-    "The pack settings panel on the right folds into the gear in the title strip; it holds the pack name, advertising, membership or join a pack, show a code and rotate key."
+    "The pack settings panel on the right folds into the gear in the title strip; it holds the pack name, advertising, membership or join a pack, show a code and rotate key.",
+    "With the mesh on, a computer card shows the real state of the direct link from this computer, and the alpha's word when the alpha reports the computer connected. The needs a look rail flags a link that is refused, blocked or has a certificate mismatch."
   ],
   "id": "pack-roster",
   "issues": [
-    2061
+    2061,
+    3307
   ],
   "keywords": [
     "pack",
@@ -40,7 +45,7 @@
     "leader",
     "settings"
   ],
-  "media_exempt": "The roster needs a live pack of two or more computers and an ssh host to show cards, the red needs a look group and the ssh tab; the capture is recorded with the release run.",
+  "media_exempt": "The roster needs a live pack of two or more computers and an ssh host to show cards, the red needs a look group and the ssh tab; the capture is recorded with the release run; recaptured after the next version bump",
   "name": "Pack roster",
   "since": "2026-10-21",
   "status": "beta",
@@ -52,7 +57,7 @@
     "src/api/hosts_routes.py",
     "src/core/hosts/store.py"
   ],
-  "updated": "2026-10-21",
+  "updated": "2026-11-23",
   "where": [
     "Pack, computers tab (#pack, with #pack/ssh landing on the over ssh filter)."
   ]

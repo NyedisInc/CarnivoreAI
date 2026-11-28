@@ -14,7 +14,8 @@ Full model: <code>docs/session-status.md</code>.</p>
 <table class="sg-table">
     <thead><tr><th>hue</th><th>states</th><th>means</th><th>told apart by</th></tr></thead>
     <tbody>
-        <tr><td>green</td><td><code>working</code>, <code>working_subagent</code></td><td>the agent is working now</td><td>the label; the ring breathes</td></tr>
+        <tr><td>green</td><td><code>working</code>, <code>working_subagent</code> (agent work)</td><td>the agent is working now</td><td>the label; the ring breathes</td></tr>
+        <tr><td>grey, spinning</td><td><code>working_subagent</code> with the wrapper hint <code>activity_hint: "background"</code> (inner state <code>background</code>, outer <code>steady</code>; not a ninth status)</td><td>only background work runs: a shell or a parked sub-agent while the agent sits at its prompt (issue #3118)</td><td>a grey open arc that turns; the label "running in the background - the agent is at its prompt"</td></tr>
         <tr><td>yellow</td><td><code>question</code>, the startup gate</td><td>stopped, waiting on you</td><td>the label</td></tr>
         <tr><td>light blue</td><td><code>notice</code></td><td>still working, wants attention</td><td>alone</td></tr>
         <tr><td>grey</td><td><code>idle</code>, <code>unknown</code></td><td>at rest and read; not measured</td><td>SHAPE: solid centre against hollow centre</td></tr>

@@ -20,7 +20,8 @@ def current() -> Optional[Engine]:
     return _engine
 
 
-def ensure(state_dir: Optional[Path] = None, db_path: Optional[Path] = None) -> Engine:
+def ensure(state_dir: Optional[Path] = None, db_path: Optional[Path] = None,
+           *, boot_scan_delay: float = 0.0) -> Engine:
     global _engine
     with _lock:
         if _engine is None:
@@ -30,12 +31,13 @@ def ensure(state_dir: Optional[Path] = None, db_path: Optional[Path] = None) -> 
 
                 state_dir = state_dir or settings.get_state_dir()
                 db_path = db_path or db_path_for(state_dir)
-            _engine = Engine(Path(state_dir), db_path=Path(db_path))
+            _engine = Engine(Path(state_dir), db_path=Path(db_path), boot_scan_delay=boot_scan_delay)
         return _engine
 
 
-def start(state_dir: Optional[Path] = None, db_path: Optional[Path] = None) -> Engine:
-    engine = ensure(state_dir, db_path)
+def start(state_dir: Optional[Path] = None, db_path: Optional[Path] = None,
+          *, boot_scan_delay: float = 0.0) -> Engine:
+    engine = ensure(state_dir, db_path, boot_scan_delay=boot_scan_delay)
     engine.start()
     return engine
 

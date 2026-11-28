@@ -34,7 +34,7 @@ _POOL = ThreadConnections(_open, limit=4)
 _DEPTH = threading.local()
 _JOB_COLS = [f.name for f in dataclasses.fields(JobRecord)]
 _HOST_COLS = [f.name for f in dataclasses.fields(HostJob)]
-_POLICY_COLS = {"auto_delegate", "never_use_json", "carry_json", "bring_back_json", "setup_json"}
+_POLICY_COLS = {"auto_delegate", "never_use_json", "carry_json", "bring_back_json", "setup_json", "local_only_json"}
 _SSH_TARGET_COLS = {"takes_work", "pinned_fp", "far_root", "login_shell", "path_extra_json", "can_json", "probed_at", "reserve_json", "labels_json",
                     "last_ok", "last_error", "updated_at"}
 _TERMINAL_VALUES = tuple(s.value for s in TERMINAL)

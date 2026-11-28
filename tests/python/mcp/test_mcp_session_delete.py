@@ -25,7 +25,7 @@ READ_ONLY = AgentCaller("ses_a", "cloude_a", "ses_a", scope="read")
 
 def _info(name: str, host: str = "local") -> SimpleNamespace:
     return SimpleNamespace(activity_status="idle", status_source="none", subagents_running=None, background_open=None,
-                           tmux_session=name, host_key=host, session_row_id=1, host_label="far",
+                           label=None, claude_title=None, tmux_session=name, host_key=host, session_row_id=1, session_uuid=None, host_label="far",
                            session=SimpleNamespace(id=f"ses_{name.removeprefix('cloude_')}", tmux_created_epoch=7))
 
 

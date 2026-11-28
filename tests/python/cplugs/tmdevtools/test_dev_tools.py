@@ -16,8 +16,8 @@ from src.plugins.host import developer_mode
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.plugins.host import runtime
-from src.plugins.huddle import devtools_port, groups, service as task_manager_service
-from src.plugins.huddle.public import TaskManagerStore
+from src.plugins.taskmanager import devtools_port, groups, service as task_manager_service
+from src.plugins.taskmanager.public import TaskManagerStore
 from src.plugins.sdk import ports
 from src.plugins.tmdevtools import commands, routes
 from tests.python.cplugs.owner import turn_on
@@ -37,12 +37,12 @@ class Env:
         self.host = runtime.install(self.app, tmp / "state")
         self.published: List[str] = []
         self.host.publish = self.published.append
-        turn_on(self.host, "huddle")
+        turn_on(self.host, "taskmanager")
         if on:
             turn_on(self.host, "tmdevtools")
         monkeypatch.setattr(task_manager_service, "project_names", lambda ctx: {"12": "carnivore", "13": "blog"})
-        self.ctx = self.host.context("huddle", infos=self._infos, background=True)
-        self.store = TaskManagerStore(self.host.storage("huddle"), notify=lambda key: None)
+        self.ctx = self.host.context("taskmanager", infos=self._infos, background=True)
+        self.store = TaskManagerStore(self.host.storage("taskmanager"), notify=lambda key: None)
         devtools_port.register(self.ctx)
 
     @staticmethod
@@ -85,7 +85,7 @@ def seed(env: Env) -> Dict[str, int]:
 
 def test_ships_off_and_the_manifest_asks_for_the_task_manager() -> None:
     d = runtime.find("tmdevtools")
-    assert d.manifest.default_enabled is False and "huddle" in d.manifest.requires
+    assert d.manifest.default_enabled is False and "taskmanager" in d.manifest.requires
     assert sorted(d.tools) == [FOLD_TOOL, SCROLL_TOOL, LIST_TOOL]
 
 

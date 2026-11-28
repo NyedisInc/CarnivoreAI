@@ -40,7 +40,7 @@ def _dialog(startup_kind=None, fingerprint: str = FINGERPRINT, kind: str = "perm
 
 def _info(name: str) -> SimpleNamespace:
     return SimpleNamespace(activity_status="idle", status_source="none", subagents_running=None, background_open=None,
-                           tmux_session=name, host_key="local", session_row_id=9, label=None, host_label="here",
+                           claude_title=None, session_uuid=None, tmux_session=name, host_key="local", session_row_id=9, label=None, host_label="here",
                            session=SimpleNamespace(id=f"ses_{name}", working_dir="/w", tmux_created_epoch=1))
 
 

@@ -1,5 +1,15 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
-import { bindState, initialValue, readStored, rememberedNames, stateKey, type StateSpec } from './widget-state.svelte';
+import {
+  WIDGET_STATE_PREF_FIELD,
+  bindState,
+  initialValue,
+  readStored,
+  rememberedNames,
+  resetWidgetStateSync,
+  startWidgetStateSync,
+  stateKey,
+  type StateSpec,
+} from './widget-state.svelte';
 
 const isBool = (value: unknown): value is boolean => typeof value === 'boolean';
 const isMode = (value: unknown): value is 'edit' | 'preview' => value === 'edit' || value === 'preview';
@@ -30,6 +40,9 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  resetWidgetStateSync();
+  delete (globalThis as Record<string, unknown>).PreferenceBridge;
+  delete (globalThis as Record<string, unknown>).Preferences;
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -115,5 +128,71 @@ describe('writing', () => {
     state.folds = true;
     expect(held).toBe(true);
     expect(writes).toEqual([]);
+  });
+});
+
+describe('ui_preferences.widget_state sync (#3385)', () => {
+  test('hydrates by widget ID, merges writes with sibling widgets, follows live preferences.changed without echo, and keeps viewportOnly local', () => {
+    let remoteHandler: ((value: unknown) => void) | null = null;
+    let shared: unknown = {
+      'core.notes': { mode: 'preview' },
+      'core.timeline': { squeeze: false },
+    };
+    const writeSpy = vi.fn(async (_field: string, value: unknown, local: () => void) => {
+      local();
+      shared = value;
+      return { status: 'committed' };
+    });
+    const unsubSpy = vi.fn();
+
+    (globalThis as Record<string, unknown>).PreferenceBridge = {
+      read: (field: string, fallback: () => unknown) => (field === WIDGET_STATE_PREF_FIELD ? shared : fallback()),
+      write: writeSpy,
+      follow: (field: string, apply: (value: unknown) => void) => {
+        if (field === WIDGET_STATE_PREF_FIELD) remoteHandler = apply;
+        return unsubSpy;
+      },
+    };
+
+    const stop = startWidgetStateSync(null);
+    const notes = bindState(
+      'core.notes',
+      {
+        mode: { home: 'device', default: 'edit', valid: isMode },
+        pinned: { home: 'device', default: false, valid: isBool, viewportOnly: true },
+      },
+      () => '',
+    );
+
+    expect(notes.mode).toBe('preview');
+    expect(map.get('carnivore.core.notes.mode')).toBe('preview');
+    expect(writeSpy).not.toHaveBeenCalled();
+
+    notes.mode = 'edit';
+    expect(notes.mode).toBe('edit');
+    expect(map.get('carnivore.core.notes.mode')).toBe('edit');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+    expect(writeSpy).toHaveBeenCalledWith(
+      WIDGET_STATE_PREF_FIELD,
+      { 'core.notes': { mode: 'edit' }, 'core.timeline': { squeeze: false } },
+      expect.any(Function),
+    );
+
+    notes.pinned = true;
+    expect(notes.pinned).toBe(true);
+    expect(map.get('carnivore.core.notes.pinned')).toBe('true');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+
+    remoteHandler!({
+      'core.notes': { mode: 'preview', pinned: false },
+      'core.timeline': { squeeze: true },
+    });
+    expect(notes.mode).toBe('preview');
+    expect(notes.pinned).toBe(true);
+    expect(map.get('carnivore.core.notes.mode')).toBe('preview');
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+
+    stop();
+    expect(unsubSpy).toHaveBeenCalledTimes(1);
   });
 });

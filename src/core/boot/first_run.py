@@ -49,39 +49,63 @@ def _migrate_projects(ctx: "BootContext") -> None:
 def _run_import(ctx: "BootContext") -> None:
     if not ctx.datastore_state.healthy:
         return
-    from src.core.db import connect, db_path_for, transaction
-    from src.core.session_import import run_first_run_import
+    from src.core.db import connect, db_path_for, get_meta, transaction
+    from src.core.db_models import META_IMPORTED_FROM_JSON_AT, SESSION_ATTRIBUTION_UNKNOWN
+    from src.core.db_reuse.core_read import lend_pooled_read
+    from src.core.session_import import run_first_run_import, sessions_stage_done
     from src.core.session_stage_a_boundary import record_boundary
     from src.core.tmux_listing import coerce_listing
     from src.core.tmux_session_cwd import make_working_dir_probe
 
+    db_path = db_path_for(settings.get_state_dir())
+    already_imported = False
+    has_unknown_attr = True
+    pooled = lend_pooled_read(db_path)
+    if pooled is not None:
+        with closing(pooled) as read_conn:
+            if get_meta(read_conn, META_IMPORTED_FROM_JSON_AT) and sessions_stage_done(read_conn):
+                already_imported = True
+                row = read_conn.execute(
+                    "SELECT 1 FROM sessions WHERE attribution = ? LIMIT 1",
+                    (SESSION_ATTRIBUTION_UNKNOWN,),
+                ).fetchone()
+                has_unknown_attr = row is not None
+
+    if already_imported and not has_unknown_attr:
+        ctx.app.state.session_import_notice = None
+        logger.info("first_run_import_already_done_fast_path")
+        return
+
     session_manager = ctx.session_manager
     _listing = coerce_listing(session_manager.list_attachable_sessions())
-    with closing(connect(db_path_for(settings.get_state_dir()))) as _import_conn:
-        with transaction(_import_conn):
-            record_boundary(_import_conn)
-            _import_result = run_first_run_import(
-                _import_conn,
-                listing=_listing,
-                owned_tmux_names=set(ctx.services.owned_tmux.names),
-                socket=session_manager.tmux_socket_name(),
-                working_dir_probe=make_working_dir_probe(
-                    session_manager.tmux_socket_name()
-                ),
-                log_dir=settings.get_log_dir(),
+    with closing(connect(db_path)) as _import_conn:
+        if not already_imported:
+            with transaction(_import_conn):
+                record_boundary(_import_conn)
+                _import_result = run_first_run_import(
+                    _import_conn,
+                    listing=_listing,
+                    owned_tmux_names=set(ctx.services.owned_tmux.names),
+                    socket=session_manager.tmux_socket_name(),
+                    working_dir_probe=make_working_dir_probe(
+                        session_manager.tmux_socket_name()
+                    ),
+                    log_dir=settings.get_log_dir(),
+                )
+            ctx.app.state.session_import_notice = _import_result.home_screen_notice()
+            logger.info(
+                "first_run_import",
+                outcome=_import_result.outcome,
+                sessions_imported=_import_result.sessions_imported,
+                listing_ok=_listing.ok,
+                listing_reason=_listing.reason,
             )
-        ctx.app.state.session_import_notice = _import_result.home_screen_notice()
-        logger.info(
-            "first_run_import",
-            outcome=_import_result.outcome,
-            sessions_imported=_import_result.sessions_imported,
-            listing_ok=_listing.ok,
-            listing_reason=_listing.reason,
-        )
-        _backfill_attribution(ctx, _listing)
+        else:
+            ctx.app.state.session_import_notice = None
+        _backfill_attribution(ctx, _listing, conn=_import_conn)
 
 
-def _backfill_attribution(ctx: "BootContext", listing: "TmuxListing") -> None:
+def _backfill_attribution(ctx: "BootContext", listing: "TmuxListing", *, conn=None) -> None:
     from src.core.db import connect, db_path_for, transaction
     from src.core.session_attribution import backfill_attribution, live_instance_keys
     from src.core.session_project_binding import correct_shallow_derivations
@@ -89,14 +113,21 @@ def _backfill_attribution(ctx: "BootContext", listing: "TmuxListing") -> None:
 
     session_manager = ctx.session_manager
     _listing = listing
-    with closing(connect(db_path_for(settings.get_state_dir()))) as _attr_conn:
-        with transaction(_attr_conn):
-            _rehomed = correct_shallow_derivations(_attr_conn)
-            _attr_result = backfill_attribution(
-                _attr_conn,
+    def _run_on(attr_conn) -> tuple:
+        with transaction(attr_conn):
+            rehomed = correct_shallow_derivations(attr_conn)
+            result = backfill_attribution(
+                attr_conn,
                 working_dir_probe=make_working_dir_probe(session_manager.tmux_socket_name()),
                 live_instances=live_instance_keys(session_manager.tmux_socket_name(), _listing),
             )
+        return rehomed, result
+
+    if conn is not None:
+        _rehomed, _attr_result = _run_on(conn)
+    else:
+        with closing(connect(db_path_for(settings.get_state_dir()))) as _attr_conn:
+            _rehomed, _attr_result = _run_on(_attr_conn)
     logger.info(
         "session_attribution_backfill_boot",
         considered=_attr_result.considered,

@@ -21,7 +21,7 @@ const PAIRS: [string, CellMeta][] = [
 
 describe('core manifests', () => {
   test('there is exactly one manifest per cell and per instance kind', () => {
-    expect(CELL_IDS).toHaveLength(39);
+    expect(CELL_IDS).toHaveLength(36);
     expect(Object.keys(CORE_MANIFESTS).sort()).toEqual(PAIRS.map(([id]) => id).sort());
   });
 
@@ -61,7 +61,7 @@ describe('core manifests', () => {
 
   test('canvases follow each page default: the hidden-by-default cells reach the terminal page, the rest are home only', () => {
     for (const id of CELL_IDS) {
-      const expected = id === 'notes' || id === 'files' || id === 'scheduled-tasks' || id === 'keep-awake' || id === 'machine-stats' || id === 'changes' || id === 'task-manager' || id === 'task-manager-all' || id === 'task-manager-mk2' || id === 'task-manager-mk2-all' || id === 'crosstalk' || id === 'tasks' || id === 'tasks-all' || id === 'bookmarks' || id === 'bookmarks-all' || id === 'pipeline' || id === 'developer' || id === 'automations' || id === 'automations-all' || id === 'session-contents' || id === 'warroom' || id === 'shell' || id === 'timeline' || id === 'questions' || id === 'task-list' || id === 'projects' ? ['home', 'terminal'] : ['home'];
+      const expected = id === 'notes' || id === 'files' || id === 'scheduled-tasks' || id === 'keep-awake' || id === 'machine-stats' || id === 'changes' || id === 'task-manager-mk2' || id === 'task-manager-mk2-all' || id === 'crosstalk' || id === 'tasks' || id === 'tasks-all' || id === 'bookmarks' || id === 'bookmarks-all' || id === 'pipeline' || id === 'developer' || id === 'automations' || id === 'automations-all' || id === 'session-contents' || id === 'warroom' || id === 'shell' || id === 'timeline' || id === 'questions' || id === 'projects' ? ['home', 'terminal'] : ['home'];
       expect(CORE_MANIFESTS[coreWidgetId(id)]!.canvases).toEqual(expected);
     }
     expect(CORE_MANIFESTS['core.terminal']!.canvases).toEqual(['home', 'terminal']);

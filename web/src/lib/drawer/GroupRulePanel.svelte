@@ -7,6 +7,8 @@
     import { t } from '../i18n/index.svelte';
     import * as GroupStore from './group-store';
     import { RULE_FLAGS, type GroupRule, type RuleFlag } from './group-rule';
+    import { countMatchingInContainer } from './nested-groups';
+    import { companySource } from '../sidebar-shell/company-source.svelte';
 
     const GLYPH: Record<RuleFlag, string> = {
         running: 'bolt', sleeping: 'sleeping-agent', coffee: 'coffee', sharing: 'telescope', pinned: 'pin',
@@ -28,7 +30,7 @@
 
     const rule = $derived<GroupRule>({ flags, prefix: prefix.trim(), suffix: suffix.trim() });
     const empty = $derived(flags.length === 0 && !rule.prefix && !rule.suffix);
-    const count = $derived.by(() => (tick >= 0 && !empty ? GroupStore.countMatching(rule) : 0));
+    const count = $derived.by(() => (tick >= 0 && !empty ? countMatchingInContainer(rule, groupUuid, companySource()) : 0));
 
     onMount(() => GroupStore.subscribeRows(() => { tick += 1; }));
 

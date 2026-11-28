@@ -252,16 +252,23 @@ async def hello(principal: Principal = Depends(require_peer_sessions)) -> HelloR
     """Who this Mac is. Peer or owner. The version gate (F13) reads ``protocol``."""
     install_id = await _db(_install_id)
     restricted: List[str] = []
-    if principal.is_peer and principal.grant is not None:
+    from src.core.federation.mesh_grants import MeshGrant
+
+    if isinstance(principal.grant, MeshGrant):
+        restricted = [direction.RESTRICTION_ONE_WAY] if principal.grant.one_way else []
+    elif principal.is_peer and principal.grant is not None:
         try:
             if not await _db(direction.inbound_allowed, principal.grant.peer_install_id):
                 restricted = [direction.RESTRICTION_ONE_WAY]
         except sqlite3.Error:
             logger.warning("hello_direction_unknown")
+    names = capabilities.names()
+    if isinstance(principal.grant, MeshGrant) and "credentials" not in principal.grant.mesh_scopes:
+        names = [n for n in names if n != capabilities.CAP_CREDENTIALS_MESH]
     return HelloResponse(install_id=install_id, label=this_label(), protocol=pairing.PROTOCOL_MAJOR,
                          protocol_minor=pairing.PROTOCOL_MINOR,
                          app_version=version.resolve_version(), principal=principal.kind,
-                         capabilities=capabilities.names(), restrictions_for_caller=restricted)
+                         capabilities=names, restrictions_for_caller=restricted)
 
 
 def _validate_back_route(grant: Grant, body: LinkRequest) -> Any:
@@ -352,7 +359,7 @@ async def peer_ws(websocket: WebSocket) -> None:
     try:
         if not token or not peer_token.is_peer_token(token):
             raise HTTPException(status_code=401)
-        grant = (await peer_auth._authorize_peer(token, "sessions")).grant
+        grant = (await peer_auth._authorize_peer(token, "sessions", conn=websocket)).grant
     except HTTPException:
         await websocket.close(code=4401)
         return
@@ -401,6 +408,9 @@ async def unpair(principal: Principal = Depends(require_peer_sessions)) -> Dict[
         raise _error(400, "peer_token_required", "use the grant id as the owner")
     gid, iid = principal.grant.grant_id, principal.grant.peer_install_id
     await _db(_drop_peer, gid, iid)
+    from src.core.federation import mesh_peers
+
+    await mesh_peers.star_row_gone(iid)
     peer_listing.forget(iid)
     if peer_links.LINKS is not None:
         await peer_links.LINKS.remove(iid)

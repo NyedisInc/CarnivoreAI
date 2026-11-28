@@ -88,6 +88,18 @@ V96_COLUMNS: Tuple[Tuple[str, str, str], ...] = (
     (HOSTS_TABLE, "computer_install_id", "ALTER TABLE hosts ADD COLUMN computer_install_id TEXT"),
 )
 
+DDL_SESSIONS_HOST_SOCKET_NAME_ID_INDEX = (
+    "CREATE INDEX IF NOT EXISTS ix_sessions_host_socket_name_id "
+    "ON sessions (host_key, tmux_socket, tmux_name, id DESC)"
+)
+DDL_V109: Tuple[str, ...] = (DDL_SESSIONS_HOST_SOCKET_NAME_ID_INDEX,)
+
+
+def apply_v109(conn: sqlite3.Connection) -> None:
+    if HOST_KEY_COLUMN in _columns(conn, "sessions"):
+        for statement in DDL_V109:
+            conn.execute(statement)
+
 
 def apply_v96(conn: sqlite3.Connection) -> None:
     for table, column, statement in V96_COLUMNS:

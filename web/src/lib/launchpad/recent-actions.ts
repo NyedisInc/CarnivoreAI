@@ -13,6 +13,7 @@ import {
     type Translate,
 } from './recent';
 import type { LiveSession } from './recent-visibility';
+import { CANCELLED, runWithOffloadRestore } from '../offload-prompt/offload-prompt';
 import { openStatusKey, recentOpenStatus } from './recent-open-status.svelte';
 import { openedSession, openToast, raiseToast, type OpenStep } from './recent-open-feedback';
 
@@ -112,7 +113,13 @@ export async function restartRecentSession(
     let result: unknown;
     try {
         if (plan.mode === 'restart') {
-            result = await host.restart(plan.sessionUuid);
+            const restarted = await runWithOffloadRestore({ sessionUuid: plan.sessionUuid, label: name }, () => host.restart(plan.sessionUuid));
+            if (restarted === CANCELLED) {
+                recentOpenStatus.clear(rowKey);
+                RESTARTS_IN_FLIGHT.delete(key);
+                return;
+            }
+            result = restarted;
             const notice = restartNotice(result as RestartResponse, t);
             if (notice) host.showError(notice);
         } else {

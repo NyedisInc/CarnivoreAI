@@ -1,6 +1,5 @@
 .session-sidebar-row[role="option"]:not([aria-selected="true"]):hover {
-  background: color-mix(in oklab, var(--oc-orange) 12%, var(--oc-ground-hover));
-  border-color: color-mix(in oklab, var(--oc-orange) 35%, var(--oc-line-panel));
+  background: var(--oc-ground-hover);
 }
 
 .session-sidebar-row[role="option"],

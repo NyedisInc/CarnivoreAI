@@ -44,3 +44,23 @@ any = [
   { contains = ["esc again to cancel"] },
   { contains = ["esc interrupt"] }
 ]
+
+[[rules]]
+id = "working_footer_interrupt"
+state = "working"
+priority = 105
+region = "bottom_non_empty_lines(3)"
+visible_working = true
+line_regex = ['^\s*[○◉●◎]\s+Working\b.*ctrl\+c interrupt']
+
+[[rules]]
+id = "resting_footer"
+state = "idle"
+priority = 50
+region = "bottom_non_empty_lines(2)"
+visible_idle = true
+any = [
+  { contains = ["/ commands"] },
+  { contains = ["@ files/sessions"] },
+  { contains = ["? help"] },
+]

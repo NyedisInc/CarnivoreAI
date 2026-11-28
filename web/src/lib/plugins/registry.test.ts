@@ -65,9 +65,8 @@ describe('ordering', () => {
 
     test('an unpopulated surface answers empty, not undefined', () => {
         const r = createRegistry();
-        expect(r.surfacesOf('status-source')).toEqual([]);
-        expect(r.surfacesOf('sidebar-item')).toEqual([]);
-        expect(r.surfacesOf('launchpad-panel')).toEqual([]);
+        expect(r.surfacesOf('session-card-action')).toEqual([]);
+        expect(r.surfacesOf('settings-panel')).toEqual([]);
     });
 });
 
@@ -115,20 +114,21 @@ describe('duplicate refusal', () => {
 
     test('the SAME id on a DIFFERENT surface is not a collision', () => {
         const r = createRegistry();
+        const DummyPanel = (() => {}) as unknown as import('svelte').Component<Record<string, never>>;
         r.register({
             id: 'both',
             contributions: [
                 contribution('twin'),
                 {
                     id: 'twin',
-                    surface: 'sidebar-item',
+                    surface: 'settings-panel',
                     enabled: () => true,
-                    payload: { label: 'l', icon: '', run: () => {} },
+                    payload: { Panel: DummyPanel },
                 },
             ],
         });
         expect(r.surfacesOf('session-card-action')).toHaveLength(1);
-        expect(r.surfacesOf('sidebar-item')).toHaveLength(1);
+        expect(r.surfacesOf('settings-panel')).toHaveLength(1);
     });
 
     test('the composite key is `surface\\0id`, not `surface + id` concatenated', () => {

@@ -26,7 +26,8 @@
     "Stop a linked computer from controlling this one while this one still drives it.",
     "Remove a computer you no longer use, from the computer that added it.",
     "Add a second computer you can ssh into with keys: preview it, check the host key, approve, and it installs Carnivore and joins the pack.",
-    "Install Carnivore on a second computer on the same network, choose join this pack, then read the code from the join request popup on main and type it on the new computer."
+    "Install Carnivore on a second computer on the same network, choose join this pack, then read the code from the join request popup on main and type it on the new computer.",
+    "Stop the alpha and watch the other computers keep showing each other's stats, names and status."
   ],
   "how_to": [
     "On the new computer run curl -fsSL https://carnivore.ai/install.sh | bash (someone must be logged in there), then type the 6-digit code from main's invite card at the prompt, or paste the join link. Pressing enter alone sets it up as a separate computer.",
@@ -35,14 +36,20 @@
     "Ask an agent to add a computer over ssh: computer_add_preview shows the host key and anything blocking, then computer_add waits for the owner's approval and installs and joins that computer; follow it in computers_list.",
     "Main must be awake with Carnivore open: it dials the new computer, so no port is opened and no router is changed. A code lives 15 minutes and 3 wrong tries; 10 wrong codes in an hour switch codes off for an hour.",
     "On 1.16.0 a code join over the home network does not complete (pair over ssh, pack, ssh tab); the fix ships in the next release.",
-    "A new computer that finds your pack can knock: main shows a join request popup in the middle of its screen with the new computer's name and a code. Read the code to that computer and type it there. Press not me to refuse and block that computer for 10 minutes. Turning off settings, advertise stops main from being findable."
+    "A new computer that finds your pack can knock: main shows a join request popup in the middle of its screen with the new computer's name and a code. Read the code to that computer and type it there. Press not me to refuse and block that computer for 10 minutes. Turning off settings, advertise stops main from being findable.",
+    "Computers on this version link to each other directly, about 8 standing links each, besides the link to the alpha. The pack page shows each link's real state, and a member that cannot reach another member directly says so in words. Computers on an older version stay ordinary members of the alpha until they update.",
+    "Remove a computer from the alpha and every member drops its links and stored data for it. Removing and adding the same computer again turns its link switch back on, because your join approval is the yes."
   ],
   "id": "computers",
   "issues": [
     1530,
     1504,
     1622,
-    2799
+    2799,
+    3139,
+    3250,
+    3255,
+    3307
   ],
   "keywords": [
     "computers",
@@ -55,7 +62,7 @@
     "ssh",
     "install"
   ],
-  "media_exempt": "the join request popup and the first-run found screen need a leased slot recapture, done before the next version bump",
+  "media_exempt": "the join request popup and the first-run found screen need a leased slot recapture, done before the next version bump; recaptured after the next version bump",
   "name": "Computers link",
   "since": "2026-10-11",
   "status": "beta",
@@ -68,7 +75,7 @@
     "src/core/computers/add_over_ssh.py",
     "src/core/computers/add_preview.py"
   ],
-  "updated": "2026-11-04",
+  "updated": "2026-11-23",
   "where": [
     "Pack, computers tab: add a computer, the invite card with the code and link, the list with a direction switch and remove, add over ssh, and join a pack on a standalone computer; agents use the computer tools."
   ]

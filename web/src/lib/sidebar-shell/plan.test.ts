@@ -164,7 +164,7 @@ describe('the pinned heading and the pack section (#1687)', () => {
         { install_id: 'a', label: 'alpha-box', is_self: true, is_master: true, state: 'self' },
     ];
 
-    it('a folded pinned heading draws no light, a folded group still does, and pack lists the computers after browsers', () => {
+    it('a folded pinned heading draws no light, a folded group still does, and pack lists the computers first, above pinned (#3104)', () => {
         roster = TWO;
         const plan = buildListPlan(stubs(), input([A, B, T, W], { arrangement: folded(['pinned', 'g:x']) }))!;
         const pinned = plan.parts.find((p) => p.key === 'pinned');
@@ -175,16 +175,33 @@ describe('the pinned heading and the pack section (#1687)', () => {
         expect(group.heading.ledHtml, 'negative control: a folded group keeps its light').toBe('<led>');
         expect(pinned.heading.ledHtml).toBe('');
         const keys = plan.parts.map((p) => p.key);
-        expect(keys.slice(-3)).toEqual(['browsers', 'files', 'pack']);
-        const pack = plan.parts[plan.parts.length - 1]!;
+        expect(keys.slice(0, 2)).toEqual(['pack', 'pinned']);
+        expect(keys.slice(-3)).toEqual(['terminals', 'browsers', 'files']);
+        const pack = plan.parts[0]!;
         expect(pack.type).toBe('pack');
         if (pack.type !== 'pack') return;
-        expect(pack.rows.map((r) => r.id), 'this computer first, then the roster order').toEqual(['a', 'b']);
+        expect(pack.rows.map((r) => r.id), 'deterministic (label.toLowerCase(), install_id) order').toEqual(['a', 'b']);
         expect(pack.rows[0]).toMatchObject({ label: 'alpha-box', self: true, alpha: true, link: null });
         expect(pack.rows[1]).toMatchObject({ label: 'beta', self: false, alpha: false, link: 'linked' });
         expect(pack.heading).toMatchObject({ key: 'pack', label: 'pack', ledHtml: '', expanded: true });
         expect(pack.heading.menu, 'a section heading has no menu').toBeUndefined();
         expect(pack.heading.iconHtml).toContain('wolf');
+    });
+
+    it('sorts pack computers deterministically by (label.toLowerCase(), install_id) without hoisting self (#3385)', () => {
+        roster = [
+            { install_id: 'self-z', label: 'Zulu-Self', is_self: true, state: 'self' },
+            { install_id: 'peer-2', label: 'studio', is_self: false, state: 'connected', snapshot: { load: {} } as PackMachine['snapshot'], age_seconds: 1 },
+            { install_id: 'peer-1', label: 'Studio', is_self: false, state: 'connected', snapshot: { load: {} } as PackMachine['snapshot'], age_seconds: 1 },
+            { install_id: 'peer-a', label: 'alpha-node', is_self: false, is_master: true, state: 'connected', snapshot: { load: {} } as PackMachine['snapshot'], age_seconds: 1 },
+        ];
+        const plan = buildListPlan(stubs(), input([A, B, T]))!;
+        const pack = plan.parts.find((p) => p.type === 'pack');
+        expect(pack?.type).toBe('pack');
+        if (pack?.type !== 'pack') return;
+        expect(pack.rows.map((r) => r.id)).toEqual(['peer-a', 'peer-1', 'peer-2', 'self-z']);
+        expect(pack.rows[3]).toMatchObject({ id: 'self-z', label: 'Zulu-Self', self: true, link: null });
+        expect(pack.rows[0]).toMatchObject({ id: 'peer-a', alpha: true, self: false });
     });
 
     it('a connected computer with no snapshot or a stale one draws a down link, a fresh one a linked link (#2362)', () => {

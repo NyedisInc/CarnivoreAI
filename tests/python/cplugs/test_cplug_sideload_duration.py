@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from src.plugins.host import sideload
+from src.plugins.host import registry_store, sideload
 from tests.python.api_keys.conftest import bearer, client, key_store, owner_jwt  # noqa: F401
 from tests.python.cplugs.test_cplug_sideload import URL, world  # noqa: F401
 
@@ -53,9 +53,11 @@ def test_any_other_duration_is_refused_and_changes_nothing(world, bad):
 
 def test_a_file_without_the_field_keeps_twelve_hours(world):
     w = world
-    path = sideload.switch_path(w.state)
+    path = registry_store.registry_path(w.state)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"enabled_at": w.clock.t, "items": {}}))
+    doc = registry_store.new_document()
+    doc["switches"]["sideload"] = {"enabled_at": w.clock.t}
+    path.write_text(json.dumps(doc))
     assert sideload.expires_at(w.state) == w.clock.t + 12 * HOUR
     w.clock.t += 12 * HOUR - 1
     assert sideload.is_on(w.state)

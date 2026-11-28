@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, Dict, FrozenSet, Iterable, List, Mapping, Optional, Sequence, Tuple
+from typing import Any, Callable, Container, Dict, FrozenSet, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 from src.core.project_history.activity import activity_days, is_automated
 from src.core.project_history.classify import (
@@ -54,6 +54,7 @@ class HistoryQuery:
     offset: int = 0
     limit: int = DEFAULT_LIMIT
     session_limit: int = DEFAULT_SESSION_LIMIT
+    offloaded: bool = False
 
     @classmethod
     def parse(
@@ -71,6 +72,7 @@ class HistoryQuery:
         offset: int = 0,
         limit: int = DEFAULT_LIMIT,
         session_limit: int = DEFAULT_SESSION_LIMIT,
+        offloaded: bool = False,
     ) -> "HistoryQuery":
         text = (q or "").strip()
         if len(text) > MAX_QUERY_CHARS:
@@ -111,6 +113,7 @@ class HistoryQuery:
             offset=int(offset),
             limit=int(limit),
             session_limit=int(session_limit),
+            offloaded=bool(offloaded),
         )
 
 
@@ -134,6 +137,14 @@ class RowFacts:
     live_id_of: Callable[[Mapping[str, Any]], Optional[str]] = lambda _row: None
     transcripts: FrozenSet[str] = frozenset()
     theme_of: Callable[[Mapping[str, Any]], Optional[str]] = lambda _project: None
+    offloaded: FrozenSet[str] = frozenset()
+
+
+def is_offloaded_conversation(conversation: Optional[str], offloaded: Container[str], transcripts: Container[str]) -> bool:
+    return bool(conversation) and conversation in offloaded and conversation not in transcripts
+
+
+OFFLOADED_FAMILY = "claude"
 
 
 def _session_payload(row: Mapping[str, Any], facts: RowFacts, family: Optional[str]) -> Dict[str, Any]:
@@ -154,6 +165,7 @@ def _session_payload(row: Mapping[str, Any], facts: RowFacts, family: Optional[s
         "agent_family": family,
         "claude_session_uuid": conversation,
         "has_transcript": bool(conversation) and conversation in facts.transcripts,
+        "offloaded": is_offloaded_conversation(conversation, facts.offloaded, facts.transcripts),
         "created_at": row.get("created_at"),
         "last_seen_running_at": row.get("last_seen_running_at"),
         "last_work_at": row.get("last_work_at"),
@@ -229,7 +241,8 @@ def build_history(
         if query.project is not None and str(key) != query.project:
             continue
         project = by_id.get(key)
-        family = facts.family_of(row)
+        offloaded_row = is_offloaded_conversation(row.get("claude_session_uuid") or None, facts.offloaded, facts.transcripts)
+        family = facts.family_of(row) or (OFFLOADED_FAMILY if offloaded_row else None)
         agents.add(family or UNKNOWN_AGENT)
         if not _project_passes(project, query):
             continue
@@ -248,7 +261,7 @@ def build_history(
             continue
         state = row_state(row)
         state_counts[state] += 1
-        if query.states and state not in query.states:
+        if query.states and state not in query.states and not (query.offloaded and offloaded_row):
             continue
         group = group_for(key)
         group["rows"].append((when, row, family))

@@ -7,6 +7,7 @@ import sqlite3
 from typing import Any, Optional
 
 from src.core.approvals.extract import FAMILY_CLAUDE, KIND_TRUST, ROLE_OPTION
+from src.core.approvals.startup_extract import IMPORTS_HEADLESS_QUESTION, IMPORTS_LABELS as _IMPORTS_LABELS
 
 GATE_AWAITING = "awaiting_startup_prompt"
 
@@ -26,20 +27,38 @@ def is_claude_trust_dialog(dialog: Any) -> bool:
 
 
 _PLAIN_HEAD = "Accessingworkspace:"
-_PLAIN_TAIL = ("Quicksafetycheck:Isthisaprojectyoucreatedoroneyoutrust?(Likeyourowncode,awell-knownopensourceproject,orworkfromyourteam)."
-               "Ifnot,takeamomenttoreviewwhat'sinthisfolderfirst.Claude" "Code'llbeabletoread,edit,andexecutefileshere."
-               "SecurityguideNo,exitYes,Itrustthisfolder")
+_PLAIN_MID = ("Quicksafetycheck:Isthisaprojectyoucreatedoroneyoutrust?(Likeyourowncode,awell-knownopensourceproject,orworkfromyourteam)."
+              "Ifnot,takeamomenttoreviewwhat'sinthisfolderfirst.Claude" "Code'llbeabletoread,edit,andexecutefileshere.")
+_HOME_SENTENCE = "Thisisyourhomefolder,soYeslastsforthissessiononly."
+_HOME_SETTINGS = "Trustingthisfolderloads.claude/settings.json."
+_PLAIN_END = "SecurityguideNo,exitYes,Itrustthisfolder"
+_PLAIN_TAIL = _PLAIN_MID + _PLAIN_END
 
 
-def plain_dialog_folder(dialog: Any) -> Optional[str]:
+def _plain_parts(dialog: Any) -> Optional[tuple]:
     if not is_claude_trust_dialog(dialog):
         return None
     kept = [re.sub(r"^[❯›>]\s*", "", ln.strip()) for ln in str(dialog.body).splitlines()]
     text = "".join(re.sub(r"\s+", "", ln) for ln in kept if ln and not set(ln) <= {"─", "-", "━"})
-    if not text.startswith(_PLAIN_HEAD) or not text.endswith(_PLAIN_TAIL):
+    start = text.rfind(_PLAIN_HEAD)
+    if start < 0:
         return None
-    shown = text[len(_PLAIN_HEAD):len(text) - len(_PLAIN_TAIL)]
-    return shown if shown.startswith("/") and "…" not in shown else None
+    text = text[start:]
+    for home, tail in ((False, _PLAIN_TAIL), (True, _PLAIN_MID + _HOME_SENTENCE + _PLAIN_END), (True, _PLAIN_MID + _HOME_SENTENCE + _HOME_SETTINGS + _PLAIN_END)):
+        if text.endswith(tail):
+            shown = text[len(_PLAIN_HEAD):len(text) - len(tail)]
+            return (shown, home) if shown.startswith("/") and "…" not in shown else None
+    return None
+
+
+def plain_dialog_folder(dialog: Any) -> Optional[str]:
+    parts = _plain_parts(dialog)
+    return parts[0] if parts else None
+
+
+def is_home_variant(dialog: Any) -> bool:
+    parts = _plain_parts(dialog)
+    return bool(parts and parts[1])
 
 
 def shows_folder(dialog: Any, folder: str) -> bool:
@@ -81,7 +100,7 @@ def may_auto_answer(conn: sqlite3.Connection, agent: dict, wake: Optional[dict],
     return made_by_carnivore(conn, str(work))
 
 
-IMPORTS_LABELS = frozenset({"No, disable external imports", "Yes, allow external imports"})
+IMPORTS_LABELS = _IMPORTS_LABELS
 _IMPORTS_HEAD = ("AllowexternalCLAUDE.mdfileimports?Thisproject'sCLAUDE.mdor.claude/rulesimportsfilesoutsidethecurrentworkingdirectory."
                  "Neverallowthisforthird-partyrepositories.Externalimports:")
 _IMPORTS_TAIL = "Important:OnlyuseClaudeCodewithfilesyoutrust.Accessinguntrustedfilesmayposesecurityrisks"
@@ -94,4 +113,7 @@ def is_plain_imports_dialog(dialog: Any) -> bool:
         return False
     kept = [re.sub(r"^[❯›>]\s*", "", ln.strip()) for ln in str(dialog.body).splitlines()]
     text = "".join(re.sub(r"\s+", "", ln) for ln in kept if ln and not set(ln) <= {"─", "-", "━"})
-    return text.startswith(_IMPORTS_HEAD) and _IMPORTS_TAIL in text
+    if getattr(dialog, "startup_kind", None) == "external_imports" and dialog.question == IMPORTS_HEADLESS_QUESTION and _IMPORTS_HEAD not in text:
+        return True
+    start = text.rfind(_IMPORTS_HEAD)
+    return start >= 0 and _IMPORTS_TAIL in text[start:]

@@ -11,8 +11,15 @@ from fastapi.staticfiles import StaticFiles
 from starlette.types import Scope
 
 from src.core import static_asset_keys, theme_paths
+from src.core.boot import shell_bundle
 from src.core.catalog import theme_migration
-from src.core.static_serving import keyed_page_response, maybe_gzip_file_response, render_compressible_html_response, warm_static_gzip_cache
+from src.core.static_serving import (
+    CRITICAL_SHELL_FILES,
+    keyed_page_response,
+    maybe_gzip_file_response,
+    render_compressible_html_response,
+    warm_static_gzip_cache,
+)
 from src.core.version import dev_build, resolve_version
 
 logger = structlog.get_logger()
@@ -36,6 +43,9 @@ class NoCacheStaticFiles(StaticFiles):
         return static_asset_keys.cache_control_for(candidate, requested)
 
     async def get_response(self, path: str, scope: Scope) -> Response:
+        bundled = shell_bundle.serve_bundle(path, scope, Path(self.directory))
+        if bundled is not None:
+            return bundled
         keyed = keyed_page_response(path, scope, Path(self.directory))
         if keyed is not None:
             return keyed
@@ -59,6 +69,7 @@ def _render_index_html() -> str:
     html = html.replace(_VERSION_PLACEHOLDER, chip).replace(
         _CLIENT_BUILD_PLACEHOLDER, static_asset_keys.client_build_key(client_dir)
     ).replace(_DEV_BUILD_PLACEHOLDER, dev_build())
+    html = shell_bundle.render_bundled_shell(html, client_dir)
     return static_asset_keys.render(html, client_dir)
 
 
@@ -90,9 +101,21 @@ def _mount_user_themes(app: FastAPI) -> None:
 def install_static(app: FastAPI) -> None:
     app.mount("/static", NoCacheStaticFiles(directory=str(client_dir)), name="static")
 
-    _warmed_count = warm_static_gzip_cache(client_dir, NoCacheStaticFiles._NO_CACHE_SUFFIXES)
+    _warmed_count = warm_static_gzip_cache(
+        client_dir,
+        NoCacheStaticFiles._NO_CACHE_SUFFIXES,
+        only_files=CRITICAL_SHELL_FILES,
+    )
     logger.info("static_gzip_cache_warmed", files=_warmed_count)
 
     _keyed_assets = static_asset_keys.warm(client_dir, client_dir / "index.html")
     logger.info("static_asset_keys_warmed", assets=_keyed_assets)
+    _bundled_count = shell_bundle.warm(client_dir, client_dir / "index.html")
+    logger.info("shell_bundles_warmed", bundles=_bundled_count)
     _mount_user_themes(app)
+
+
+def warm_remaining_static_gzip_cache() -> int:
+    count = warm_static_gzip_cache(client_dir, NoCacheStaticFiles._NO_CACHE_SUFFIXES, skip_dev=True)
+    logger.info("static_gzip_cache_background_warmed", files=count)
+    return count

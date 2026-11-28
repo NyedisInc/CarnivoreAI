@@ -10,7 +10,7 @@ import structlog
 from fastapi import HTTPException, Request
 
 from src.plugins.host import activity_log, activity_reader, ai_budget, audit, capabilities, risk, egress_log, fetch_proxy, plugin_ai, secret_store, session_actions, state as owner_state, system_lifecycle
-from src.plugins.host import default_roots, identity, sidecar_registry, sidecar_spec
+from src.plugins.host import default_roots, identity, purge_guard, renamed, sidecar_registry, sidecar_spec
 from src.plugins.host.sidecar_registry import SidecarDefinition
 from src.plugins.host.legacy_move import move_legacy_state
 from src.plugins.sdk.ai_features import feature_id, permission_name
@@ -18,7 +18,7 @@ from src.plugins.sdk.context import CplugContext
 from src.plugins.sdk.definition import GATES, CplugDefinition
 from src.plugins.sdk.manifest import TIERS
 from src.core.deepsearch import fallback_hook
-from src.plugins.sdk import settings_aliases, sidecar
+from src.plugins.sdk import settings_aliases
 from src.plugins.sdk.routing import router_prefix
 from src.plugins.sdk.storage import CoreStorageSpec, CplugSchemaError, CplugStorage
 from src.plugins.host import developer_mode
@@ -47,6 +47,7 @@ class RegistryError(Exception):
 def check_definitions(defs: Tuple[CplugDefinition, ...]) -> None:
     seen: Dict[str, CplugDefinition] = {}
     legacy_owner: Dict[str, str] = {}
+    legacy_field: Dict[str, str] = {}
     tool_owner: Dict[str, str] = {}
     for d in defs:
         m = d.manifest
@@ -65,6 +66,15 @@ def check_definitions(defs: Tuple[CplugDefinition, ...]) -> None:
             if old in legacy_owner:
                 raise RegistryError(f"{m.id}: retired plugin id {old} is already used")
             legacy_owner[old] = m.id
+        if m.renamed_from:
+            if m.renamed_from in legacy_owner:
+                raise RegistryError(f"{m.id}: renamed_from {m.renamed_from} is already used")
+            try:
+                renamed.check_reserved(m.id, m.renamed_from)
+            except renamed.RenamedFromRefused as exc:
+                raise RegistryError(str(exc)) from exc
+            legacy_owner[m.renamed_from] = m.id
+            legacy_field[m.renamed_from] = "renamed_from"
         s = m.surfaces
         if bool(d.router) != s.routes:
             raise RegistryError(f"{m.id}: surfaces.routes is {s.routes} but the definition {'has' if d.router else 'has no'} router")
@@ -81,9 +91,11 @@ def check_definitions(defs: Tuple[CplugDefinition, ...]) -> None:
             raise RegistryError(f"{m.id}: feed plugins arrive with docs/cplugs.md section 8 slice 4")
     for old, owner in legacy_owner.items():
         if old in seen:
-            raise RegistryError(f"{owner}: retired plugin id {old} is also a shipped plugin")
+            what = "renamed_from" if legacy_field.get(old) == "renamed_from" else "retired plugin id"
+            raise RegistryError(f"{owner}: {what} {old} is also a shipped plugin")
+    old_ids = renamed.old_ids(defs)
     for d in defs:
-        unknown = [r for r in d.manifest.requires if r not in seen]
+        unknown = [r for r in d.manifest.requires if r not in seen and r not in old_ids]
         if unknown:
             raise RegistryError(f"{d.id}: requires {unknown}, which this build does not ship")
 
@@ -94,9 +106,8 @@ def definitions() -> Tuple[CplugDefinition, ...]:
         from src.plugins.registry import CPLUGS  # noqa: PLC0415
 
         check_definitions(tuple(CPLUGS))
-        sidecar.audit_ship_list((d.manifest for d in CPLUGS), Path(__file__).resolve().parents[1])
         plugin_ai.register_features(CPLUGS)
-        _definitions = tuple(CPLUGS)
+        _definitions = renamed.resolve_requires(CPLUGS)
     return _definitions
 
 
@@ -112,6 +123,18 @@ def find(cplug_id: str) -> Optional[Any]:
     return next((d for d in definitions() if d.id == cplug_id), None) or sidecar_registry.find(cplug_id)
 
 
+def canonical_id(cplug_id: str) -> str:
+    return renamed.canonical(definitions(), cplug_id)
+
+
+def renamed_ids() -> FrozenSet[str]:
+    return renamed.old_ids(definitions())
+
+
+def reserved_plugin_ids() -> FrozenSet[str]:
+    return frozenset(d.id for d in definitions()) | renamed_ids()
+
+
 def legacy_target(cplug_id: str) -> Optional[CplugDefinition]:
     return next((d for d in definitions() if cplug_id in d.manifest.legacy_ids), None)
 
@@ -122,7 +145,9 @@ def topic_families() -> Tuple[str, ...]:
 
 def settings_defaults(schema: Mapping[str, Any]) -> Dict[str, Any]:
     fields = schema.get("fields") if isinstance(schema, Mapping) else None
-    return {k: f.get("default") for k, f in (fields or {}).items() if isinstance(f, Mapping)}
+    if not isinstance(fields, Mapping):
+        return {}
+    return {k: f.get("default") for k, f in fields.items() if isinstance(f, Mapping)}
 
 
 _RATE = fetch_proxy.RateLimiter()
@@ -169,6 +194,9 @@ class Host:
         self._started: set = set()
         self.ai_gateway: Optional[Callable[[], Any]] = None
 
+    def listed(self) -> Tuple[Any, ...]:
+        return listed()
+
     def state(self, cplug_id: str) -> owner_state.CplugState:
         d = find(cplug_id)
         if d is None:
@@ -202,8 +230,12 @@ class Host:
     def storage(self, cplug_id: str) -> CplugStorage:
         d = find(cplug_id)
         if d is not None and isinstance(d.storage, CoreStorageSpec):
-            return d.storage.bind(self.folder(cplug_id), self.state_dir)
-        return CplugStorage(self.folder(cplug_id), d.storage if d else None, self.state_dir)
+            storage = d.storage.bind(self.folder(cplug_id), self.state_dir)
+        else:
+            storage = CplugStorage(self.folder(cplug_id), d.storage if d else None, self.state_dir)
+        renamed_from = d.manifest.renamed_from if isinstance(d, CplugDefinition) else ""
+        storage.previous_path = purge_guard.previous(self.folder(cplug_id), renamed_from)
+        return storage
 
     def notify(self, cplug_id: str, name: str, key: Optional[str] = None) -> None:
         family = self.family(cplug_id, name)
@@ -338,29 +370,53 @@ class Host:
                 self.unavailable[d.id] = f"start hook failed: {type(exc).__name__}{reason}"
 
     async def start(self) -> None:
+        pending = [d for d in definitions() if self.enabled(d.id) and d.id not in self._started]
+        pending_ids = {d.id for d in pending}
+        completed: set = set(self._started)
         try:
-            for d in definitions():
-                if self.enabled(d.id) and d.id not in self._started:
+            while pending:
+                ready = [
+                    d for d in pending
+                    if all((req not in pending_ids) or (req in completed) for req in d.manifest.requires)
+                ]
+                if not ready:
+                    ready = [pending[0]]
+                ready_ids = {d.id for d in ready}
+                pending = [d for d in pending if d.id not in ready_ids]
+                for d in ready:
                     self._started.add(d.id)
-                    await self._hook(d, "start", at_boot=True)
+                if len(ready) == 1:
+                    await self._hook(ready[0], "start", at_boot=True)
+                else:
+                    await asyncio.gather(*(self._hook(d, "start", at_boot=True) for d in ready))
+                completed.update(ready_ids)
         finally:
             fallback_hook.end_boot()
+        from src.plugins.host import plugin_channels  # noqa: PLC0415
+
+        plugin_channels.sync_all(self, self.listed())
         logger.info("cplug_host_started", cplugs=[d.id for d in definitions()], enabled=sorted(self._started))
 
     async def stop(self) -> None:
+        from src.plugins.host import plugin_channels  # noqa: PLC0415
+
         for d in definitions():
             if d.id in self._started:
                 self._started.discard(d.id)
                 await self._hook(d, "stop")
+            plugin_channels.unregister_plugin(d.id, host=self, publish=False)
 
     async def switched(self, cplug_id: str, enabled: bool) -> None:
+        from src.plugins.host import plugin_channels, ui_slots  # noqa: PLC0415
+
         d = find(cplug_id)
         if isinstance(d, SidecarDefinition):
             await self._switch_sidecar(d, enabled)
             return
         if d is None:
             return
-        if d.manifest.surfaces.tabs:
+        has_sidecar_tab = bool(getattr(d.manifest, "page", None) or (isinstance(getattr(d.manifest, "ui_meta", None), Mapping) and d.manifest.ui_meta.get("sidebar_tab")))
+        if d.manifest.surfaces.tabs or has_sidecar_tab:
             self.publish("browser_pages")
         if enabled and cplug_id not in self._started:
             self.unavailable.pop(cplug_id, None)
@@ -369,13 +425,33 @@ class Host:
         elif not enabled and cplug_id in self._started:
             self._started.discard(cplug_id)
             await self._hook(d, "stop")
+        live = self.sidecar_runtime()
+        safe_active = any(live.safe_mode().values()) if live is not None and hasattr(live, "safe_mode") else False
+        sup = getattr(live, "supervisor", None) if live is not None else None
+        plugin_channels.sync_plugin(
+            self,
+            d,
+            safe_mode_active=safe_active,
+            supervisor=sup,
+            tier0_registry=getattr(live, "tier0_channels", None) if live is not None else None,
+        )
+        defs = live._all_definitions() if live is not None and hasattr(live, "_all_definitions") else listed()
+        ui_slots.registry_for(self.state_dir).sync(
+            defs,
+            host=self,
+            safe_mode_active=safe_active,
+            supervisor=sup,
+        )
 
     async def _switch_sidecar(self, d: SidecarDefinition, enabled: bool) -> None:
+        from src.plugins.host import plugin_channels, ui_slots  # noqa: PLC0415
+
         live = self.sidecar_runtime()
         if live is None:
             return
         if enabled:
-            await live.index.ensure()
+            if getattr(d.manifest, "tier", None) == "catalog":
+                await live.index.ensure()
             await live.supervisor.activate(self.sidecar_spec(d))
             await live.mcp_health_switched(d.id, not any(live.safe_mode().values()))
         else:
@@ -383,13 +459,36 @@ class Host:
             await live.mcp_health_switched(d.id, False)
             await asyncio.to_thread(live.supervisor.cancel_effects, d.id, "disabled")
             await asyncio.to_thread(live.resolve_alerts, d.id)
+        plugin_channels.sync_plugin(
+            self,
+            d,
+            safe_mode_active=any(live.safe_mode().values()),
+            supervisor=live.supervisor,
+            tier0_registry=live.tier0_channels,
+        )
+        defs = live._all_definitions() if hasattr(live, "_all_definitions") else listed()
+        ui_slots.registry_for(self.state_dir).sync(
+            defs,
+            host=self,
+            safe_mode_active=any(live.safe_mode().values()),
+            supervisor=live.supervisor,
+        )
+        if hasattr(live, "refresh_feed"):
+            live.refresh_feed()
 
-    async def restart_sidecar(self, d: SidecarDefinition) -> Optional[str]:
+    async def restart_sidecar(self, d: SidecarDefinition, *, stop_timeout: Optional[float] = None) -> Optional[str]:
         live = self.sidecar_runtime()
         if live is None:
             return None
-        await live.index.ensure()
-        state = await live.supervisor.restart(self.sidecar_spec(d))
+        manifest = getattr(d, "manifest", None)
+        if getattr(manifest, "tier", None) == "catalog":
+            await live.index.ensure()
+        spec = self.sidecar_spec(d)
+        state = (
+            await live.supervisor.restart(spec)
+            if stop_timeout is None
+            else await live.supervisor.restart(spec, stop_timeout=stop_timeout)
+        )
         await live.mcp_health_switched(d.id, not any(live.safe_mode().values()))
         return state
 

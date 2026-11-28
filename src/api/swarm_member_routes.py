@@ -10,7 +10,8 @@ from src.api.auth import require_auth
 from src.api.swarm_routes import NEEDS_ON, NEEDS_PORT, _manager, _project_missing, _refused
 from src.core import db
 from src.core.resource_push import notify, topics
-from src.core.swarm import body, membership, project_agent, views
+from src.core.swarm.types import TurnOnError
+from src.core.swarm import body, membership, views
 from src.core.swarm.body import BodyError
 from src.models.swarm import SwarmAgentDetail, SwarmJoinRequest, SwarmLeaveRequest, SwarmLeaveResponse, SwarmMembershipSetting
 
@@ -34,7 +35,7 @@ async def join_swarm(payload: SwarmJoinRequest, request: Request) -> Dict[str, A
                                       confirm_restart=payload.confirm_restart, create_project_agent=payload.create_project_agent)
     except membership.MembershipRefused as exc:
         _member_refused(exc)
-    except project_agent.TurnOnError as exc:
+    except TurnOnError as exc:
         raise HTTPException(status_code=409, detail={"code": "refused", "sentence": str(exc)}) from exc
     except (BodyError, db.DatastoreUnreadableError, sqlite3.Error) as exc:
         _refused(exc)

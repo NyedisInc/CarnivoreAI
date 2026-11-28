@@ -13,14 +13,16 @@ from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.api.error_response import refusal_error
-from src.api import peer_auth, project_replica_routes as replica_routes, projects_service
+from src.api import project_replica_routes as replica_routes, projects_service
 from src.api.auth import require_auth
 from src.config import settings
 from src.core.companies import accounts as company_accounts
 from src.core.db import transaction
-from src.core.federation import peer_hosts, peer_links
+from src.core.computers import mesh as mesh_mod
+from src.core.federation import peer_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.pack.identity import home, replicas
+from src.core.pack.jobs import member_link
 from src.core.pack.machines import capabilities as pack_capabilities
 from src.core.pack.transport import blobs, bundles, gh_helper, github_account, ladder, publish, sync
 
@@ -120,26 +122,30 @@ async def sync_project(project_name: str, body: SyncBody) -> Dict[str, Any]:
         raise HTTPException(409, {"code": "not_a_repo", "detail": "the project folder is not a git repository, so there are no commits to carry"})
     targets: List[Dict[str, Any]] = found["targets"]
     if body.machine:
-        peer = await run_in_threadpool(replica_routes.find_peer, body.machine)
+        peer = await run_in_threadpool(lambda: replica_routes.find_peer(body.machine, members=True))
         targets = [t for t in targets if t["install_id"] == peer.peer_install_id]
         if not targets:
             raise HTTPException(404, {"code": "unknown_replica", "detail": f"{peer.label} holds no replica of {project['display_name']!r} and is not its home"})
     else:
         targets = [t for t in targets if t["rung"] == ladder.RUNG_CARRIED or project.get("air_gap")]
-    with closing(peer_auth.open_db()) as peer_conn:
-        labels = {p.peer_install_id: str(p.label) for p in peer_hosts.list_peers(peer_conn)}
+    labels = {p.peer_install_id: str(p.label) for p in await run_in_threadpool(member_link.find_rows)}
     results: List[Dict[str, Any]] = []
     for target in targets:
-        results.append(await carry_to(project, target["install_id"], labels.get(target["install_id"], target["install_id"]), body.full))
+        results.append(await carry_to(project, target["install_id"], labels.get(target["install_id"], target["install_id"]), body.full, mesh=True))
     return {"project_uid": project["uid"], "results": results}
 
 
-async def carry_to(project: Dict[str, Any], install_id: str, label: str, full: bool) -> Dict[str, Any]:
+async def carry_to(project: Dict[str, Any], install_id: str, label: str, full: bool, *, mesh: bool = False, copy_send: bool = False) -> Dict[str, Any]:
     links = peer_links.LINKS
-    client = links.client(install_id) if links is not None else None
+    refusal = await asyncio.to_thread(member_link.copy_refusal, install_id, label) if mesh else None
+    if refusal is not None:
+        return {"machine": label, "sent": False, "error": refusal[1]}
+    if mesh and copy_send and member_link.on() and (links is None or links.client(install_id) is None) and mesh_mod.on_demand(install_id):
+        return {"machine": label, "sent": False, "error": "member_on_demand_only"}
+    client = member_link.client_for(install_id, members=mesh)
     if client is None:
         return {"machine": label, "sent": False, "error": "machine_unreachable"}
-    if CAP_TRANSPORT not in links.capabilities(install_id):
+    if CAP_TRANSPORT not in (member_link.caps_for(install_id) if mesh else links.capabilities(install_id)):
         return {"machine": label, "sent": False, "error": "runs_older_carnivore"}
     try:
         answer = await sync.carry_bundle(

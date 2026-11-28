@@ -35,13 +35,21 @@ def normal_failure(rc: int, log_text: str) -> bool:
     return bool(m) and {int(m[-1][0]), int(m[-1][1])} <= {0, 1}
 
 
-def decide(rc: int, log_text: str, ids: list[str], cap: int, run_one: Callable[[str], bool]) -> Outcome:
-    if cap <= 0 or not ids or len(ids) > cap or not normal_failure(rc, log_text):
-        return Outcome(rc=rc)
+def rerun_ids(ids: list[str], cap: int, run_one: Callable[[str], bool]) -> Outcome:
+    if not ids:
+        return Outcome(rc=0)
+    if cap <= 0 or len(ids) > cap:
+        return Outcome(rc=1, real=list(ids))
     flakes, real = [], []
     for i in ids:
         (flakes if run_one(i) else real).append(i)
     return Outcome(rc=1 if real else 0, flakes=flakes, real=real, reran=True)
+
+
+def decide(rc: int, log_text: str, ids: list[str], cap: int, run_one: Callable[[str], bool]) -> Outcome:
+    if cap <= 0 or not ids or len(ids) > cap or not normal_failure(rc, log_text):
+        return Outcome(rc=rc)
+    return rerun_ids(ids, cap, run_one)
 
 
 def make_runner(timeout: int, cwd: str) -> Callable[[str], bool]:

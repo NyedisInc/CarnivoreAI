@@ -110,6 +110,7 @@ export type SettingControl =
     | { readonly kind: 'screen-reader' }
     | { readonly kind: 'terminal-font' }
     | { readonly kind: 'cell-dim' }
+    | { readonly kind: 'comet' }
     | { readonly kind: 'time-zone' }
     | { readonly kind: 'row-icons' }
     | { readonly kind: 'theme-picker' }
@@ -169,6 +170,7 @@ export const SETTINGS: readonly SettingDef[] = [
     { id: 'foot_bar_layout_open', section: 'appearance', group: 'appearance.control_center', saves: 'instant', control: { kind: 'foot-bar-layout', half: 'open' } },
     { id: 'animations', section: 'appearance', group: 'appearance.motion', saves: 'instant', control: { kind: 'animations' } },
     { id: 'row_lights', section: 'appearance', group: 'appearance.motion', saves: 'instant', control: { kind: 'row-lights' } },
+    { id: 'comet', section: 'appearance', group: 'appearance.motion', saves: 'instant', control: { kind: 'comet' } },
 
     { id: 'auto_sleep', section: 'sessions', group: 'sessions.auto_sleep', saves: 'instant', control: { kind: 'auto-sleep' }, info: true },
     { id: 'auto_sleep_minutes', section: 'sessions', group: 'sessions.auto_sleep', saves: 'batch', control: { kind: 'auto-sleep-minutes' }, parent: 'auto_sleep' },

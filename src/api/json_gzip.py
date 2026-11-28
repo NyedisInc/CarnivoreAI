@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import gzip
 from typing import Any, Awaitable, Callable, Dict, List, MutableMapping, Optional
 
@@ -9,6 +10,7 @@ Receive = Callable[[], Awaitable[MutableMapping[str, Any]]]
 Send = Callable[[MutableMapping[str, Any]], Awaitable[None]]
 
 MIN_BYTES = 8 * 1024
+OFFLOAD_MIN_BYTES = 64 * 1024
 LEVEL = 4
 
 
@@ -50,7 +52,10 @@ class JsonGzipMiddleware:
                     return
                 body = b"".join(chunks)
                 if len(body) >= MIN_BYTES:
-                    body = gzip.compress(body, LEVEL)
+                    if len(body) >= OFFLOAD_MIN_BYTES:
+                        body = await asyncio.to_thread(gzip.compress, body, LEVEL)
+                    else:
+                        body = gzip.compress(body, LEVEL)
                     start["headers"] = [(k, v) for k, v in start["headers"] if k.lower() not in (b"content-length", b"vary")] + [
                         (b"content-encoding", b"gzip"), (b"vary", b"Accept-Encoding"), (b"content-length", str(len(body)).encode())]
                 await send(start)

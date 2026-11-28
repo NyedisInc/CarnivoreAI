@@ -1,4 +1,5 @@
 import type { CplugItem } from './cplugs-adapter';
+import { canonicalPluginId } from '../../plugins/host/renamed-ids';
 
 export const PLUGINS_FRAGMENT = '#plugins';
 
@@ -20,13 +21,11 @@ export function pluginSettingsHash(cplugId: string): string {
 export function pluginLinkOf(hash: string | null | undefined): PluginLink | null {
     if (typeof hash !== 'string') return null;
     const bare = hash.trim().replace(/^#/, '');
-    if (LEGACY_TASK_MANAGER_FRAGMENTS.has(bare)) return { cplugId: 'huddle', settings: true };
+    if (LEGACY_TASK_MANAGER_FRAGMENTS.has(bare)) return { cplugId: 'taskmanager', settings: true };
     const match = DEEP_LINK.exec(bare);
-    return match ? { cplugId: match[1]!, settings: match[2] === SETTINGS_SEGMENT } : null;
+    return match ? { cplugId: canonicalPluginId(match[1]!), settings: match[2] === SETTINGS_SEGMENT } : null;
 }
 
-export const EXTRA_SETTINGS_PLUGINS: ReadonlySet<string> = new Set(['argent', 'crate', 'huddle', 'save']);
-
-export function hasPluginSettings(plugin: Pick<CplugItem, 'cplugId' | 'settingsSchema' | 'state'>): boolean {
-    return (plugin.settingsSchema !== null || EXTRA_SETTINGS_PLUGINS.has(plugin.cplugId)) && plugin.state !== 'removed';
+export function hasPluginSettings(plugin: Pick<CplugItem, 'settingsSchema' | 'surfaces' | 'state'>): boolean {
+    return (plugin.settingsSchema !== null || Boolean(plugin.surfaces?.plugins?.includes('settings-panel'))) && plugin.state !== 'removed';
 }

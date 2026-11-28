@@ -1,10 +1,11 @@
+/* the Task Manager */
 import { authFetch } from './auth.svelte';
 import { resource, type Resource } from './poll.svelte';
 import { TASK_MANAGER_TOPICS } from '../../lib/task-manager-schedules/task-manager-scheduled';
 
 export const SENT_POLL_MS = 15000;
 export const SENT_LIMIT = 40;
-export const SENT_TOPICS: readonly string[] = [...TASK_MANAGER_TOPICS, 'cplug.huddle.sendq', 'cplug.huddle.held', 'cplug.huddle.told'];
+export const SENT_TOPICS: readonly string[] = [...TASK_MANAGER_TOPICS, 'cplug.taskmanager.sendq', 'cplug.taskmanager.held', 'cplug.taskmanager.told'];
 export const SENT_ROUTE = '/cplugs/huddle/sent';
 
 export interface SentTell {

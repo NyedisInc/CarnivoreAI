@@ -1,11 +1,12 @@
-import manifest from '../../../../src/plugins/reviewboard/cplug.json';
+import manifest from '../../../../src/plugins/reviewboard/carnivore.toml';
 import type { CplugManifest, CplugWeb } from '../sdk';
-import { ApiError, authFetch, cplugEnabled, registerPageRowAction, registerPostedPageOpener, registerBoardAttachments, registerProjectPanel, unregisterBoardAttachments, registerRoundOpener } from '../sdk';
+import { ApiError, authFetch, cplugEnabled, lazyComponent, registerPageRowAction, registerPostedPageOpener, registerBoardAttachments, registerProjectPanel, unregisterBoardAttachments, registerRoundOpener } from '../sdk';
 import { boardCardSource, openRound } from './board-api';
 import { reviewboardTab } from './board-tab';
-import ClosedReviews from './ClosedReviews.svelte';
 import { sharePageRowAction } from './public/page-row-action';
 import { publicLinksOn } from './public/public-links-on';
+
+const ClosedReviews = lazyComponent(() => import('./ClosedReviews.svelte'));
 
 export const CLOSED_PANEL_ID = 'reviewboard.closed';
 

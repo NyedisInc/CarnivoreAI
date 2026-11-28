@@ -20,5 +20,5 @@ def test_stateless_and_declared_widgets_do_not_warn() -> None:
 
 def test_the_task_manager_widgets_declare_what_they_remember() -> None:
     by_id = {r["id"]: r for r in RECORDS}
-    for wid in ("core.task-manager", "core.task-manager-all"):
+    for wid in ("core.task-manager-mk2", "core.task-manager-mk2-all"):
         assert "status-folds" in by_id[wid]["remembers"]

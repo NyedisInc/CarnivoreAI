@@ -17,7 +17,7 @@ from tests.python.launch_profiles.test_launch_profile_create import _row, env  #
 MEMBER = {"label": "api", "family": "codex", "model": "gpt-x", "opening_prompt": "start the api work",
           "folder": {"mode": "existing", "path": "/work/api"}}
 GOLDEN_BLUEPRINT_BODY = ('{"working_dir":"/work/api","project_name":"api","label":"api","cols":120,"rows":40,'
-                         '"agent_type":"codex","model":"gpt-x","account_pinned":false,"opening_prompt":"start the api work"}')
+                         '"agent_type":"codex","model":"gpt-x","account_pinned":false,"opening_prompt":"start the api work","disposable":false}')
 GOLDEN_PEER_BODY = ('{"working_dir":"/work/api","project_name":"api","label":"api","agent_type":"codex",'
                     '"model":"gpt-x","opening_prompt":"start the api work","cols":120,"rows":40,"host_key":"local"}')
 

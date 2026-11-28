@@ -1,6 +1,8 @@
 import { defineConfig, type Plugin } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { fileURLToPath } from 'node:url';
+import { dedupeI18nPlugin } from './vite.i18n-shared';
+import { tomlPlugin } from './vite.toml-plugin';
 
 const entry = fileURLToPath(new URL('./src/style-guide/main.ts', import.meta.url));
 
@@ -22,7 +24,8 @@ function dropCss(): Plugin {
 }
 
 export default defineConfig({
-    plugins: [svelte(), dropCss()],
+    base: '/static/dist/',
+    plugins: [tomlPlugin(), dedupeI18nPlugin(), svelte(), dropCss()],
     build: {
         outDir,
         emptyOutDir: false,
@@ -30,6 +33,7 @@ export default defineConfig({
         target: 'es2022',
         sourcemap: false,
         cssCodeSplit: false,
+        modulePreload: { polyfill: false },
         rollupOptions: {
             input: entry,
             output: {

@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import base64
 from typing import Any, Callable, Dict, List, Optional
 
 import structlog
@@ -194,9 +193,8 @@ class SessionRegistry:
         subs = self.subscribers.get(session_id)
         if not subs:
             return
-        encoded = base64.b64encode(data).decode("utf-8")
         for stream in list(subs):
-            outcome = viewer_fanout.offer_pty(stream, encoded)
+            outcome = viewer_fanout.offer_pty(stream, data)
             if outcome == OFFER_ACCEPTED:
                 continue
             if outcome == OFFER_OVERFLOWED:

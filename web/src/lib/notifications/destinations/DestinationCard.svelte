@@ -7,7 +7,7 @@
     import '../../settings-page/panel-kit/panel-kit.css';
     import './destinations.css';
     import { isRateLimited, testDestination, type Destination, type ExtrasBody, type Fetcher, type Kind } from './api';
-    import { failureKey } from './form-logic';
+    import { failureKey, fieldLabel, kindLabel } from './form-logic';
     import DestinationExtras from './DestinationExtras.svelte';
 
     interface Props {
@@ -49,13 +49,13 @@
 <div class="tm__srv" class:tm__srv--off={!destination.enabled} data-notify-dest={destination.id}>
     <div class="tm__srv-head">
         <span class="tm__srv-name" data-notify="name">{destination.name}</span>
-        <span class="tm__sub" data-notify="kind-name">{kind ? t(kind.label_key) : destination.kind}</span>
+        <span class="tm__sub" data-notify="kind-name">{kind ? kindLabel(kind, t) : destination.kind}</span>
         {#if isLocal}<span class="nd-badge" data-notify="local-badge">{t('settings.notify.dest.local')}</span>{/if}
         <Check role="switch" label={t('settings.notify.dest.enabled')} checked={destination.enabled} disabled={busy} data-notify="toggle" onToggle={onToggle} />
         <span class="tm__srv-tools">
             <Button disabled={busy || test.state === 'sending'} data-notify="test" onclick={() => void runTest()}>{t(test.state === 'sending' ? 'settings.notify.dest.test.sending' : 'settings.notify.dest.test.button')}</Button>
             <Button disabled={busy} aria-expanded={extrasOpen} data-notify="extras-toggle" onclick={() => (extrasOpen = !extrasOpen)}>{t('settings.notify.dest.extras.button')}</Button>
-            {#if !managedElsewhere}<Button disabled={busy} data-notify="edit" onclick={onEdit}>{t('settings.notify.dest.edit')}</Button>{/if}
+            {#if !managedElsewhere && kind}<Button disabled={busy} data-notify="edit" onclick={onEdit}>{t('settings.notify.dest.edit')}</Button>{/if}
             {#if destination.pinned}
                 <Button disabled={busy} data-notify="reset" onclick={onReset}>{t('settings.notify.dest.reset')}</Button>
             {:else if destination.scope === 'global'}
@@ -64,10 +64,10 @@
             {#if !managedElsewhere}<Button variant="danger" disabled={busy} data-notify="delete" onclick={() => (confirming = true)}>{t('settings.notify.dest.delete')}</Button>{/if}
         </span>
     </div>
-    {#if kind}
+    {#if kind && kind.secret_fields.length > 0}
         <p class="tm__sub" data-notify="secrets-state">
             {#each kind.secret_fields as field (field.name)}
-                <span class="nd-secret">{t(`settings.notify.field.${field.name}`)}: {t(destination.secrets[field.name]?.set ? 'settings.notify.dest.secret_set' : 'settings.notify.dest.secret_unset')}</span>
+                <span class="nd-secret">{fieldLabel(field, t)}: {t(destination.secrets[field.name]?.set ? 'settings.notify.dest.secret_set' : 'settings.notify.dest.secret_unset')}</span>
             {/each}
         </p>
     {/if}

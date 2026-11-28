@@ -1,0 +1,1 @@
+import{S as e,v as t,w as n}from"./chunk-poll.svelte.js";var r=`/api/v1`;function i(e,t){return`${r}/feature-media/${encodeURIComponent(e)}/${encodeURIComponent(t)}`}function a(r,a){return e.state===`signed-out`?Promise.reject(Error(`not signed in`)):n(i(r,a).slice(t.length))}export{a as t};

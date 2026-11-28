@@ -24,6 +24,8 @@ class TmuxPresence:
     outcome: str
     detail: str = ""
     listed: int = 0
+    session_id: Optional[str] = None
+    other_instance: bool = False
 
     @property
     def gone(self) -> bool:
@@ -117,4 +119,5 @@ def presence_as_other_instance(presence: TmuxPresence) -> TmuxPresence:
             "gone and comes back under a new name"
         ),
         listed=presence.listed,
+        other_instance=True,
     )

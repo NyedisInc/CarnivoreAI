@@ -17,11 +17,11 @@ export const PLUGIN_VIEW_TITLE_KEY = 'opscenter.cell.plugin_view.title';
 
 export const PLUGIN_VIEW_EXTRAS: CoreExtras = { category: 'plugins', type: 'plugin', capabilities: [], remembers: [] };
 
-export function panelMeta(kind: string, titleKey: string, min: FitSize): CellMeta {
+export function panelMeta(kind: string, titleKey: string, min: FitSize, icon = 'plug'): CellMeta {
   return {
     id: `${kind}:${PANEL_TAIL}` as SlotId,
     titleKey,
-    icon: 'plug',
+    icon: icon || 'plug',
     iconTone: 'oc-cyan',
     showCount: false,
     chrome: 'card',

@@ -29,7 +29,7 @@
     "Drag the slide-out's inner edge to make it wider (taller for the bottom rail, down to the height of the bottom strip itself), or focus it and use the arrow keys.",
     "Enter edit layout to drag widgets onto either rail from the widget drawer, along it to reorder, onto the other rail to move across, or off both to take them out.",
     "In edit layout, drag a widget over a bar: the area under it previews a split inside the bar (a dashed divider and an empty dashed box in the new half). Drop on the box to make a new area holding it. Any area can split again, up to four; drag the last widget out of an area to close it. A copy of the key follows the pointer, and Escape puts everything back.",
-    "With a split rail, a key opens its widget beside the other areas' last-used ones; drag or arrow-key each divider between areas to resize them, and press any open key to close.",
+    "With a split rail, a key opens its widget beside the other areas' last-used ones; drag or arrow-key each divider between areas to resize them, and press any open key to close. The same dividers sit on the closed bar between its areas: drag or arrow-key a line on the bar itself to resize the areas without opening anything. The sizes are one value for every device.",
     "To see every task manager list in a rail instead of the selected session's project, drop the all task managers widget from the widget drawer onto either rail; it stays put when you switch sessions.",
     "A widget that has a local and a global variant (all task managers) wears a small globe in the lower right corner of its icon, on the rail keys, the slide-out, the widget drawer and the frame.",
     "To follow an agent's progress, drop the session tasks widget (this session) or the all session tasks widget (every session, with the globe mark) from the widget drawer onto either rail.",
@@ -50,7 +50,8 @@
     1551,
     1682,
     1728,
-    2766
+    2766,
+    3322
   ],
   "keywords": [
     "all huddles",
@@ -85,8 +86,8 @@
     "web/src/lib/session-rail/RailSlideout.svelte",
     "web/src/lib/session-rail/SessionRail.svelte",
     "web/src/opscenter/cells/changes/Cell.svelte",
-    "web/src/opscenter/cells/task-manager-all/Cell.svelte",
-    "web/src/opscenter/cells/task-manager/Cell.svelte",
+    "web/src/plugins/taskmanager/mk2-all/Cell.svelte",
+    "web/src/plugins/taskmanager/mk2/Cell.svelte",
     "web/src/opscenter/cells/tasks-all/Cell.svelte",
     "web/src/opscenter/cells/tasks/Cell.svelte",
     "web/src/opscenter/ui/WidgetIcon.svelte",
@@ -102,7 +103,7 @@
     "web/src/lib/drag-preview/ghost.ts",
     "web/src/lib/zone-shell/ZoneKeys.svelte"
   ],
-  "updated": "2026-11-02",
+  "updated": "2026-11-23",
   "where": [
     "Open a session at 1024 wide or more: the side rail runs down the right edge of the terminal grid and the bottom rail runs under it.",
     "Edit layout: both rails wear the dashed edit outline, an empty rail shows as a drop zone, and both take widgets from the widget drawer."

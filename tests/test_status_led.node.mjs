@@ -109,6 +109,7 @@ test('the inner vocabulary is exactly the twelve documented states', () => {
         'asleep',
         'asleep-unread',
         'limit',
+        'background',
         'unknown',
     ]);
 });
@@ -653,11 +654,10 @@ test('the soft glow is a blurred layer with its own blur and spread tokens', () 
 });
 
 test('alpha lives in the shadow colour, never in a STATIC element opacity', () => {
-    const staticRules = RULES.split('@keyframes')[0];
-    assert.ok(
-        !/^\s*opacity:/m.test(staticRules),
-        'no static rule may set opacity on the LED - it would fade the fill as well as the ring',
+    const fixedFades = (RULES.match(/^\s*opacity:\s*[^;]+;/gm) || []).filter(
+        (d) => !/opacity:\s*(1|var\(--amb-led-op\));/.test(d),
     );
+    assert.deepEqual(fixedFades, [], 'no static rule may set a fixed opacity on the LED - it would fade the fill as well as the ring');
     assert.ok(
         CSS.includes('color-mix(in srgb, var(--led-ring-ink) var(--led-ring-alpha), transparent)'),
         'the ring alpha must be mixed into the ring colour',
@@ -738,11 +738,15 @@ test('idle stays a SOLID dot - unknown is the only hollow one', () => {
 
 test('EXACTLY ONE outer state animates, and the animation is on the element', () => {
     assert.ok(CSS.includes(".status-led[data-outer='active'] {"));
+    const active = ruleBodies(".status-led[data-outer='active']").join('\n');
+    assert.ok(active.includes('animation: amb-join-status-lights'), 'the breathing outer state joins the ambient clock');
+    assert.ok(active.includes('opacity: var(--amb-led-op)'), 'the breath is the clock-written opacity');
     assert.equal(
-        (CSS.match(/animation: status-led-breathe/g) || []).length,
+        (RULES.match(/^\.status-led\[data-outer='active'\]\s*\{[^}]*animation:\s*amb-join/gm) || []).length,
         1,
         'only one rule may start the breathing animation',
     );
+    assert.ok(!/animation:[^;]*infinite/.test(RULES), 'the LED runs no infinite CSS animation');
     assert.ok(
         !/^\.status-led\s*\{[^}]*animation:\s*(?!none)/m.test(RULES),
         'the base rule must not carry a running animation',
@@ -766,37 +770,23 @@ test('dim is a low-alpha ring, not a lit one', () => {
     assert.ok(block.includes('--led-glow-alpha: 0%'), 'not-measured must not glow');
 });
 
-test('the breathing keyframes move the FILL ALPHA and nothing else', () => {
-    const block = RULES.split('@keyframes status-led-breathe')[1].split('\n}\n')[0];
-    assert.ok(block, 'the breathing keyframes must exist');
-    for (const forbidden of [
-        'transform:',
-        'width:',
-        'height:',
-        'margin',
-        'inset:',
-        'top:',
-        'left:',
-        'scale(',
-        'box-shadow:',
-    ]) {
-        assert.ok(
-            !block.includes(forbidden),
-            `the keyframes must not touch ${forbidden} - opacity is the only paint-only option here`,
-        );
+test('the breath moves the FILL ALPHA and nothing else', () => {
+    assert.ok(!/@keyframes\s+status-led-breathe/.test(CSS), 'the 60 Hz keyframes are gone');
+    const reads = CSS.match(/var\(--amb-led-op\)/g) || [];
+    assert.ok(reads.length >= 1, 'the stylesheet reads the clock-written opacity');
+    for (const m of CSS.matchAll(/^[^\n]*var\(--amb-led-op\)[^\n]*$/gm)) {
+        if (/^\s*(\/?\*|\/\/)/.test(m[0])) continue;
+        assert.ok(/^\s*opacity:/.test(m[0]), `--amb-led-op may only feed opacity: ${m[0].trim()}`);
     }
-    const opacityFrames = block.split('opacity:').length - 1;
-    assert.equal(opacityFrames, 2, 'exactly two keyframes, each writing opacity');
-    const values = Array.from(block.matchAll(/opacity:\s*([\d.]+)/g))
-        .map((m) => Number(m[1]))
-        .sort((a, b) => a - b);
-    assert.equal(values.length, 2, 'two opacity values, a trough and a peak');
-    assert.equal(values[1], 1, 'the peak must be full strength');
-    assert.ok(
-        values[0] >= 0.3 && values[0] < 1,
-        `the trough ${values[0]} must still read as a lit dot, and must actually differ from the peak`,
-    );
+    const ticker = fs.readFileSync(path.join(__dirname, '..', 'client', 'js', 'ambient-ticker.js'), 'utf8');
+    const m = ticker.match(/v\.op = \(([\d.]+) - ([\d.]+) \* easeInOut/);
+    assert.ok(m, 'the ticker must write the breath opacity');
+    const peak = Number(m[1]);
+    const trough = peak - Number(m[2]);
+    assert.equal(peak, 1, 'the peak must be full strength');
+    assert.ok(trough >= 0.3 && trough < 1, `the trough ${trough} must still read as a lit dot, and must actually differ from the peak`);
 });
+
 test('the rest glow shrinks and dims from ONE fraction', () => {
     assert.ok(
         CSS.includes('calc(var(--led-glow-spread) * var(--led-glow-rest))'),
@@ -843,7 +833,8 @@ test('prefers-reduced-motion kills the pulse and leaves the ring lit', () => {
 });
 
 test('the breathing period is about two seconds, as specified', () => {
-    assert.ok(CSS.includes('status-led-breathe 2s ease-in-out infinite'));
+    const ticker = fs.readFileSync(path.join(__dirname, '..', 'client', 'js', 'ambient-ticker.js'), 'utf8');
+    assert.ok(/v\.op = .*elapsed % 2000/.test(ticker), 'the ticker breathes on a 2000 ms lap');
 });
 
 await runQueue();

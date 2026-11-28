@@ -1,0 +1,40 @@
+ [Current]  Sessions   Issues   Pull requests   Gists
+
+│                                                                                                                                        │ ┃
+│  ╭─╮╭─╮                             │  Getting started                                                                                 │ ┃
+│  ╰─╯╰─╯  Copilot v1.0.114 uses AI.  │  Use the tabs above to explore your sessions and pull requests                                   │ ┃
+│  █ ▘▝ █  Check for mistakes.        │  /model — Switch models across providers, or use Copilot Fusion                                  │ ┃
+│   ▔▔▔▔                              │                                                                                                  │ ┃
+│                                                                                                                                        │ ┃
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯ ┃
+                                                                                                                                           ┃
+ ● Folder /work has been added to trusted folders.                                                                      ┃
+                                                                                                                                           ┃
+ ● MCP Servers reloaded: 1 server connected                                                                                                ┃
+                                                                                                                                           ┃
+ ❯ say hi in 3 words                                                                                                                 12:04 ┃
+                                                                                                                                           ┃
+ ● Copilot Fusion selected MAI Code 2 Flash because it was the best choice out of the models available in your plan.                       ┃
+                                                                                                                                           ┃
+ ● Hi, there!                                                                                                                              ┃
+                                                                                                                                           ┃
+ ❯ run the shell command: sleep 20 && echo done                                                                                      12:05 ┃
+                                                                                                                                           ┃
+ $ Shell Wait 20 seconds and print done 1 line…                                                                                        20s ┃
+   sleep 20 && echo done                                                                                                                   ┃
+                                                                                                                                           ┃
+ ● Done.                                                                                                                                   ┃
+                                                                                                                                           ┃
+ ❯ create a file named zz.txt containing hello, using shell redirect                                                                 12:05 ┃
+                                                                                                                                           ┃
+ $ Shell Create zz.txt containing hello No Content                                                                                         ┃
+   printf 'hello' > zz.txt                                                                                                                 ┃
+                                                                                                                                           ┃
+ ● Created  zz.txt .                                                                                                                       ┃
+                                                                                                                                           ┃
+ /work                                                                                            Session: 0.54 AIC used
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+❯
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ← open sidebar · Interactive · Manual Approval · / commands · ? help · tab next tab                      Copilot Fusion → mai-code-2-flash
+probe bar

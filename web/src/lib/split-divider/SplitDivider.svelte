@@ -107,6 +107,7 @@
 <style>
   @layer components {
     .split-divider {
+      --_off: round(down, calc((var(--oc-section-hit) - var(--oc-section-line)) / 2), 1px);
       position: absolute;
       z-index: 3;
       touch-action: none;
@@ -131,14 +132,14 @@
       left: 0;
       right: 0;
       height: var(--oc-section-hit);
-      margin-top: calc((var(--oc-section-hit) - var(--oc-section-line)) / -2);
+      margin-top: calc(var(--_off) * -1);
       cursor: ns-resize;
     }
 
     .split-divider--y::after {
       left: 0;
       right: 0;
-      top: calc((var(--oc-section-hit) - var(--oc-section-line)) / 2);
+      top: var(--_off);
       height: var(--oc-section-line);
     }
 
@@ -146,14 +147,14 @@
       top: 0;
       bottom: 0;
       width: var(--oc-section-hit);
-      margin-left: calc((var(--oc-section-hit) - var(--oc-section-line)) / -2);
+      margin-left: calc(var(--_off) * -1);
       cursor: ew-resize;
     }
 
     .split-divider--x::after {
       top: 0;
       bottom: 0;
-      left: calc((var(--oc-section-hit) - var(--oc-section-line)) / 2);
+      left: var(--_off);
       width: var(--oc-section-line);
     }
 

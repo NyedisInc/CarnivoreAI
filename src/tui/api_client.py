@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 import httpx
 import structlog
 
-from src.tui.token_store import LockBusy, TokenPair, TokenStore
+from src.core.cli_command.token_store import LockBusy, TokenPair, TokenStore
 
 logger = structlog.get_logger(__name__)
 

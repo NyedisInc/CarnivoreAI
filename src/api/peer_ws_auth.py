@@ -29,7 +29,7 @@ async def try_peer(websocket: WebSocket) -> Optional[bool]:
         await websocket.close(code=4401, reason="invalid token")
         return False
     try:
-        grant = (await peer_auth._authorize_peer(others[0], "sessions")).grant
+        grant = (await peer_auth._authorize_peer(others[0], "sessions", conn=websocket)).grant
         await peer_auth.enforce_direction(websocket.url.path, grant)
     except HTTPException:
         await websocket.close(code=4401, reason="invalid token")

@@ -44,6 +44,17 @@ def file_points(vault: Vault, state: Path, run_id: str, points: List[FallbackPoi
     return adopt.adopt_points(vault, points, lambda entry: runs.append_undo(state, run_id, entry))
 
 
+HEADLINE_DONE: str = "cplug.save.import.receipt.headline"
+HEADLINE_REFUSED: str = "cplug.save.import.receipt.headline_refused"
+HEADLINE_LEDGER_UNREADABLE: str = "cplug.save.import.receipt.headline_ledger_unreadable"
+
+
+def headline_of(filed: int, refused: List[Dict[str, Any]]) -> Dict[str, Any]:
+    blind = sum(1 for r in refused if r.get("reason") == adopt.REASON_LEDGER_UNREADABLE)
+    key = HEADLINE_LEDGER_UNREADABLE if blind else HEADLINE_REFUSED if refused else HEADLINE_DONE
+    return {"key": key, "params": {"filed": filed, "refused": len(refused), "ledger_unreadable": blind}}
+
+
 def receipt_of(run_id: str, results: List[AdoptedPoint], counts: Dict[str, Any], extras: Optional[str]) -> Dict[str, Any]:
     tally: Dict[str, int] = {}
     for r in results:
@@ -54,7 +65,7 @@ def receipt_of(run_id: str, results: List[AdoptedPoint], counts: Dict[str, Any],
     else:
         state = runs.STATE_PARTIAL if refused else runs.STATE_DONE
     return {"run_id": run_id, "state": state, "finished_at": datetime.now(timezone.utc).isoformat(), "filed": tally, "refused": refused,
-            "counts": counts, "extras_unit": extras, "points": [{"unit": r.conversation_id, "source_point_id": r.source_point_id, "point_id": r.point_id, "status": r.status}
+            "headline": headline_of(tally.get(adopt.ADOPTED, 0), refused), "counts": counts, "extras_unit": extras, "points": [{"unit": r.conversation_id, "source_point_id": r.source_point_id, "point_id": r.point_id, "status": r.status}
                                                                  for r in results]}
 
 

@@ -1,6 +1,7 @@
 
 import { t } from '../../lib/i18n/index.svelte';
 import { detailOfBody } from '../../lib/errors/detail-of-body';
+import { errorCodeOf, paramsOf, codedSentence } from '../../lib/errors/coded-error';
 
 const ACCESS_KEY = 'claude_tunnel_token';
 
@@ -87,32 +88,7 @@ function detailOf(body: unknown): string {
   return detailOfBody(body, (reason) => (reason === 'code_reused' ? t('opscenter.auth.code_reused') : reason));
 }
 
-export function errorCodeOf(body: unknown): string | null {
-  if (!body || typeof body !== 'object') return null;
-  const record = body as Record<string, unknown>;
-  if (typeof record['code'] === 'string' && record['code']) return record['code'];
-  const detail = record['detail'];
-  if (detail && typeof detail === 'object') {
-    const inner = (detail as Record<string, unknown>)['code'];
-    if (typeof inner === 'string' && inner) return inner;
-  }
-  return null;
-}
-
-export function paramsOf(body: unknown): Record<string, string> {
-  const detail = body && typeof body === 'object' ? (body as Record<string, unknown>)['detail'] : null;
-  const raw = detail && typeof detail === 'object' ? (detail as Record<string, unknown>)['params'] : null;
-  if (!raw || typeof raw !== 'object') return {};
-  return Object.fromEntries(Object.entries(raw).filter((entry): entry is [string, string] => typeof entry[1] === 'string'));
-}
-
-export function codedSentence(body: unknown, fallback: string): string {
-  const code = errorCodeOf(body);
-  if (!code) return fallback;
-  const key = `api.error.${code}`;
-  const sentence = t(key, paramsOf(body));
-  return sentence && sentence !== key ? sentence : fallback;
-}
+export { errorCodeOf, paramsOf, codedSentence };
 
 let refreshInFlight: Promise<boolean> | null = null;
 
@@ -212,7 +188,7 @@ export function authFetch<T>(
 ): Promise<T> {
   const dedupe = retrying ? undefined : (globalThis as { BootFetchDedupe?: BootFetchDedupe }).BootFetchDedupe;
   if (!dedupe) return request(path, init, retrying, readBody<T>);
-  return dedupe.run(`web:${BASE}${path}`, init, () => request(path, init, retrying, readBody<T>)) as Promise<T>;
+  return dedupe.run(`${BASE}${path}`, init, () => request(path, init, retrying, readBody<T>)) as Promise<T>;
 }
 
 interface BootFetchDedupe {
@@ -221,6 +197,10 @@ interface BootFetchDedupe {
 
 export function authFetchBlob(path: string, init: RequestInit = {}): Promise<Blob> {
   return request(path, init, false, (response) => response.blob());
+}
+
+export function authFetchStream(path: string, init: RequestInit = {}): Promise<Response> {
+  return request(path, init, false, async (response) => response);
 }
 
 export function dispositionFilename(header: string): string | undefined {

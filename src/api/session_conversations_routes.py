@@ -13,6 +13,7 @@ from src.core.pack.identity.home import ProjectMovedAway
 from src.api.auth import require_auth
 from src.config import settings
 from src.core import session_fork
+from src.core.backup_health import offload_guard
 from src.core.db import DatastoreUnreadableError, connect, db_path_for
 from src.core.session_conversations import view
 from src.core.session_label import label_from_tmux_name
@@ -136,6 +137,9 @@ def _resume_source(conn, session_uuid: str, conversation_id: str) -> Dict[str, A
     if conversation_id != row["claude_session_uuid"] and conversation_id not in view.conversation_ids(conn, session_uuid):
         raise HTTPException(status_code=404, detail="that conversation does not belong to this session")
     if conversation_presence(conversation_id, working_dir=row["working_dir"], corpus_root=_corpus_root()).outcome != CONVERSATION_PRESENT:
+        off = offload_guard.lookup(conversation_id)
+        if off is not None:
+            raise HTTPException(status_code=409, detail=offload_guard.refusal_body(off))
         raise HTTPException(status_code=409, detail="that conversation's transcript is not on disk")
     return dict(row)
 

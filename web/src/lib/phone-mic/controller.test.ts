@@ -56,15 +56,36 @@ describe('phone mic controller', () => {
         expect(mic.state.phase).toBe('idle');
     });
 
-    it('an engine that ends on its own pastes what it heard; silence says so', () => {
+    it('an engine that ends on its own does not end the capture: the words stay and the restarted engine appends', () => {
         const { fake, mic, deliver } = setup();
         mic.start();
-        fake.probe.events!.end('hello');
-        expect(deliver).toHaveBeenCalledWith('hello', 'ticket-1');
+        fake.probe.events!.text('one two');
+        fake.probe.events!.end('one two');
+        expect(mic.state.phase).toBe('listening');
+        expect(deliver).not.toHaveBeenCalled();
+        fake.probe.events!.text('three');
+        expect(mic.state.transcript).toBe('one two three');
+        mic.done();
+        fake.probe.events!.end('three');
+        expect(deliver).toHaveBeenCalledWith('one two three', 'ticket-1');
         mic.start();
+        fake.probe.events!.end('');
+        mic.done();
         fake.probe.events!.end('');
         expect(deliver).toHaveBeenCalledTimes(1);
         expect(mic.state.reason).toBe('empty');
+    });
+
+    it('a restart loop with no words stops restarting, says so, keeps the words, and send still pastes them', () => {
+        const { fake, mic, deliver } = setup();
+        mic.start();
+        fake.probe.events!.text('kept words');
+        for (let i = 0; i < 6; i += 1) fake.probe.events!.end('');
+        expect(mic.state.phase).toBe('listening');
+        expect(mic.state.reason).toBe('dropping');
+        expect(mic.state.transcript).toBe('kept words');
+        mic.done();
+        expect(deliver).toHaveBeenCalledWith('kept words', 'ticket-1');
     });
 
     it('a blocked mic shows its reason and pastes nothing', () => {

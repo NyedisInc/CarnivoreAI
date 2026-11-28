@@ -69,6 +69,7 @@
     position: absolute;
     inset: -2px;
     pointer-events: none;
+    animation: amb-join-sparks-steam 1ms;
   }
 
   .asw-spark::before,
@@ -80,27 +81,24 @@
     border-radius: var(--oc-radius-circle);
     background: var(--asw-ink);
     opacity: 0;
-    animation: asw-spark 2.4s ease-out infinite;
   }
 
   .asw-spark::before {
     left: 3px;
     bottom: 5px;
+    opacity: var(--amb-spark-op-a, 0);
+    transform: translateY(var(--amb-spark-y-a, 0px)) scale(var(--amb-spark-sc-a));
   }
 
   .asw-spark::after {
     right: 3px;
     bottom: 3px;
-    animation-delay: 1.2s;
-  }
-
-  @keyframes asw-spark {
-    0% { opacity: 0; transform: translateY(0) scale(0.6); }
-    20% { opacity: 0.9; }
-    100% { opacity: 0; transform: translateY(-9px) scale(1); }
+    opacity: var(--amb-spark-op-b, 0);
+    transform: translateY(var(--amb-spark-y-b, 0px)) scale(var(--amb-spark-sc-b));
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .asw-spark,
     .asw-spark::before,
     .asw-spark::after {
       animation: none;

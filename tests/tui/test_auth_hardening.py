@@ -15,7 +15,7 @@ from textual.worker import WorkerFailed
 
 from src.tui.api_client import ApiClient, AuthRequired, ServerUnavailable
 from src.tui.safe_errors import crash_summary
-from src.tui.token_store import LockBusy, TokenPair, TokenStore
+from src.core.cli_command.token_store import LockBusy, TokenPair, TokenStore
 from tests.tui.test_auth import BASE, FakeServer, NoEvents, make_client, seed
 
 FAKE_JWT = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.planted-signature-value-0123456789"

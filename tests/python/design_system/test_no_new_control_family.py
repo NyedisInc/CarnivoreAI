@@ -18,7 +18,7 @@ _SELECTOR = re.compile(r"([^{}]+)\{")
 _WORD_SPLIT = re.compile(r"__|-")
 
 KNOWN_ELEMENT_BUTTONS = frozenset({
-    "catalog-card__btn", "cbk__btn", "home-bar__btn", "info-tip__btn", "paste-fallback__btn", "sbr-rail__btn",
+    "catalog-card__btn", "cbk__btn", "home-bar__btn", "paste-fallback__btn", "sbr-rail__btn",
     "sidebar-help__nav-btn", "tlx-key__btn", "toast__thumb-btn",
 })
 KNOWN_FIELD_FAMILIES = frozenset({
@@ -26,10 +26,10 @@ KNOWN_FIELD_FAMILIES = frozenset({
     "card-image__file-input", "cat-try__field", "cat-try__input", "cmp-field", "cmp-packname__field", "command-filter-input",
     "d-field", "dst-field", "dwl-field", "fdh-input", "hd-add-input", "hdc-input", "hdg-input", "hdq-input", "hds-field",
     "hdt-input", "header-rename-input", "hfk-field", "hse-field", "icp__input", "lcb__input", "lp-field", "lpm-field",
-    "lsk-sheet__field", "mk2-field", "modal-input", "oc-facet__select", "oc-field", "oc-form-field", "oc-inline-field",
-    "oc-inline-field__input", "oc-inline-field__select", "oc-lv-field", "oc-notes-field", "oc-pick__input", "oc-sf-field",
+    "mk2-field", "modal-input", "oc-facet__select", "oc-field", "oc-form-field", "oc-inline-field",
+    "oc-inline-field__input", "oc-inline-field__select", "oc-notes-field", "oc-pick__input", "oc-sf-field",
     "oc-split__select", "one-shot__field", "one-shot__select", "paste-fallback__input", "pm-field", "provider-add-input",
-    "rbl-field", "rep__field", "sbb-select", "sbp-field", "session-sidebar-rename-input", "settings-field",
+    "rbl-field", "sbb-select", "sbp-field", "session-sidebar-rename-input", "settings-field",
     "settings-wrapper-script-input", "sf__input", "share-select", "sheet__field", "sheet__select", "skp-input", "sp-field",
     "st-nav__select", "terminal-search__input", "tkm-note-input", "tkm-title-input", "tm__field", "tnf-field",
     "xterm-helper-textarea",

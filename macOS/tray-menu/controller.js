@@ -13,7 +13,7 @@ const { createPresenter } = require('./presenter');
 const { createLedIcons } = require('./led-icons');
 const { statusFacts, actionForClick } = require('./status-facts');
 const { createTrayData } = require('./data');
-const { gatherSnapshot, trayStatusInput } = require('./snapshot');
+const { gatherSnapshot, gatherTrayTooltipInput } = require('./snapshot');
 const { createDispatcher } = require('./actions');
 const trayStatus = require('../tray-status');
 const terminalOpen = require('../terminal-open');
@@ -71,7 +71,7 @@ function createTrayMenu(deps) {
 
   function refresh() {
     if (!presenter) return;
-    tray.setToolTip(trayStatus.buildTooltip(trayStatusInput(snapshot(false))));
+    tray.setToolTip(trayStatus.buildTooltip(gatherTrayTooltipInput({ serverManager, data, autoUpdate: deps.autoUpdate })));
     presenter.refresh();
     if (deps.onListing) deps.onListing(data.parts().listing, { led, t: (k, p) => t(k, p) });
     if (deps.statusWindow) deps.statusWindow.update();
@@ -139,7 +139,10 @@ function createTrayMenu(deps) {
     presentToast: (input) => banners.presentToast(input),
     closeToast: (id) => banners.closeToast(id),
     menuForDock: () => presenter.menuForDock(),
-    statusFacts: () => statusFacts(snapshot(false), model(false), t),
+    statusFacts: () => {
+      const snap = snapshot(false);
+      return statusFacts(snap, buildMenuModel(snap, { t, led }), t);
+    },
     runAction: (action) => dispatch(action),
     runStatusAction(id) {
       const action = actionForClick(model(false), id);

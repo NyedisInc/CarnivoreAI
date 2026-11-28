@@ -26,7 +26,7 @@ LEGACY_SHEETS = (
     "client/css/session-row-menu.css",
 )
 UNLAYERED: dict[str, int] = {"client/css/version-footer.css": 4, "client/css/session-sidebar-rows.css": 3}
-LITERAL_BASELINE = 71
+LITERAL_BASELINE = 66
 PROVIDER_GLANCE = "web/src/lib/ledger-drawer/ProviderGlanceTile.svelte"
 PROVIDER_GLANCE_LITERALS = {
     "padding: 3px 5px;": 1,

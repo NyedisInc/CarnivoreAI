@@ -17,6 +17,7 @@
   import { tripwires } from '../../viz/tripwires.svelte';
   import { auth } from '../../api/auth.svelte';
   import { analytics, chartTick } from './state.svelte';
+  import { selfHostInstallId } from './host-id.svelte';
   import { holdWhileRefreshing, planShape } from './swr';
   import { annotations } from './api';
   import { setHidden } from './chart-view';
@@ -134,7 +135,7 @@
   const quotaWindow = $derived(analytics.dimensions.window?.find((item) => item.filter_value === 'five_hour')
     ?? analytics.dimensions.window?.find((item) => item.filter_value));
   const activeQuotaWindow = $derived(primary?.filters?.window || config?.filters.window || analytics.filters.window || quotaWindow?.filter_value || DEFAULT_QUOTA_WINDOW);
-  const planContext = $derived<PlanContext>({ now, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: activeQuotaWindow ?? undefined, marker: markerRange, rolling: true });
+  const planContext = $derived<PlanContext>({ now, timezone: analytics.timezone, filters: analytics.filters, quotaWindow: activeQuotaWindow ?? undefined, marker: markerRange, rolling: true, selfInstallId: selfHostInstallId() });
   const activeQuotaLabel = $derived(analytics.dimensions.window?.find((item) => item.filter_value === activeQuotaWindow)?.label || (activeQuotaWindow ? windowLabel(activeQuotaWindow) : activeQuotaWindow));
   const cardTitle = $derived(config?.title === 'token history' ? t('analytics.tokens_used') : config?.title === 'estimated cost history' ? t('analytics.estimated_cost')
     : primary?.metric === 'quota_utilization' && activeQuotaLabel && config?.title ? `${config.title} · ${activeQuotaLabel}` : config?.title || '');

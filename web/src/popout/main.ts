@@ -15,9 +15,9 @@ import SingleWidget from './SingleWidget.svelte';
 import AgentPopout from './AgentPopout.svelte';
 import TabPopout from './TabPopout.svelte';
 import BrowserPopout from './BrowserPopout.svelte';
-import { popoutTab } from '../lib/dynamic-tabs/popout-tabs';
+import { popoutTabOn } from '../lib/dynamic-tabs/popout-tabs';
 import { tabFromSearch, tabGeometryKey } from '../lib/dynamic-tabs/tab-popout';
-import { agentFromSearch, agentGeometryKey, browserFromSearch, BROWSER_GEOMETRY_KEY, dashboardFromSearch, dashboardOpensEditing, placementFromSearch, rememberGeometry, widgetFromSearch, widgetGeometryKey, DASHBOARD_GEOMETRY_KEY, POPOUT_GEOMETRY_KEY, WALLBOARD_GEOMETRY_KEY, POPOUT_SAVE_DELAY_MS } from './popout';
+import { agentFromSearch, agentGeometryKey, browserFromSearch, BROWSER_GEOMETRY_KEY, dashboardFromSearch, dashboardOpensEditing, parseWidgetTarget, placementFromSearch, rememberGeometry, rewriteRetiredWidgetUrl, widgetFromSearch, widgetGeometryKey, DASHBOARD_GEOMETRY_KEY, POPOUT_GEOMETRY_KEY, WALLBOARD_GEOMETRY_KEY, POPOUT_SAVE_DELAY_MS } from './popout';
 import { startHomeSync } from '../opscenter/engine/home-sync.svelte';
 import { isWallboardSearch } from '../opscenter/engine/wallboard';
 import { BOARD_PARAM } from '../opscenter/engine/home-boards';
@@ -25,11 +25,13 @@ import { bootListingPush } from '../lib/listing-push/boot';
 import { stopHomeCacheWrites } from '../opscenter/engine/persist';
 import { startPopoutEditor } from '../opscenter/layout-editor/popout-editor';
 import { startPopoutCplugs } from '../plugins/host/popout-start';
+import { bootPluginCells } from '../plugins/host/cell-boot';
 
 export const POPOUT_CONTAINER = 'popout-screen';
 
 function bootWidgetPopout(widget: string): boolean {
-    const titleKey = manifestById(widget)?.titleKey ?? popoutWidgetFor(widget)?.widget.meta.titleKey;
+    const parsed = parseWidgetTarget(widget);
+    const titleKey = manifestById(parsed.kind)?.titleKey ?? popoutWidgetFor(widget)?.widget.meta.titleKey;
     document.title = titleKey ? t(titleKey) : t('opscenter.popout.title');
     if (mountPanel(POPOUT_CONTAINER, SingleWidget as never, { widget, placement: placementFromSearch(window.location.search) }) === null) return false;
     rememberGeometry(window, POPOUT_SAVE_DELAY_MS, widgetGeometryKey(widget));
@@ -44,7 +46,7 @@ function bootAgentPopout(agent: number): boolean {
 }
 
 function bootTabPopout(tab: string): boolean {
-    const def = popoutTab(tab);
+    const def = popoutTabOn(tab);
     document.title = def ? t(def.labelKey, { count: 0 }) : t('opscenter.popout.title');
     if (mountPanel(POPOUT_CONTAINER, TabPopout as never, { tab }) === null) return false;
     rememberGeometry(window, POPOUT_SAVE_DELAY_MS, tabGeometryKey(tab));
@@ -66,7 +68,10 @@ export function bootPopout(): boolean {
     const browser = browserFromSearch(window.location.search);
     if (browser !== null) return bootBrowserPopout(browser);
     const widget = widgetFromSearch(window.location.search);
-    if (widget !== null) return bootWidgetPopout(widget);
+    if (widget !== null) {
+        rewriteRetiredWidgetUrl(window);
+        return bootWidgetPopout(widget);
+    }
     const wallboard = isWallboardSearch(window.location.search);
     const dashboard = dashboardFromSearch(window.location.search);
     if (dashboard !== null) stopHomeCacheWrites();
@@ -84,5 +89,6 @@ installSharedTooltip();
 
 bootListingPush();
 bootPopoutLive();
+bootPluginCells();
 startPopoutCplugs();
 bootPopout();

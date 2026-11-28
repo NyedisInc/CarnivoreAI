@@ -104,7 +104,7 @@ function rig(dir, url = ORIGIN) {
       this.handlers = {};
       this.loaded = [];
       this.webContents = {
-        mainFrame: { url: `${ORIGIN}/` }, sent: [], on() {}, reload() {}, send(...a) { this.sent.push(a); },
+        mainFrame: { url: `${ORIGIN}/` }, sent: [], wcHandlers: {}, on(ev, fn) { this.wcHandlers[ev] = fn; }, reload() {}, send(...a) { this.sent.push(a); },
         loading: false, isLoading() { return this.loading; }, once(ev, fn) { this.finish = fn; },
         setWindowOpenHandler: (fn) => { this.openHandler = fn; },
         session: { setPermissionRequestHandler() {}, setPermissionCheckHandler() {} },
@@ -355,4 +355,69 @@ test('showInMain on a main window still loading sends once the page has loaded, 
   main.webContents.loading = false;
   main.webContents.finish();
   assert.deepEqual(main.webContents.sent.at(-1), ['carnivore:show-row', '7']);
+});
+
+test('M4.1e: nativeTarget rejects hash on popout, tearOff accepts hyphenated plugin widgets & tab tear-offs, and will-frame-navigate guards about/view subframes', async () => {
+  assert.equal(policy.nativeTarget(`${ORIGIN}/static/popout.html?widget=core.notes#evil`, ORIGIN), null, 'non-empty hash on popout rejected');
+  assert.deepEqual(policy.nativeTarget(`${ORIGIN}/static/popout.html?tab=cplug-linear`, ORIGIN), { kind: 'popout', path: '/static/popout.html?tab=cplug-linear' });
+
+  const r = rig(tmpDir());
+  r.ctl.open();
+  const [main] = r.log.wins;
+  const ev = (w) => ({ sender: w.webContents, senderFrame: w.webContents.mainFrame });
+  const tear = r.log.handle['carnivore:tear-off'];
+
+  r.clock.t += 600;
+  assert.equal(await tear(ev(main), 'widget', 'my-plug.panel:panel-ab12cd34', 120, 80), true, 'hyphenated plugin widget id accepted');
+  const popWidget = r.log.wins.at(-1);
+  assert.deepEqual(popWidget.loaded, [`${ORIGIN}/static/popout.html?widget=my-plug.panel%3Apanel-ab12cd34`]);
+
+  r.clock.t += 600;
+  assert.equal(await tear(ev(main), 'tab', 'cplug-linear', 140, 90), true, 'tab tear-off accepted');
+  const popTab = r.log.wins.at(-1);
+  assert.deepEqual(popTab.loaded, [`${ORIGIN}/static/popout.html?tab=cplug-linear`]);
+
+  r.clock.t += 600;
+  const longTab = `cplug-${'a'.repeat(24)}-${'b'.repeat(40)}`;
+  assert.equal(await tear(ev(main), 'tab', longTab, 140, 90), true, '71-char plugin tab tear-off accepted');
+
+  r.clock.t += 600;
+  assert.equal(await tear(ev(main), 'widget', 'huddle.chat', 140, 90), false, 'plugin widget without :target still rejected');
+  r.clock.t += 600;
+  assert.equal(await tear(ev(main), 'widget', 'core.notes:t', 140, 90), false, 'core widget with :target rejected');
+  r.clock.t += 600;
+  assert.equal(await tear(ev(main), 'tab', 'bad tab!', 140, 90), false, 'malformed tab id rejected');
+
+  const navHandler = main.webContents.wcHandlers['will-frame-navigate'];
+  assert.equal(typeof navHandler, 'function');
+
+  const callNav = (url, frame = null) => {
+    let prevented = false;
+    navHandler({
+      url,
+      frame: typeof frame === 'string' ? { url: frame } : (frame || undefined),
+      preventDefault() { prevented = true; },
+    });
+    return prevented;
+  };
+
+  assert.equal(callNav('about:blank'), false, 'about:blank allowed');
+  assert.equal(callNav('about:srcdoc'), false, 'about:srcdoc allowed');
+  assert.equal(callNav('about:evil'), true, 'non-blank/srcdoc about: blocked');
+  assert.equal(callNav('https://evil.example/'), true, 'cross-origin frame blocked');
+
+  const viewBase = `${ORIGIN}/api/v1/cplugs/my-plug/view/panel/tok123/`;
+  assert.equal(callNav(`${viewBase}subpage.html`, `${viewBase}index.html`), false, 'navigation inside own view prefix allowed');
+  assert.equal(callNav(`${ORIGIN}/static/popout.html`, `${viewBase}index.html`), true, 'view subframe escape to /static/popout.html blocked');
+  assert.equal(callNav(`${ORIGIN}/api/v1/cplugs/other/view/panel/tok999/x`, `${viewBase}index.html`), true, 'view subframe escape to another view blocked');
+  assert.equal(
+    callNav(`${ORIGIN}/api/v1/sessions`, { url: 'about:blank', parent: { url: `${viewBase}index.html` } }),
+    true,
+    'nested frame inside plugin view blocked from escaping to /api/v1/sessions',
+  );
+  assert.equal(
+    callNav(`${viewBase}subpage.html`, { url: 'about:blank', parent: { url: `${viewBase}index.html` } }),
+    false,
+    'nested frame inside plugin view allowed within own view prefix',
+  );
 });

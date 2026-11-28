@@ -13,6 +13,7 @@
 	<key>keychain-access-groups</key>
 	<array>
 		<string>$(AppIdentifierPrefix)ai.carnivore.shared</string>
+		<string>$(AppIdentifierPrefix)ai.carnivore.notify-mac</string>
 	</array>
 </dict>
 </plist>

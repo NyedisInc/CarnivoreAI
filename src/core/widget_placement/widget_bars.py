@@ -23,9 +23,9 @@ class WidgetBar(BaseModel):
 
 
 class SidebarRail(BaseModel):
-    """The sidebar rail's chrome (#1790): the slim icon column of ``sidebar_layout`` "rail" hides like a bar.
+    """The sidebar rail's chrome (#1790, #3388): the slim icon column of ``sidebar_layout`` "rail" hides like a bar.
 
-    Only ``mode`` exists: the rail has no size and is always shown. Absent reads as ``autohide``.
+    Only ``mode`` exists: the rail has no size and is always shown. Absent reads as ``pinned`` (matching #2511).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -40,8 +40,8 @@ class SidebarRail(BaseModel):
 class WidgetBars(BaseModel):
     """Both bars' chrome plus the sidebar rail's, one value for every device. ``side`` is the right bar.
 
-    Absent reads as every default. ``rail`` (#1790) rides here so the rail uses the bars' auto-hide setting, its write
-    route and its reset ("reset bars to defaults" puts the rail back to auto-hide too).
+    Absent reads as every default. ``rail`` (#1790, #3388) rides here so the rail uses the bars' pin/auto-hide setting, its write
+    route and its reset ("reset bars to defaults" puts the rail back to pinned default too).
     """
 
     model_config = ConfigDict(extra="forbid")

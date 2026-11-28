@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterable, Iterator, List, Optional, Sequence, Tupl
 from src.core.stream_redactor import redact_whole
 from src.core.deepsearch.query import match_expression, phrase_expression, tokens_of
 from src.core.deepsearch import constants as K
-from src.core.deepsearch import hit_bookmarks, hit_exports, vault_lane
+from src.core.deepsearch import hit_bookmarks, hit_exports, hit_offloaded, vault_lane
 from src.core.deepsearch import rules as rules_mod
 from src.core.deepsearch.peer_air_gap import PeerGate
 from src.core.deepsearch.search import CONVERSATION_EXPR, HIT_SQL, HitOpener, hit_of
@@ -266,6 +266,7 @@ def search_grouped(conn: sqlite3.Connection, state_dir: Path, query: str, *, kin
             out.append(group)
         hit_bookmarks.attach(state_dir, out)
         hit_exports.attach(conn, out)
+        hit_offloaded.attach(state_dir, out)
         answer.update(total_conversations=len(ranked), total_matches=sum(g["matches"] for g in ranked),
                       count=len(out), groups=out, stale=stale, frames_read=opener.frames_read,
                       live_bytes_read=opener.live_bytes_read)

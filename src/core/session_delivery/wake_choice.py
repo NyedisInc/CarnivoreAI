@@ -11,6 +11,10 @@ AGENT_FAMILIES = ("claude", "codex")
 def is_agent_row(info: Any) -> bool:
     family = (getattr(info, "agent_family", None) or "").lower()
     if family:
+        if family == "custom":
+            from src.core.agy.identity import info_is_agy
+
+            return info_is_agy(info)
         return family in AGENT_FAMILIES
     agent = (getattr(info, "agent_type", None) or getattr(info.session, "agent_type", None) or "").lower()
     return agent.startswith(AGENT_FAMILIES)

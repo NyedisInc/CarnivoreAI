@@ -32,6 +32,9 @@ def test_the_listing_carries_no_unread_order_copy(client: TestClient) -> None:
 
 def test_the_registry_sorts_by_the_file_and_has_no_literal_copy() -> None:
     names = json.loads(ORDER_FILE.read_text())["order"]
-    present = [n for n in names if (ROOT / "src/plugins" / n / "cplug.json").is_file()]
+    present = [
+        n for n in names
+        if (ROOT / "src/plugins" / n / "carnivore.toml").is_file() or (ROOT / "src/plugins" / n / "cplug.json").is_file()
+    ]
     assert registry.plugin_folders()[: len(present)] == present
     assert "huddle\", \"unread\"" not in (ROOT / "src/plugins/registry.py").read_text()

@@ -2611,6 +2611,11 @@
       "key": "a"
     },
     {
+      "id": "group",
+      "label": "new group",
+      "key": "g"
+    },
+    {
       "id": "colour",
       "label": "color",
       "key": "c"

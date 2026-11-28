@@ -37,6 +37,12 @@ console.log('[SessionModelIcon Module] Loading...');
         return (tier >= 1 && tier <= TOP_TIER) ? String(tier) : '';
     }
 
+    function colorKey(text) {
+        if (typeof text !== 'string') return '';
+        var m = text.toLowerCase().match(/\b(neon|carbon|argon|hydrogen)\b|(fable|mythos|opus|sonnet|haiku)/);
+        return m ? (m[1] || m[2]) : '';
+    }
+
     /* could not be read */
     function html(model, tier, effort, esc) {
         if (typeof model !== 'string' || !model.trim()) return '';
@@ -51,7 +57,7 @@ console.log('[SessionModelIcon Module] Loading...');
             ? ' ' + window.EffortLevel.className(effort) : '';
         var sheen = shimmer && SHEEN_EFFORTS.indexOf(window.EffortLevel.level(effort)) !== -1;
         var label = model.trim() + (effort ? ' at ' + effort : '');
-        var attrs = ' data-model-tier="' + safe(tierAttr(tier)) + '"';
+        var attrs = ' data-model-tier="' + safe(tierAttr(tier)) + '" data-model-color="' + safe(colorKey(model)) + '"';
         if (topped) attrs += ' data-model-top="1"';
         return (topped ? '<span class="session-sidebar-row-model-wrap">' : '')
             + '<span class="session-sidebar-row-model' + shimmer + '"' + attrs
@@ -68,6 +74,7 @@ console.log('[SessionModelIcon Module] Loading...');
         html: html,
         isTopped: isTopped,
         tierAttr: tierAttr,
+        colorKey: colorKey,
         TOP_TIER: TOP_TIER,
         TOP_EFFORTS: TOP_EFFORTS,
         ROBOT: ROBOT,

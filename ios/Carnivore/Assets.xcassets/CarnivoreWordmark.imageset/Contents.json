@@ -1,0 +1,18 @@
+{
+  "images" : [
+    {
+      "filename" : "carnivore-wordmark.png",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "carnivore-wordmark@2x.png",
+      "idiom" : "universal",
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

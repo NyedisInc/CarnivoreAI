@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS attention_events (
 );
 CREATE INDEX IF NOT EXISTS attention_events_session ON attention_events (session_uuid, at);
 """
+_INITIALIZED_DBS: set[tuple[str, int]] = set()
+_INIT_LOCK = threading.Lock()
 
 
 def _iso(value: datetime) -> str:
@@ -37,8 +39,21 @@ class AttentionHistoryStore:
     def record(self, session_uuid: str, kind: str, at: datetime) -> bool:
         if kind not in KINDS or not session_uuid:
             return False
-        with self._lock, closing(sqlite3.connect(self._path_of(), timeout=10.0)) as conn:
-            conn.executescript(_SCHEMA)
+        path = Path(self._path_of())
+        with self._lock, closing(sqlite3.connect(path, timeout=10.0)) as conn:
+            conn.execute("PRAGMA synchronous=NORMAL")
+            try:
+                ino = path.stat().st_ino
+            except OSError:
+                ino = 0
+            key = (str(path.resolve()), ino)
+            with _INIT_LOCK:
+                needs_init = key not in _INITIALIZED_DBS
+            if needs_init:
+                conn.execute("PRAGMA journal_mode=WAL")
+                conn.executescript(_SCHEMA)
+                with _INIT_LOCK:
+                    _INITIALIZED_DBS.add(key)
             with conn:
                 newest = conn.execute("SELECT kind FROM attention_events WHERE session_uuid = ? "
                                       "ORDER BY at DESC, id DESC LIMIT 1", (session_uuid,)).fetchone()

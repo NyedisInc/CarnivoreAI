@@ -20,6 +20,10 @@ class PlaceConflict(FileExistsError):
     pass
 
 
+class PlaceUnsupported(OSError):
+    pass
+
+
 class PlaceMismatch(ValueError):
     pass
 
@@ -39,7 +43,7 @@ def file_matches(dest: PathLike, sha256: str, length: int) -> bool:
         return False
 
 
-def place_no_clobber(temp: PathLike, dest: PathLike) -> None:
+def place_no_clobber(temp: PathLike, dest: PathLike, *, strict: bool = False) -> None:
     try:
         os.link(temp, dest)
     except FileExistsError:
@@ -47,6 +51,8 @@ def place_no_clobber(temp: PathLike, dest: PathLike) -> None:
     except OSError as exc:
         if os.path.lexists(dest):
             raise PlaceConflict(str(dest)) from None
+        if strict:
+            raise PlaceUnsupported(f"{dest}: this volume cannot hard link, so the file cannot be placed without a window to overwrite ({exc})") from exc
         logger.debug("place_no_hard_links", dest=str(dest), error=str(exc))
         os.rename(temp, dest)
 

@@ -46,7 +46,9 @@ async def _close_remote_hosts(ctx: "BootContext") -> None:
 
 
 async def _write_cli_shim(_ctx: "BootContext") -> None:
-    await asyncio.to_thread(cli_shim.write_shim, settings.get_state_dir())
+    state = settings.get_state_dir()
+    await asyncio.to_thread(cli_shim.write_shim, state)
+    await asyncio.to_thread(cli_shim.write_runtime_info, state, settings.port)
 
 
 async def _publish_log_breadcrumb(_ctx: "BootContext") -> None:

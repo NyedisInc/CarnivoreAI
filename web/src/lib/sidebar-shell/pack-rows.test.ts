@@ -55,7 +55,7 @@ beforeEach(() => {
 afterEach(() => { if (handle) unmount(handle); handle = null; });
 
 describe('drawer pack rows', () => {
-    it('the alpha row has the red wolf labelled Alpha, a non-alpha row has none, and the order is icon, wolf, light, name, stats', () => {
+    it('the alpha row has the red wolf labelled Alpha, a non-alpha row has none, and the order is light, icon, wolf, name, stats', () => {
         const el = draw(plan('compact', [machine(), machine({ install_id: 'b', label: 'studio', is_self: false, is_master: false, state: 'connected', host_key: 'peer' })]));
         const rows = el.querySelectorAll('[data-pack-computer]');
         expect(rows.length).toBe(2);
@@ -65,14 +65,13 @@ describe('drawer pack rows', () => {
         expect(rows[1]!.querySelector('[data-mark="alpha"]')).toBeNull();
         expect(rows[0]!.textContent).not.toMatch(/alpha/i);
         const order = [...rows[0]!.querySelector('.sb-pack-row__main')!.children].map((c) => c.className.split(' ')[0]);
-        expect(order).toEqual(['pk-marks', 'sb-pack-row__wolf', 'sb-pack-row__light', 'sb-pack-row__name', 'sb-pack-row__stats']);
-        expect(el.querySelectorAll('[title]').length, 'the wolf is the only tooltip').toBe(1);
+        expect(order).toEqual(['sb-pack-row__light', 'pk-marks', 'sb-pack-row__wolf', 'sb-pack-row__name', 'sb-pack-row__stats']);
     });
 
-    it('compact shows three labeled whole percents, cpu from load over cores', () => {
+    it('compact shows three aligned tabular percents under the Pack header columns, cpu from load over cores', () => {
         const el = draw(plan('compact', [machine()]));
         const stats = [...el.querySelectorAll('.sb-pack-stat')].map((s) => s.textContent);
-        expect(stats).toEqual(['cpu50%', 'ram58%', '40%']);
+        expect(stats).toEqual(['50%', '58%', '40%']);
         expect(el.querySelector('.pk-meter')).toBeNull();
     });
 
@@ -81,14 +80,10 @@ describe('drawer pack rows', () => {
         expect(observers).toHaveBeenCalledTimes(1);
     });
 
-    it('compact disk is an icon with the catalog name, not the word, and no tooltip', () => {
+    it('compact stats carry accessible hover titles for CPU, RAM, and Disk (#3387)', () => {
         const el = draw(plan('compact', [machine()]));
-        const k = el.querySelectorAll('.sb-pack-stat')[2]!.querySelector('.sb-pack-stat__k')!;
-        expect(k.getAttribute('role')).toBe('img');
-        expect(k.getAttribute('aria-label')).toBe('disk');
-        expect(k.querySelector('svg')).not.toBeNull();
-        expect(k.textContent).toBe('');
-        expect(k.hasAttribute('title')).toBe(false);
+        const titles = [...el.querySelectorAll('.sb-pack-stat')].map((s) => s.getAttribute('title'));
+        expect(titles).toEqual(['CPU 50%', 'RAM 58%', 'DISK 40%']);
     });
 
     it('compact colors each percent with the Settings meter level: 49 green, 87 yellow, 95 red, unmeasured muted', () => {

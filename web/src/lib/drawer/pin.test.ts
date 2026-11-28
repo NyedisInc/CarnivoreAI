@@ -1,3 +1,4 @@
+/* cannot be read */
 // @vitest-environment jsdom
 import assert from 'node:assert/strict';
 import { afterEach, it, vi } from 'vitest';

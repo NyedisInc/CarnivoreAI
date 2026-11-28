@@ -97,7 +97,8 @@ final class NotifyCardTests: XCTestCase {
             let want = NotifyContract.actions[kind] ?? []
             XCTAssertEqual(category.actions.map(\.identifier), want.map(\.id), kind.rawValue)
             for (action, spec) in zip(category.actions, want) {
-                XCTAssertEqual(action.options.contains(.authenticationRequired), spec.faceId, "\(kind) \(spec.id)")
+                let expectAuth = spec.faceId || spec.id == "copy_link" || spec.id == "play"
+                XCTAssertEqual(action.options.contains(.authenticationRequired), expectAuth, "\(kind) \(spec.id)")
                 XCTAssertEqual(action.options.contains(.foreground), spec.foreground, "\(kind) \(spec.id)")
                 XCTAssertEqual(action is UNTextInputNotificationAction, spec.textInput, "\(kind) \(spec.id)")
                 XCTAssertFalse(action.options.contains(.destructive), "no red: \(kind) \(spec.id)")
@@ -112,6 +113,13 @@ final class NotifyCardTests: XCTestCase {
         XCTAssertTrue(actions.allSatisfy { $0.options.contains(.authenticationRequired) })
     }
 
+
+    func testQuestionKindsDrawQuestionGlyphNotIdleMinus() {
+        XCTAssertEqual(CardGlyphs.name(for: .yesno), "question")
+        XCTAssertEqual(CardGlyphs.name(for: .choice), "question")
+        XCTAssertEqual(CardModel.hue(for: .yesno), .caution)
+        XCTAssertEqual(CardModel.hue(for: .choice), .caution)
+    }
 
     func testEveryKindShowsItsExpectedStrings() throws {
         let expect: [String: [String]] = [
@@ -265,8 +273,8 @@ final class NotifyCardTests: XCTestCase {
 
     func testCapabilityTravelsInTheHeaderNeverTheURL() throws {
         let cap = String(repeating: "A", count: NotifyContract.limitCap)
-        let req = AnswerClient.request(base: try XCTUnwrap(URL(string: "https://abc.link.carnivore.ai:443")), path: AnswerClient.actPath, method: "POST", cap: cap,
-                                       body: AnswerClient.actBody(action: "opt.2", text: nil))
+        let req = try XCTUnwrap(AnswerClient.request(base: try XCTUnwrap(URL(string: "https://abc.link.carnivore.ai:443")), path: AnswerClient.actPath, method: "POST", cap: cap,
+                                       body: AnswerClient.actBody(action: "opt.2", text: nil)))
         XCTAssertEqual(req.value(forHTTPHeaderField: AnswerClient.capHeader), cap)
         XCTAssertFalse(try XCTUnwrap(req.url).absoluteString.contains(cap))
         XCTAssertEqual(req.url?.path, "/api/v1/notify/act")

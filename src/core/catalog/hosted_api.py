@@ -144,6 +144,14 @@ def _transport_refusal(exc: httpx.RequestError) -> HostedUnavailable:
     return HostedUnavailable(UNAVAILABLE, "the catalog api could not be reached")
 
 
+_CIRCUIT_BACKOFF_S = (30.0, 60.0, 120.0)
+_circuit_state: Dict[tuple[int, str], tuple[int, float]] = {}
+
+
+def reset_circuit_breaker() -> None:
+    _circuit_state.clear()
+
+
 async def call(
     api_base_url: str,
     method: str,
@@ -162,7 +170,12 @@ async def call(
         headers["authorization"] = f"Bearer {bearer}"
 
     client = await shared_client()
-    started_at = time.monotonic()
+    circuit_key = (id(client), api_base_url.rstrip("/"))
+    now_mono = time.monotonic()
+    tripped = _circuit_state.get(circuit_key)
+    if tripped is not None and now_mono < tripped[1]:
+        raise HostedUnavailable(UNAVAILABLE, "the catalog api could not be reached")
+    started_at = now_mono
     attempts = 0
     while True:
         attempts += 1
@@ -170,10 +183,15 @@ async def call(
             status, raw = await _attempt(
                 client, method, url, json_body=json_body, headers=headers
             )
+            _circuit_state.pop(circuit_key, None)
             break
         except _AttemptFailed as failure:
             if attempts < _MAX_ATTEMPTS and _may_retry(method, failure):
                 continue
+            if isinstance(failure.cause, (httpx.ConnectTimeout, httpx.ConnectError)):
+                prev = _circuit_state.get(circuit_key, (0, 0.0))[0] + 1
+                delay = _CIRCUIT_BACKOFF_S[min(prev - 1, len(_CIRCUIT_BACKOFF_S) - 1)]
+                _circuit_state[circuit_key] = (prev, time.monotonic() + delay)
             logger.warning(
                 "catalog_hosted_call_failed",
                 method=method.upper(),

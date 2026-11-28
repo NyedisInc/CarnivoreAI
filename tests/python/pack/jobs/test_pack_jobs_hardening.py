@@ -338,7 +338,7 @@ def test_agent_tree_holds_head_for_a_harness_path_at_a_middle_folder_level(repo,
     (repo / "a" / ".codex" / "config.toml").write_text("EVIL\n")
     snap = snapshot.take(str(repo / "a" / "b"), UID, JOB, jobs_root=jobs_root, agent=True)
     assert _tree_blob(snap, "a/.codex/config.toml") == "committed\n"
-    assert "a/.codex/config.toml" in snapshot.harness_paths("a/b") and len(snapshot.harness_paths("a/b")) == 12
+    assert "a/.codex/config.toml" in snapshot.harness_paths("a/b") and len(snapshot.harness_paths("a/b")) == 3 * len(snapshot.HARNESS_CONFIG_PATHS)
 
 
 def test_land_parks_a_result_when_the_callers_harness_folder_became_a_link(dirty, jobs_root):
@@ -376,7 +376,7 @@ def test_the_engine_keeps_an_agent_job_here_when_a_harness_path_is_linked(rig, t
     monkeypatch.setattr(rig, "_resolve_project", lambda folder: ({"uid": "uid-test-0001", "name": "app", "root": top}, ""))
     monkeypatch.setattr(rig, "_view_for", lambda root, uid: PlaceView(
         self_input=SimpleNamespace(install_id="iid-a"), peers=[SimpleNamespace(install_id="iid-b", label="b")], caps={"iid-b": ["pack.jobs", CAP_AGENT]}))
-    monkeypatch.setattr(engine_mod.place, "place", lambda *a: PlaceAnswer("remote", "iid-b", "b", "room"))
+    monkeypatch.setattr(engine_mod.place, "place", lambda *a, **kw: PlaceAnswer("remote", "iid-b", "b", "room"))
     monkeypatch.setattr(engine_mod.snapshot, "take", lambda *a, **k: (_ for _ in ()).throw(JobError("harness_linked", ".claude sits behind a link")))
     rec = asyncio.run(rig.propose(_agent_req(top)))
     assert rec.state == JobState.HERE and ".claude sits behind a link" in rec.reason and rec.peer_install_id is None
@@ -396,7 +396,7 @@ def test_the_engine_asks_for_an_agent_snapshot_and_lands_with_the_harness_skip_a
     monkeypatch.setattr(rig, "_resolve_project", lambda folder: ({"uid": "uid-test-0001", "name": "app", "root": snap.toplevel}, ""))
     monkeypatch.setattr(rig, "_view_for", lambda root, uid: PlaceView(
         self_input=SimpleNamespace(install_id="iid-a"), peers=[SimpleNamespace(install_id="iid-b", label="b")], caps={"iid-b": ["pack.jobs", CAP_AGENT]}))
-    monkeypatch.setattr(engine_mod.place, "place", lambda *a: PlaceAnswer("remote", "iid-b", "b", "room"))
+    monkeypatch.setattr(engine_mod.place, "place", lambda *a, **kw: PlaceAnswer("remote", "iid-b", "b", "room"))
     with pytest.raises(JobError):
         asyncio.run(rig.propose(_agent_req(snap.toplevel)))
     assert seen["take"]["agent"] is True

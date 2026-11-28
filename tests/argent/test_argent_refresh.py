@@ -262,7 +262,7 @@ def test_a_member_401_asks_the_owner_once_and_never_flags_the_login(tmp_path: Pa
 
 def test_an_unreachable_owner_reads_as_waiting_and_a_delegate_403_changes_nothing(tmp_path: Path) -> None:
     copy, sync, _ = member(tmp_path)
-    sync._peer = lambda iid: None  # type: ignore[assignment]
+    sync._peer = sync._cred_peer = lambda iid: None  # type: ignore[assignment]
     assert run(sync.ask_owner()) == "waiting_on_owner" and sync.view()["waiting_on_owner"] == "iid-owner"
 
     def forbidden(request: httpx.Request) -> httpx.Response:

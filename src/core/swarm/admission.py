@@ -32,6 +32,7 @@ class Machine:
     mem_total_gb: Optional[float] = None
     busy1: Optional[float] = None
     busy5: Optional[float] = None
+    busy15: Optional[float] = None
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,11 @@ def _linux_memory_pct() -> Optional[float]:
 def available_memory_pct() -> Optional[float]:
     try:
         if sys.platform == "darwin":
+            from src.core import host_metrics
+
+            mem = host_metrics.collect_memory()
+            if mem.get("available") and mem.get("total_bytes") and mem.get("available_bytes") is not None:
+                return round(100.0 * float(mem["available_bytes"]) / float(mem["total_bytes"]), 1)
             return _darwin_memory_pct()
         if sys.platform.startswith("linux"):
             return _linux_memory_pct()
@@ -90,12 +96,15 @@ def measure() -> Machine:
         load1 = load5 = None
     cores = os.cpu_count()
     busy = cpu_busy.METER.busy_cores(cores)
-    return Machine(load1, load5, cores, available_memory_pct(), _total_memory_gb(), busy["busy_1"], busy["busy_5"])
+    return Machine(load1, load5, cores, available_memory_pct(), _total_memory_gb(), busy["busy_1"], busy["busy_5"], busy.get("busy_15s"))
 
 
 def reserve_refusal(machine: Machine, reserve: Reserve, est_cpu_cores: float, est_ram_gb: float) -> Optional[str]:
     name = f"its {reserve.cpu_pct}% {reserve.level.replace('_', ' ') or 'compute'} reserve"
-    busy_now = machine.busy1 if machine.busy1 is not None else machine.load1
+    if machine.busy1 is not None and machine.busy15 is not None:
+        busy_now: Optional[float] = max(machine.busy1, machine.busy15)
+    else:
+        busy_now = machine.busy1 if machine.busy1 is not None else machine.load1
     if machine.cores and busy_now is not None:
         busy, line = min(busy_now, float(machine.cores)), machine.cores * (1 - reserve.cpu_pct / 100)
         if busy + est_cpu_cores > line:

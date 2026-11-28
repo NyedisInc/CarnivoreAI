@@ -194,6 +194,7 @@ class SessionManager:
         )
         self._resolved_legacy_probe_socket: Optional[str] = None
         self._published_status_map: Optional[tuple[float, StatusMap]] = None
+        self._ref_meta_cache: dict[tuple[str, Optional[int]], tuple[float, Optional[dict]]] = {}
         self._theme_store: ThemeStore = (
             theme_store
             if theme_store is not None
@@ -399,7 +400,6 @@ class SessionManager:
         finally:
             self._schedule_boot_readopt()
             remote_sessions.schedule_remote_readopt(self)
-            await self._sweep_orphan_uploads()
 
     def _schedule_boot_readopt(self) -> Optional["asyncio.Task[None]"]:
         from src.core.session_boot_readopt import schedule_boot_readopt
@@ -1478,9 +1478,15 @@ class SessionManager:
         return [info for info in infos if info is not None]
 
     def claude_uuid_for_tmux_name(self, tmux_name: str) -> Optional[str]:
+        from src.core.db_reuse.core_read import lend_pooled_read
+        from src.core.db import db_path_for
+
         conn = None
         try:
-            conn = self._writable_datastore_connection()
+            db_path = db_path_for(settings.get_state_dir())
+            conn = lend_pooled_read(db_path) if db_path.exists() else None
+            if conn is None:
+                conn = self._writable_datastore_connection()
             if conn is None:
                 return None
             row = conn.execute(
@@ -1936,6 +1942,112 @@ class SessionManager:
                 )
             ),
         )
+
+    def _read_ref_db_row(self, tmux_name: str, tmux_created_epoch: Optional[int]) -> Optional[dict]:
+        from src.core.db import db_path_for
+        from src.core.db_reuse.core_read import lend_pooled_read
+
+        if tmux_created_epoch is None:
+            return None
+        db_path = db_path_for(settings.get_state_dir())
+        if not db_path.exists():
+            return None
+        conn = lend_pooled_read(db_path)
+        if conn is None:
+            return None
+        try:
+            row = conn.execute(
+                "SELECT agent_family, agent_type, agent_family_source, session_uuid, claude_session_uuid, tmux_created_epoch "
+                "FROM sessions WHERE tmux_name = ? AND tmux_created_epoch = ? ORDER BY id DESC LIMIT 1",
+                (tmux_name, int(tmux_created_epoch)),
+            ).fetchone()
+            if row is None:
+                return None
+            return {
+                "agent_family": row[0],
+                "agent_type": row[1],
+                "agent_family_source": row[2],
+                "session_uuid": row[3],
+                "claude_session_uuid": row[4],
+                "tmux_created_epoch": row[5],
+            }
+        except sqlite3.Error as exc:
+            logger.debug("session_ref_db_read_failed", error=str(exc))
+            return None
+        finally:
+            try:
+                conn.close()
+            except sqlite3.Error:
+                pass
+
+    async def resolve_session_ref(self, session_id: Optional[str] = None) -> Optional[dict]:
+        sid = self._registry.resolve_session_id(session_id)
+        if not sid:
+            return None
+        sess = self._registry.sessions.get(sid)
+        backend = self._registry.backends.get(sid)
+        if sess is None and backend is None:
+            return None
+        tmux_name = getattr(backend, "tmux_session", None) or (sess.tmux_session if sess is not None else None)
+        working_dir = sess.working_dir if sess is not None else None
+        epoch = (
+            (sess.tmux_created_epoch if sess is not None else None)
+            or self._instance_epochs.get(sid)
+        )
+        if epoch is None and tmux_name:
+            epoch = await asyncio.to_thread(self._work_stamp_epoch, sid, tmux_name)
+        row_meta: Optional[dict] = None
+        if tmux_name:
+            cache = self._ref_meta_cache
+            cache_key = (tmux_name, epoch)
+            now = time.monotonic()
+            cached = cache.get(cache_key)
+            if cached is not None and now < cached[0]:
+                row_meta = cached[1]
+            else:
+                row_meta = await asyncio.to_thread(self._read_ref_db_row, tmux_name, epoch)
+                if len(cache) > 512:
+                    cache.clear()
+                cache[cache_key] = (now + 5.0, row_meta)
+        agent_family: Optional[str] = None
+        effective_agent_type: Optional[str] = None
+        if sess is not None:
+            evidence = choose_agent_evidence(
+                memory_agent_type=sess.agent_type,
+                memory_from_fingerprint=sess.agent_type_via_fingerprint,
+                row_agent_type=(row_meta.get("agent_type") if row_meta else None),
+                row_family_source=(row_meta.get("agent_family_source") if row_meta else None),
+            )
+            effective_agent_type = evidence.agent_type
+            wrappers = self._wrappers_reader()
+            display_family, _src = resolve_family_for_display(
+                evidence.agent_type,
+                wrappers,
+                from_fingerprint=evidence.from_fingerprint,
+                from_process=evidence.from_process,
+            )
+            recorded = recorded_launch_family(
+                row_agent_family=(row_meta.get("agent_family") if row_meta else None),
+                row_family_source=(row_meta.get("agent_family_source") if row_meta else None),
+                row_agent_type=(row_meta.get("agent_type") if row_meta else None),
+                effective_agent_type=evidence.agent_type,
+            )
+            if recorded is not None:
+                display_family = recorded[0]
+            agent_family = display_family.name if display_family is not None else None
+        return {
+            "session_id": sid,
+            "tmux_session": tmux_name,
+            "working_dir": working_dir,
+            "agent_family": agent_family,
+            "agent_type": effective_agent_type,
+            "session_uuid": row_meta.get("session_uuid") if row_meta else None,
+            "claude_session_uuid": row_meta.get("claude_session_uuid") if row_meta else None,
+            "tmux_created_epoch": (
+                epoch
+                or (row_meta.get("tmux_created_epoch") if row_meta else None)
+            ),
+        }
 
     async def get_session_info(
         self, session_id: Optional[str] = None

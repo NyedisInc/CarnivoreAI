@@ -13,7 +13,14 @@ STATE = "document.querySelector('.sbr-shell').dataset.railState"
 
 def _open_page(pw, rig_slot: RigSlot, theme: str) -> Page:
     prefs = rig_slot.slot.api("GET", "/api/v1/preferences")
-    rig_slot.slot.api("PATCH", "/api/v1/preferences", {"changes": {"theme": theme}, "expected_revision": prefs["revision"]})
+    rig_slot.slot.api(
+        "PATCH",
+        "/api/v1/preferences",
+        {
+            "changes": {"theme": theme, "widget_bars": {"v": 1, "rail": {"mode": "autohide"}}},
+            "expected_revision": prefs["revision"],
+        },
+    )
     ctx = pw.chromium.launch().new_context(storage_state=rig_slot.slot.auth, viewport={"width": 1440, "height": 900})
     page = ctx.new_page()
     page.goto(rig_slot.slot.base + "/")

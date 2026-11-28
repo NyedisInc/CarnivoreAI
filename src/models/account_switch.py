@@ -23,7 +23,7 @@ class ActiveAccountState(BaseModel):
             are absent.
     """
 
-    provider: Literal["claude", "codex"]
+    provider: Literal["claude", "codex", "antigravity"]
     account_id: Optional[str] = None
     source: Literal["pointer", "default_login", "none"]
     pointer: Optional[str] = None

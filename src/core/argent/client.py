@@ -6,6 +6,7 @@ import ssl
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Mapping, Optional, Tuple
 
+import certifi
 import httpx
 import structlog
 
@@ -83,12 +84,15 @@ class ArgentClient:
         if not self._ca_path:
             return True
         try:
-            return ssl.create_default_context(cafile=self._ca_path)
+            context = ssl.create_default_context(cafile=certifi.where())
+            context.load_verify_locations(cafile=self._ca_path)
         except (OSError, ssl.SSLError) as exc:
             raise Unreachable("the argent ca file could not be read") from exc
+        context.verify_flags &= ~ssl.VERIFY_X509_STRICT
+        return context
 
     async def request(self, method: str, path: str, *, json: Any = None, params: Optional[Mapping[str, Any]] = None, auth: bool = True,
-                      headers: Optional[Mapping[str, str]] = None) -> ArgentResponse:
+                      headers: Optional[Mapping[str, str]] = None, route_refusal_on_401: bool = False) -> ArgentResponse:
         url = f"{self._base}{path}"
         sent: Dict[str, str] = {"Accept": "application/json"}
         if auth:
@@ -109,9 +113,10 @@ class ArgentClient:
         except httpx.HTTPError as exc:
             logger.info("argent_call_unreachable", path=path, error_type=type(exc).__name__)
             raise Unreachable(f"argent did not answer ({type(exc).__name__})") from None
-        return self._read(method, path, cache_key, cached, reply)
+        return self._read(method, path, cache_key, cached, reply, route_refusal_on_401)
 
-    def _read(self, method: str, path: str, cache_key: str, cached: Optional[Tuple[str, Dict[str, Any]]], reply: httpx.Response) -> ArgentResponse:
+    def _read(self, method: str, path: str, cache_key: str, cached: Optional[Tuple[str, Dict[str, Any]]], reply: httpx.Response,
+              route_refusal_on_401: bool = False) -> ArgentResponse:
         status = reply.status_code
         if status == 304 and cached:
             return ArgentResponse(status, cached[1], True)
@@ -122,7 +127,7 @@ class ArgentClient:
         body: Dict[str, Any] = parsed if isinstance(parsed, dict) else {"items": parsed}
         if status == 401:
             logger.info("argent_call_unauthorized", path=path)
-            if self._on_unauthorized is not None:
+            if self._on_unauthorized is not None and not route_refusal_on_401:
                 self._on_unauthorized()
             raise Unauthorized("argent did not accept the login", status, error_code(body) or "unauthorized", body)
         if status >= 500:

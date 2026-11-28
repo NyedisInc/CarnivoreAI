@@ -14,6 +14,7 @@ interface ArchivedRecord {
     working_dir?: string | null;
     agent_family?: string | null;
     agent_family_source?: string | null;
+    agent_wrapper_icon?: string | null;
     owned?: boolean;
     tmux_created_epoch?: number;
     last_work_at?: string | null;
@@ -51,6 +52,7 @@ export function archivedRows(
             last_work_at: rec.last_work_at || null,
             agent_family: rec.agent_family != null ? rec.agent_family : null,
             agent_family_source: rec.agent_family_source != null ? rec.agent_family_source : null,
+            agent_wrapper_icon: rec.agent_wrapper_icon != null ? rec.agent_wrapper_icon : null,
             project_id: rec.project_id != null ? rec.project_id : null,
             project_name: rec.project_name != null ? rec.project_name : null,
             working_dir: rec.working_dir != null ? rec.working_dir : null,

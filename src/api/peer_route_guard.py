@@ -13,7 +13,7 @@ from starlette.requests import HTTPConnection
 
 from src.api import peer_auth
 from src.config import settings
-from src.core.federation import peer_forward, peer_links, peer_listing, peer_token
+from src.core.federation import mesh_peers, peer_forward, peer_hosts, peer_links, peer_listing, peer_token
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.federation.peer_forward import FORWARD, LOCAL, SELF, SID, UUID
 from src.core.launch_profiles import create_seam
@@ -106,7 +106,7 @@ async def _authenticate(conn: HTTPConnection, token: Optional[str]) -> bool:
     if token and peer_token.is_peer_token(token):
         if conn.scope.get("via_link"):
             raise HTTPException(status_code=403, detail="peer tokens are not accepted over the link")
-        await peer_auth._authorize_peer(token, "sessions")
+        await peer_auth._authorize_peer(token, "sessions", conn=conn)
         return True
     from fastapi.security import HTTPAuthorizationCredentials
 
@@ -127,10 +127,14 @@ def _extract(rule: peer_forward.Rule, conn: HTTPConnection, body: Any) -> Option
 async def forward_reply(rule: peer_forward.Rule, peer: Any, path: str, body: Any, retry: Optional[Tuple[str, Any]] = None,
                  name: Optional[str] = None) -> Response:
     links = peer_links.LINKS
-    client = links.client(peer.peer_install_id) if links is not None else None
+    client = mesh_peers.session_client(links, peer.peer_install_id)
+    if client is None and getattr(peer, "back_kind", "") == peer_hosts.MESH_BACK_KIND:
+        client = await mesh_peers.connect(links, peer.peer_install_id)
+        if client is None:
+            raise _refusal(503, "peer_unavailable", f"{peer.label} cannot be reached from this computer right now")
     if client is None:
         raise _refusal(503, "peer_unavailable", f"{peer.label} is not connected")
-    if rule.min_minor > links.minor(peer.peer_install_id):  # type: ignore[union-attr]
+    if rule.min_minor > mesh_peers.session_minor(links, peer.peer_install_id):
         raise _refusal(409, "peer_capability_missing", f"{peer.label} runs an older Carnivore without this action")
     try:
         answer = await peer_forward.send(client, rule, path, body)

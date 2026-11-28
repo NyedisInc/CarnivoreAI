@@ -43,6 +43,7 @@ export const BROWSE_KEYS = Object.freeze({
     kindChipMod: 'warez.kind.chip.mod',
     kindChipTheme: 'warez.kind.chip.theme',
     kindChipPlugin: 'warez.kind.chip.plugin',
+    kindChipWidget: 'warez.kind.chip.widget',
     kindChipLoadout: 'warez.kind.chip.loadout',
     packsHeading: 'skill.browse.packs.heading',
     keysTitle: 'skill.browse.keys.title',

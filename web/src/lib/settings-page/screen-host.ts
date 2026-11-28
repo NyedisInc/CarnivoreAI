@@ -1,5 +1,4 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import SettingsScreen from './SettingsScreen.svelte';
 import type { SectionId } from './settings-registry';
 import { settingsFeatureOf, settingsFragment, settingsPluginOf, settingsTabOf, writeSettingsFragment } from './settings-hash';
 import { registerSettingsOpener } from './settings-navigate';
@@ -10,7 +9,7 @@ export const SETTINGS_HASH = '#settings';
 
 export const SETTINGS_ALIASES = ['#wrappers', '#launch-profiles', '#shortcuts'] as const;
 
-const host = createOverlayHost(SETTINGS_SCREEN_CONTAINER, SettingsScreen, SETTINGS_HASH, { aliases: SETTINGS_ALIASES });
+const host = createOverlayHost(SETTINGS_SCREEN_CONTAINER, { load: () => import('./SettingsScreen.svelte') }, SETTINGS_HASH, { aliases: SETTINGS_ALIASES });
 
 export const openSettingsScreen = (): boolean => host.open();
 

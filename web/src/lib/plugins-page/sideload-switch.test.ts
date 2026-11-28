@@ -90,6 +90,42 @@ describe('SideloadSwitch', () => {
         expect(root.querySelector('[data-sideload-failed]')).not.toBeNull();
         expect(root.querySelector('[data-sideload-toggle]')?.getAttribute('aria-checked')).toBe('false');
     });
+
+    test('loading a folder that requires script consent forwards the third consent argument to store.loadFolder', async () => {
+        const { ApiError } = await import('../../opscenter/api/auth.svelte');
+        const sheet = {
+            kind: 'skill',
+            name: 'my-skill',
+            digest: 'a'.repeat(64),
+            body_sha: 'b'.repeat(64),
+            files: [{ path: 'scripts/run.sh', exec: true }],
+        };
+        const folder = vi.fn(async (_path: string, _name: string | null, consent?: unknown) => {
+            if (!consent) throw new ApiError('consent_required', 422, 'consent_required', { detail: sheet });
+            return { ok: true };
+        });
+        const root = await draw(api({ load: async () => ({ enabled: true, expires_at: null, hours: null, items: [] }), folder }));
+        root.querySelector<HTMLButtonElement>('[data-sideload-open="folder"]')!.click();
+        await settle();
+
+        const pathInput = document.querySelector<HTMLInputElement>('[data-sideload-path="1"] input, input[data-sideload-path="1"]')!;
+        pathInput.value = '/tmp/my-skill';
+        pathInput.dispatchEvent(new Event('input', { bubbles: true }));
+        await settle();
+
+        document.querySelector<HTMLFormElement>('[data-sideload-form="folder"]')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        await settle();
+
+        const cb = document.querySelector<HTMLInputElement>('[data-sideload-consent] input[type="checkbox"]')!;
+        cb.click();
+        await settle();
+
+        document.querySelector<HTMLButtonElement>('[data-sideload-consent-confirm="1"]')!.click();
+        await settle();
+
+        expect(folder).toHaveBeenCalledTimes(2);
+        expect(folder.mock.calls[1]).toEqual(['/tmp/my-skill', null, { digest: 'a'.repeat(64), body_sha: 'b'.repeat(64), scripts: true }]);
+    });
 });
 
 describe('sideload helpers', () => {

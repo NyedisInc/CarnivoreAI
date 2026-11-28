@@ -21,7 +21,7 @@ from src.config import settings
 from src.core.api_keys.store import is_api_key
 from src.core.attention.wiring_builders import spawn_held
 from src.core.pack.identity import home, replicas as identity_replicas
-from src.core.pack.jobs import boot, copy_run, place, policy, replicas, wipe
+from src.core.pack.jobs import boot, copy_run, member_view, place, policy, replicas, wipe
 from src.core.pack.jobs.ssh import owner as ssh_owner
 from src.core.pack.jobs.view import host_labels, host_view, job_view
 from src.core.pack.jobs.types import TERMINAL, JobError, JobRecord, JobRequest
@@ -44,6 +44,7 @@ class JobBody(BaseModel):
     kind: Optional[Literal["browser", "suite", "build", "render"]] = None
     outputs: List[str] = Field(default_factory=list, max_length=20)
     time_cap_minutes: int = Field(default=60, ge=1, le=360)
+    commit: Optional[str] = Field(default=None, pattern=r"^[0-9a-f]{40}$")
 
     def model_post_init(self, __context: Any) -> None:
         if any(len(o) > 256 for o in self.outputs):
@@ -69,7 +70,7 @@ def request_for(body: JobBody, caller_session: Optional[str]) -> JobRequest:
         raise JobError("folder_not_absolute", "the folder must be an absolute path", 422)
     kind = body.kind or kind_from_task_type(body.command)
     return JobRequest(command=body.command, folder=body.folder, kind="suite" if kind == "light" else kind,
-                      caller_session=caller_session, outputs=list(body.outputs), time_cap_s=body.time_cap_minutes * 60)
+                      caller_session=caller_session, outputs=list(body.outputs), time_cap_s=body.time_cap_minutes * 60, commit=body.commit)
 
 
 def _job_error(exc: JobError) -> HTTPException:
@@ -238,11 +239,14 @@ def _ensure_done(task: "asyncio.Task[None]") -> None:
 
 async def _ensure(eng: Any, name: str, uid: str, root: str) -> None:
     outcome: Dict[str, str] = {}
+    skips: Dict[str, str] = {}
     error: Optional[str] = None
     completed = False
     try:
         await ssh_owner.seed_targets(eng.store, uid, root)
         view = await asyncio.to_thread(place.live_view, root, uid)
+        view = await member_view.for_copies(view, root, uid, store=eng.store, self_iid=eng.install_id)
+        skips = view.copy_skips
         outcome = await replicas.ensure_all(name, uid, store=eng.store, view=view, policy=policy.get(eng.store, uid))
         completed = True
         logger.info("pack_jobs_ensure_all", project_uid=uid, outcome=outcome)
@@ -250,7 +254,7 @@ async def _ensure(eng: Any, name: str, uid: str, root: str) -> None:
         error = exc.code
         logger.warning("pack_jobs_ensure_refused", project_uid=uid, code=exc.code)
     finally:
-        copy_run.finish(uid, outcome, error or (None if completed else "copy_run_failed"))
+        copy_run.finish(uid, {**skips, **outcome}, error or (None if completed else "copy_run_failed"))
         home.notify_changed()
 
 

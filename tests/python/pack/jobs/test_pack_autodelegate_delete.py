@@ -213,12 +213,12 @@ async def test_a_real_forget_gets_a_longer_peer_limit_than_a_dry_run(world):
 
     seen: List[float] = []
 
-    async def fake_call(peer: Any, method: str, path: str, body: Any = None, *, timeout: float = 20.0) -> Any:
+    async def fake_call(peer: Any, method: str, path: str, body: Any = None, *, timeout: float = 20.0, mesh: bool = False) -> Any:
         seen.append(timeout)
         return {"verdict": "deletable", "code": ""}
 
     world.mp.setattr(wipe, "_ask", _REAL_ASK)
-    world.mp.setattr(project_replica_routes, "find_peer", lambda m: SimpleNamespace(peer_install_id=m, label=m, key=m))
+    world.mp.setattr(project_replica_routes, "find_peer", lambda m, **_k: SimpleNamespace(peer_install_id=m, label=m, key=m))
     world.mp.setattr(project_replica_routes, "call_peer", fake_call)
     await wipe._ask("iid-new", {"dry_run": True})
     await wipe._ask("iid-new", {"dry_run": False})
@@ -257,12 +257,12 @@ async def test_two_offs_for_one_project_run_one_after_the_other(world):
 async def test_keep_by_label_is_this_computer_only_when_no_paired_computer_has_it(world, monkeypatch):
     found = {"install_id": ME, "label": "mini"}
     assert await routes._keeper(found, None) is None and await routes._keeper(found, ME) is None
-    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m: (_ for _ in ()).throw(HTTPException(404, {"code": "unknown_machine"})))
+    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m, **_k: (_ for _ in ()).throw(HTTPException(404, {"code": "unknown_machine"})))
     assert await routes._keeper(found, "MINI") is None
     with pytest.raises(HTTPException):
         await routes._keeper(found, "ghost")
     found["replicas"] = []
-    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m: SimpleNamespace(peer_install_id="iid-x", label="Mini", key="k"))
+    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m, **_k: SimpleNamespace(peer_install_id="iid-x", label="Mini", key="k"))
     with pytest.raises(HTTPException):
         await routes._keeper(found, "mini")
 
@@ -281,7 +281,7 @@ async def test_keep_skips_the_keeper_and_answers_handoff(world, monkeypatch):
     peers = [rule.MachineInput(i, l, {"restrictions": {}}, True, False, False, True, None) for i, l in
              [("iid-new", "studio"), ("iid-old", "tower"), ("iid-hand", "odin")]]
     monkeypatch.setattr(place, "live_view", lambda root, uid: place.PlaceView(rule.MachineInput(ME, "mini", {}, True, True, True, True, None), peers))
-    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m: SimpleNamespace(peer_install_id={"studio": "iid-new"}.get(m, "iid-zzz"),
+    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m, **_k: SimpleNamespace(peer_install_id={"studio": "iid-new"}.get(m, "iid-zzz"),
                                                                                        label=m, key=m))
     r = await _off(delete_copies=True, keep="studio")
     assert r.status_code == 200 and r.json()["handoff"] == {"machine": "iid-new", "label": "studio"}
@@ -292,7 +292,7 @@ async def test_keep_skips_the_keeper_and_answers_handoff(world, monkeypatch):
 @pytest.mark.asyncio
 async def test_bad_keep_is_409_and_the_mark_stays_on(world, monkeypatch):
     calls = {"peer": "iid-zzz", "usable": True, "snap": {"restrictions": {}}}
-    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m: (_ for _ in ()).throw(HTTPException(404, {"code": "unknown_machine"}))
+    monkeypatch.setattr(project_replica_routes, "find_peer", lambda m, **_k: (_ for _ in ()).throw(HTTPException(404, {"code": "unknown_machine"}))
                         if m == "ghost" else SimpleNamespace(peer_install_id=calls["peer"], label=m, key=m))
 
     def view(root: str, uid: str) -> Any:

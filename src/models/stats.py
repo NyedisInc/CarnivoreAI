@@ -43,7 +43,7 @@ class StrictModel(BaseModel):
 class StatsFilters(StrictModel):
     host: str | None = Field(None, max_length=128)
     hosts: list[str] | None = Field(None, min_length=1, max_length=64)
-    provider: Literal["claude", "codex"] | None = None
+    provider: Literal["claude", "codex", "antigravity"] | None = None
     project: str | None = Field(None, max_length=512)
     model: str | None = Field(None, max_length=128)
     agent_kind: str | None = Field(None, max_length=64)

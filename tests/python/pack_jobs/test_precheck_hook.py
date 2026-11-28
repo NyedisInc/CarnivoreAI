@@ -13,6 +13,7 @@ from src.core.pack.jobs import launch_line, precheck, precheck_hook, precheck_le
 from src.core.pack.jobs.store import JobStore
 from src.core.pack.jobs.types import PlaceAnswer
 from src.core.pack.reserve import pressure
+from src.core.pack.jobs import metrics as _metrics
 
 HOOK = str(launch_line.HOOK_SCRIPT)
 
@@ -59,7 +60,7 @@ def test_hook_blocks_remote_lets_exempt_unmarked_and_down_through():
         reason = out["hookSpecificOutput"]["permissionDecisionReason"]
         assert reason.startswith("/// this computer is full") and "\x1b" not in reason
         assert out["systemMessage"].startswith("\x1b[31m///\x1b[0m this computer is full") and out["systemMessage"].count("\x1b") == 2
-        assert "again" not in blocked.stdout and "python" not in blocked.stdout
+        assert "tower has room" in reason and "exact command" in reason and "do not retry it first" in reason and "python" not in blocked.stdout
         path, auth, session, body = _Route.seen[0]
         assert (path, auth, session, body) == ("/api/v1/pack/jobs/precheck", "Bearer tok", "ses_1", {"command": "pytest -q", "folder": "/work/app", "tool_use_id": "", "background": False, "timeout_ms": None})
         _Route.seen.clear()
@@ -94,6 +95,14 @@ class _Engine:
     def _view_for(self, root, uid):
         return None
 
+    @staticmethod
+    def _agent_view(view):
+        return view
+
+    @staticmethod
+    def _setup_needs(uid, folder, root, pol):
+        return []
+
 
 def _marked(monkeypatch, decision="remote"):
     monkeypatch.setattr(precheck.policy_mod, "get", lambda store, uid: type("P", (), {"auto_delegate": True})())
@@ -108,15 +117,16 @@ def test_light_commands_always_run_and_heavy_by_program_or_expectation_block(mon
     for heavy in ("cd web && npm run build", "pytest -q", "cargo test", "node scripts/build-all.mjs"):
         assert precheck.decide(eng, "s", heavy, "/w", memory=mem).decision == "block"
     assert precheck.decide(eng, "s", "./run.sh", "/w", background=True, memory=mem).decision == "block"
-    assert precheck.decide(eng, "s", "./run.sh", "/w", timeout_ms=600000, memory=mem).decision == "block"
+    assert precheck.decide(eng, "s", "./run.sh", "/w", timeout_ms=600000, memory=mem).decision == "run"
+    mem = precheck.Memory()
     assert precheck.decide(eng, "s", "./run.sh", "/w", timeout_ms=120000, memory=mem).decision == "run"
     assert precheck.decide(eng, "s", "timeout 300 ./run.sh", "/w", memory=mem).decision == "block"
-    assert precheck.decide(eng, "s", "gtimeout 10m ./run.sh", "/w", memory=mem).decision == "block"
+    assert precheck.decide(eng, "s", "gtimeout 10m ./run.sh", "/w", memory=precheck.Memory()).decision == "block"
     assert precheck.decide(eng, "s", "gtimeout 90 ./run.sh", "/w", memory=mem).decision == "run"
     assert precheck.decide(eng, "s", "pytest -q", "/elsewhere/scratch", memory=mem).decision == "run"
     mem.note_here("s")
     assert precheck.decide(eng, "s", "pytest -q", "/w", memory=mem).decision == "run"
-    assert precheck.decide(eng, "t", "pytest -q", "/w", memory=mem).decision == "block" and "again" not in precheck_hook.message("x")[0]
+    assert precheck.decide(eng, "t", "pytest -q", "/w", memory=mem).decision == "block"
 
 
 def test_heavy_with_nowhere_to_send_it_runs_here(monkeypatch, tmp_path):
@@ -135,11 +145,14 @@ def test_a_slow_run_makes_its_shape_heavy_next_time_and_the_table_is_bounded(mon
     assert precheck.decide(eng, "s", "./deploy.sh 1", "/w", tool_use_id="t1", memory=mem).decision == "run"
     now[0] = 75.0
     precheck.finished(eng, "s", "t1", memory=mem)
-    assert precheck.decide(eng, "s", "./deploy.sh 2", "/w", tool_use_id="t2", memory=mem).decision == "block"
-    assert precheck.decide(eng, "other", "./deploy.sh 2", "/other", memory=mem).decision == "run"
+    assert precheck.decide(eng, "s", "./deploy.sh 2", "/w", tool_use_id="t2", memory=mem).decision == "run"
+    now[0] = 155.0
+    precheck.finished(eng, "s", "t2", memory=mem)
+    assert precheck.decide(eng, "s", "./deploy.sh 3", "/w", tool_use_id="t3", memory=mem).decision == "block"
+    assert precheck.decide(eng, "other", "./deploy.sh 3", "/other", memory=mem).decision == "run"
     precheck.finished(eng, "s", "never-started", memory=mem)
     with store._borrow() as conn:
-        assert [r[0] for r in conn.execute("SELECT shape FROM command_runs")] == ["deploy.sh N"]
+        assert [r[0] for r in conn.execute("SELECT shape FROM command_runs")] == ["deploy.sh N", "deploy.sh N"]
         for i in range(30):
             precheck_learn.record(store, "u", "deploy.sh N", 1.0, now=1000.0 + i)
         assert conn.execute("SELECT COUNT(*) FROM command_runs").fetchone()[0] == precheck_learn.LAST_RUNS
@@ -217,3 +230,68 @@ def test_agent_check_blocks_only_a_marked_project_over_reserve_and_never_leaves_
 
     monkeypatch.setattr(precheck.policy_mod, "get", boom)
     assert precheck.decide_agent(eng, "t", "/w", memory=precheck.Memory()).decision == "run"
+
+
+def test_remote_work_and_wait_loops_are_exempt_and_a_loop_around_heavy_work_is_not():
+    for exempt in ("ssh host-b pytest -q", "scp a host-b:/b", "rsync -a x host-b:y", "until ssh host-b test -f /tmp/done; do sleep 30; done",
+                   "while true; do sleep 5; done", "for i in 1 2 3; do ssh host-b ls; done", "if [ -f x ]; then echo hi; fi", "echo $(ssh host-b hostname)"):
+        assert precheck_hook.is_exempt(exempt), exempt
+    for heavy in ("until pytest -q; do sleep 1; done", "echo $(npm run build)", "for i in 1 2; do make; done"):
+        assert not precheck_hook.is_exempt(heavy), heavy
+    assert precheck_learn.shape("until ssh host-b true; do sleep 30; done") is None
+
+
+def test_one_verdict_sizes_as_the_delegate_tool_and_reads_the_real_holds_without_taking_one(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake(work, uid, pol, view, **kw):
+        seen.update(work=work, holds=kw["holds"])
+        return PlaceAnswer("here", None, None, "room")
+
+    monkeypatch.setattr(precheck.policy_mod, "get", lambda store, uid: type("P", (), {"auto_delegate": True})())
+    monkeypatch.setattr(precheck.place, "place", fake)
+    precheck.decide(_Engine(JobStore(tmp_path)), "s", "pytest -q", "/w", memory=precheck.Memory())
+    assert (seen["work"].kind, seen["work"].est_cpu_cores, seen["work"].est_ram_gb) == ("suite", 3.0, 2.0)
+    assert seen["holds"].try_hold("k", "o", 1, 1, 60, lambda c, r: True) is False and seen["holds"].total() == precheck.HOLDS.total()
+    precheck.decide_agent(_Engine(JobStore(tmp_path)), "s", "/w", memory=precheck.Memory())
+    assert (seen["work"].kind, seen["work"].est_cpu_cores, seen["work"].est_ram_gb) == ("agent", 1.0, 1.5)
+
+
+def test_never_twice_counts_the_give_way_and_a_delegate_call_or_other_shape_resets(monkeypatch, tmp_path):
+    _marked(monkeypatch)
+    store = JobStore(tmp_path)
+    eng, now = _Engine(store), [0.0]
+    mem = precheck.Memory(clock=lambda: now[0])
+    assert precheck.decide(eng, "s", "pytest -q", "/w", memory=mem).decision == "block"
+    assert precheck.decide(eng, "s", "pytest -q", "/w", memory=mem).decision == "run"
+    assert precheck.decide(eng, "s", "pytest -q", "/w", memory=mem).decision == "run"
+    assert precheck.decide(eng, "s", "npm run build", "/w", memory=mem).decision == "block"
+    mem.note_delegated("s")
+    assert precheck.decide(eng, "s", "npm run build", "/w", memory=mem).decision == "block"
+    assert precheck.decide_agent(eng, "s", "/w", memory=mem).decision == "block" and precheck.decide_agent(eng, "s", "/w", memory=mem).decision == "run"
+    with store._borrow() as conn:
+        assert [r[0] for r in conn.execute("SELECT shape FROM guard_giveways ORDER BY id")] == ["pytest -q", "agent"]
+        assert conn.execute("SELECT COUNT(*) FROM guard_giveways").fetchone()[0] == 2
+    now[0] = 700.0
+    assert precheck.decide(eng, "s", "pytest -q", "/w", memory=mem).decision == "block"
+    assert _metrics.guard(store, now=1000.0)["gave_way"] == 2
+    mem.note_here("s")
+    now[0] = 1200.0
+    assert precheck.decide(eng, "s", "make", "/w", memory=mem).decision == "run"
+    now[0] = 1301.0
+    assert precheck.decide(eng, "s", "make", "/w", memory=mem).decision == "block"
+
+
+def test_a_slow_run_older_than_a_day_no_longer_flags_its_shape_and_the_old_flags_are_wiped(tmp_path):
+    store = JobStore(tmp_path)
+    precheck_learn.record(store, "u", "deploy.sh N", 90.0, now=1000.0)
+    precheck_learn.record(store, "u", "deploy.sh N", 85.0, now=1010.0)
+    assert precheck_learn.learned_heavy(store, "u", "deploy.sh N", now=1000.0 + 3600)
+    assert not precheck_learn.learned_heavy(store, "u", "deploy.sh N", now=1000.0 + 25 * 3600)
+    with store._tx() as conn:
+        conn.execute("DELETE FROM schema_marks")
+        conn.execute("INSERT INTO command_runs (project_uid, shape, seconds, at) VALUES ('u','a',70,1),('u','b',5,1)")
+        from src.core.pack.jobs import ddl
+        ddl.migrate(conn)
+        ddl.migrate(conn)
+        assert [r[0] for r in conn.execute("SELECT shape FROM command_runs WHERE shape IN ('a','b')")] == ["b"]

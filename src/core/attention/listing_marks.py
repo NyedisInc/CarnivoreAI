@@ -26,6 +26,7 @@ def marks_stamp(evidence: Any) -> tuple:
         _fields(skills, "state", "fired", "last_skill", "last_at"),
         (getattr(parked, "is_live", False), (getattr(parked, "entries", None) or (None,))[0]),
         standing_background_claims(evidence), getattr(evidence, "background_open", None),
+        _fields(getattr(evidence, "background_process", None), "state", "count"),
         workflow_active(evidence),
         getattr(getattr(evidence, "transcript", None), "mcp_events", ()),
         (hold.reasons, hold.text) if hold else None, update,

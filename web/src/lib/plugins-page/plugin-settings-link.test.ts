@@ -3,8 +3,7 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 import PluginsScreen from './PluginsScreen.svelte';
 import { toCplugItem, type CplugRow } from './cplugs-adapter';
-import { EXTRA_SETTINGS_PLUGINS, hasPluginSettings, pluginLinkOf, pluginSettingsHash } from './plugin-settings-link';
-import { PLUGIN_SETTINGS_EXTRAS } from './plugin-extras';
+import { hasPluginSettings, pluginLinkOf, pluginSettingsHash } from './plugin-settings-link';
 import '../plugins/builtin';
 import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 import type { ManagerAdapter } from '../manager-frame/types';
@@ -14,7 +13,7 @@ const FIELDS = { showTab: { kind: 'boolean' as const, labelKey: 'cplug.flow.sett
 const rows: CplugRow[] = [
     { id: 'flow', enabled: true, state: 'active', revision: 1, settings: { showTab: false }, settings_schema: { version: 1, fields: FIELDS } },
     { id: 'unread', enabled: true, state: 'active', revision: 1, settings: {}, settings_schema: { version: 1, fields: {} } },
-    { id: 'huddle', enabled: true, state: 'active', revision: 1, settings: { showTab: true }, settings_schema: { version: 1, fields: FIELDS } },
+    { id: 'taskmanager', enabled: true, state: 'active', revision: 1, settings: { showTab: true }, settings_schema: { version: 1, fields: FIELDS }, surfaces: { plugins: ['settings-panel'] } },
 ];
 const adapter = { list: async () => rows.map((row) => toCplugItem(row, t)) } as unknown as ManagerAdapter;
 
@@ -45,8 +44,8 @@ describe('the settings rule', () => {
         expect(pluginSettingsHash('flow')).toBe('#plugins/flow/settings');
         expect(pluginLinkOf('#plugins/flow/settings')).toEqual({ cplugId: 'flow', settings: true });
         expect(pluginLinkOf('#plugins/flow')).toEqual({ cplugId: 'flow', settings: false });
-        expect(pluginLinkOf('#swarm-settings')).toEqual({ cplugId: 'huddle', settings: true });
-        expect(pluginLinkOf('#interactive-todo')).toEqual({ cplugId: 'huddle', settings: true });
+        expect(pluginLinkOf('#swarm-settings')).toEqual({ cplugId: 'taskmanager', settings: true });
+        expect(pluginLinkOf('#interactive-todo')).toEqual({ cplugId: 'taskmanager', settings: true });
         expect(pluginLinkOf('#plugins')).toBeNull();
         expect(pluginLinkOf('#settings/plugins')).toBeNull();
     });
@@ -56,7 +55,7 @@ describe('the plugin card gear', () => {
     test('only a plugin with settings carries the gear', async () => {
         await draw();
         expect(document.querySelector('[data-plugin-settings-open="flow"]')).not.toBeNull();
-        expect(document.querySelector('[data-plugin-settings-open="huddle"]')).not.toBeNull();
+        expect(document.querySelector('[data-plugin-settings-open="taskmanager"]')).not.toBeNull();
         expect(document.querySelector('[data-plugin-settings-open="unread"]')).toBeNull();
         expect(document.querySelector('[data-item-id="cplug:unread"]')).not.toBeNull();
     });
@@ -93,9 +92,9 @@ describe('the deep link', () => {
         expect(document.querySelector('[data-plugin-settings]')?.id).toBe('plugin-settings-flow');
     });
 
-    test('#swarm-settings opens huddle\'s pane, with the swarm block inside the same section', async () => {
+    test('#swarm-settings opens the Task Manager\'s pane, with the swarm block inside the same section', async () => {
         await draw('#swarm-settings');
-        const section = document.querySelector('#plugin-settings-huddle');
+        const section = document.querySelector('#plugin-settings-taskmanager');
         expect(section).not.toBeNull();
         expect(section?.querySelector('[data-huddle-swarm-settings]')).not.toBeNull();
         expect(document.querySelector('#plugin-settings-flow')).toBeNull();
@@ -108,12 +107,22 @@ describe('the deep link', () => {
 });
 
 describe('the panels that moved out of Settings', () => {
-    const bare = (id: string): CplugRow => ({ id, enabled: true, state: 'active', revision: 1, settings: {}, settings_schema: { version: 1, fields: {} } });
+    const bare = (id: string, plugins: readonly string[] = []): CplugRow => ({
+        id,
+        enabled: true,
+        state: 'active',
+        revision: 1,
+        settings: {},
+        settings_schema: { version: 1, fields: {} },
+        ...(plugins.length > 0 ? { surfaces: { plugins } } : {}),
+    });
 
-    test('the gear rule and the extras map name the same plugins', () => {
-        expect([...EXTRA_SETTINGS_PLUGINS].sort()).toEqual([...Object.keys(PLUGIN_SETTINGS_EXTRAS), 'argent', 'crate', 'save'].sort());
-        for (const id of ['save']) expect(hasPluginSettings(toCplugItem(bare(id), t)), id).toBe(true);
+    test('any plugin declaring settings-panel in surfaces.plugins has settings', () => {
+        for (const id of ['argent', 'crate', 'taskmanager', 'save']) {
+            expect(hasPluginSettings(toCplugItem(bare(id, ['settings-panel']), t)), id).toBe(true);
+        }
         expect(hasPluginSettings(toCplugItem(bare('unread'), t))).toBe(false);
+        expect(hasPluginSettings(toCplugItem({ ...bare('save', ['settings-panel']), state: 'removed' }, t))).toBe(false);
     });
 
     test('conversation backups draw their panel inside the settings section', async () => {
@@ -122,7 +131,7 @@ describe('the panels that moved out of Settings', () => {
         try {
             const blocks: Array<[string, string]> = [['save', 'data-save-settings']];
             for (const [id, marker] of blocks) {
-                rows.splice(0, rows.length, bare(id));
+                rows.splice(0, rows.length, bare(id, ['settings-panel']));
                 await draw(`#plugins/${id}/settings`);
                 expect(document.querySelector(`#plugin-settings-${id} [${marker}]`), id).not.toBeNull();
                 expect(document.querySelector(`[data-plugin-settings-open="${id}"]`), id).not.toBeNull();
@@ -140,7 +149,7 @@ describe('the panels that moved out of Settings', () => {
         vi.stubGlobal('fetch', vi.fn(async () => new Response('{}', { status: 500 })));
         cplugEnablement.enabled = { save: false };
         try {
-            rows.splice(0, rows.length, bare('save'));
+            rows.splice(0, rows.length, bare('save', ['settings-panel']));
             await draw('#plugins/save/settings');
             expect(document.querySelector('[data-save-settings]')).toBeNull();
         } finally {

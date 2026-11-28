@@ -13,7 +13,7 @@ vi.mock('../../opscenter/api/events.svelte', () => ({
 }));
 
 import SkillsScreen from './SkillsScreen.svelte';
-import { fakeServer } from './skills-fixtures';
+import { fakeServer, fixtureInventory } from './skills-fixtures';
 import { createI18n } from '../../../../client/js/i18n/runtime.js';
 import type { Translate } from '../sessions/types';
 
@@ -250,6 +250,24 @@ describe('live refresh and words', () => {
         await settle();
         expect(reads()).toBe(before + 1);
         expect(root.querySelectorAll('[data-item-id]').length).toBe(5);
+    });
+
+    test('the store is asked for the ratings of a store skill and never of a bundled one', async () => {
+        const inventory = fixtureInventory();
+        for (const group of inventory.skills) for (const l of group.locations) if (l.managed) l.managed.item_id = 'harbor/rated-once';
+        const base = fakeServer(inventory);
+        const fetcher = (async (path: string, init?: RequestInit) =>
+            path === '/catalog/required-skills'
+                ? { items: [{ item_id: 'carnivore/huddle', required: true, state: 'available', install_id: null, local_edits: null }] }
+                : base.fetcher(path, init)) as typeof base.fetcher;
+        const itemRatings = vi.fn(async () => ({ ok: false }) as never);
+        const target = document.createElement('div');
+        document.body.append(target);
+        mounted = mount(SkillsScreen, { target, props: { embedded: true, fetcher, t, catalogHost: { itemRatings } } });
+        await settle();
+        const asked = itemRatings.mock.calls.map((c) => (c as unknown[])[0]);
+        expect(asked).toContain('harbor/rated-once');
+        expect(asked).not.toContain('carnivore/huddle');
     });
 
     test('no visible string is a bare catalog key', async () => {

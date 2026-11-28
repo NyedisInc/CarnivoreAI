@@ -27,7 +27,7 @@ SPECS = [s for m in tools._ROUTE_MODULES for s in getattr(m, "SPECS", ())]
 
 
 def _info(name: str) -> SimpleNamespace:
-    return SimpleNamespace(tmux_session=name, host_key="local", session_row_id=9, label=None, host_label="here",
+    return SimpleNamespace(claude_title=None, tmux_session=name, host_key="local", session_row_id=9, label=None, host_label="here",
                            session=SimpleNamespace(id=f"ses_{name}", working_dir="/w", tmux_created_epoch=1))
 
 
@@ -57,6 +57,16 @@ def world(monkeypatch):
     arm_beast(monkeypatch, lambda: False)
     monkeypatch.setattr(directory, "_asleep_rows", lambda: [{"id": 5, "session_uuid": ASLEEP, "tmux_name": "cloude_nap"}])
     monkeypatch.setattr(session_target, "_session_uuid_of_row", lambda row_id: LIVE_UUID)
+    from src.core.mcp import group_tools, project_tools
+
+    async def project_name(project_id, *, include_archived=False):
+        return "demo"
+
+    async def groups(route_call=None):
+        return [SimpleNamespace(group_uuid="g", name="g")]
+
+    monkeypatch.setattr(project_tools, "_current_name", project_name)
+    monkeypatch.setattr(group_tools, "_groups", groups)
     calls: list = []
     for spec in SPECS:
         module, name = spec.route.split(":")

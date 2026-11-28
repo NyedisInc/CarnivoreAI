@@ -66,8 +66,8 @@ def measure_in_root(
         found, unreadable = _scan_children(children, filename, root)
         if found is not None:
             return ConversationPresence(CONVERSATION_PRESENT, path=found)
-        if not (unreadable and from_cache):
+        if not (unreadable is not None and from_cache):
             break
         _forget_root_listing(root)
 
-    return ConversationPresence(CONVERSATION_ABSENT, detail=f"not under {root}", unreadable=unreadable)
+    return ConversationPresence(CONVERSATION_ABSENT, detail=f"not under {root}", unreadable=unreadable is not None, unreadable_folder=unreadable)

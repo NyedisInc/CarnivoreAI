@@ -127,6 +127,7 @@ TABLE: Tuple[Rule, ...] = (
     _f("GET", "/sessions/{session_id}/toasts", _SID),
     _f("POST", "/sessions/{session_id}/toasts", _SID),
     _f("POST", "/toasts/{toast_id}/ack", ("query", "session_id", NAME)),
+    _s("POST", "/sessions/hydrate"),
     _s("GET", "/sessions/{session_id}/size-master"),
     _s("PUT", "/sessions/{session_id}/size-master"),
     _s("DELETE", "/sessions/{session_id}/size-master"),
@@ -158,12 +159,15 @@ TABLE: Tuple[Rule, ...] = (
     _r("GET", "/sessions/{session}/timeline/threads", "the timeline reads the owning computer's own cold index and transcript files"),
     _l("POST", "/sessions/auto"),
     _r("POST", "/sessions/{session_uuid}/move-folder", "moves the owning computer's working folder on its own disk; the owner stays the only owner, so move it on that computer"),
+    _r("GET", "/cplugs/save/offload/sessions/{session_uuid}", _OWNER_DISK),
+    _r("POST", "/cplugs/save/offload/sessions/{session_uuid}", _OWNER_DISK),
+    _r("POST", "/cplugs/save/offload/sessions/{session_uuid}/restore", _OWNER_DISK),
     _r("GET", "/cplugs/save/sessions/{session_uuid}/points", _OWNER_DISK),
     _r("POST", "/cplugs/save/sessions/{session_uuid}/points/{point_id}/pin", _OWNER_DISK),
     _r("DELETE", "/cplugs/save/sessions/{session_uuid}/points/{point_id}", _OWNER_DISK),
     _r("POST", "/cplugs/save/sessions/{session_uuid}/points/{point_id}/restore", "a restore writes files back onto the owning computer's own disk; restore on that computer"),
     *(_l(m, p) for m, p in (
-        ("GET", "/cplugs/huddle/lists/{key}/sessions"),
+        ("GET", "/cplugs/huddle/lists/{key}/sessions"), ("GET", "/cplugs/taskmanager/lists/{key}/sessions"),
         ("GET", "/sessions/list"), ("GET", "/sessions/recent"), ("GET", "/sessions/records"),
         ("GET", "/sessions/asleep"), ("GET", "/sessions/list-and-asleep"), ("GET", "/sessions/companions"), ("GET", "/sessions/attachable"), ("GET", "/sessions/attention"),
         ("GET", "/sessions/background"), ("GET", "/sessions/import-status"), ("GET", "/sessions/logs"),
@@ -190,6 +194,8 @@ TABLE: Tuple[Rule, ...] = (
         ("PATCH", "/sessions/records/{session_uuid}/description"), ("GET", "/sessions/roster"),
         ("GET", "/cplugs/huddle/sessions/{session_uuid}/prefs"), ("PUT", "/cplugs/huddle/sessions/{session_uuid}/prefs"),
         ("PUT", "/cplugs/huddle/sessions/{session_uuid}/dnd"),
+        ("GET", "/cplugs/taskmanager/sessions/{session_uuid}/prefs"), ("PUT", "/cplugs/taskmanager/sessions/{session_uuid}/prefs"),
+        ("PUT", "/cplugs/taskmanager/sessions/{session_uuid}/dnd"),
         ("GET", "/catalog/account/sessions"), ("DELETE", "/catalog/account/sessions/{sid}"),
         ("POST", "/catalog/account/sessions/revoke-others"),
         ("POST", "/native-devices"), ("GET", "/native-devices"), ("DELETE", "/native-devices/{row_id}"))),
@@ -230,7 +236,7 @@ def could_name_a_peer_session(value: Optional[str]) -> bool:
 
 def _peer_by_key(conn: sqlite3.Connection, key: str) -> Optional[peer_hosts.PeerRow]:
     row = conn.execute("SELECT peer_install_id FROM hosts WHERE key = ? AND kind = 'peer'", (key,)).fetchone()
-    return peer_hosts.get(conn, row[0]) if row else None
+    return peer_hosts.get(conn, row[0], include_mesh=True) if row else None
 
 
 def resolve(conn: sqlite3.Connection, value: Optional[str]) -> Optional[Target]:

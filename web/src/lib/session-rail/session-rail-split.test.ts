@@ -31,7 +31,7 @@ const rail = (edge: RailEdge): HTMLElement => document.getElementById(RAIL_SPECS
 const hairline = (edge: RailEdge): HTMLElement | null => rail(edge).querySelector<HTMLElement>('[data-rail-split]');
 const panel = (): HTMLElement | null => document.querySelector<HTMLElement>('[data-rail-slideout]');
 const shownWidgets = (): string[] => [...document.querySelectorAll<HTMLElement>('[data-rail-out-section]')].map((s) => s.dataset['railOutWidget']!);
-const divider = (): HTMLElement => document.querySelector<HTMLElement>('[data-split-divider]')!;
+const divider = (): HTMLElement => document.querySelector<HTMLElement>('[data-rail-slideout] [data-split-divider]')!;
 
 beforeEach(() => { mountRails(); follow(BOTTOM_FIELD, { v: 1, items: [] }); });
 afterEach(() => unmountRails());
@@ -53,7 +53,7 @@ function hold(edge: RailEdge, id: string, from: [number, number], to: [number, n
 describe('splitting in place', () => {
 
   test('an area narrower than twice the minimum share offers no preview', () => {
-    follow(RAIL_FIELD, { v: 2, ratio: 0.85, sections: [items('core.files', 'core.notes'), items('core.changes', 'core.task-manager')] });
+    follow(RAIL_FIELD, { v: 2, ratio: 0.85, sections: [items('core.files', 'core.notes'), items('core.changes', 'core.task-manager-mk2')] });
     layoutEditor.active = true;
     flushSync();
     layOutRails();
@@ -119,7 +119,7 @@ describe('the closed rail', () => {
 
 describe('opening a split rail', () => {
   test('the clicked widget in its section, the other section first widget, then its last-used one', () => {
-    follow(RAIL_FIELD, split(0.5, ['core.changes', 'core.notes'], ['core.files', 'core.task-manager']));
+    follow(RAIL_FIELD, split(0.5, ['core.changes', 'core.notes'], ['core.files', 'core.task-manager-mk2']));
     keyIn('side', 'core.files').click();
     flushSync();
     expect(shownWidgets()).toEqual(['core.changes', 'core.files']);
@@ -129,22 +129,22 @@ describe('opening a split rail', () => {
     railSlideout.close();
     flushSync();
     expect(railSlideout.shown('side')).toEqual([]);
-    keyIn('side', 'core.task-manager').click();
+    keyIn('side', 'core.task-manager-mk2').click();
     flushSync();
-    expect(shownWidgets()).toEqual(['core.notes', 'core.task-manager']);
-    expect(JSON.parse(localStorage.getItem(lastUsedKey('side'))!)).toEqual(['core.notes', 'core.task-manager']);
+    expect(shownWidgets()).toEqual(['core.notes', 'core.task-manager-mk2']);
+    expect(JSON.parse(localStorage.getItem(lastUsedKey('side'))!)).toEqual(['core.notes', 'core.task-manager-mk2']);
   });
 
   test('open, another key swaps only its own section and the other stays', () => {
-    follow(RAIL_FIELD, split(0.5, ['core.changes', 'core.notes'], ['core.files', 'core.task-manager']));
+    follow(RAIL_FIELD, split(0.5, ['core.changes', 'core.notes'], ['core.files', 'core.task-manager-mk2']));
     keyIn('side', 'core.changes').click();
     flushSync();
     expect(shownWidgets()).toEqual(['core.changes', 'core.files']);
-    keyIn('side', 'core.task-manager').click();
+    keyIn('side', 'core.task-manager-mk2').click();
     flushSync();
-    expect(shownWidgets()).toEqual(['core.changes', 'core.task-manager']);
+    expect(shownWidgets()).toEqual(['core.changes', 'core.task-manager-mk2']);
     expect(keyIn('side', 'core.changes').getAttribute('aria-expanded')).toBe('true');
-    expect(keyIn('side', 'core.task-manager').getAttribute('aria-expanded')).toBe('true');
+    expect(keyIn('side', 'core.task-manager-mk2').getAttribute('aria-expanded')).toBe('true');
     expect(keyIn('side', 'core.files').getAttribute('aria-expanded')).toBe('false');
   });
 
@@ -214,19 +214,19 @@ describe('the divider', () => {
 
 describe('the old flat value', () => {
   test('a stored v1 list draws as one section with every widget, and the first edit saves the v2 shape', () => {
-    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.notes' }, { widget: 'core.files' }, { widget: 'core.task-manager' }] });
-    expect(sectionKeysIn('side')).toEqual([['core.notes', 'core.files', 'core.task-manager']]);
+    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.notes' }, { widget: 'core.files' }, { widget: 'core.task-manager-mk2' }] });
+    expect(sectionKeysIn('side')).toEqual([['core.notes', 'core.files', 'core.task-manager-mk2']]);
     expect(hairline('side')).toBeNull();
     expect(written).toEqual([]);
     layoutEditor.active = true;
     flushSync();
-    keyIn('side', 'core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    keyIn('side', 'core.task-manager-mk2').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
     flushSync();
     expect(written).toEqual([]);
-    keyIn('side', 'core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    keyIn('side', 'core.task-manager-mk2').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     flushSync();
     expect(written).toHaveLength(1);
-    expect(written.at(-1)).toEqual({ field: RAIL_FIELD, value: { v: 2, sections: [items('core.notes', 'core.task-manager', 'core.files')] } });
+    expect(written.at(-1)).toEqual({ field: RAIL_FIELD, value: { v: 2, sections: [items('core.notes', 'core.task-manager-mk2', 'core.files')] } });
   });
 });
 

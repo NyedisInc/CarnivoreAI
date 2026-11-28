@@ -9,6 +9,7 @@ from typing import Any, Hashable, Optional, Tuple
 import structlog
 
 from src.api.attach_settle import NO_RESIZE_ATTEMPTED, ResizeOutcome, read_pane_geometry
+from src.core.attention import viewer_focus
 from src.core.terminal_size import TerminalSizeNegotiator
 from src.models import WSMessageType
 
@@ -132,8 +133,12 @@ async def broadcast_size(
     await connection_manager.broadcast_to_session(session_id, message)
 
 
-async def measured_size_frame(backend: Any) -> Optional[str]:
-    grid = await read_pane_geometry(backend)
+async def measured_size_frame(
+    backend: Any,
+    *,
+    known_grid: Optional[Tuple[int, int]] = None,
+) -> Optional[str]:
+    grid = known_grid if known_grid is not None else await read_pane_geometry(backend)
     if grid is None:
         return None
     return json.dumps({
@@ -198,6 +203,7 @@ async def release_client_resize(
     if not session_id:
         return
     negotiator = get_negotiator(session_manager)
+    viewer_focus.get_tracker(session_manager).forget(session_id, client_key)
     effective = negotiator.remove_client(session_id, client_key)
     if effective is None:
         await broadcast_size(session_id, negotiator, connection_manager, departed=True)

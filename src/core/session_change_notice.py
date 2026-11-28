@@ -1,7 +1,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import structlog
 
@@ -10,6 +10,30 @@ from src.core.read_caches.ttl_flight import invalidate_all
 from src.models import WSMessageType
 
 logger = structlog.get_logger()
+
+STATUS_NOTICE_KEYS: Tuple[str, ...] = ("session_id", "tmux_session", "activity_status", "unread", "startup_gate")
+
+_FRAME_LISTENERS: List[Callable[[Dict[str, Any]], None]] = []
+
+
+def add_frame_listener(listener: Callable[[Dict[str, Any]], None]) -> None:
+    if listener not in _FRAME_LISTENERS:
+        _FRAME_LISTENERS.append(listener)
+
+
+def remove_frame_listener(listener: Callable[[Dict[str, Any]], None]) -> None:
+    try:
+        _FRAME_LISTENERS.remove(listener)
+    except ValueError:
+        return
+
+
+def _notify_listeners(frame: Dict[str, Any]) -> None:
+    for listener in list(_FRAME_LISTENERS):
+        try:
+            listener(frame)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("session_change_listener_failed", error_type=type(exc).__name__)
 
 
 def build_status_notice(
@@ -52,6 +76,8 @@ def build_rename_notice(*, session_id: str, new_name: str) -> Dict[str, Any]:
 
 def publish(app_state: Any, frame: Dict[str, Any]) -> int:
     invalidate_all()
+    if _FRAME_LISTENERS:
+        _notify_listeners(frame)
     hub: Optional[EventHub] = get_hub(app_state)
     if hub is None:
         return 0
@@ -67,7 +93,7 @@ def publish_attention_status(
 ) -> int:
     invalidate_all()
     hub = get_hub(app_state)
-    if hub is None or hub.client_count == 0:
+    if (hub is None or hub.client_count == 0) and not _FRAME_LISTENERS:
         return 0
 
     unread: Optional[bool] = None
@@ -101,12 +127,15 @@ def publish_attention_status(
             activity_status, unread=bool(unread)
         )
 
-    return hub.publish(
-        build_status_notice(
-            session_id=session_id,
-            tmux_session=tmux_session,
-            epoch=epoch,
-            activity_status=activity_status,
-            unread=unread,
-        )
+    frame = build_status_notice(
+        session_id=session_id,
+        tmux_session=tmux_session,
+        epoch=epoch,
+        activity_status=activity_status,
+        unread=unread,
     )
+    if _FRAME_LISTENERS:
+        _notify_listeners(frame)
+    if hub is None or hub.client_count == 0:
+        return 0
+    return hub.publish(frame)

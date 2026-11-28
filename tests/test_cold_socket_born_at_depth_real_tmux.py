@@ -36,7 +36,7 @@ pytestmark = pytest.mark.skipif(
     shutil.which("tmux") is None, reason="real tmux binary not available"
 )
 
-COLD_LAUNCH_TMUX_PROCESSES = 9
+COLD_LAUNCH_TMUX_PROCESSES = 10
 
 
 def _tmux(socket: str, *args: str) -> subprocess.CompletedProcess:

@@ -47,7 +47,7 @@ def test_ps_reruns_when_the_pane_pid_set_changes(monkeypatch) -> None:
 
 def test_ps_reruns_when_a_watched_file_changes(monkeypatch, tmp_path) -> None:
     calls = _count_ps(monkeypatch)
-    transcript = tmp_path / "t.jsonl"
+    transcript = tmp_path / "7.json"
     transcript.write_text("a")
     reader = _reader([10])
     reader._paths = {"ses": (str(transcript),)}

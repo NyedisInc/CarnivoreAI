@@ -228,6 +228,7 @@ class Settings(BaseSettings):
             purpose=purpose,
             launch_line=launch_line,
             permission_hook=permission_hook,
+            approved_resume_prefixes=tuple(block.approved_resume_prefixes) if block is not None else (),
         )
 
     def pane_launch_command(

@@ -13,8 +13,9 @@ ACTION_RECEIVE_CREDENTIALS = "receive_credentials"
 ACTION_UPDATE_CARNIVORE = "update_carnivore"
 ACTION_RECEIVE_PROJECTS = "receive_projects"
 ACTION_RECEIVE_GLOBAL_SETUP = "receive_global_setup"
+ACTION_RECEIVE_PACK_UI = "receive_pack_ui"
 
-MANAGED_SCOPES: FrozenSet[str] = frozenset({"machine", "replica", "migrate", "credentials", "refresh", "swarm-proxy", "skills", "global-setup"})
+MANAGED_SCOPES: FrozenSet[str] = frozenset({"machine", "replica", "migrate", "credentials", "refresh", "swarm-proxy", "skills", "global-setup", "pack-ui"})
 
 
 class Restrictions(BaseModel):
@@ -25,6 +26,7 @@ class Restrictions(BaseModel):
     may_install_tools: bool = True
     may_receive_credentials: bool = False
     may_receive_global_setup: bool = False
+    may_receive_pack_ui: bool = True
     may_update_carnivore: bool = True
     may_host_agents: bool = True
     may_receive_projects: bool = True
@@ -33,7 +35,7 @@ class Restrictions(BaseModel):
     allowed_companies: List[str] = Field(default_factory=list, max_length=500)
 
 
-_BOOLS = ("may_install_tools", "may_receive_credentials", "may_receive_global_setup", "may_update_carnivore", "may_host_agents",
+_BOOLS = ("may_install_tools", "may_receive_credentials", "may_receive_global_setup", "may_receive_pack_ui", "may_update_carnivore", "may_host_agents",
           "may_receive_projects")
 
 
@@ -87,7 +89,7 @@ def check(restrictions: Restrictions, action: str, *, project_uid: Optional[str]
             return "allowed_companies"
         return None
     flag = {ACTION_INSTALL_TOOLS: "may_install_tools", ACTION_RECEIVE_CREDENTIALS: "may_receive_credentials",
-            ACTION_RECEIVE_GLOBAL_SETUP: "may_receive_global_setup",
+            ACTION_RECEIVE_GLOBAL_SETUP: "may_receive_global_setup", ACTION_RECEIVE_PACK_UI: "may_receive_pack_ui",
             ACTION_UPDATE_CARNIVORE: "may_update_carnivore", ACTION_RECEIVE_PROJECTS: "may_receive_projects"}.get(action)
     if flag is None:
         return "unknown_action"
@@ -115,6 +117,8 @@ def scopes_for(restrictions: Restrictions, *, tracks_master: bool) -> FrozenSet[
         out.add("credentials")
     if restrictions.may_receive_global_setup:
         out.add("global-setup")
+    if restrictions.may_receive_pack_ui:
+        out.add("pack-ui")
     if restrictions.may_update_carnivore and tracks_master:
         out.add("refresh")
     return frozenset(out)

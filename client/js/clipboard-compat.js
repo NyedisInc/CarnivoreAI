@@ -51,6 +51,7 @@
         return true;
     }
 
+    /* cannot be read */
     function copyViaExecCommand(text) {
         var el = makeCopySource(text);
         var fired = false;

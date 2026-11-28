@@ -41,6 +41,7 @@ export interface ScheduledRow extends Record<string, unknown> {
 export interface ChartInput {
   automations: readonly Automation[];
   projects: Readonly<Record<number, string>>;
+  /* the Task Manager */
   huddle: readonly TaskManagerSchedule[];
 }
 

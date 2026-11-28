@@ -26,6 +26,7 @@ class WSMessageType(str, Enum):
     TERMINAL_SIZE = "terminal_size"
     REPAINT = "repaint"
     PAUSE = "pause"
+    VIEWER_FOCUS = "viewer_focus"
     RESUME = "resume"
     SIZE_MASTER = "size_master"
     EVENTS_HELLO = "events.hello"

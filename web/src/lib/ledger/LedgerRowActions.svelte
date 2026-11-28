@@ -1,4 +1,4 @@
-
+<!-- cannot be read -->
 <script lang="ts">
     import Button from '../base/Button.svelte';
     import type { Translate } from '../sessions/types';

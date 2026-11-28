@@ -141,7 +141,7 @@ def _restored_group_name(a: an.Analysis) -> str:
 
 
 def _notify(project: Dict[str, Any], post: Dict[str, Any]) -> None:
-    topics = [resource_topics.PROJECTS, f"cplug.huddle.list:{project['project_id']}", "cplug.huddle.list:all"]
+    topics = [resource_topics.PROJECTS, f"cplug.taskmanager.list:{project['project_id']}", "cplug.taskmanager.list:all"]
     side = post.get("side") or {}
     if (side.get(rows_side.AUTOMATION_TABLES[0]) or {}).get("inserted"):
         topics.append(resource_topics.AUTOMATIONS)
@@ -332,6 +332,7 @@ def _leftovers(report: undo.UndoReport) -> str:
 
 
 def recover_files(entries: List[Dict[str, Any]], env: ImportEnv, import_id: Optional[str] = None) -> undo.UndoReport:
+    entries = task_files_in.with_renamed_twins(entries, Path(env.state))
     return undo.rollback(entries, [*files_apply.undo_roots(env), *plugin_data_in.undo_roots(entries, env, import_id)])
 
 

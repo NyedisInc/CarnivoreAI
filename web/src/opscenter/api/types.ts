@@ -106,10 +106,18 @@ export interface SessionInfo {
   automations_enabled?: number | null;
   automations_next?: Array<{ name: string; enabled: boolean; next_fire_at: number | null }> | null;
   sleep_hold?: { reasons: string[]; text: string } | null;
+  sleep_verdict?: {
+    code: string;
+    idle_since?: string | null;
+    threshold_minutes?: number | null;
+    reasons?: string[];
+    detail?: string | null;
+  } | null;
   skills_state?: string | null;
   skills_fired?: number | null;
   skill_last?: { name: string; at?: string | null } | null;
   background_open?: number | null;
+  stalled_agents?: number | null;
   account_id?: string | null;
   local_servers?: LocalServerInfo[];
   claude_title?: string | null;
@@ -121,6 +129,12 @@ export interface SessionInfo {
   swarm_color_slot?: number | null;
   project_uid?: string | null;
   company_uid?: string | null;
+  parent_project_uid?: string | null;
+  last_work_at?: string | null;
+  is_swarm?: boolean;
+  swarm_role?: string | null;
+  hop?: number;
+  origin_label?: string | null;
   origin_install_id?: string | null;
   parent_session_id?: number | null;
   agent_update?: AgentUpdateInfo | null;
@@ -156,6 +170,7 @@ export interface SessionRecord {
   working_dir: string | null;
   agent_type: string | null;
   agent_family: string | null;
+  agent_wrapper_icon?: string | null;
   archived_at: string | null;
   created_at: string | null;
   last_work_at: string | null;
@@ -299,7 +314,7 @@ export interface LedgerSnapshot {
 
 export type TokenUsageState = 'ok' | 'absent' | 'unchecked';
 
-export type TokenUsageFamily = 'claude' | 'codex';
+export type TokenUsageFamily = 'claude' | 'codex' | 'agy';
 
 export interface DelegatedUsage {
   jobs: number;

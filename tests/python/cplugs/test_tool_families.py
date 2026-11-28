@@ -40,7 +40,7 @@ def _definition(cplug_id: str, tools: list) -> CplugDefinition:
 
 
 def test_the_family_table_is_the_one_source_of_the_prefix() -> None:
-    assert TOOL_FAMILIES == {"task_manager": ("huddle", "reviewboard", "tmdevtools"), "widget_lab": ("devwidgetlab",)}
+    assert TOOL_FAMILIES == {"task_manager": ("taskmanager", "reviewboard", "tmdevtools"), "widget_lab": ("devwidgetlab",)}
     assert family_prefix("task_manager") == TASK_MANAGER_PREFIX == "task_manager_"
     with pytest.raises(KeyError):
         family_prefix("nothing")
@@ -66,9 +66,9 @@ def test_the_manifest_refuses_a_family_it_was_not_granted(cplug_id: str, tools: 
 
 
 def test_two_plugins_never_declare_one_tool_name() -> None:
-    runtime.check_definitions((_definition("huddle", ["task_manager_a"]), _definition("reviewboard", ["task_manager_b"])))
-    with pytest.raises(runtime.RegistryError, match="already declared by huddle"):
-        runtime.check_definitions((_definition("huddle", [TOOL]), _definition("reviewboard", [TOOL])))
+    runtime.check_definitions((_definition("taskmanager", ["task_manager_a"]), _definition("reviewboard", ["task_manager_b"])))
+    with pytest.raises(runtime.RegistryError, match="already declared by taskmanager"):
+        runtime.check_definitions((_definition("taskmanager", [TOOL]), _definition("reviewboard", [TOOL])))
 
 
 def test_a_remote_body_runs_a_task_manager_tool_at_its_home() -> None:

@@ -65,7 +65,7 @@ describe('splitting and unsplitting', () => {
     expect(ids(placeInLayout(lone, SPLIT, 'core.changes', undefined, 256))).toEqual([['core.changes']]);
     const split = placeInLayout(rail, SPLIT, 'core.notes', undefined, 256);
     expect(canSplitAt(split, 0, null)).toBe(true);
-    expect(ids(placeInLayout(split, SPLIT, 'core.task-manager', undefined, 256))).toEqual([['core.changes', 'core.files'], ['core.task-manager'], ['core.notes']]);
+    expect(ids(placeInLayout(split, SPLIT, 'core.task-manager-mk2', undefined, 256))).toEqual([['core.changes', 'core.files'], ['core.task-manager-mk2'], ['core.notes']]);
   });
 
   test('the last widget leaving a section takes the split away (removed, or moved to the other section)', () => {
@@ -93,11 +93,11 @@ describe('splitting and unsplitting', () => {
 });
 
 describe('what the slide-out shows', () => {
-  const sections = [['core.changes', 'core.notes'], ['core.files', 'core.task-manager']];
+  const sections = [['core.changes', 'core.notes'], ['core.files', 'core.task-manager-mk2']];
 
   test('closed, a key opens with its widget and the other section first widget, then its last-used one', () => {
     expect(pressKey(sections, [], 'core.files', [null, null])).toEqual({ open: ['core.changes', 'core.files'], last: ['core.changes', 'core.files'] });
-    expect(pressKey(sections, [], 'core.task-manager', ['core.notes', null])).toEqual({ open: ['core.notes', 'core.task-manager'], last: ['core.notes', 'core.task-manager'] });
+    expect(pressKey(sections, [], 'core.task-manager-mk2', ['core.notes', null])).toEqual({ open: ['core.notes', 'core.task-manager-mk2'], last: ['core.notes', 'core.task-manager-mk2'] });
   });
 
   test('open, a key swaps only its own section; a press on either shown widget closes', () => {

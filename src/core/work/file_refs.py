@@ -12,11 +12,12 @@ from typing import Any, Callable, Dict, Iterator, List, Mapping, Optional, Seque
 import structlog
 
 from src.core.blobcodec.place import PlaceConflict, PlaceMismatch, write_verified
-from src.plugins.sdk import ports, task_folders
+from src.core.work import folders
+from src.plugins.sdk import ports, renamed_files, task_folders
 
 logger = structlog.get_logger()
 
-FILES_DIR: Tuple[str, ...] = ("cplugs", "huddle", "files")
+FILES_DIR: Tuple[str, ...] = tuple(folders.files_rel(folders.CURRENT_ID).split("/"))
 REL_PREFIX = "files"
 FILE_MODE = 0o600
 DIR_MODE = 0o700
@@ -43,6 +44,7 @@ class FileHome:
     on_create: Optional[OnCreate] = None
     carried_own: bool = False
     local_files: Optional[Path] = None
+    previous_local_files: Optional[Path] = None
     keep_unresolved: bool = False
     dry_run: bool = False
     decide_only: bool = False
@@ -109,6 +111,10 @@ class FileHome:
         if found is None or self.local_files is None:
             return None, "its bytes are not carried"
         source = Path(self.local_files) / found.group(1) / found.group(2)
+        if self.previous_local_files is not None and not task_folders.is_regular_file(source):
+            old = Path(self.previous_local_files) / found.group(1) / found.group(2)
+            if renamed_files.servable(Path(self.local_files), Path(self.previous_local_files), old):
+                source = old
         if not task_folders.FILE_ID_PATTERN.match(file_id) or not source.name.startswith(f"{file_id}-") or ".." in found.group(2).split("/"):
             return None, "its name is not a stored file's"
         return source, (None if task_folders.is_regular_file(source) and task_folders.is_real_dir(source.parent) else "it is not a regular file")

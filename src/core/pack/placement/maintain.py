@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 import structlog
 
 from src.core.db_reuse.kept_read import hot_read
-from src.core.pack.jobs import boot as jobs_boot, metrics as jobs_metrics, miss_count, paths as jobs_paths, place as jobs_place, policy as jobs_policy, runner as jobs_runner
+from src.core.pack.jobs import boot as jobs_boot, host_admit, load_store, metrics as jobs_metrics, miss_count, paths as jobs_paths, place as jobs_place, policy as jobs_policy, runner as jobs_runner
 from src.core.pack.jobs.types import TERMINAL, JobError
 from src.core.pack.load import process_tree
 from src.core.pack.placement import queue as spawn_queue, rule as placement_rule, workload as placement_workload
@@ -130,9 +130,47 @@ class MetricsBeat:
             got = session_demote.gather(self._wired.open_db, procs) if procs is not None else None
             if procs is not None and got is not None:
                 counter.observe(procs, got[0], got[1], True)
+        self._sample_fleet(store)
+        self._decay_live_holds()
         if self._clock() - self._flushed >= self.FLUSH_SECONDS:
             self._flushed = self._clock()
             store.load_hours_put(self._gauge.hours(), keep_since_hour=int(self._wall() // 3600) - jobs_metrics.KEEP_DAYS * 24)
+
+    def _sample_fleet(self, store: Any) -> None:
+        rt = getattr(self._wired, "runtime", None)
+        if rt is None or not hasattr(rt, "own_snapshot") or not hasattr(rt, "roster"):
+            return
+        try:
+            machines = [{"install_id": rt.install_id, "label": rt.label, "snapshot": rt.own_snapshot()}]
+            for peer in self._wired.peers():
+                entry = rt.roster.entries.get(peer.install_id)
+                if entry is not None and entry.snapshot is not None and rt.roster.peer_state(peer) == "connected":
+                    machines.append({"install_id": peer.install_id, "label": peer.label or entry.label, "snapshot": entry.snapshot})
+            load_store.record_fleet_sample(store, machines, now=self._wall())
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _decay_live_holds(self) -> None:
+        try:
+            if not holds_mod.HOLDS.total()[2]:
+                return
+            panes = jobs_runner.pane_pids_by_job(socket=jobs_paths.JOBS_TMUX_SOCKET)
+            if not panes:
+                return
+            procs = process_tree.read()
+            if not procs:
+                return
+            trees = process_tree.trees(procs, list(panes.values()))
+            by_pid = {p.pid: p for p in procs}
+            for job_id, root_pid in panes.items():
+                pids = trees.get(root_pid, ())
+                if not pids:
+                    continue
+                cpu_cores = sum(by_pid[p].cpu for p in pids if p in by_pid) / 100.0
+                ram_gb = sum(getattr(by_pid[p], "rss_kb", 0) for p in pids if p in by_pid) / (1024.0 * 1024.0)
+                host_admit.update_measured(job_id, cpu_cores, ram_gb)
+        except Exception:  # noqa: BLE001
+            pass
 
 
 async def run(app_state: Any, wired: Any, throttle: throttle_mod.Throttle, *, tick: float = throttle_mod.TICK_SECONDS,

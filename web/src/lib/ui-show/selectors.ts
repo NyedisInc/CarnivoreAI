@@ -1,3 +1,4 @@
+/* the Task Manager */
 import { browsers } from '../browser/api.svelte';
 import { openPages } from '../browser/pages.svelte';
 import { selectBrowserItem } from '../browser/select-push.svelte';

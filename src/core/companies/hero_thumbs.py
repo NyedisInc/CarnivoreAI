@@ -1,21 +1,22 @@
 
 from __future__ import annotations
 
-import io
 from pathlib import Path
 from typing import Optional
 
 import structlog
-from PIL import Image, UnidentifiedImageError
 
 from src.core.companies import hero_images
+from src.core.media.image_ops import render_thumbnail
 
 logger = structlog.get_logger()
 
 TIERS = {"thumb": 128, "card": 1400, "banner": 2400}
 THUMB_MAX_PX = TIERS["thumb"]
 THUMBS_DIR = "thumbs"
-_WEBP_QUALITY = 80
+THUMB_EXT = "avif"
+_THUMB_QUALITY = 80
+_CLEANUP_EXTS = ("avif", "webp")
 
 
 def _thumb_path(kind: str, row_id: int, original: Path, tier: str) -> Optional[Path]:
@@ -23,16 +24,12 @@ def _thumb_path(kind: str, row_id: int, original: Path, tier: str) -> Optional[P
         stat = original.stat()
     except OSError:
         return None
-    return hero_images.images_dir(kind) / THUMBS_DIR / f"{int(row_id)}-{tier}-{stat.st_mtime_ns}-{stat.st_size}.webp"
+    return hero_images.images_dir(kind) / THUMBS_DIR / f"{int(row_id)}-{tier}-{stat.st_mtime_ns}-{stat.st_size}.{THUMB_EXT}"
 
 
 def _render(original: Path, max_px: int) -> bytes:
-    with Image.open(original) as image:
-        image.thumbnail((max_px, max_px))
-        converted = image.convert("RGBA" if "A" in image.getbands() or image.mode == "P" else "RGB")
-        out = io.BytesIO()
-        converted.save(out, format="WEBP", quality=_WEBP_QUALITY)
-        return out.getvalue()
+    data, _ext, _mime = render_thumbnail(original, max_px, quality=_THUMB_QUALITY)
+    return data
 
 
 def thumb_for(kind: str, row_id: int, original: Path, tier: str = "thumb") -> Optional[Path]:
@@ -43,10 +40,12 @@ def thumb_for(kind: str, row_id: int, original: Path, tier: str = "thumb") -> Op
         return target
     try:
         hero_images.atomic_write(target, _render(original, TIERS[tier]))
-    except (OSError, UnidentifiedImageError, Image.DecompressionBombError, ValueError) as exc:
+    except (OSError, ValueError) as exc:
         logger.warning("hero_thumb_failed", kind=kind, tier=tier, row_id=row_id, path=str(original), error=str(exc))
         return None
-    stale_globs = [f"{int(row_id)}-{tier}-*.webp"] + ([f"{int(row_id)}-[0-9]*.webp"] if tier == "thumb" else [])
+    stale_globs = [f"{int(row_id)}-{tier}-*.{ext}" for ext in _CLEANUP_EXTS]
+    if tier == "thumb":
+        stale_globs.extend(f"{int(row_id)}-[0-9]*.{ext}" for ext in _CLEANUP_EXTS)
     for pattern in stale_globs:
         for stale in target.parent.glob(pattern):
             if stale != target:

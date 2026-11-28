@@ -12,12 +12,20 @@ import structlog
 
 from src.core.computers import direction
 from src.core.db import table_exists
+from src.core.pack.machines import capabilities as caps_mod
 from src.core.pack.machines import runtime as machines_runtime
 from src.core.pack.placement import enhanced, rule
 from src.core.pack.placement.workload import Workload
 from src.core.pack.placement.workload import resolve as resolve_workload
 
 logger = structlog.get_logger()
+
+MESH_NOTE = "member computers are not listed here"
+
+
+def mesh_note() -> Optional[str]:
+    return MESH_NOTE if caps_mod.mesh_on() else None
+
 
 class PlacementUnavailable(RuntimeError):
     pass
@@ -80,7 +88,7 @@ def _gather(wired: Any, request: Request, remote: bool) -> Dict[str, Any]:
     with closing(wired.open_db()) as conn:
         presence = lookup_project(conn, request.project, me.install_id)
         live = _live_agents(conn)
-    return {"settings": me.settings(), "machines": machine_inputs(wired, presence, me.own_snapshot(), live, remote), "presence": presence}
+    return {"settings": me.operating_settings(), "machines": machine_inputs(wired, presence, me.own_snapshot(), live, remote), "presence": presence}
 
 
 def _live_agents(conn: sqlite3.Connection) -> int:
@@ -119,7 +127,7 @@ async def place(request: Request, *, wired: Any = None, decide: Optional[enhance
     wired = wired or machines_runtime.wiring()
     if wired is None:
         raise PlacementUnavailable("the Pack machine layer is not running")
-    use_remote = remote if remote is not None else bool(request.machine) or wired.runtime.settings().auto_distribute
+    use_remote = remote if remote is not None else bool(request.machine) or wired.runtime.operating_settings().auto_distribute
     got = await asyncio.to_thread(_gather, wired, request, use_remote)
     settings, machines, presence = got["settings"], got["machines"], got["presence"]
     decision = rule.decide(machines, request.workload, auto_distribute=settings.auto_distribute, needs=request.needs,

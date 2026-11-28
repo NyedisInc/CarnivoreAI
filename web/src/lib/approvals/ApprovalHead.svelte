@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the Task Manager */
   import type { Snippet } from 'svelte';
   import { t } from '../i18n/index.svelte';
   import { consequenceLines, detailLabel, headline, inUseLine } from './approval-display';

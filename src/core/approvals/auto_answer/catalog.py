@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import Tuple
 
 from src.core.approvals.beast_grid import (  # noqa: F401
-    ROW_BYPASS_ACCEPT, ROW_CHROME_ACCEPT, ROW_CHROME_DECLINE, ROW_DEV_CHANNELS, ROW_EXTERNAL_IMPORTS, ROW_FOLDER_TRUST, ROW_EFFORT_KEEP, ROW_MCP_SERVER, ROW_TRUST_PERMISSIONS, Policy,
+    ROW_BYPASS_ACCEPT, ROW_CHROME_ACCEPT, ROW_CHROME_DECLINE, ROW_DEV_CHANNELS, ROW_EXTERNAL_IMPORTS, ROW_FOLDER_TRUST, ROW_CLI_TRUST, ROW_EFFORT_KEEP, ROW_MCP_SERVER, ROW_TRUST_PERMISSIONS, Policy,
 )
 
 RULE_DEV_CHANNELS: str = ROW_DEV_CHANNELS
@@ -17,6 +17,7 @@ RULE_BYPASS_ACCEPT: str = ROW_BYPASS_ACCEPT
 RULE_CHROME_ACCEPT: str = ROW_CHROME_ACCEPT
 RULE_MCP_SERVER: str = ROW_MCP_SERVER
 RULE_EFFORT_KEEP: str = ROW_EFFORT_KEEP
+RULE_CLI_TRUST: str = ROW_CLI_TRUST
 
 RISK_LOW: str = "low"
 RISK_MEDIUM: str = "medium"
@@ -47,6 +48,7 @@ RULE_INFOS: Tuple[RuleInfo, ...] = (
     RuleInfo(RULE_BYPASS_ACCEPT, "bypassAccept", RISK_MEDIUM, "bypass_permissions"),
     RuleInfo(RULE_MCP_SERVER, "mcpServer", RISK_MEDIUM, "mcp_server"),
     RuleInfo(RULE_EFFORT_KEEP, "effortKeep", RISK_LOW, "effort_nudge"),
+    RuleInfo(RULE_CLI_TRUST, "cliTrust", RISK_MEDIUM, "cli_trust"),
 )
 
 NEVER_ANSWERED: Tuple[str, ...] = (

@@ -5,9 +5,9 @@ from src.core.session_respawn import (
     RESPAWN_AGENT,
     RESPAWN_TRANSCRIPT_MISSING,
     project_restart_rung,
-    refuse_if_transcript_missing,
     resume_uuid_in,
 )
+from src.core.respawn.transcript_guard import refuse_if_transcript_missing
 from src.core.session_resume_target import (
     CONVERSATION_RESUMED,
     CONVERSATION_UNKNOWN,

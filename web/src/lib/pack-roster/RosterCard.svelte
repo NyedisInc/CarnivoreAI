@@ -1,5 +1,6 @@
 
 <script lang="ts">
+  import { seenWords } from './seen-words';
   import Button from '../base/Button.svelte';
   import { t } from '../i18n/index.svelte';
   import Marks from './Marks.svelte';
@@ -14,15 +15,17 @@
   const { c, list = false, open = false, onOpen, nowMs }: Props = $props();
 
   const specs = $derived(c.machine?.specs ?? null);
-  const model = $derived([specs?.model, specs?.cores != null ? t('roster.card.cores', { n: specs.cores }) : null, specs?.mem_total_gb != null ? t('roster.card.gb', { n: Math.round(specs.mem_total_gb) }) : null].filter(Boolean).join(' · ') || t('roster.card.no_carnivore'));
+  const model = $derived([specs?.model, specs?.cores != null ? t('roster.card.cores', { n: specs.cores }) : null, specs?.mem_total_gb != null ? t('roster.card.gb', { n: Math.round(specs.mem_total_gb) }) : null].filter(Boolean).join(' · ') || (c.member ? (c.appVersion ? t('roster.card.carnivore_version', { version: c.appVersion }) : '') : t('roster.card.no_carnivore')));
   const key = $derived(c.entry?.fid_short ?? '');
+  const sshLogin = $derived(loginOf(c.host) ?? c.entry?.label ?? '');
+  const sshHow = $derived(sshLogin ? t('roster.card.over_ssh_as', { login: sshLogin }) : t('roster.card.over_ssh'));
   const how = $derived(
     c.isSelf ? (key ? t('roster.card.key', { key }) : '')
       : c.kind === 'ssh-only' ? t('roster.card.reached_ssh', { login: loginOf(c.host) ?? '' })
-      : c.transport === 'ssh' ? t('roster.card.over_ssh_as', { login: loginOf(c.host) ?? c.entry?.label ?? 'ssh', key })
-      : t('roster.card.linked_over', { proto: c.peer?.protocol ?? 'tls', key }),
+      : c.member ? [c.mesh?.state === 'linked' ? t('roster.card.linked_directly') : ''].filter(Boolean).join(' · ')
+      : [c.transport === 'ssh' ? sshHow : t('roster.card.linked_over', { transport: c.transport }), key ? t('roster.card.key', { key }) : ''].filter(Boolean).join(' · '),
   );
-  const seen = $derived(c.isSelf ? t('roster.card.this') : t('roster.card.last_seen', { age: c.lastSeen ? ageWords(c.lastSeen, nowMs) : t('roster.card.never_seen') }));
+  const seen = $derived(seenWords(c, nowMs, true) ?? '');
   const sshOnly = $derived(c.kind === 'ssh-only' && c.host !== null);
 
   function click(event: MouseEvent): void {
@@ -69,7 +72,7 @@
           </div>
         </div></div>
         <div class="catalog-card__ct">
-          <div class="m1-brief"><span>{model}</span><span class="pp-dim">{how}</span><span class="m1-brief__st"><Status {c} /><span class="pp-dim">{seen}</span></span></div>
+          <div class="m1-brief">{#if model}<span>{model}</span>{/if}{#if how}<span class="pp-dim">{how}</span>{/if}<span class="m1-brief__st"><Status {c} />{#if seen}<span class="pp-dim">{seen}</span>{/if}</span></div>
         </div>
       </div>
     </article>

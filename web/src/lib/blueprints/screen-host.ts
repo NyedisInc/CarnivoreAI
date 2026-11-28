@@ -1,11 +1,10 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import BlueprintsScreen from './BlueprintsScreen.svelte';
 
 export const BLUEPRINTS_SCREEN_CONTAINER = 'blueprints-screen';
 
 export const BLUEPRINTS_HASH = '#blueprints';
 
-const host = createOverlayHost(BLUEPRINTS_SCREEN_CONTAINER, BlueprintsScreen, BLUEPRINTS_HASH);
+const host = createOverlayHost(BLUEPRINTS_SCREEN_CONTAINER, { load: () => import('./BlueprintsScreen.svelte') }, BLUEPRINTS_HASH);
 
 export const openBlueprintsScreen = (): boolean => host.open();
 

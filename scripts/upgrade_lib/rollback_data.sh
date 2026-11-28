@@ -66,7 +66,7 @@ warn_code_only() {
     echo "" >&2
     echo "==================================================================" >&2
     log_fail "--code-only: the DATA half of this rollback was SKIPPED"
-    log_fail "code is being moved to ${target}; cloude.db and config.json are NOT being restored"
+    log_fail "code is being moved to ${target}; carnivore.db and config.json are NOT being restored"
     if [ -n "${schema_at}" ]; then
         log_fail "the trail says schema was at v${schema_at} at ${target}; the database on disk is NOT being returned to it"
     else

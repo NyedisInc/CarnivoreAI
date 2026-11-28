@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any, Dict
 
@@ -11,33 +10,34 @@ from pydantic import BaseModel, ConfigDict, StrictBool
 
 from src.api.auth import require_auth
 from src.plugins.host.peer_refusal import refuse_peer_token_writes
-from src.plugins.host import registry_files, registry_store
+from src.plugins.host import registry_store
 
 logger = structlog.get_logger()
 
-FILE_NAME = registry_store.THIRD_PARTY_FILE
-
-
-def switch_path(state_dir: Path) -> Path:
-    return Path(state_dir) / "cplugs" / FILE_NAME
-
 
 def read(state_dir: Path) -> bool:
-    views = registry_files.flipped_views(state_dir)
-    if views is not None:
-        return views["third_party"]["enabled"] is True
-    try:
-        data = json.loads(switch_path(state_dir).read_text(encoding="utf-8"))
-    except FileNotFoundError:
+    doc, status = registry_store.load_registry(state_dir)
+    if status != registry_store.STATUS_OK or doc is None:
         return False
-    except (OSError, ValueError) as exc:
-        logger.warning("cplug_owner_switch_unreadable", error_type=type(exc).__name__)
-        return False
-    return isinstance(data, dict) and data.get("enabled") is True
+    switches = doc.get("switches")
+    return isinstance(switches, dict) and switches.get("third_party") is True
 
 
 def write(state_dir: Path, enabled: bool) -> bool:
-    return registry_store.write_document(state_dir, "third_party", {"enabled": bool(enabled)}, log_event="cplug_owner_switch_write_failed")
+    if registry_store.read_only_reason(state_dir) is not None:
+        logger.warning("cplug_owner_switch_write_failed", reason="registry_read_only", detail=registry_store.read_only_reason(state_dir))
+        return False
+    try:
+        with registry_store.exclusive(state_dir):
+            doc = registry_store.read_for_mutation(state_dir, log_event="cplug_owner_switch_write_failed")
+            doc.setdefault("switches", {})["third_party"] = bool(enabled)
+            return registry_store.save_document(state_dir, doc, log_event="cplug_owner_switch_write_failed")
+    except registry_store.RegistryBusy as exc:
+        logger.warning("cplug_owner_switch_write_failed", reason="registry_lock", error=str(exc)[:200])
+        return False
+    except registry_store.RegistryUnreadable as exc:
+        logger.error("cplug_owner_switch_write_failed", reason="registry_unreadable", error_type=type(exc).__name__)
+        return False
 
 
 class SwitchBody(BaseModel):

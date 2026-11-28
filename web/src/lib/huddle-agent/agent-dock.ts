@@ -3,7 +3,7 @@ import type { InstanceKind, LayoutPage, SlotId } from '../../opscenter/engine/ty
 import { refusalLine } from '../../opscenter/engine/components-actions';
 import { beginCardDrag } from '../../opscenter/layout-editor/drawer-drag';
 import { storeFor, surfacePage } from '../drawer-tabs/drawer-surface.svelte';
-import { chatSlotId } from '../../plugins/huddle/chat/chat-model';
+import { chatSlotId } from '../../plugins/taskmanager/chat/chat-model';
 import { openAgentPopout } from '../../popout/popout';
 import { t } from '../i18n/index.svelte';
 

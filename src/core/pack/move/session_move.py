@@ -14,6 +14,8 @@ from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional, Tupl
 import structlog
 from fastapi import HTTPException
 
+from src.core.agy.identity import row_is_agy
+from src.core.pack.move import agy_files
 from src.core.pack.transport import progress
 from src.core.pack.identity import home
 from src.core.pack.migrate import transcripts
@@ -117,6 +119,9 @@ async def move_session(env: SourceEnv, hooks: Hooks, request: Request, *, subjec
                        code: Optional[CodeStep] = None) -> Dict[str, Any]:
     row, op_id = subject["row"], op_id or ops.new_id()
     uuid, claude_uuid = row["session_uuid"], row["claude_session_uuid"]
+    agy_row = row_is_agy(row)
+    if agy_row and mode == "copy":
+        raise MigrateError("agy_copy_unsupported", "an agy conversation cannot be copied while it runs; move it or start a fresh agent there", 409)
     target_uuid = uuid if mode == "move" else str(uuid_lib.uuid4())
     await _db(env, lambda c: ops.create(c, op_id=op_id, role="source", session_uuid=uuid, claude_session_uuid=claude_uuid, source_install_id=env.install_id,
                                         target_install_id=target_install_id, detail={"machine": target_label, "name": row.get("title"), "mode": mode,
@@ -144,7 +149,7 @@ async def move_session(env: SourceEnv, hooks: Hooks, request: Request, *, subjec
     try:
         account_key = await asyncio.to_thread(hooks.account_key, uuid)
         if mode != "fresh":
-            await asyncio.to_thread(conversation_files, row["working_dir"], claude_uuid)
+            await asyncio.to_thread(agy_files.source_files, claude_uuid) if agy_row else await asyncio.to_thread(conversation_files, row["working_dir"], claude_uuid)
         if code is not None:
             await code.gate()
         dry = body_for(subject, op_id, account_key, dry_run=True, mode=mode, target_uuid=target_uuid)
@@ -208,12 +213,12 @@ async def move_session(env: SourceEnv, hooks: Hooks, request: Request, *, subjec
                         raise MigrateError("shells_not_stopped", _plain(exc), 409, "stop_shells") from exc
             await at("carry")
             first = await _db(env, lambda c: moved_note.first_to_target(c, subject["project"]["id"], target_install_id, op_id))
-            files = await asyncio.to_thread(lambda: conversation_files(row["working_dir"], claude_uuid, with_memory=first,
+            files = await asyncio.to_thread(agy_files.source_files, claude_uuid) if agy_row else await asyncio.to_thread(lambda: conversation_files(row["working_dir"], claude_uuid, with_memory=first,
                                                                        prefer_root=hooks.profile_root(uuid) if hooks.profile_root else None))
             os.makedirs(work, mode=0o700, exist_ok=True)
             if mode == "copy":
                 files = await asyncio.to_thread(snapshot.whole_lines, files, os.path.join(work, "snapshot"))
-            if mode == "move":
+            if mode == "move" and not agy_row:
                 files = await asyncio.to_thread(moved_note.add_note, files, os.path.join(work, "note"), op_id, target_label, note_args()[0])
             path = os.path.join(work, "session.tar.gz")
             await asyncio.to_thread(transcripts.build_archive, files, path)

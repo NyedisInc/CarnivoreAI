@@ -118,6 +118,7 @@ def evaluate(record: Dict[str, Any], *, now: Optional[float] = None, stale_hours
     uncovered = record.get("uncovered") if known else None
     first = record.get("uncovered_since")
     overdue = uncovered if (uncovered and isinstance(first, (int, float)) and stamp - first > grace_hours * 3600.0) else None
+    frozen = record.get("frozen") if isinstance(record.get("frozen"), dict) and record.get("frozen") else None
     return {
         "known": known,
         "active": bool(record.get("active", True)) if record else False,
@@ -129,6 +130,9 @@ def evaluate(record: Dict[str, Any], *, now: Optional[float] = None, stale_hours
         "over_cap": bool(record.get("over_cap")),
         "damaged": int(record.get("damaged") or 0),
         "mass_gone": record.get("mass_gone") if isinstance(record.get("mass_gone"), dict) else None,
+        "frozen": frozen,
+        "frozen_over_cap": bool(frozen) and bool(record.get("over_cap")),
+        "offload_alerts": record.get("offload_alerts") if isinstance(record.get("offload_alerts"), dict) else {},
         "pending": int(record.get("pending") or 0),
         "legacy_unmigrated": int(record.get("legacy_unmigrated") or 0),
         "folders": [row for row in record.get("folders") or [] if isinstance(row, dict)],

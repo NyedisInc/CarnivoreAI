@@ -77,6 +77,31 @@ def plan(slot_path: str, dep_dirs: Sequence[DepDir], memo: Mapping[str, str], ov
     return steps
 
 
+def tools_needed(steps: Sequence[Step]) -> List[str]:
+    words: List[str] = []
+    for step in steps:
+        prog = posixpath.basename(step.argv[0])
+        if step.memo_key != "override" and prog == "npm":
+            words += ["node", "npm"]
+        elif step.memo_key != "override" and prog.startswith("python"):
+            words.append("python3.12" if prog == "python3.12" else "python3")
+    return list(dict.fromkeys(words))
+
+
+def step_name(step: Step) -> str:
+    if step.memo_key == "override":
+        return "your setup command"
+    prog = posixpath.basename(step.argv[0])
+    if prog == "sh":
+        return "playwright install"
+    return "".join(c for c in prog if c.isalnum() or c in "._-")[:24] or "setup"
+
+
+def failure_text(steps: Sequence[Step], index: int) -> str:
+    name = step_name(steps[index]) if 0 <= index < len(steps) else "setup"
+    return f"setup step {index + 1} of {len(steps)} ({name}) failed (see the setup log on that computer)"
+
+
 def _kill_group(proc: "asyncio.subprocess.Process") -> None:
     try:
         os.killpg(proc.pid, signal.SIGKILL)

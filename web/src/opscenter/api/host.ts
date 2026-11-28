@@ -1,11 +1,13 @@
 
 import { closeMenuPagesExcept } from '../../lib/menu-page/menu-page-shell.svelte';
 import { createGroupThenAssign } from '../../lib/sidebar-shell/group-assign';
+import type { OpenNewAgentWizardOptions } from '../../lib/new-agent-wizard/open';
 
 interface WebNamespace {
   openCatalogScreen?: () => boolean;
   openThemesScreen?: () => boolean;
   openPluginsScreen?: () => boolean;
+  openPluginStudioScreen?: () => Promise<boolean> | boolean;
   openWidgetsScreen?: () => boolean;
   openWrappersScreen?: () => boolean;
   openFeaturesScreen?: () => boolean;
@@ -20,7 +22,10 @@ interface WebNamespace {
       project: Record<string, unknown>,
       choice?: Record<string, unknown> | null,
     ) => Promise<void>;
-    createNewSession?: () => Promise<void>;
+    createNewSession?: (
+      agentType?: string | null,
+      wizardOpts?: OpenNewAgentWizardOptions,
+    ) => Promise<void>;
     createConsoleSession?: (options?: { workingDir?: string | null } | null) => Promise<void>;
     openProjectFromFolder?: () => Promise<void>;
     startNewClaudeProject?: () => Promise<void>;
@@ -104,11 +109,14 @@ export function newTerminal(): boolean {
   return startNewSession('terminal') !== null;
 }
 
-export function startNewSession(kind: 'agent' | 'terminal'): Promise<void> | null {
+export function startNewSession(
+  kind: 'agent' | 'terminal',
+  wizardOpts?: OpenNewAgentWizardOptions,
+): Promise<void> | null {
   const lp = web()?.launchpad;
   if (kind === 'agent') {
     if (typeof lp?.createNewSession !== 'function') return missing('CloudeWeb.launchpad.createNewSession') || null;
-    return lp.createNewSession();
+    return wizardOpts ? lp.createNewSession(null, wizardOpts) : lp.createNewSession();
   }
   if (typeof lp?.createConsoleSession !== 'function') return missing('CloudeWeb.launchpad.createConsoleSession') || null;
   return lp.createConsoleSession({});
@@ -189,6 +197,13 @@ export function openPlugins(): boolean {
   const open = web()?.openPluginsScreen;
   if (typeof open !== 'function') return missing('CloudeWeb.openPluginsScreen');
   open();
+  return true;
+}
+
+export function openPluginStudio(): boolean {
+  const open = web()?.openPluginStudioScreen;
+  if (typeof open !== 'function') return missing('CloudeWeb.openPluginStudioScreen');
+  void open();
   return true;
 }
 

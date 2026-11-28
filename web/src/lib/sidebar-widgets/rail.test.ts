@@ -20,7 +20,7 @@ import { closeDrawerAfterSwitch } from '../drawer-tabs/menu-hotkeys';
 import { DRAWER_LIST_ID, DRAWER_SEARCH_ID, DRAWER_STATS_ID } from '../drawer-tabs/drawer-tabs';
 import { SidebarWidgetRegistry } from './registry';
 import { registerCoreSidebarWidgets } from './core-widgets';
-import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/taskmanager/swarm-flyout';
 import { activeFlyout, flyoutShowsTab, openFlyout, railHostsTab } from './flyout.svelte';
 import { initMenuPageEscape } from '../menu-page/menu-page-escape';
 import { railEntries, widgetPresent } from './rail-model';
@@ -297,6 +297,7 @@ test('a pick of the questions or huddle tab elsewhere opens its slide-out; the s
   redirectTabToFlyout(HUDDLE);
   expect(sidebarTabs.active()).toBe('agents');
   expect(activeFlyout()).toBe(SWARM_FLYOUT);
+  // the Task Manager
   expect(railHostsTab(HUDDLE)).toBe(true);
 });
 

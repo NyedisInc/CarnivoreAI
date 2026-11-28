@@ -1,7 +1,5 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
 import { closeMenuPagesExcept } from '../menu-page/menu-page-shell.svelte';
-import DocsScreen from './DocsScreen.svelte';
-import ChangelogScreen from './ChangelogScreen.svelte';
 
 export const DOCS_SCREEN_CONTAINER = 'docs-screen';
 export const CHANGELOG_SCREEN_CONTAINER = 'changelog-screen';
@@ -9,8 +7,8 @@ export const CHANGELOG_SCREEN_CONTAINER = 'changelog-screen';
 export const DOCS_HASH = '#docs';
 export const CHANGELOG_HASH = '#changelog';
 
-const docsHost = createOverlayHost(DOCS_SCREEN_CONTAINER, DocsScreen, DOCS_HASH);
-const changelogHost = createOverlayHost(CHANGELOG_SCREEN_CONTAINER, ChangelogScreen, CHANGELOG_HASH);
+const docsHost = createOverlayHost(DOCS_SCREEN_CONTAINER, { load: () => import('./DocsScreen.svelte') }, DOCS_HASH);
+const changelogHost = createOverlayHost(CHANGELOG_SCREEN_CONTAINER, { load: () => import('./ChangelogScreen.svelte') }, CHANGELOG_HASH);
 
 function openAlone(host: { open(): boolean }): boolean {
     closeMenuPagesExcept(null);

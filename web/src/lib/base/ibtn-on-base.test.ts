@@ -12,12 +12,12 @@ const TWINS: Array<[string, string]> = [
     ["[data-tone='close']", '.oc-ibtn--close'],
     ["[data-tone='float']", '.oc-ibtn--float'],
 ];
-const NO_TWIN = "[data-tone='danger']";
+const NO_TWIN = ["[data-tone='danger']", "[data-tone='strong']"];
 const FAMILY_RULE = /^(?::where\()?\.oc-ibtn(?:--[\w-]+)?(?![\w-])[^\s>+~]*$/;
 
 function missingTwins(css: string): string[] {
     return cssRules(css).flatMap((rule) =>
-        TWINS.filter(([attr, cls]) => rule.selector.includes(attr) && !rule.selector.includes(cls) && !rule.selector.includes(NO_TWIN)).map(
+        TWINS.filter(([attr, cls]) => rule.selector.includes(attr) && !rule.selector.includes(cls) && !NO_TWIN.some((n) => rule.selector.includes(n))).map(
             ([attr, cls]) => `${attr} missing ${cls}: ${rule.selector}`,
         ),
     );

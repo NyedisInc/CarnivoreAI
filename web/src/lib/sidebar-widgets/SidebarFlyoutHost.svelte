@@ -13,6 +13,8 @@
   import './flyout-title.css';
   import { motionReduced } from '../motion/motion';
   import { tabRegistry } from '../dynamic-tabs/registry';
+  import { popoutTab } from '../dynamic-tabs/popout-tabs';
+  import { openTabPopout } from '../dynamic-tabs/tab-popout';
   import {
     activeFlyout,
     closeFlyout,
@@ -111,6 +113,8 @@
     return { component: def.body.component as Component<{ tabId?: string }>, actions: (def.body.titleActions ?? null) as Component<{ popout?: boolean; tabId?: string }> | null, tabId: def.id };
   });
 
+  const flyoutPopout = $derived(body.tabId ? popoutTab(body.tabId) : null);
+
   $effect(() => {
     closeFlyoutIfGone();
   });
@@ -161,17 +165,22 @@
 >
   {#if widget}
     {#if titleRow}
-    <header class="sbr-flyout__title">
+    <header class="sbr-flyout__title" data-btn-density="frame">
       <span class="sbr-flyout__icon">
         <CornerMenu meta={{ id: widget.id, icon: widget.icon }} title={t(widget.titleKey)} editing={false} place="row" menu={menuNodes().length > 0 ? cornerMenu : null} />
       </span>
       <h2 class="sbr-flyout__name">{t(widget.titleKey)}</h2>
+      {#if flyoutPopout}
+        <IconButton label={t('opscenter.nav.pop_out', { name: t(widget.titleKey) })} variant="quiet" icon="external" iconSize={14}
+          data-flyout-popout={flyoutPopout.id}
+          onclick={() => { void openTabPopout(flyoutPopout.id, window, flyoutPopout.popoutParams?.(), flyoutPopout.popoutMulti === true); }} />
+      {/if}
       <IconButton label={t('sidebar.flyout.close', { name: t(widget.titleKey) })} variant="close" icon="close" iconSize={14}
         data-flyout-close onclick={close} />
     </header>
     {/if}
     {#if body.actions}
-      <div class="sbr-flyout__actions"><body.actions tabId={body.tabId} /></div>
+      <div class="sbr-flyout__actions" data-btn-density="frame"><body.actions tabId={body.tabId} /></div>
     {/if}
     <div class="sbr-flyout__body">
       {#if body.component && drawnTab}{#key drawnTab.key}<ZonePane {zone} tab={drawnTab} body={pane} />{/key}{/if}

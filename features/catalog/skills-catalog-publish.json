@@ -40,7 +40,7 @@
   "status": "beta",
   "summary": "send one of your own skills to the catalog from inside the app, with a local check first and your submissions listed beside it; you register once (terms, age, handle) before you can publish. Your own themes are listed beside your skills and go through the same check and review (a theme is theme.json plus raster images only); a plugin is checked the same way when the app has a local source for one.",
   "surfaces": [],
-  "updated": "2026-10-24",
+  "updated": "2026-11-26",
   "where": [
     "The warez store, PUBLISH YOURS in the menu (#warez/publish)."
   ]

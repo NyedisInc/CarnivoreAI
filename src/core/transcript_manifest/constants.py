@@ -7,6 +7,7 @@ TABLE: str = "transcript_files"
 
 FAMILY_CLAUDE: str = "claude"
 FAMILY_CODEX: str = "codex"
+FAMILY_AGY: str = "agy"
 
 KIND_CONVERSATION: str = "conversation"
 KIND_SUBAGENT: str = "subagent"
@@ -24,10 +25,11 @@ OUT_UNCHANGED: str = "unchanged"
 OUT_GROWN: str = "grown"
 OUT_REWRITTEN: str = "rewritten"
 OUT_REMOVED: str = "removed"
+OUT_MOVED: str = "moved"
 OUT_DATALESS: str = "dataless"
 OUT_UNREADABLE: str = "unreadable"
 OUTCOMES: Tuple[str, ...] = (OUT_ADDED, OUT_UNCHANGED, OUT_GROWN, OUT_REWRITTEN, OUT_REMOVED,
-                             OUT_DATALESS, OUT_UNREADABLE)
+                             OUT_MOVED, OUT_DATALESS, OUT_UNREADABLE)
 
 SF_DATALESS: int = 0x40000000
 

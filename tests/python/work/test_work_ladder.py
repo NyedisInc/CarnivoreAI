@@ -10,12 +10,12 @@ from scripts.schema_ledger.ladders import LADDERS
 from src.core.schema_ledger.ledger import check_ledger, parse_ledger
 from src.core.schema_ledger.snapshot import dump_schema
 from src.core.work import ladder, tables
-from src.core.work.storage import DB_NAME, LEGACY_STORAGE, folder
+from src.core.work.storage import DB_NAME, LEGACY_STORAGE, legacy_folder
 from src.plugins.sdk.storage import CplugStorage
 
 
 def storage_for(state_dir: Path) -> CplugStorage:
-    return CplugStorage(folder(state_dir), LEGACY_STORAGE, state_dir)
+    return CplugStorage(legacy_folder(state_dir), LEGACY_STORAGE, state_dir)
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURE = ROOT / "tests" / "fixtures" / "task_manager_fresh_schema.sql"
@@ -51,7 +51,7 @@ def test_the_legacy_names_are_exactly_the_tables_the_legacy_ladder_creates(tmp_p
 
 def test_a_rung_lives_in_core_only_never_in_a_plugin_module() -> None:
     left = []
-    for path in (ROOT / "src" / "plugins" / "huddle").rglob("*.py"):
+    for path in (ROOT / "src" / "plugins" / "taskmanager").rglob("*.py"):
         for node in ast.parse(path.read_text(encoding="utf-8")).body:
             if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id.endswith("_MIGRATION") for t in node.targets):
                 left.append(f"{path.relative_to(ROOT)}:{node.lineno}")

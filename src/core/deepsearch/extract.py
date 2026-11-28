@@ -123,6 +123,27 @@ def _codex(rec: Dict[str, Any], rules: Dict[str, Any]) -> Extracted:
     return None
 
 
+def _agy(rec: Dict[str, Any], rules: Dict[str, Any]) -> Extracted:
+    kind, content = rec.get("type"), rec.get("content")
+    if kind == "USER_INPUT" and isinstance(content, str):
+        return _finish(K.KIND_USER, [_apply(rules["blocks"]["text"], content)], rules)
+    if kind == "PLANNER_RESPONSE":
+        parts, kinds = [], set()
+        if isinstance(content, str) and content:
+            parts.append(_apply(rules["blocks"]["text"], content))
+            kinds.add(K.KIND_ASSISTANT)
+        for call in rec.get("tool_calls") or []:
+            if isinstance(call, dict) and isinstance(call.get("name"), str):
+                parts.append(_tool_call_text(call["name"], call.get("args"), rules))
+                kinds.add(K.KIND_TOOL)
+        if not parts and isinstance(rec.get("thinking"), str):
+            return _finish(K.KIND_THINKING, [_apply(rules["blocks"]["thinking"], rec["thinking"])], rules)
+        return _finish(K.KIND_ASSISTANT if K.KIND_ASSISTANT in kinds else K.KIND_TOOL, parts, rules)
+    if kind == "GENERIC" and isinstance(content, str):
+        return _finish(K.KIND_TOOL, [_apply(rules["blocks"]["tool_result"], content)], rules)
+    return None
+
+
 def extract(line: bytes, rules: Dict[str, Any], family: str) -> Extracted:
     try:
         rec = json.loads(line)
@@ -130,6 +151,8 @@ def extract(line: bytes, rules: Dict[str, Any], family: str) -> Extracted:
         return None
     if not isinstance(rec, dict):
         return None
+    if family == "agy":
+        return _agy(rec, rules)
     return _codex(rec, rules) if family == "codex" else _claude(rec, rules)
 
 

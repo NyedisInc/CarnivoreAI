@@ -209,8 +209,17 @@ async def report_session(client: ArgentClient, tenant_id: str, session: SpendSes
                          work_item_for: Optional[Callable[[RequestUsageRow], Optional[str]]] = None,
                          sleep: Callable[[float], Awaitable[Any]] = asyncio.sleep, projects_dir: Any = None,
                          clock: Callable[[], float] = time.time) -> int:
+    from src.core.perf_hooks import executors as _executors
+
     since = _since(cursors.get(tenant_id, session.key))
-    usage = await asyncio.to_thread(read_session_requests, session.subject, since=since, limit=MAX_LIMIT, projects_dir=projects_dir)
+    usage = await _executors.run_in(
+        _executors.maintenance_executor(),
+        read_session_requests,
+        session.subject,
+        since=since,
+        limit=MAX_LIMIT,
+        projects_dir=projects_dir,
+    )
     rows = [r for r in usage.requests if r.request_id and r.timestamp]
     if usage.state != "ok" or not rows:
         return 0

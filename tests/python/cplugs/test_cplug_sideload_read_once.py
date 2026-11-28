@@ -7,7 +7,7 @@ from typing import Callable, List
 
 import pytest
 
-from src.plugins.host import sideload
+from src.plugins.host import registry_store, sideload
 
 HOUR = 3600
 
@@ -18,7 +18,7 @@ def opens(monkeypatch: pytest.MonkeyPatch) -> List[Path]:
     real = Path.read_text
 
     def counting(self: Path, *args: object, **kwargs: object) -> str:
-        if self.name == sideload.FILE_NAME:
+        if self.name == registry_store.REGISTRY_FILE:
             seen.append(self)
         return real(self, *args, **kwargs)  # type: ignore[arg-type]
 
@@ -31,7 +31,7 @@ def clock(t: float) -> Callable[[], float]:
 
 
 def forget_snapshots() -> None:
-    sideload._snapshots.clear()
+    registry_store._cache.clear()
 
 
 def test_unchanged_file_is_not_reopened(tmp_path: Path, opens: List[Path]) -> None:
@@ -62,7 +62,8 @@ def test_own_write_is_seen_at_once(tmp_path: Path) -> None:
 def test_outside_edit_is_seen(tmp_path: Path) -> None:
     sideload.set_switch(tmp_path, True, clock(0.0), hours=12)
     assert sideload.is_on(tmp_path, clock(1.0))
-    sideload.switch_path(tmp_path).write_text(json.dumps({"enabled_at": None, "items": {}}), encoding="utf-8")
+    doc = registry_store.new_document()
+    registry_store.registry_path(tmp_path).write_text(json.dumps(doc), encoding="utf-8")
     assert not sideload.is_on(tmp_path, clock(1.0))
 
 
@@ -77,19 +78,19 @@ def test_missing_file_is_off_and_forgets_a_stale_snapshot(tmp_path: Path) -> Non
     assert not sideload.is_on(tmp_path, clock(0.0))
     sideload.set_switch(tmp_path, True, clock(0.0))
     assert sideload.is_on(tmp_path, clock(1.0))
-    sideload.switch_path(tmp_path).unlink()
+    registry_store.registry_path(tmp_path).unlink()
     assert not sideload.is_on(tmp_path, clock(1.0))
 
 
 def test_unreadable_file_turns_the_switch_off(tmp_path: Path) -> None:
     sideload.set_switch(tmp_path, True, clock(0.0), hours=12)
-    path = sideload.switch_path(tmp_path)
+    path = registry_store.registry_path(tmp_path)
     assert sideload.is_on(tmp_path, clock(1.0))
     try:
         path.chmod(0o000)
         assert not sideload.is_on(tmp_path, clock(1.0))
     finally:
-        path.chmod(0o600)
+        path.chmod(0o644)
     assert sideload.is_on(tmp_path, clock(1.0))
 
 
@@ -100,7 +101,7 @@ def test_a_failed_read_is_not_cached_as_off(tmp_path: Path, monkeypatch: pytest.
     calls: List[int] = []
 
     def flaky(self: Path, *args: object, **kwargs: object) -> str:
-        if self.name == sideload.FILE_NAME and not calls:
+        if self.name == registry_store.REGISTRY_FILE and not calls:
             calls.append(1)
             raise OSError(24, "Too many open files")
         return real(self, *args, **kwargs)  # type: ignore[arg-type]

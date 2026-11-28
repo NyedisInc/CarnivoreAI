@@ -1,0 +1,2 @@
+
+NAME_PREFIX = "cplug-"

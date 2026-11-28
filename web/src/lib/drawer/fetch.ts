@@ -2,6 +2,7 @@ import type { LoginExpired, UsageLimit } from '../../opscenter/api/types';
 import { addRows } from './asleep';
 import { addClosedRows } from './closed';
 import { closedShown } from './closed-visibility.svelte';
+import { isPinnedRow } from './closed-pinned';
 import { noteSleepingCount, sectionShown } from './section-visibility.svelte';
 import { searchLists } from './search';
 import { filterAwakeSleeping, isSleepingSession } from './bucketing';
@@ -26,7 +27,7 @@ export type DrawerRow = Record<string, unknown> & { name: string };
 export interface LiveInfo {
     tmux_session?: string;
     session_uuid?: string | null;
-    session?: { id?: string; working_dir?: string | null } | null;
+    session?: { id?: string; working_dir?: string | null; tmux_created_epoch?: number | null } | null;
     activity_status?: string;
     unread?: boolean;
     created_by_us?: boolean;
@@ -38,6 +39,7 @@ export interface LiveInfo {
     usage_limit?: UsageLimit | null;
     login_expired?: LoginExpired | null;
     background_open?: number | null;
+    stalled_agents?: number | null;
     agent_update?: { running: string; installed: string; ready: boolean } | null;
     codex_helpers?: { verdict: string; version: string | null; text: string | null; checked_at: string } | null;
     mcp_health?: {
@@ -103,18 +105,28 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
     if (G.UIFlags && typeof G.UIFlags.ensure === 'function') G.UIFlags.ensure();
 
     const api = G.API;
-    try {
-        const attachable = await api!.listAttachableSessions();
-        rows = Array.isArray(attachable) ? (attachable as DrawerRow[]).slice() : [];
-    } catch (err) {
-        console.error('SessionSidebar: listAttachableSessions failed:', err);
-        listing = fromError(err, statusOf(err));
+    const [attachableRes, liveRes, companionsRes, recordsRes] = await Promise.allSettled([
+        api!.listAttachableSessions(),
+        api && typeof api.listSessions === 'function' ? api.listSessions() : Promise.resolve([]),
+        api && typeof api.listSessionCompanions === 'function' ? api.listSessionCompanions() : Promise.resolve([]),
+        api && typeof api.listSessionRecords === 'function' ? api.listSessionRecords() : Promise.resolve([]),
+    ]);
+
+    if (attachableRes.status === 'fulfilled') {
+        rows = Array.isArray(attachableRes.value) ? (attachableRes.value as DrawerRow[]).slice() : [];
+    } else {
+        console.error('SessionSidebar: listAttachableSessions failed:', attachableRes.reason);
+        listing = fromError(attachableRes.reason, statusOf(attachableRes.reason));
         rows = [];
     }
 
-    try {
-        const live = api && typeof api.listSessions === 'function' ? await api.listSessions() : [];
-        for (const info of Array.isArray(live) ? live as LiveInfo[] : []) mergeLiveRow(rows, info);
+    const byName = new Map<string, DrawerRow>();
+    for (const row of rows) {
+        if (row && row.name) byName.set(row.name, row);
+    }
+
+    if (liveRes.status === 'fulfilled') {
+        for (const info of Array.isArray(liveRes.value) ? liveRes.value as LiveInfo[] : []) mergeLiveRow(rows, info, byName);
         if (!listing.ok && rows.length > 0) {
             listing = {
                 ok: false,
@@ -122,34 +134,31 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
                 detail: `${listing.detail}; only sessions with a live backend are listed`,
             };
         }
-    } catch (err) {
-        console.warn('SessionSidebar: listSessions unavailable:', (err as Error)?.message);
+    } else {
+        console.warn('SessionSidebar: listSessions unavailable:', (liveRes.reason as Error)?.message);
     }
 
-    try {
-        const companions = api && typeof api.listSessionCompanions === 'function' ? await api.listSessionCompanions() : [];
-        for (const info of Array.isArray(companions) ? companions as LiveInfo[] : []) mergeLiveRow(rows, info);
-    } catch (err) {
-        console.warn('SessionSidebar: companion shells unavailable:', (err as Error)?.message);
+    if (companionsRes.status === 'fulfilled') {
+        for (const info of Array.isArray(companionsRes.value) ? companionsRes.value as LiveInfo[] : []) mergeLiveRow(rows, info, byName);
+    } else {
+        console.warn('SessionSidebar: companion shells unavailable:', (companionsRes.reason as Error)?.message);
     }
 
     let workByName = new Map<string, string>();
     let workByUuid = new Map<string, string>();
     let records: unknown[] = [];
-    try {
-        if (api && typeof api.listSessionRecords === 'function') {
-            const got = await api.listSessionRecords();
-            records = Array.isArray(got) ? got : [];
-            workByName = workStampIndex(records);
-            workByUuid = workStampByUuid(records);
-        }
-    } catch (err) {
-        console.warn('SessionSidebar: session records unavailable:', (err as Error)?.message);
+    if (recordsRes.status === 'fulfilled') {
+        records = Array.isArray(recordsRes.value) ? recordsRes.value : [];
+        workByName = workStampIndex(records);
+        workByUuid = workStampByUuid(records);
+    } else {
+        console.warn('SessionSidebar: session records unavailable:', (recordsRes.reason as Error)?.message);
     }
     Identity.stamp(rows, records as Identity.SessionRecord[]);
     addRows(rows, records, G.SessionSidebarLayouts?.memberUuids?.());
-    if (closedShown()) addClosedRows(rows, records);
-    noteIdentities(rows, records as Identity.SessionRecord[]);
+    if (closedShown() || searchLists()) addClosedRows(rows, records);
+    else addClosedRows(rows, records, isPinnedRow);
+    noteIdentities(rows, records as Identity.SessionRecord[], true);
 
     const inLayout = inLayoutPage();
     for (const row of rows) {
@@ -186,8 +195,8 @@ export async function load(activeTmuxName: string | null): Promise<{ rows: Drawe
     return { rows: sorted, listing };
 }
 
-export function noteIdentities(rows: DrawerRow[], records: readonly Identity.SessionRecord[]): void {
-    Identity.stamp(rows, records);
+export function noteIdentities(rows: DrawerRow[], records: readonly Identity.SessionRecord[], alreadyStamped = false): void {
+    if (!alreadyStamped) Identity.stamp(rows, records);
     reconcile(rows as Array<{ name: string; session_uuid?: string | null }>);
     noteRows(rows as Array<{ name: string; session_uuid?: string | null }>);
     GroupStore.setRuleContext(liveRuleContext);
@@ -237,6 +246,7 @@ function liveFields(info: LiveInfo): Partial<DrawerRow> {
         automations_enabled: orNull(info.automations_enabled),
         automations_next: orNull(info.automations_next),
         background_open: orNull(info.background_open),
+        stalled_agents: orNull(info.stalled_agents),
         agent_update: orNull(info.agent_update),
         codex_helpers: orNull(info.codex_helpers),
         mcp_health: orNull(info.mcp_health),
@@ -254,14 +264,23 @@ function liveFields(info: LiveInfo): Partial<DrawerRow> {
     };
 }
 
-export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
+function liveEpoch(info: LiveInfo): number {
+    const ep = info.session?.tmux_created_epoch;
+    return typeof ep === 'number' && Number.isFinite(ep) && ep > 0 ? ep : 0;
+}
+
+export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo, byName?: Map<string, DrawerRow>): void {
     const tmuxName = info && info.tmux_session;
     if (!tmuxName) return;
     const rowId = typeof info.session_row_id === 'number' ? info.session_row_id : null;
-    const existing = rows.find((r) => r.name === tmuxName);
+    const epoch = liveEpoch(info);
+    const existing = byName ? byName.get(tmuxName) : rows.find((r) => r.name === tmuxName);
     if (existing) {
         Object.assign(existing, liveFields(info));
         if (rowId !== null) existing.session_row_id = rowId;
+        if (epoch > 0 && !(typeof existing.created_at_epoch === 'number' && existing.created_at_epoch > 0)) {
+            existing.created_at_epoch = epoch;
+        }
         existing.session_uuid = info.session_uuid || existing.session_uuid || null;
         if (info.label !== undefined) existing.label = info.label;
         if (info.agent_family !== undefined) existing.agent_family = info.agent_family;
@@ -270,10 +289,10 @@ export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
         if (info.pinned_theme) existing.pinned_theme = info.pinned_theme;
         return;
     }
-    rows.unshift({
+    const created = {
         name: tmuxName,
         label: orNull(info.label),
-        created_at_epoch: 0,
+        created_at_epoch: epoch,
         session_row_id: rowId,
         session_uuid: orNull(info.session_uuid),
         agent_family: orNull(info.agent_family),
@@ -281,7 +300,9 @@ export function mergeLiveRow(rows: DrawerRow[], info: LiveInfo): void {
         agent_wrapper_icon: orNull(info.agent_wrapper_icon),
         pinned_theme: info.pinned_theme || null,
         ...liveFields(info),
-    } as DrawerRow);
+    } as DrawerRow;
+    rows.push(created);
+    if (byName) byName.set(tmuxName, created);
 }
 
 export function workStampIndex(records: readonly unknown[]): Map<string, string> {

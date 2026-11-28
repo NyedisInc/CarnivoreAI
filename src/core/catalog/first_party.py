@@ -43,26 +43,26 @@ def _import_reason(root: Path, name: str) -> Optional[str]:
     specs = [m.group(2) or m.group(4) for m in _STATIC_IMPORT_RE.finditer(text)]
     specs += [m.group(2) if m.group(2) is not None else "<dynamic>" for m in _DYNAMIC_IMPORT_RE.finditer(text)]
     for spec in specs:
-        if spec != EFFECTS_BASE or not (root / "effects-base.js").is_file():
+        if not spec.startswith("./") or "/" in spec[2:] or not (root / spec[2:]).is_file():
             return f"{name} imports {spec[:60]!r}"
     return None
 
 
 def _code_reason(root: Path, first_party: bool) -> Optional[str]:
+    _ = first_party
     manifest_name = kinds.manifest_name(kinds.KIND_THEME)
-    allowed_files = THEME_METADATA_FILES | set(FIRST_PARTY_FILES) if first_party else THEME_METADATA_FILES
+    skill_manifest = kinds.manifest_name(kinds.KIND_SKILL)
+    js_files: list[str] = []
     for path in sorted(root.rglob("*")):
         rel = path.relative_to(root)
         if path.is_symlink():
             return str(rel)
         if not path.is_file():
             continue
-        name = path.name
-        if len(rel.parts) == 1 and (
-            name == manifest_name or name in allowed_files or name.lower().endswith(THEME_IMAGE_SUFFIXES)
-        ):
-            continue
-        return str(rel)
+        if path.name == skill_manifest:
+            return str(rel)
+        if len(rel.parts) == 1 and path.name.lower().endswith(".js"):
+            js_files.append(path.name)
     manifest = root / manifest_name
     try:
         raw: Any = json.loads(manifest.read_text(encoding="utf-8"))
@@ -70,16 +70,14 @@ def _code_reason(root: Path, first_party: bool) -> Optional[str]:
         return "theme.json (unreadable)"
     if not isinstance(raw, dict):
         return "theme.json (not an object)"
-    allowed_keys = THEME_DATA_KEYS | FIRST_PARTY_KEYS if first_party else THEME_DATA_KEYS
+    allowed_keys = THEME_DATA_KEYS | FIRST_PARTY_KEYS
     for key in raw:
         if key not in allowed_keys:
             return f"theme.json key {str(key)[:40]!r}"
-    if first_party:
-        for name in ("effects.js", "effects-base.js"):
-            if (root / name).is_file():
-                reason = _import_reason(root, name)
-                if reason is not None:
-                    return reason
+    for name in js_files:
+        reason = _import_reason(root, name)
+        if reason is not None:
+            return reason
     return None
 
 

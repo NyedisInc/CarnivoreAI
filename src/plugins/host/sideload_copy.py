@@ -5,7 +5,7 @@ import hashlib
 import os
 import stat
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, FrozenSet, List, Tuple
 
 from src.core.skills.validate_types import EXCLUDED_BASENAME_PREFIXES, EXCLUDED_BASENAMES
 from src.plugins.host.sideload_errors import SideloadRefused
@@ -13,6 +13,7 @@ from src.plugins.host.sideload_errors import SideloadRefused
 MAX_FILES = 2000
 MAX_BYTES = 20 * 1024 * 1024
 _SKIP_DIRS = frozenset({"__pycache__", ".git"})
+DEV_SKIP_DIRS = frozenset({"__pycache__", ".git", "node_modules", ".venv", ".pytest_cache", ".mypy_cache", ".ruff_cache", "target"})
 _SKIP_SUFFIXES = (".pyc", ".pyo")
 
 
@@ -47,7 +48,7 @@ def is_noise(name: str) -> bool:
     return name in EXCLUDED_BASENAMES or name.startswith(EXCLUDED_BASENAME_PREFIXES)
 
 
-def copy_tree(source: Path, dest: Path) -> Dict[str, str]:
+def copy_tree(source: Path, dest: Path, *, skip_dirs: FrozenSet[str] = _SKIP_DIRS) -> Dict[str, str]:
     files: Dict[str, str] = {}
     total = 0
     pending: set = set()
@@ -55,7 +56,7 @@ def copy_tree(source: Path, dest: Path) -> Dict[str, str]:
     for root, dirs, names, dirfd in os.fwalk(source, follow_symlinks=False):
         rel_root = Path(root).relative_to(source)
         pending.discard(rel_root.as_posix())
-        dirs[:] = sorted(d for d in dirs if d not in _SKIP_DIRS)
+        dirs[:] = sorted(d for d in dirs if d not in skip_dirs)
         for d in dirs:
             if not stat.S_ISDIR(os.stat(d, dir_fd=dirfd, follow_symlinks=False).st_mode):
                 raise SideloadRefused("source_unsafe", "the folder holds a link; sideload copies real files only", 422)

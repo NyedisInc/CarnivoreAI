@@ -18,6 +18,7 @@ from src.config.rate_limits import AuthRateLimits
 from src.config.session import SessionConfig
 from src.config.swarm_switch import SwarmSwitchConfig
 from src.config.ui import UIConfig
+from src.config.retention import RetentionConfig
 from src.config.uploads import UploadsConfig
 from src.config.workspace import ServerPrefsConfig, WorkspaceConfig
 
@@ -37,6 +38,7 @@ class AuthConfig(BaseModel):
     auth_rate_limits: AuthRateLimits = Field(default_factory=AuthRateLimits)
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     uploads: UploadsConfig = Field(default_factory=UploadsConfig)
+    retention: RetentionConfig = Field(default_factory=RetentionConfig)
     providers: ProvidersConfig = Field(default_factory=ProvidersConfig)
     workspace: WorkspaceConfig = Field(default_factory=WorkspaceConfig)
     server_prefs: ServerPrefsConfig = Field(default_factory=ServerPrefsConfig)

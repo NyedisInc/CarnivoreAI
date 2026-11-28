@@ -58,9 +58,20 @@ interface RepaintGlobals {
     SessionSidebar?: { repaint?(): void };
 }
 
+let repaintFrame: number | null = null;
+
 export function repaintDrawer(): boolean {
     const ctrl = (globalThis as unknown as RepaintGlobals).SessionSidebar;
     if (!ctrl || typeof ctrl.repaint !== 'function') return false;
+    if (typeof requestAnimationFrame === 'function' && !import.meta.env?.VITEST) {
+        if (repaintFrame === null) {
+            repaintFrame = requestAnimationFrame(() => {
+                repaintFrame = null;
+                ctrl.repaint?.();
+            });
+        }
+        return true;
+    }
     ctrl.repaint();
     return true;
 }

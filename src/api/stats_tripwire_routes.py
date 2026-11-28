@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Request
 
 from src.api.auth import require_auth
-from src.api.stats_routes import _BoundedBodyRoute, _run, _store
+from src.api.stats_routes import _BoundedBodyRoute, _run, _store, _wake_mesh_workspace
 from src.core.stats import tripwires
 from src.models.stats import TripwireWrite
 
@@ -22,7 +22,9 @@ async def list_tripwires(request: Request) -> list[dict]:
 @router.post("", response_model=None, status_code=201)
 async def post_tripwire(request: Request, value: TripwireWrite) -> dict:
     """Create a tripwire (422 at the 64 limit or on an invalid query)."""
-    return await _run(tripwires.create_tripwire, _store(request), value)
+    created = await _run(tripwires.create_tripwire, _store(request), value)
+    _wake_mesh_workspace()
+    return created
 
 
 @router.get("/{tripwire_id}", response_model=None)
@@ -34,10 +36,13 @@ async def get_tripwire(request: Request, tripwire_id: UUID) -> dict:
 @router.put("/{tripwire_id}", response_model=None)
 async def put_tripwire(request: Request, tripwire_id: UUID, value: TripwireWrite) -> dict:
     """Replace a tripwire; its state resets to unknown."""
-    return await _run(tripwires.replace_tripwire, _store(request), str(tripwire_id), value)
+    updated = await _run(tripwires.replace_tripwire, _store(request), str(tripwire_id), value)
+    _wake_mesh_workspace()
+    return updated
 
 
 @router.delete("/{tripwire_id}", response_model=None, status_code=204)
 async def delete_tripwire(request: Request, tripwire_id: UUID) -> None:
     """Delete a tripwire."""
     await _run(tripwires.delete_tripwire, _store(request), str(tripwire_id))
+    _wake_mesh_workspace()

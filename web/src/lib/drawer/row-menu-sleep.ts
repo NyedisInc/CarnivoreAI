@@ -3,6 +3,8 @@ import { confirmOk } from '../confirm-ok/confirm-ok';
 import type { SidebarPick } from '../legacy-globals';
 import { say, tr } from '../item-menu/run/run-env';
 import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
+import { liveRowAfterNotAsleep } from '../../opscenter/api/wake-answer';
+import { CANCELLED, isOffloadedAnswer, promptRestore, runWithOffloadRestore } from '../offload-prompt/offload-prompt';
 import { restartNotice } from '../../../../client/js/labels/recent-session.js';
 
 export interface SleepCtx {
@@ -117,6 +119,10 @@ async function resolveRefusal(ctx: SleepCtx, name: string, res: WakeAnswer | und
     const picker = g().SessionRestartPicker;
     const uuid = ctx.sessionUuid as string;
     let answer = res;
+    if (answer && answer.status === 'refused' && isOffloadedAnswer(answer)) {
+        if (!(await promptRestore({ sessionUuid: uuid, label: name }, true))) return 'cancelled';
+        answer = (await g().API!.wakeSession(uuid)) ?? answer;
+    }
     if (answer && answer.status === 'refused' && answer.code === WRAPPER_NEEDED && picker) {
         const picked = await pickAndWake(ctx.name, name, uuid);
         if (!picked) {
@@ -145,8 +151,14 @@ export async function runWakeWithId(ctx: SleepCtx): Promise<WakeOutcome> {
         sessionId = (started && res && res.session_id) || null;
         if (!started) say(ctx, tr('session.wake.failed', { name, reason: (res && res.detail) || '' }));
     } catch (err) {
-        console.error('[SessionRowMenuSleep] wake failed:', err);
-        say(ctx, tr('session.wake.failed', { name, reason: reasonOf(err) }));
+        const live = await liveRowAfterNotAsleep(err, ctx.sessionUuid);
+        if (live) {
+            started = true;
+            sessionId = live.session.id;
+        } else {
+            console.error('[SessionRowMenuSleep] wake failed:', err);
+            say(ctx, tr('session.wake.failed', { name, reason: reasonOf(err) }));
+        }
     }
     await refresh();
     if (started && g().WakeFocus) void g().WakeFocus!.afterWake(ctx.sessionUuid, nav, sessionId);
@@ -188,8 +200,10 @@ export async function runReopen(ctx: SleepCtx): Promise<boolean> {
     let started = false;
     let answer: RestartAnswer | null = null;
     try {
-        answer = (await g().API!.restartSession(ctx.sessionUuid)) ?? null;
-        started = true;
+        const uuid = ctx.sessionUuid;
+        const out = await runWithOffloadRestore({ sessionUuid: uuid, label: name }, () => g().API!.restartSession(uuid));
+        started = out !== CANCELLED;
+        answer = out === CANCELLED ? null : (out ?? null);
     } catch (err) {
         console.error('[SessionRowMenuSleep] reopen failed:', err);
         say(ctx, tr('session.reopen.failed', { name, reason: reasonOf(err) }));

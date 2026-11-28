@@ -11,15 +11,16 @@
         heading?: HeadingPlan;
         bodyId?: string;
         block?: string;
+        tint?: string;
         gestures?: Attachment<HTMLElement> | null;
         body?: HTMLElement | null;
         children: Snippet;
     }
 
-    let { kind = '', attrs = {}, heading, bodyId, block, gestures = null, body = $bindable(null), children }: Props = $props();
+    let { kind = '', attrs = {}, heading, bodyId, block, tint, gestures = null, body = $bindable(null), children }: Props = $props();
 
     const cls = $derived(kind ? `session-sidebar-group ${kind}` : 'session-sidebar-group');
     const id = $derived(bodyId ?? heading?.bodyId);
 </script>
 
-<div class={cls} role="group" {...attrs} style:--sb-block={block} {@attach gestures}>{#if heading}<Heading h={heading} />{/if}<div class="session-sidebar-group__body" {id} bind:this={body}>{@render children()}</div></div>
+<div class={cls} role="group" {...attrs} style:--sb-block={block} style:--sb-tint={tint} {@attach gestures}>{#if heading}<Heading h={heading} />{/if}<div class="session-sidebar-group__body" {id} bind:this={body}>{@render children()}</div></div>

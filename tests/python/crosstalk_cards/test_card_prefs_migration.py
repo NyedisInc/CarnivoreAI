@@ -9,13 +9,15 @@ from typing import Any, Dict
 from src.core.crosstalk import card_prefs_migration as migration
 from src.core.crosstalk import card_push
 from src.core.ui_preferences_store import UiPreferencesStore
-from src.plugins.host import state as owner_state
+from src.plugins.host import registry_store, state as owner_state
 
 
 def _state(state_dir: Path, entries: Dict[str, Any]) -> None:
-    path = owner_state.state_path(state_dir)
+    path = registry_store.registry_path(state_dir)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"version": owner_state.STATE_VERSION, "cplugs": entries}))
+    doc = registry_store.new_document()
+    doc["items"] = {k: {"kind": "feature", **v} for k, v in entries.items()}
+    path.write_text(json.dumps(doc))
 
 
 def _store(tmp_path: Path) -> UiPreferencesStore:

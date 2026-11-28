@@ -104,12 +104,13 @@ it('a GROUP NAME no longer keeps its members: a header match is not a session na
     assert.deepEqual(namesIn(html), []);
 });
 
-it('"pinned" does not keep PINNED: only a row that matches is listed, and a pinned one wears no pin', async () => {
+it('"pinned" does not keep PINNED: only a row that matches is listed, and a pinned one wears its pin', async () => {
     const html = body(Search.normalize('pin'));
     assert.deepEqual(namesIn(html), []);
     const named = body(Search.normalize('lante'));
     assert.ok(named.includes('data-group="search:agents"'));
-    assert.ok(!named.includes('oc-tag') && !named.includes('data-pin-session'), 'a pinned hit draws no pin in a search');
+    assert.ok(!named.includes('oc-tag'), 'a pinned hit wears no tag');
+    assert.match(named, /data-pin-session="[^"]+" aria-pressed="true"/, 'a pinned hit wears its pin, pressed (#3259)');
 });
 
 it('a saved Layout row and a browser row in a search draw no pin, keep the kebab; the normal drawer keeps both pins', async () => {

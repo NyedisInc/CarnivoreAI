@@ -47,7 +47,7 @@ def marker(project_uid: str) -> str:
     return MARK + hashlib.sha256(project_uid.encode()).hexdigest()[:16]
 
 
-def _refusal(host: Any, caller: str, body: PrewarmBody, deps: List[DepDir]) -> Optional[str]:
+def _refusal(host: Any, caller: str, body: PrewarmBody, deps: List[DepDir], member: bool = False) -> Optional[str]:
     store: JobStore = host.store
     live = [r for r in store.host_list([HostState.PREPARING, HostState.RUNNING, HostState.PARKED]) if r.project_uid == body.project_uid]
     if any(r.job_id.startswith(MARK) for r in live):
@@ -74,7 +74,7 @@ def _refusal(host: Any, caller: str, body: PrewarmBody, deps: List[DepDir]) -> O
     if any(not r["job_id"] and not recipe.plan(r["path"], deps, r["memo"], None) for r in rows):
         return "a folder here is already set up for these lockfiles"
     try:
-        host_admit._hold(host, marker(body.project_uid), caller, body.project_uid, workload.resolve({"kind": "build"}), TIME_CAP_S)  # noqa: SLF001
+        host_admit._hold(host, marker(body.project_uid), caller, body.project_uid, workload.resolve({"kind": "build"}), TIME_CAP_S, member)  # noqa: SLF001
     except JobError as exc:
         return exc.detail or exc.code
     return None
@@ -102,7 +102,7 @@ async def _warm(host: Any, project: Dict[str, Any], body: PrewarmBody, deps: Lis
         host_admit.drop(job_id)
 
 
-async def prewarm(host: Any, caller: str, body: PrewarmBody) -> Dict[str, Any]:
+async def prewarm(host: Any, caller: str, body: PrewarmBody, member: bool = False) -> Dict[str, Any]:
     deps = [DepDir(d.path, d.kind, dict(d.locks), d.python) for d in body.dep_dirs]
 
     def start() -> Any:
@@ -115,7 +115,7 @@ async def prewarm(host: Any, caller: str, body: PrewarmBody) -> Dict[str, Any]:
         stale = host.store.host_get(job_id)
         if stale is not None and stale.state not in (HostState.PREPARING, HostState.RUNNING, HostState.PARKED):
             host.store.host_delete(job_id)
-        reason = _refusal(host, caller, body, deps)
+        reason = _refusal(host, caller, body, deps, member)
         if reason:
             return reason
         try:

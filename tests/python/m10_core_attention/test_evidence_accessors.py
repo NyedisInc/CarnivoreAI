@@ -6,7 +6,7 @@ from src.core.attention.evidence import Evidence
 
 
 def _bound(**fields):
-    row = SimpleNamespace(**fields)
+    row = SimpleNamespace(**{"manifest": None, **fields})
     for name in ("active_pane", "active_transcript"):
         setattr(row, name, getattr(Evidence, name).__get__(row))
     return row

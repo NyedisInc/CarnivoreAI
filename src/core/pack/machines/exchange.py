@@ -15,7 +15,7 @@ from src.core.machine_stats.sample import signature
 from src.core.pack.machines import capabilities as caps_mod
 from src.core.pack.machines import restrictions as restrictions_mod
 from src.core.pack.machines import roster as roster_mod
-from src.core.pack.machines import roster_doc, settings_doc, settings_sign
+from src.core.pack.machines import operating, roster_doc, roster_pieces, roster_v2, settings_doc, settings_sign
 from src.core.pack.machines.config_state import ConfigState
 from src.core.pack.machines.settings_custody import SettingsCustody
 from src.core.pack.machines.roster import Entry, PeerInfo, Roster
@@ -30,6 +30,7 @@ RESERVE_PATH = "/federation/pack/reserve"
 TIGHTEN_PATH = "/federation/pack/restrictions/tighten"
 RESCAN_PATH, LABELS_PATH = "/federation/pack/rescan", "/federation/pack/labels"
 KICK_DELAY_SECONDS = 2.0
+FAST_KICK_SECONDS = 0.5
 NOTIFY_EVERY_SECONDS = 5.0
 LOAD_NOTIFY_SECONDS = 30.0
 TOPIC = "pack_machines"
@@ -80,6 +81,8 @@ class PackMachines:
         self.custody = SettingsCustody(install_id=install_id, state=state, default_master=default_master, signing=signing,
                                        paired=paired, clock=clock)
         self._clock, self._local_now = clock, local_now
+        self.custody.switch_refusal_changed = self.settings_changed
+        self.courier = roster_pieces.Courier(self.custody.roster_v2_wire, self.custody.merge_roster_v2)
         self._signatures: Dict[str, Any] = {}
         self._live_signatures: Dict[str, Any] = {}
         self._live_noticed: Dict[str, float] = {}
@@ -94,8 +97,10 @@ class PackMachines:
         self._pull_tasks: set = set()
         self.pipeline_rev: Callable[[], Dict[str, int]] = lambda: {}
         self.member_labels: Callable[[], List[Dict[str, str]]] = lambda: []
-        self.credential_offers: Callable[[], List[Dict[str, str]]] = lambda: []
+        self.credential_offers: Callable[[], Optional[List[Dict[str, str]]]] = lambda: []
         self.offers_changed: Callable[[], None] = lambda: None
+        self.offers_reconcile: Optional[Callable[[str, List[str]], Awaitable[Any]]] = None
+        self._reconcile_tasks: Dict[str, "asyncio.Task[Any]"] = {}
         self.skills_block: Callable[[], Optional[Dict[str, Any]]] = lambda: None
         self.skills_seen: Callable[[str, Dict[str, Any]], Any] = lambda install_id, snapshot: None
         self.skills_settings_changed: Callable[[str, str], None] = lambda source, from_install_id: None
@@ -107,6 +112,16 @@ class PackMachines:
 
     def settings(self) -> settings_doc.PackSettings:
         return self.custody.settings()
+
+    def operating_settings(self) -> settings_doc.PackSettings:
+        return operating.effective(self.settings())
+
+    def settings_changed(self) -> None:
+        self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
+
+    def held_list(self) -> Optional[Any]:
+        held = self.custody.held_lists()
+        return held[0] if held is not None else None
 
     def own_snapshot(self) -> Dict[str, Any]:
         with self._snap_lock:
@@ -130,7 +145,9 @@ class PackMachines:
             reserve={**active, "config": reserve_cfg.model_dump()}, restrictions=restrictions.model_dump(),
             capabilities=caps_mod.names(), hid_idle=hid)
         snap["members"] = self.member_labels()
-        snap["credential_offers"] = self.credential_offers()
+        offers = self.credential_offers()
+        if offers is not None:
+            snap["credential_offers"] = offers
         snap["relay_accept"] = consent_mod.published(self.state.relay_consent())
         skills = self.skills_block()
         if skills:
@@ -187,6 +204,10 @@ class PackMachines:
         self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
         return True
 
+    def _take_pieces(self, peer_id: str, part: Any) -> None:
+        if not direction.contained(peer_id) and self.courier.incoming(peer_id, part):
+            self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
+
     def _record(self, install_id: str, label: str, snapshot: Dict[str, Any], remote_settings: Any) -> None:
         held = settings_doc.from_dict(remote_settings)
         entry = self.roster.record(install_id, label=label, snapshot=snapshot,
@@ -198,11 +219,24 @@ class PackMachines:
         if self._offer_signatures.get(install_id, ()) != offered:
             self._offer_signatures[install_id] = offered
             self.offers_changed()
+        self._schedule_reconcile(install_id, snapshot)
         if self._store is not None and (entry.persisted_at == 0.0 or self.roster.due_for_store(entry)):
             try:
                 self._store(entry)
             except Exception as exc:  # noqa: BLE001
                 logger.info("pack_machines_store_failed", error=type(exc).__name__)
+
+    def _schedule_reconcile(self, install_id: str, snapshot: Dict[str, Any]) -> None:
+        offers = snapshot.get("credential_offers") if isinstance(snapshot, dict) else None
+        running = self._reconcile_tasks.get(install_id)
+        if self.offers_reconcile is None or not isinstance(offers, list) or (running is not None and not running.done()):
+            return
+        keys = [o["account_key"] for o in consent_mod.clean_offers(offers)]
+        try:
+            self._reconcile_tasks[install_id] = asyncio.get_running_loop().create_task(
+                self.offers_reconcile(install_id, keys), name="pack-relay-reconcile")
+        except RuntimeError:
+            return
 
     def _schedule_pull(self, peer_id: str, snapshot: Dict[str, Any]) -> None:
         if self.importer is None:
@@ -226,11 +260,15 @@ class PackMachines:
             self.kick()
         if "roster" in body:
             await asyncio.to_thread(self._merge_roster, body.get("roster"), caller_id)
+        if caps_mod.mesh_on() and "roster_v2" in body:
+            await asyncio.to_thread(self._take_pieces, caller_id, body["roster_v2"])
         mine, (doc, sig) = await asyncio.to_thread(lambda: (self.own_snapshot(), self.custody.outgoing()))
         self._announce(self.install_id, mine, roster_mod.STATE_SELF)
         reply = {"snapshot": mine, "settings": doc, "settings_sig": sig, "want_agents": self.viewer_live()}
         if "roster" in body:
             reply["roster"] = await asyncio.to_thread(self.custody.roster_wire)
+        if caps_mod.mesh_on() and "roster_v2" in body:
+            reply["roster_v2"] = await asyncio.to_thread(self.courier.outgoing, caller_id, body["roster_v2"])
         return reply
 
     async def beat(self, peer_id: str, post: PostFn, peer_capabilities: List[str]) -> bool:
@@ -244,6 +282,8 @@ class PackMachines:
                 body["settings_sig"] = sig
             if caps_mod.has(peer_capabilities, caps_mod.CAP_ROSTER):
                 body["roster"] = await asyncio.to_thread(self.custody.roster_wire)
+            if caps_mod.mesh_on() and caps_mod.has(peer_capabilities, caps_mod.CAP_ROSTER_V2):
+                body["roster_v2"] = await asyncio.to_thread(self.courier.outgoing, peer_id, None)
             status, data = await post("POST", EXCHANGE_PATH, body)
             if status != 200 or not isinstance(data, dict) or not roster_mod.snapshot_ok(data.get("snapshot"), peer_id):
                 logger.info("pack_exchange_refused", peer=peer_id[:8], status=status)
@@ -257,6 +297,8 @@ class PackMachines:
                 self.kick()
             if "roster" in body:
                 await asyncio.to_thread(self._merge_roster, data.get("roster"), peer_id)
+            if "roster_v2" in body:
+                await asyncio.to_thread(self._take_pieces, peer_id, data.get("roster_v2"))
             return True
         except asyncio.CancelledError:
             raise
@@ -268,16 +310,20 @@ class PackMachines:
         for peer_id, post, caps in self._connected():
             await self.beat(peer_id, post, caps)
 
-    def kick(self) -> None:
+    def kick(self, delay: float = KICK_DELAY_SECONDS) -> None:
         if self._kick_task is not None and not self._kick_task.done():
             return
         try:
-            self._kick_task = asyncio.get_running_loop().create_task(self._kick_run())
+            self._kick_task = asyncio.get_running_loop().create_task(self._kick_run(delay))
         except RuntimeError:
             self._kick_task = None
 
-    async def _kick_run(self) -> None:
-        await asyncio.sleep(KICK_DELAY_SECONDS)
+    def notify_load_shift(self) -> None:
+        self._invalidate_snapshot()
+        self.kick(FAST_KICK_SECONDS)
+
+    async def _kick_run(self, delay: float = KICK_DELAY_SECONDS) -> None:
+        await asyncio.sleep(delay)
         await self.beat_all()
 
     LEASE_SECONDS = 120.0
@@ -330,8 +376,11 @@ class PackMachines:
         return doc
 
     def refresh_roster(self, inputs: List[roster_doc.RosterInput], *, order: Optional[List[str]] = None,
-                       eligible: Optional[Dict[str, bool]] = None) -> str:
-        result = self.custody.refresh_roster(inputs, order=order, eligible=eligible)
+                       eligible: Optional[Dict[str, bool]] = None, link_peers: Optional[Dict[str, bool]] = None) -> str:
+        if caps_mod.mesh_on():
+            inputs = roster_v2.with_capabilities(inputs, self.install_id, caps_mod.names(), lambda iid: (
+                getattr(self.roster.entries.get(iid), "snapshot", None) or {}).get("capabilities"))
+        result = self.custody.refresh_roster(inputs, order=order, eligible=eligible, link_peers=link_peers)
         if result.startswith("bump:"):
             self._notify(TOPIC, "settings", NOTIFY_EVERY_SECONDS)
             self.skills_settings_changed("local_edit", "")
@@ -354,13 +403,21 @@ class PackMachines:
 
     def set_restrictions(self, patch: Dict[str, Any], *, from_peer: bool,
                          sync_consent: bool = True) -> restrictions_mod.Restrictions:
-        current = self.state.restrictions()
-        new = restrictions_mod.merged(current, patch)
         if from_peer:
-            loosened = restrictions_mod.loosened_rules(current, new)
-            if loosened:
-                raise PermissionError(",".join(loosened))
-        if self.state.save_restrictions(new):
+            def tighten(current: restrictions_mod.Restrictions) -> restrictions_mod.Restrictions:
+                merged = restrictions_mod.merged(current, patch)
+                loosened = restrictions_mod.loosened_rules(current, merged)
+                if loosened:
+                    raise PermissionError(",".join(loosened))
+                return merged
+
+            current, new = self.state.update_restrictions(tighten)
+            changed = new != current
+        else:
+            current = self.state.restrictions()
+            new = restrictions_mod.merged(current, patch)
+            changed = self.state.save_restrictions(new)
+        if changed:
             self._invalidate_snapshot()
             self._notify(TOPIC, self.install_id, NOTIFY_EVERY_SECONDS)
             if new.may_receive_credentials != current.may_receive_credentials:
@@ -378,8 +435,20 @@ class PackMachines:
         offers_mod.revoke_keys(consent_mod.revoked(before, after, offered))
 
     def view(self, peers: List[PeerInfo]) -> Dict[str, Any]:
-        return self.roster.view(self_snapshot=self.own_snapshot(), self_id=self.install_id, self_label=self.label,
-                                peers=peers, settings=self.settings())
+        peer_tel: Optional[Dict[str, Dict[str, Any]]] = None
+        if caps_mod.mesh_on():
+            from src.core.pack.globalsync import mesh_telemetry
+
+            peer_tel = mesh_telemetry.active_peers()
+        out = self.roster.view(self_snapshot=self.own_snapshot(), self_id=self.install_id, self_label=self.label,
+                               peers=peers, settings=self.operating_settings(), peer_telemetry=peer_tel)
+        if self.custody.roster_refusal is not None:
+            out["roster_refusal"] = dict(self.custody.roster_refusal)
+        if caps_mod.mesh_on() and self.custody.link_switches_unknown:
+            out["link_switches_unknown"] = True
+        if caps_mod.mesh_on() and self.custody.switch_refusal is not None:
+            out["link_switch_refused"] = {"signer": self.custody.switch_refusal["signer"], "computers": list(self.custody.switch_refusal["computers"])}
+        return out
 
 
 RUNTIME: Optional[PackMachines] = None

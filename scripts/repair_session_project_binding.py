@@ -35,7 +35,7 @@ WHAT IT REFUSES, and this is the safety argument.
 
 Example:
     ./venv/bin/python3 scripts/repair_session_project_binding.py \\
-        --state-dir "$HOME/Library/Application Support/CloudeCode"
+        --state-dir "$HOME/Library/Application Support/Carnivore"
 """
 
 from __future__ import annotations
@@ -50,6 +50,8 @@ from typing import Dict, List, Tuple
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.core.db import connect, db_path_for  # noqa: E402
+from src.core.message_body_codec import register_body_functions  # noqa: E402
+from src.core.safe_io.readonly_db import READONLY_TIMEOUT_LONG_S, connect_readonly  # noqa: E402
 from src.core.db_models import (  # noqa: E402
     SESSION_ATTRIBUTION_DERIVED_DEEPEST,
     SESSION_ATTRIBUTION_NONE,
@@ -172,6 +174,20 @@ def apply_plans(
     return written
 
 
+def open_connection(db: Path, *, apply: bool) -> sqlite3.Connection:
+    if apply:
+        return connect(db, create=False)
+    source = connect_readonly(db, timeout=READONLY_TIMEOUT_LONG_S)
+    try:
+        copy = sqlite3.connect(":memory:", isolation_level=None)
+        source.backup(copy)
+    finally:
+        source.close()
+    copy.row_factory = sqlite3.Row
+    register_body_functions(copy)
+    return copy
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--state-dir", required=True)
@@ -201,7 +217,7 @@ def main() -> int:
             print(f"REFUSED: backup {backup} is missing or empty")
             return 2
 
-    conn = connect(db)
+    conn = open_connection(db, apply=args.apply)
     try:
         before = counts_before(conn)
         plans, tally = plan_rows(conn, allow_create=not args.no_create)

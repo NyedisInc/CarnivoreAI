@@ -38,6 +38,7 @@ async def _groups(route_call: Any = None) -> list:
 def _shape(group: Any, names: dict) -> dict:
     members = [{"name": n, "id": names.get(n)} for n in group.members]
     return {"group_uuid": group.group_uuid, "name": group.name, "position": group.position,
+            "parent_key": group.parent_key,
             "members": members, "other_members": max(0, len(group.member_session_uuids) - len(members))}
 
 
@@ -66,10 +67,15 @@ async def session_groups_list(manager: Any, caller: AgentCaller, args: dict) -> 
 async def session_group_create(manager: Any, caller: AgentCaller, args: dict) -> dict:
     from src.api import session_groups_routes as routes
 
-    _only(args, {"name"}, "session_group_create")
+    _only(args, {"name", "parent_key"}, "session_group_create")
     name = _name_arg(args)
+    parent_key = args.get("parent_key")
+    if parent_key is not None and not isinstance(parent_key, str):
+        raise ToolError("parent_key must be a string or null")
     before = {g.group_uuid for g in await _groups()}
-    listed = await _via_route(routes.create_session_group(routes.CreateGroupRequest(name=name), _request(manager)))
+    listed = await _via_route(
+        routes.create_session_group(routes.CreateGroupRequest(name=name, parent_key=parent_key), _request(manager))
+    )
     groups = await _groups(listed)
     shaped = await _shaped(manager, groups)
     fresh = [g for g in shaped if g["group_uuid"] not in before]
@@ -142,8 +148,10 @@ READ_TOOLS: dict = {
 
 WRITE_TOOLS: dict = {
     "session_group_create": (
-        "Create an empty drawer group with a name. Every open drawer updates live. Then use session_group_move to fill it.",
-        {"name": {"type": "string", "description": "the group's label"}}, ["name"], session_group_create,
+        "Create an empty drawer group with a name, optionally nested inside a container (parent_key: 'pinned', 'c:<id>', 'p:<id>', 'g:<uuid>', etc.). Every open drawer updates live.",
+        {"name": {"type": "string", "description": "the group's label"},
+         "parent_key": {"type": ["string", "null"], "description": "optional enclosing container key (null for top-level GROUPS)"}},
+        ["name"], session_group_create,
     ),
     "session_group_move": (
         "Move sessions on this computer into a drawer group, or out of every group (group null). Stored by session_uuid, "

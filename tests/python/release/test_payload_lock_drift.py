@@ -13,8 +13,8 @@ REQUIREMENTS = ROOT / "requirements.txt"
 PAYLOAD = ROOT / "macOS" / "payload"
 LOCK = PAYLOAD / "runtime.lock"
 BUILD = PAYLOAD / "build-payload.sh"
-DROPPED = {"pytest", "pytest-asyncio", "playwright"}
-MUST_BE_LOCKED = {"fastapi", "starlette", "uvicorn", "backports-zstd"}
+DROPPED = {"pytest", "pytest-asyncio", "playwright", "pillow"}
+MUST_BE_LOCKED = {"fastapi", "starlette", "uvicorn", "backports-zstd", "orjson"}
 PAYLOAD_PYTHON = {"python_version": "3.12", "python_full_version": "3.12.15", "sys_platform": "darwin"}
 
 

@@ -65,7 +65,7 @@ beforeEach(() => {
   barLead.edge = null;
   follow('widget_bars', null);
   follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.files' }, { widget: 'core.notes' }] });
-  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }] });
+  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager-mk2' }] });
   resetMenuPageShell();
   for (const page of MENU_PAGES) {
     const div = document.createElement('div');

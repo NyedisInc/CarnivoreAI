@@ -4,7 +4,6 @@
     import Field from '../base/Field.svelte';
     import State from '../base/State.svelte';
     import type { Translate } from '../sessions/types';
-    import ColorSwatches from './ColorSwatches.svelte';
     import { LEDGER_KEYS } from './ledger-model';
     import {
         pathLabelKey,
@@ -31,10 +30,13 @@
     // svelte-ignore state_referenced_locally
     let shortName = $state(typeof stored.short_name === 'string' ? stored.short_name : '');
 
-    // svelte-ignore state_referenced_locally
-    let color = $state<string | null>(stored.color ?? null);
-
-    const provider = $derived<ProviderKind>(stored.provider === 'codex' ? 'codex' : 'claude');
+    const provider = $derived<ProviderKind>(
+        stored.provider === 'codex'
+            ? 'codex'
+            : stored.provider === 'antigravity'
+              ? 'antigravity'
+              : 'claude',
+    );
 
     const path = $derived(
         (provider === 'codex' ? stored.codex_home : stored.claude_config_dir) ?? '',
@@ -77,36 +79,23 @@
             <dt class="oc-label">{t(LEDGER_KEYS.editorProviderLabel)}</dt>
             <dd class="ledger-edit__value">{provider}</dd>
         </div>
-        <div class="ledger-edit__fact">
-            <dt class="oc-label">{t(LEDGER_KEYS.editManagedLabel)}</dt>
-            <dd class="ledger-edit__value">
-                {managed ? t(LEDGER_KEYS.editManagedYes) : t(LEDGER_KEYS.editManagedNo)}
-            </dd>
-        </div>
-        <div class="ledger-edit__fact ledger-edit__fact--wide">
-            <dt class="oc-label">{t(pathLabelKey(provider))}</dt>
-            <dd
-                class="ledger-edit__value ledger-edit__value--mono"
-            >
-                {path === '' ? t(LEDGER_KEYS.valueUnknown) : path}
-            </dd>
-        </div>
+        {#if provider !== 'antigravity'}
+            <div class="ledger-edit__fact">
+                <dt class="oc-label">{t(LEDGER_KEYS.editManagedLabel)}</dt>
+                <dd class="ledger-edit__value">
+                    {managed ? t(LEDGER_KEYS.editManagedYes) : t(LEDGER_KEYS.editManagedNo)}
+                </dd>
+            </div>
+            <div class="ledger-edit__fact ledger-edit__fact--wide">
+                <dt class="oc-label">{t(pathLabelKey(provider))}</dt>
+                <dd
+                    class="ledger-edit__value ledger-edit__value--mono"
+                >
+                    {path === '' ? t(LEDGER_KEYS.valueUnknown) : path}
+                </dd>
+            </div>
+        {/if}
     </dl>
-
-    
-    <div class="ledger-edit__colors">
-        <span class="oc-label" id="ledger-edit-color-label">
-            {t(LEDGER_KEYS.colorLabel)}
-        </span>
-        <ColorSwatches
-            value={color}
-            disabled={busy}
-            {t}
-            onPick={(hex) => {
-                color = hex;
-            }}
-        />
-    </div>
 
     <p class="ledger-edit__help">{t(LEDGER_KEYS.editImmutableHelp)}</p>
 
@@ -119,7 +108,7 @@
             variant="confirm"
             data-ledger="edit-save"
             disabled={busy}
-            onclick={() => onSave({ name, color, short_name: shortName })}
+            onclick={() => onSave({ name, color: null, short_name: shortName })}
         >
             {busy ? t(LEDGER_KEYS.editSaving) : t(LEDGER_KEYS.editSave)}
         </Button>
@@ -181,12 +170,6 @@
 
     .ledger-edit__value--mono {
         font-family: var(--font-mono);
-    }
-
-    .ledger-edit__colors {
-        display: flex;
-        flex-direction: column;
-        gap: var(--oc-space-1);
     }
 
     .ledger-edit__help {

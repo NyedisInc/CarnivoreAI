@@ -5,7 +5,7 @@ import json
 import sqlite3
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 from src.core.pack.machines import can_block
 from src.core.pack.machines import capabilities as caps_mod
@@ -17,7 +17,9 @@ PERSIST_EVERY_SECONDS = 60.0
 MAX_SNAPSHOT_BYTES = 16 * 1024
 
 STATE_SELF, STATE_CONNECTED, STATE_STALE, STATE_WAITING = "self", "connected", "stale", "waiting"
-STATE_OLDER, STATE_NOT_PAIRED = "older", "not_paired"
+STATE_OLDER, STATE_NOT_PAIRED, STATE_UNKNOWN = "older", "not_paired", "unknown"
+REPORTED_STATES = ("connected", "disconnected", "connecting")
+REPORTED_PREFIX = "reported_"
 
 
 @dataclass
@@ -59,8 +61,60 @@ def clean_members(raw: Any) -> List[Dict[str, str]]:
     out: List[Dict[str, str]] = []
     for item in raw if isinstance(raw, list) else []:
         if isinstance(item, dict) and isinstance(item.get("install_id"), str) and item["install_id"]:
-            out.append({"install_id": item["install_id"][:64], "label": str(item.get("label") or "")[:64]})
+            member = {"install_id": item["install_id"][:64], "label": str(item.get("label") or "")[:64]}
+            if item.get("state") in REPORTED_STATES:
+                member["state"] = item["state"]
+            out.append(member)
     return out[:64]
+
+
+def _telemetry_snapshot(install_id: str, tel: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    machine = tel.get("machine")
+    if not isinstance(machine, dict) or not machine:
+        return None
+    gb = 1024.0**3
+    mem_total = machine.get("memory_total_bytes")
+    mem_used = machine.get("memory_used_bytes")
+    disk_free = machine.get("disk_free_bytes")
+    mem_total_gb = round(mem_total / gb, 1) if isinstance(mem_total, (int, float)) and mem_total > 0 else None
+    mem_avail_gb = (
+        round((mem_total - mem_used) / gb, 1)
+        if isinstance(mem_total, (int, float)) and isinstance(mem_used, (int, float)) and mem_total >= mem_used
+        else None
+    )
+    disk_free_gb = round(disk_free / gb, 1) if isinstance(disk_free, (int, float)) and disk_free >= 0 else None
+    return {
+        "install_id": install_id,
+        "label": str(tel.get("label") or ""),
+        "app_version": str(tel.get("app_version") or ""),
+        "taken_at": tel.get("ts"),
+        "cpu_percent": machine.get("cpu_percent"),
+        "cpu_count": machine.get("cpu_count"),
+        "memory_percent": machine.get("memory_percent"),
+        "memory_used_bytes": mem_used,
+        "memory_total_bytes": mem_total,
+        "disk_percent": machine.get("disk_percent"),
+        "disk_free_bytes": disk_free,
+        "disk_total_bytes": machine.get("disk_total_bytes"),
+        "load_1": machine.get("load_1"),
+        "load_5": machine.get("load_5"),
+        "load_15": machine.get("load_15"),
+        "uptime_seconds": machine.get("uptime_seconds"),
+        "live_agents": machine.get("live_agents"),
+        "via_telemetry": True,
+        "load": {
+            "cores": machine.get("cpu_count"),
+            "load_1": machine.get("load_1"),
+            "load_5": machine.get("load_5"),
+            "cpu_percent": machine.get("cpu_percent"),
+            "memory_percent": machine.get("memory_percent"),
+            "mem_total_gb": mem_total_gb,
+            "mem_available_gb": mem_avail_gb,
+            "disk_percent": machine.get("disk_percent"),
+            "disk_free_gb": disk_free_gb,
+            "uptime_seconds": machine.get("uptime_seconds"),
+        },
+    }
 
 
 class Roster:
@@ -99,10 +153,24 @@ class Roster:
             return STATE_WAITING
         return STATE_CONNECTED if self.fresh(entry) else STATE_STALE
 
-    def view(self, *, self_snapshot: Dict[str, Any], self_id: str, self_label: str, peers: Iterable[PeerInfo],
-             settings: settings_doc.PackSettings) -> Dict[str, Any]:
+    def _named_state(self, entry: Entry, member: Dict[str, str]) -> str:
+        if member.get("state") is None:
+            return STATE_NOT_PAIRED
+        return REPORTED_PREFIX + member["state"] if self.fresh(entry) else STATE_UNKNOWN
+
+    def view(
+        self,
+        *,
+        self_snapshot: Dict[str, Any],
+        self_id: str,
+        self_label: str,
+        peers: Iterable[PeerInfo],
+        settings: settings_doc.PackSettings,
+        peer_telemetry: Optional[Dict[str, Dict[str, Any]]] = None,
+    ) -> Dict[str, Any]:
         master = settings.master_install_id
         now = self._clock()
+        telemetry_map = peer_telemetry or {}
         machines: List[Dict[str, Any]] = [{
             "install_id": self_id, "label": self_label, "host_key": "local", "is_self": True, "is_master": self_id == master,
             "paired": True, "state": STATE_SELF, "capabilities": caps_mod.names(), "specs": self_snapshot.get("specs"),
@@ -125,18 +193,51 @@ class Roster:
                 "age_seconds": round(now - entry.received_at) if entry and entry.received_at else None,
                 "holds_master": entry.holds_master if entry and not entry.from_store else None,
             })
-        named: Dict[str, str] = {}
-        for entry in self.entries.values():
+        named: Dict[str, Tuple[str, str]] = {}
+        for entry in sorted(self.entries.values(), key=lambda e: e.install_id != master):
             if entry.install_id not in known:
                 continue
             for member in entry.members:
-                named.setdefault(member["install_id"], member["label"])
-        for install_id, label in sorted(named.items(), key=lambda kv: kv[1]):
+                if member["install_id"] in named and named[member["install_id"]][1] != STATE_NOT_PAIRED:
+                    continue
+                named[member["install_id"]] = (member["label"], self._named_state(entry, member))
+        shown_unpaired = set()
+        for install_id, (label, named_state) in sorted(named.items(), key=lambda kv: kv[1][0]):
             if install_id not in known:
+                shown_unpaired.add(install_id)
+                tel = telemetry_map.get(install_id)
+                tel_snap = _telemetry_snapshot(install_id, tel) if isinstance(tel, dict) else None
+                tel_ts = tel.get("ts") if isinstance(tel, dict) else None
+                tel_age = max(0, round(now - float(tel_ts))) if tel_snap is not None and isinstance(tel_ts, (int, float)) else None
                 machines.append({"install_id": install_id, "label": label, "host_key": None, "is_self": False,
-                                 "is_master": install_id == master, "paired": False, "state": STATE_NOT_PAIRED,
-                                 "capabilities": [], "specs": None, "snapshot": None, "age_seconds": None,
+                                 "is_master": install_id == master, "paired": False, "state": named_state,
+                                 "capabilities": [], "specs": None, "snapshot": tel_snap, "age_seconds": tel_age,
                                  "holds_master": None})
+        for install_id, tel in sorted(
+            telemetry_map.items(),
+            key=lambda kv: (str((kv[1] or {}).get("label") or kv[0]).lower(), kv[0]),
+        ):
+            if install_id in known or install_id in shown_unpaired or not isinstance(tel, dict):
+                continue
+            tel_snap = _telemetry_snapshot(install_id, tel)
+            if tel_snap is None:
+                continue
+            tel_ts = tel.get("ts")
+            tel_age = max(0, round(now - float(tel_ts))) if isinstance(tel_ts, (int, float)) else None
+            machines.append({
+                "install_id": install_id,
+                "label": str(tel.get("label") or install_id),
+                "host_key": None,
+                "is_self": False,
+                "is_master": install_id == master,
+                "paired": False,
+                "state": REPORTED_PREFIX + "connected",
+                "capabilities": [],
+                "specs": None,
+                "snapshot": tel_snap,
+                "age_seconds": tel_age,
+                "holds_master": None,
+            })
         return {"master_install_id": master, "self_install_id": self_id, "settings": settings.model_dump(mode="json"),
                 "disagreement": disagree or None, "machines": machines, "taken_at": now}
 

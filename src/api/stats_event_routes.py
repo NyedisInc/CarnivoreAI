@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/stats", tags=["stats"], dependencies=[Depends(requir
 @router.get("/event-log", response_model=None)
 async def get_event_log(request: Request, from_: datetime = Query(alias="from"),
                         to: datetime = Query(), kind: str | None = None,
+                        scope: Literal["local", "pack"] = Query("pack"),
                         limit: int = Query(100, ge=1, le=200),
                         cursor: int = Query(0, ge=0, le=100000)) -> dict:
     """Return typed events in [from, to), newest first: ids and numbers only, never content."""
@@ -26,7 +28,8 @@ async def get_event_log(request: Request, from_: datetime = Query(alias="from"),
     try:
         await asyncio.to_thread(config.require_enabled, store)
         return await asyncio.to_thread(events.list_events, store, start=int(from_.timestamp()),
-                                       end=int(to.timestamp()), kind=kind, limit=limit, cursor=cursor)
+                                       end=int(to.timestamp()), kind=kind, limit=limit, cursor=cursor,
+                                       scope=scope)
     except config.StatsOff as exc:
         raise HTTPException(409, detail={"code": "stats_off", "message": "stats off"}) from exc
     except ValueError as exc:

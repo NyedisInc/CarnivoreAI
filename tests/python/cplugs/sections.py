@@ -8,7 +8,7 @@ from typing import FrozenSet, Iterator, List, Set, Tuple
 ROOT = Path(__file__).resolve().parents[3]
 CPLUGS = ROOT / "src" / "plugins"
 CPLUGS_PACKAGE = "src.plugins"
-PLATFORM_DIRS: Tuple[str, ...] = ("host", "runtime", "sdk", "sdk_py")
+PLATFORM_DIRS: Tuple[str, ...] = ("cli", "host", "runtime", "sdk", "sdk_py")
 SDK_PACKAGE = "src.plugins.sdk"
 CORE_PREFIX = "src."
 ROW_ARROW = " -> "
@@ -62,8 +62,8 @@ def core_imports(source: str, known: FrozenSet[str] = frozenset()) -> List[str]:
     return [m for m in imported_modules(source, known) if m.startswith(CORE_PREFIX) and not m.startswith(f"{CPLUGS_PACKAGE}.") and m != CPLUGS_PACKAGE]
 
 
-TASK_MANAGER_PACKAGE = "src.plugins.huddle"
-TASK_MANAGER_PUBLIC = "src.plugins.huddle.public"
+TASK_MANAGER_PACKAGE = "src.plugins.taskmanager"
+TASK_MANAGER_PUBLIC = "src.plugins.taskmanager.public"
 
 
 def huddle_reaches(source: str) -> List[str]:
@@ -76,13 +76,13 @@ def huddle_reaches(source: str) -> List[str]:
             names = [node.module]
             if node.module == TASK_MANAGER_PACKAGE:
                 names = [_huddle_member(alias.name) for alias in node.names]
-            elif node.module == CPLUGS_PACKAGE and any(alias.name == "huddle" for alias in node.names):
+            elif node.module == CPLUGS_PACKAGE and any(alias.name == "taskmanager" for alias in node.names):
                 names = [TASK_MANAGER_PACKAGE]
         found.update(n for n in names if (n == TASK_MANAGER_PACKAGE or n.startswith(TASK_MANAGER_PACKAGE + ".")) and n != TASK_MANAGER_PUBLIC)
     return sorted(found)
 
 
 def _huddle_member(name: str) -> str:
-    stem = CPLUGS / "huddle" / name
+    stem = CPLUGS / "taskmanager" / name
     is_module = stem.with_suffix(".py").exists() or (stem / "__init__.py").exists()
     return f"{TASK_MANAGER_PACKAGE}.{name}" if is_module else TASK_MANAGER_PACKAGE

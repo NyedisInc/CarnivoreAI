@@ -24,7 +24,8 @@ from src.core.db_steps import run_chain
 from src.core.mcp import swarm_tools
 from src.core.mcp.caller import AgentCaller
 from src.core.mcp.common import ToolError
-from src.core.swarm import body, company_agent, desk, profiles, project_agent, store, thread_port, wake_prompt
+from src.core.swarm.types import TurnOnError
+from src.core.swarm import body, company_agent, desk, profiles, store, thread_port, wake_prompt
 from src.core.swarm.facade import SwarmFacade
 
 
@@ -180,7 +181,7 @@ def test_company_approval_makes_company_hq_repo_project_and_agent(env):
     assert agent["project_id"] == project["id"] and profiles.effective_profile(agent) == profiles.SWARM_UPPER_ID
     assert env.woke == [(agent["id"], "spawn")]
     _db(env, lambda c: store.cas_state(c, agent["id"], "asleep", "awake"))
-    with pytest.raises(project_agent.TurnOnError, match="already has an agent"):
+    with pytest.raises(TurnOnError, match="already has an agent"):
         asyncio.run(company_agent.turn_on(SimpleNamespace(), zed["id"]))
 
 
@@ -189,10 +190,10 @@ def test_existing_hq_folder_is_refused_and_untouched(env):
     (env.root / "Taken HQ").mkdir()
     (env.root / "Taken HQ" / "mine.txt").write_text("keep")
     before = _counts(env)
-    with pytest.raises(project_agent.TurnOnError, match="already exists"):
+    with pytest.raises(TurnOnError, match="already exists"):
         asyncio.run(company_agent.turn_on(SimpleNamespace(), other["id"]))
     assert _counts(env) == before and (env.root / "Taken HQ" / "mine.txt").read_text() == "keep" and not (env.root / "Taken HQ" / ".git").exists()
-    with pytest.raises(project_agent.TurnOnError, match="already has an agent"):
+    with pytest.raises(TurnOnError, match="already has an agent"):
         asyncio.run(company_agent.turn_on(SimpleNamespace(), env.acme["id"]))
     (env.root / "Blocked HQ").mkdir()
     with pytest.raises(ToolError, match="already exists"):

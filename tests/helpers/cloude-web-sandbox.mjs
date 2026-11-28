@@ -6,15 +6,103 @@ import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
 
 import { glyphSvg } from '../../client/js/icons/glyphs.js';
+import { createI18n } from '../../client/js/i18n/runtime.js';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..', '..');
-const BUNDLE = path.join(ROOT, 'client', 'dist', 'app.js');
+const DIST_DIR = path.join(ROOT, 'client', 'dist');
+const BUNDLE = path.join(DIST_DIR, 'app.js');
 
-let cached = null;
-function bundleSource() {
-    if (cached === null) cached = fs.readFileSync(BUNDLE, 'utf8');
-    return cached;
+const sourceCache = new Map();
+function readDistFile(filePath) {
+    let src = sourceCache.get(filePath);
+    if (src === undefined) {
+        src = fs.readFileSync(filePath, 'utf8');
+        sourceCache.set(filePath, src);
+    }
+    return src;
+}
+
+function compileChunkToClassic(src, loadRel) {
+    let body = src;
+    body = body.replace(
+        /(?<=^|[;\n/])\s*import\s*\{([^}]*)\}\s*from\s*["'](\.[^"']+)["'];?/g,
+        (_m, names, spec) => {
+            const bindings = names
+                .split(',')
+                .map((s) => s.trim())
+                .filter(Boolean)
+                .map((s) => {
+                    const parts = s.split(/\s+as\s+/);
+                    return parts.length === 2 ? `${parts[0].trim()}:${parts[1].trim()}` : s;
+                })
+                .join(',');
+            return `var {${bindings}}=${loadRel}(${JSON.stringify(spec)});`;
+        },
+    );
+    body = body.replace(
+        /(?<=^|[;\n/])\s*import\s*\*\s*as\s+(\w+)\s*from\s*["'](\.[^"']+)["'];?/g,
+        (_m, alias, spec) => `var ${alias}=${loadRel}(${JSON.stringify(spec)});`,
+    );
+    body = body.replace(
+        /(?<=^|[;\n/])\s*import\s+(\w+)\s*from\s*["'](\.[^"']+)["'];?/g,
+        (_m, alias, spec) => `var ${alias}=${loadRel}(${JSON.stringify(spec)}).default;`,
+    );
+    body = body.replace(
+        /(?<=^|[;\n/])\s*import\s*["'](\.[^"']+)["'];?/g,
+        (_m, spec) => `${loadRel}(${JSON.stringify(spec)});`,
+    );
+
+    let exportReturn = 'return {};';
+    const exportRe = /export\s*\{([^}]*)\}\s*;?\s*$/;
+    const em = exportRe.exec(body);
+    if (em) {
+        body = body.slice(0, em.index);
+        const props = em[1]
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map((s) => {
+                const parts = s.split(/\s+as\s+/);
+                if (parts.length === 2) {
+                    const local = parts[0].trim();
+                    const exported = parts[1].trim();
+                    return `get ${exported}(){return ${local};}`;
+                }
+                return `get ${s}(){return ${s};}`;
+            })
+            .join(',');
+        exportReturn = `return {${props}};`;
+    }
+
+    body = body.replace(
+        /typeof document<[`"']u[`"']&&document\.createElement\([`"']link[`"']\)\.relList/g,
+        'typeof document<"u"&&typeof document.createElement==="function"&&document.createElement("link").relList',
+    );
+    body = body.replace(/\bimport\.meta\b/g, '({url:"http://localhost/static/dist/app.js"})');
+    body = body.replace(/\bimport\s*\(([^)]+)\)/g, 'Promise.resolve().then(()=>__cloudeEsmLoad($1))');
+
+    return `(function(){\n${body}\n${exportReturn}})()`;
+}
+
+function runCodeSplitBundle(context) {
+    const modules = Object.create(null);
+    const loadModule = (spec) => {
+        const rel = spec.replace(/^\.\//, '');
+        if (modules[rel]) return modules[rel];
+        const filePath = path.join(DIST_DIR, rel);
+        const raw = readDistFile(filePath);
+        const box = {};
+        modules[rel] = box;
+        const wrapped = compileChunkToClassic(raw, '__cloudeEsmLoad');
+        const exportsObj = vm.runInContext(wrapped, context, { filename: rel });
+        if (exportsObj && typeof exportsObj === 'object') {
+            Object.defineProperties(box, Object.getOwnPropertyDescriptors(exportsObj));
+        }
+        return box;
+    };
+    context.__cloudeEsmLoad = loadModule;
+    loadModule('./app.js');
 }
 
 export function unrefTimer(start) {
@@ -80,6 +168,8 @@ export function completeHostGlobals(context) {
     }
     if (!context.CloudeGlyphs) context.CloudeGlyphs = { glyphSvg };
     if (win !== context && !win.CloudeGlyphs) win.CloudeGlyphs = context.CloudeGlyphs;
+    if (!context.CloudeI18n) context.CloudeI18n = createI18n();
+    if (win !== context && !win.CloudeI18n) win.CloudeI18n = context.CloudeI18n;
     if (typeof win.addEventListener !== 'function') {
         const listeners = new Map();
         win.addEventListener = (type, fn) => {
@@ -105,7 +195,7 @@ export function completeHostGlobals(context) {
 export function installCloudeWeb(context) {
     const win = completeHostGlobals(context);
     if (win.CloudeWeb) return win.CloudeWeb;
-    vm.runInContext(bundleSource(), context);
+    runCodeSplitBundle(context);
     return win.CloudeWeb;
 }
 

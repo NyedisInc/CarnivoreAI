@@ -39,6 +39,7 @@ from fastapi.routing import APIRoute  # noqa: E402
 from src.api.auth import require_auth  # noqa: E402
 from src.core.mcp import deprecated_tools, tools  # noqa: E402
 from src.main import app  # noqa: E402
+from src.plugins.host import renamed, runtime  # noqa: E402
 from tests.test_route_auth_inventory import _dep_calls, _walk  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -56,16 +57,29 @@ REASONS = frozenset({
     "superseded",
     "forks-session",
 })
-DEFERRED_RATCHET = 194
+DEFERRED_RATCHET = 162
 _ROUTE_REF = re.compile(r"(src\.[a-z_.]+):([A-Za-z_0-9]+)")
 _ROW = re.compile(r"^(tool|retired|out|deferred):(.+)$")
 
 
+def alias_prefixes() -> Tuple[str, ...]:
+    """The old route prefixes of renamed plugins (``/api/v1/cplugs/<old>/``). Output: tuple of str.
+
+    Why skipped: an old-prefix route is an ALIAS of the plugin's own route, the same endpoint object (``src/plugins/host/renamed.py``
+    ``alias_router``), so it shares that route's one decision; a ledger row per alias would be a second decision for one action.
+    """
+    return tuple(f"/api/v1{renamed.old_prefix(d)}/" for d in runtime.definitions() if d.manifest.renamed_from and renamed.old_prefix(d))
+
+
 def guarded_routes() -> Dict[str, Tuple[str, str]]:
-    """Every authenticated HTTP route of the real app. Output: {"METHOD /full/path": (endpoint module, endpoint function)}."""
+    """Every authenticated HTTP route of the real app, renamed plugins' old-prefix aliases left out (:func:`alias_prefixes`).
+
+    Output: {"METHOD /full/path": (endpoint module, endpoint function)}.
+    """
     found: Dict[str, Tuple[str, str]] = {}
+    aliases = alias_prefixes()
     for path, route, inherited in ((p, r, i) for kind, p, r, i in _walk(app.routes) if kind == "http"):
-        if not isinstance(route, APIRoute):
+        if not isinstance(route, APIRoute) or (aliases and path.startswith(aliases)):
             continue
         calls = set(_dep_calls(route.dependant)) | set(inherited)
         if require_auth in calls or any(hasattr(c, "peer_scope") for c in calls):
@@ -185,6 +199,14 @@ def test_every_authenticated_route_has_exactly_one_decision(world) -> None:
     assert len(routes) > 800 and len(called) > 100
     assert ledger_problems(routes, called, rows, tools.tool_names(), deprecated_tools.DEPRECATED) == []
 
+
+
+def test_an_old_prefix_alias_shares_its_routes_decision(world) -> None:
+    """The Task Manager's old ``/cplugs/huddle/`` aliases are left out only because each has its ``/cplugs/taskmanager/`` twin walked (#3260 S4)."""
+    routes = world[0]
+    assert alias_prefixes() == ("/api/v1/cplugs/huddle/",)
+    aliased = [k for k in routes if k.split(" ", 1)[1].startswith("/api/v1/cplugs/taskmanager/")]
+    assert len(aliased) > 50 and not [k for k in routes if k.split(" ", 1)[1].startswith("/api/v1/cplugs/huddle/")]
 
 def test_the_deferred_count_is_the_ratchet(world) -> None:
     """The ledger's deferred rows are exactly DEFERRED_RATCHET, so the number can only fall with the rows."""

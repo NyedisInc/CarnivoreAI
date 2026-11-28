@@ -1,0 +1,1 @@
+function e(e,t){return t.includes(e)}function t(t,n,r){try{let i=globalThis.localStorage?.getItem(t)??``;return e(i,n)?i:r}catch{return r}}function n(e,t){try{globalThis.localStorage?.setItem(e,t)}catch{}}export{t as n,n as r,e as t};

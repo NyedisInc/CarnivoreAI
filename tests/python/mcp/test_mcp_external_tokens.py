@@ -22,7 +22,7 @@ from tests.python.mcp.test_mcp_endpoint import _rpc
 from tests.python.mcp.test_mcp_write import WriteManager, seed_crosstalk_directory
 
 
-PLUGINS_WITH_TOOLS = ("huddle", "reviewboard", "tmdevtools")
+PLUGINS_WITH_TOOLS = ("taskmanager", "reviewboard", "tmdevtools")
 
 
 @pytest.fixture

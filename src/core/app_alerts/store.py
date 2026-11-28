@@ -154,6 +154,25 @@ def raise_alert(conn: sqlite3.Connection, spec: AlertSpec, *,
     return get(conn, rid), event
 
 
+def drop_actions(conn: sqlite3.Connection, key: str, action_ids: Sequence[str]) -> int:
+    opened = ",".join("?" * len(K.OPEN_STATES))
+    conn.execute("BEGIN IMMEDIATE")
+    changed = 0
+    try:
+        rows = conn.execute(f"SELECT id, actions_json FROM {K.TABLE} WHERE (dedupe_key = ? OR substr(dedupe_key, 1, ?) = ?) "
+                            f"AND state IN ({opened})", (key, len(key) + 1, key + ".", *K.OPEN_STATES)).fetchall()
+        for rid, raw in rows:
+            kept = [a for a in json.loads(raw or "[]") if a.get("id") not in action_ids]
+            if len(kept) != len(json.loads(raw or "[]")):
+                conn.execute(f"UPDATE {K.TABLE} SET actions_json = ? WHERE id = ?", (json.dumps(kept), rid))
+                changed += 1
+    except (sqlite3.Error, ValueError):
+        conn.execute("ROLLBACK")
+        raise
+    conn.execute("COMMIT")
+    return changed
+
+
 def resolve(conn: sqlite3.Connection, key: str, *, now: Optional[datetime] = None) -> List[Dict[str, Any]]:
     stamp = iso(now)
     opened = ",".join("?" * len(K.OPEN_STATES))

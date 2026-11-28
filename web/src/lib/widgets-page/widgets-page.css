@@ -48,17 +48,11 @@
 .wp-screen [data-pl='glance'] { --_pl: var(--wp-place-glance); }
 .wp-screen [data-pl='board'] { --_pl: var(--wp-place-board); }
 
-.wp-screen .wp-body { display: flex; flex: 1; min-height: 0; }
-.wp-screen .wp-body > .oc-page__scroll { flex: 1 1 0; min-width: 0; }
-.wp-screen .wp-body--reading > .oc-page__scroll { flex: 1 1 0; }
-.wp-screen .wp-detail.oc-page__detail { flex: 0 0 var(--pn-pane-w, 400px); width: var(--pn-pane-w, 400px); min-width: 0; position: relative; }
+/* the reading pane */
+.wp-screen .wp-body { display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); flex: 1; min-height: 0; }
 .wp-screen .wp-main { container: wpmain / inline-size; min-width: 0; }
 @media (max-width: 767px) {
     .wp-screen .wp-body { display: block; flex: none; }
-    .wp-screen .wp-body > .oc-page__scroll { overflow: visible; }
-    .wp-screen .wp-detail.oc-page__detail { width: 100%; border-left: 0; }
-    .wp-screen .wp-body--reading > .oc-page__scroll { display: none; }
-    .wp-screen .pn-detail { overflow: visible; }
 }
 
 .wp-screen .oc-toolbar .oc-facet { gap: 0; padding: 0; border-color: var(--oc-line-panel); border-radius: var(--oc-radius-control); background: transparent; overflow: hidden; }
@@ -171,7 +165,7 @@
 .wp-screen .wp-hero__none { margin: 0; padding: var(--oc-space-4); color: var(--oc-text-muted); font-size: var(--oc-fs-label); }
 
 
-.wp-screen .pn-detail { display: flex; flex-direction: column; flex: 1; min-width: 0; min-height: 0; overflow-y: auto; background: var(--oc-ground-panel); font-size: var(--oc-fs-body, 12px); line-height: 1.4; }
+.wp-screen .pn-detail { display: flex; flex-direction: column; min-width: 0; background: var(--oc-ground-panel); font-size: var(--oc-fs-body, 12px); line-height: 1.4; }
 .wp-screen .pn-band { flex: none; height: 3px; background: color-mix(in srgb, var(--_kind, var(--oc-line-rule)) 70%, var(--oc-surface-1)); }
 .wp-screen .pn-hero { position: relative; flex: none; background: var(--oc-surface-2); box-shadow: 0 1px 0 var(--oc-line-rule); }
 .wp-screen .pn-hero__top { position: absolute; z-index: var(--oc-z-raised); inset: 6px 4px auto 8px; display: flex; align-items: center; justify-content: space-between; gap: var(--oc-space-2); }

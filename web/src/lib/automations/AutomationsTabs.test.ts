@@ -114,7 +114,7 @@ test('the page root is the shared Page frame: one .oc-page with the standard tit
   expect(bar.querySelector('[data-header-sentence]')).toBeNull();
   expect(q('[data-ap-advanced-head] [data-header-sentence]')).not.toBeNull();
   expect(root.querySelector('.oc-page__tabs [role="tab"][data-tab]')).not.toBeNull();
-  expect(root.querySelector('.pl-titlebar:not(.ap-pn-bar):not(.ap-dr-bar):not(.ap-adv-head)')).toBeNull();
+  expect(root.querySelector('.pl-titlebar:not(.ap-adv-head)')).toBeNull();
 });
 
 test('exactly three tabs, and a remembered huddle tab opens automations', async () => {
@@ -156,6 +156,15 @@ test('the editor opened from the title strip is seen on the overview, and openIn
   expect(data.paneOpen).toBe(true);
   expect(q('[data-automations]').hasAttribute('data-pane-open')).toBe(true);
   expect(document.querySelector('.ap-pn')).not.toBeNull();
+  const region = q('[data-frame-region="detail"]');
+  expect(region.contains(document.querySelector('.ap-pn'))).toBe(true);
+  expect(region.closest('.oc-page')).toBe(q('[data-automations]'));
+  expect(region.querySelector('.oc-page__detail-title')?.textContent).toBeTruthy();
+  expect(document.querySelector('.ap-pn-bar')).toBeNull();
+  region.querySelector<HTMLButtonElement>('.oc-page__detail-head [data-btn]')!.click();
+  await settle();
+  expect(data.paneOpen).toBe(false);
+  expect(document.querySelector('[data-frame-region="detail"]')).toBeNull();
   closePane();
   openInAdvanced('automation', 'aut_p');
   await settle();

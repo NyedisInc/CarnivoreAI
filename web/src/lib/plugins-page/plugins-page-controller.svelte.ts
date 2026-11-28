@@ -1,10 +1,12 @@
+import { isCplugIndexKind } from '../catalog/kind-display';
+import { disableAndUninstallPlugin } from '../catalog/revocation';
 import { nonEmptyErrorMessageOr } from '../errors/failure-reason';
 import { latestOnly } from '../resource-push/latest-only';
 import { openModalCount } from '../modal';
 import type { ManagerToggleState } from '../manager-frame/types';
 import type { Translate } from '../sessions/types';
 import type { CatalogPluginItem, CatalogPlugins } from './catalog-plugins.svelte';
-import type { CplugItem, CplugSheet } from './cplugs-adapter';
+import { setCplugEnabled, type CplugItem, type CplugSheet } from './cplugs-adapter';
 import { uninstallPlugin, uninstallableRow } from './plugin-uninstall';
 
 export interface PluginsPageDeps {
@@ -24,6 +26,7 @@ export interface PluginsPageController {
     runAct(id: string, run: () => Promise<void>): Promise<void>;
     ledgerRowOf(plugin: CplugItem): ReturnType<typeof uninstallableRow>;
     uninstallFromPane(plugin: CplugItem): Promise<void>;
+    disableAndUninstallRevoked(plugin: CplugItem): Promise<void>;
     readSheetFor(cplugId: string): void;
 }
 
@@ -47,7 +50,16 @@ export function createPluginsPageController(deps: PluginsPageDeps): PluginsPageC
     }
 
     function ledgerRowOf(plugin: CplugItem): ReturnType<typeof uninstallableRow> {
-        return catalog && plugin.thirdParty && plugin.publisher ? uninstallableRow(catalog.ledger(), `${plugin.publisher}/${plugin.cplugId}`) : undefined;
+        if (!catalog) return undefined;
+        if (plugin.installId) {
+            const byInstallId = catalog.ledger().find(
+                (row) => row.install_id === plugin.installId && (isCplugIndexKind(row.kind) || row.kind === 'plugin') && row.source_index_url !== 'builtin',
+            );
+            if (byInstallId) return byInstallId;
+        }
+        if (!plugin.thirdParty && plugin.pluginKind !== 'agent-plugin') return undefined;
+        const lookupId = plugin.itemId || (plugin.publisher ? `${plugin.publisher}/${plugin.cplugId}` : '');
+        return lookupId ? uninstallableRow(catalog.ledger(), lookupId) : undefined;
     }
 
     return {
@@ -76,6 +88,28 @@ export function createPluginsPageController(deps: PluginsPageDeps): PluginsPageC
             uninstallErrors = { ...uninstallErrors, [plugin.id]: null };
             try {
                 const result = await uninstallPlugin(row, plugin.name, catalog, t);
+                uninstallErrors = { ...uninstallErrors, [plugin.id]: result.error };
+                if (result.done) await Promise.all([catalog.load(), deps.reloadBuiltins()]);
+            } finally {
+                uninstallingId = null;
+            }
+        },
+
+        async disableAndUninstallRevoked(plugin) {
+            if (!catalog || uninstallingId !== null) return;
+            const row = ledgerRowOf(plugin);
+            if (!row?.install_id) return;
+            uninstallingId = plugin.id;
+            uninstallErrors = { ...uninstallErrors, [plugin.id]: null };
+            try {
+                const result = await disableAndUninstallPlugin({
+                    enabled: plugin.enabled ?? null,
+                    disable: () => setCplugEnabled(plugin.id, false, t, undefined, async () => {}, true),
+                    installId: row.install_id,
+                    uninstall: (installId) => catalog.uninstall(installId),
+                    row,
+                    t,
+                });
                 uninstallErrors = { ...uninstallErrors, [plugin.id]: result.error };
                 if (result.done) await Promise.all([catalog.load(), deps.reloadBuiltins()]);
             } finally {

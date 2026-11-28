@@ -43,6 +43,8 @@ def test_codex_supervisor_command_carries_the_flags(monkeypatch) -> None:
     assert words[words.index(next(w for w in words if "codex_supervisor" in w)) - 1] == "-B"
 
 
-def test_payload_build_compiles_under_dash_b() -> None:
-    line = next(l for l in (ROOT / "macOS/payload/build-payload.sh").read_text().splitlines() if "compileall" in l and "-m" in l)
-    assert " -B " in line
+def test_payload_build_strips_dead_pycache() -> None:
+    text = (ROOT / "macOS/payload/build-payload.sh").read_text()
+    assert "compileall" not in text
+    assert "-name __pycache__" in text
+    assert "-name '*.pyc' -delete" in text

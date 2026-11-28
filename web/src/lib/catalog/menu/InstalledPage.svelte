@@ -20,7 +20,7 @@
     const kind = $derived(node.scope === 'look' ? (node.page === 'consent' ? 'plugin' : 'mod') : node.kind);
     const entries = $derived(node.scope === 'look' && node.page === 'flagged' ? sources.flagged : sources.installed[kind]);
     const entry = $derived(node.scope === 'installed' && node.page === 'item' ? entries.find((e) => e.key === node.key) : undefined);
-    const realPage = $derived(node.scope === 'installed' && !entry?.catalogId);
+    const realPage = $derived(node.scope === 'installed' && node.kind !== 'loadout' && !entry?.catalogId);
 </script>
 
 {#if node.scope === 'installed' && realPage}

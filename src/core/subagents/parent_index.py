@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, FrozenSet, Iterable, Iterator, List, Optional, Tuple
 
 import structlog
 
@@ -36,6 +36,10 @@ _NOTIFICATION_RE = re.compile(
 _TASK_ID_RE = re.compile(r"<task-id>\s*([^<\s]+)\s*</task-id>")
 _STATUS_RE = re.compile(r"<status>\s*([^<\s]+)\s*</status>")
 
+_PARKED_NOTE_RE = re.compile(
+    r"<note>\s*This agent stopped with background work of its own still running"
+)
+
 _NOTIFICATION_MARK = b"<task-notification>"
 _RESULT_MARK = b'"tool_result"'
 _AGENT_MARK = b'"agentId"'
@@ -46,6 +50,7 @@ class RecordedEnd:
 
     at: datetime
     status: Optional[str]
+    parked: bool = False
 
 
 @dataclass
@@ -119,6 +124,20 @@ def _notifications(text: str) -> Iterator[Tuple[str, Optional[str]]]:
         status = _STATUS_RE.search(block)
         for task_id in _TASK_ID_RE.findall(block):
             yield task_id, (status.group(1) if status else None)
+
+
+def _parked_task_ids(text: str) -> FrozenSet[str]:
+    return frozenset(
+        task_id for block in _NOTIFICATION_RE.findall(text) if _PARKED_NOTE_RE.search(block)
+        for task_id in _TASK_ID_RE.findall(block)
+    )
+
+
+def parked_agent_ids(index: CompletionIndex, agent_ids: Iterable[str]) -> FrozenSet[str]:
+    return frozenset(
+        agent for agent in agent_ids
+        if (end := index.by_agent_id.get(agent)) is not None and end.parked
+    )
 
 
 def _sync_results(record: Dict[str, Any]) -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
@@ -205,8 +224,10 @@ def scan_parent_lines(
             continue
         if notification:
             text = _notification_text(record)
+            parked = _parked_task_ids(text or "")
             for agent_id, status in _notifications(text or ""):
-                _keep_newest(index.by_agent_id, agent_id, RecordedEnd(at, status))
+                _keep_newest(index.by_agent_id, agent_id,
+                             RecordedEnd(at, status, agent_id in parked))
             _fold_workflow_ends(index, text or "", at)
         if launch:
             _fold_workflow_launch(index, record)
@@ -223,7 +244,7 @@ def scan_parent_lines(
 
 
 def _encode_ends(ends: Dict[str, RecordedEnd]) -> List[List[Any]]:
-    return [[key, encode_instant(end.at), end.status] for key, end in ends.items()]
+    return [[key, encode_instant(end.at), end.status, end.parked] for key, end in ends.items()]
 
 
 def _decode_ends(rows: Any) -> Dict[str, RecordedEnd]:
@@ -231,14 +252,16 @@ def _decode_ends(rows: Any) -> Dict[str, RecordedEnd]:
         raise TypeError("ends must be a list")
     ends: Dict[str, RecordedEnd] = {}
     for row in rows:
-        if not (isinstance(row, list) and len(row) == 3):
-            raise ValueError("an end row must hold three values")
-        key, at, status = row
+        if not (isinstance(row, list) and len(row) == 4):
+            raise ValueError("an end row must hold four values")
+        key, at, status, parked = row
         if not isinstance(key, str) or not isinstance(at, str):
             raise TypeError("an end key and instant must be strings")
         if status is not None and not isinstance(status, str):
             raise TypeError("an end status must be a string or null")
-        ends[key] = RecordedEnd(decode_instant(at), status)
+        if not isinstance(parked, bool):
+            raise TypeError("an end parked flag must be a bool")
+        ends[key] = RecordedEnd(decode_instant(at), status, parked)
     return ends
 
 
@@ -277,7 +300,7 @@ INDEX_SOURCES: Tuple[str, ...] = (
 
 
 def index_spec(name: str) -> PersistSpec:
-    return PersistSpec(name=name, manual_version=2, sources=INDEX_SOURCES,
+    return PersistSpec(name=name, manual_version=3, sources=INDEX_SOURCES,
                        encode=encode_index, decode=decode_index)
 
 

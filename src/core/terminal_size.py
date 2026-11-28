@@ -134,6 +134,10 @@ class TerminalSizeNegotiator:
         withdrawn = self._withdrawn.get(session_id, set())
         return sum(1 for key in clients if key not in withdrawn)
 
+    def visible_keys(self, session_id: str) -> list:
+        withdrawn = self._withdrawn.get(session_id, set())
+        return [key for key in self._sizes.get(session_id, {}) if key not in withdrawn]
+
     def client_count(self, session_id: str) -> int:
         clients = self._sizes.get(session_id)
         return len(clients) if clients else 0

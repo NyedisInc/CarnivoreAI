@@ -51,6 +51,18 @@ def default_mode(conn: sqlite3.Connection, account_key: str) -> bool:
     return conn.execute("SELECT 1 FROM pack_relay_targets WHERE account_key = ? LIMIT 1", (account_key,)).fetchone() is None
 
 
+def orphan_rows(conn: sqlite3.Connection, existing: Iterable[str]) -> List[Target]:
+    keep = list(dict.fromkeys(existing))
+    marks = ",".join("?" * len(keep))
+    return [Target(*r) for r in conn.execute(
+        f"SELECT {_COLUMNS} FROM pack_relay_targets" + (f" WHERE account_key NOT IN ({marks})" if keep else ""), keep)]
+
+
+def delete_row(conn: sqlite3.Connection, account_key: str, target_install_id: str) -> None:
+    with transaction(conn):
+        conn.execute("DELETE FROM pack_relay_targets WHERE account_key = ? AND target_install_id = ?", (account_key, target_install_id))
+
+
 def effective_on(conn: sqlite3.Connection, account_key: str) -> bool:
     return default_mode(conn, account_key) or bool(enabled_for(conn, account_key))
 

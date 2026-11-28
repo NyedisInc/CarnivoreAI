@@ -202,6 +202,7 @@ console.log('[TerminalSizeVote Module] Loading...');
         var next = !!hidden;
         if (!!ctl._tabHidden === next) return;
         ctl._tabHidden = next;
+        if (global.TerminalViewerFocus) global.TerminalViewerFocus.recompute();
         if (next) ctl._thawRepaint = true;
         if (!canSend(ctl) || isHidden(doc)) return;
         if (next) ctl.sendResize('tab.hidden', true);

@@ -11,6 +11,7 @@
   import { ledger } from '../../api/ledger.svelte';
   import { accountSwitch } from '../../../lib/account-switch/switch-store.svelte';
   import { footAccount, remoteFootAccount } from './foot-account';
+  import { provisionalUsage } from './provisional-usage';
   import { rowFor } from '../terminal-viewer/meta';
   import ShellFoot from './ShellFoot.svelte';
   import { delegatedSegment } from '../../../lib/terminal-foot-bar/delegated-segment';
@@ -57,10 +58,10 @@
   const resolvedCollapsedOption = $derived(resolveFootBarCollapsedOption(collapsedOption ?? footBarLayout.collapsed));
   const resolvedOpenOption = $derived(resolveSessionControlOption(openOption ?? footBarLayout.open));
 
-  const footKind = $derived(footKindFor(rowFor(sessions.data, sessionId)?.agent_family));
+  const footRow = $derived(rowFor(sessions.data, sessionId));
+  const footKind = $derived(footKindFor(footRow?.agent_family));
   const isShell = $derived(footKind === 'shell');
-  const markPreset = $derived(footMarkPreset(rowFor(sessions.data, sessionId)?.agent_family));
-  const noStats = $derived(footKind === 'none');
+  const noSource = $derived(footKind === 'none');
 
   /* the bottom bar */
   let expanded = $state(readFootExpanded());
@@ -122,7 +123,7 @@
 
   $effect(() => {
     const id = sessionId;
-    if (!id || usage || isShell || noStats) {
+    if (!id || usage || isShell || noSource) {
       usageResource = null;
       return;
     }
@@ -130,7 +131,10 @@
     return () => releaseSessionUsage(id);
   });
 
-  const payload = $derived(usage ?? (usageResource ? usageResource.data : null));
+  const provisional = $derived(!usage && !usageResource?.data ? provisionalUsage(footRow, ledger.data) : null);
+  const payload = $derived(usage ?? usageResource?.data ?? provisional);
+  const noStats = $derived(noSource || (footKind === 'probe' && !payload?.family));
+  const markPreset = $derived(footMarkPreset(footRow?.agent_family, payload?.family));
   const model = $derived(sessionUsageLabels(payload, null));
 
   const rowsByKey = $derived<Record<string, UsageRow>>(
@@ -148,9 +152,8 @@
   const ALL: Admit = Object.fromEntries(FOOT_PRIORITY.map((k) => [k, true])) as Admit;
   let measureEl = $state<HTMLDivElement | null>(null);
   let measured = $state<FootMeasure | null>(null);
-  const footRow = $derived(rowFor(sessions.data, sessionId));
   const account = $derived(
-    sessionId.startsWith('remote:')
+    sessionId.startsWith('remote:') || payload?.family === 'agy'
       ? remoteFootAccount(payload?.account)
       : footAccount(footRow?.agent_family, footRow?.account_id, ledger.data?.accounts, accountSwitch.data?.active),
   );
@@ -289,7 +292,7 @@
   >
     <FootMeters option={resolvedCollapsedOption} admit={resolvedCollapsedOption === 'b' ? admB : resolvedCollapsedOption === 'c' ? admC : adm} {core} {model} {payload} {context} {windows} {rowsByKey} {hasEffort}
       {markPreset} {footBarOrder} {leadScope} {leadWindow} shells={inlineShells} /></button>
-  <FootWork {sessionId} form={activeWorkForm} active={expanded ? focus : null}
+  <FootWork {sessionId} form={activeWorkForm} active={expanded ? focus : null} {expanded}
     hideAgents={!footBarItems.agents} hideShells={!footBarItems.shells} hideTimers={!footBarItems.timers}
     shellsInline={footBarItems.shells} onshells={(n) => { inlineShells = n; }}
     onwidths={(w) => { workWidths = w; }} onopen={openSection} />

@@ -33,6 +33,9 @@ ITEM_COLUMNS: Tuple[str, ...] = (
     "installed_at",
     "updated_at",
     "consent_via",
+    "provenance_repo",
+    "provenance_tag",
+    "commit_sha",
 )
 
 MUTABLE_COLUMNS = frozenset(
@@ -92,6 +95,9 @@ class InstalledItem:
     installed_at: str
     updated_at: str
     consent_via: str
+    provenance_repo: str = ""
+    provenance_tag: str = ""
+    commit_sha: str = ""
 
 
 @dataclass(frozen=True)
@@ -128,6 +134,9 @@ def row_to_item(row: sqlite3.Row) -> InstalledItem:
         installed_at=str(row["installed_at"]),
         updated_at=str(row["updated_at"]),
         consent_via=str(row["consent_via"]),
+        provenance_repo=str(row["provenance_repo"]) if "provenance_repo" in row.keys() and row["provenance_repo"] is not None else "",
+        provenance_tag=str(row["provenance_tag"]) if "provenance_tag" in row.keys() and row["provenance_tag"] is not None else "",
+        commit_sha=str(row["commit_sha"]) if "commit_sha" in row.keys() and row["commit_sha"] is not None else "",
     )
 
 
@@ -151,6 +160,9 @@ def item_values(item: InstalledItem) -> Tuple[Any, ...]:
         item.installed_at,
         item.updated_at,
         item.consent_via,
+        item.provenance_repo,
+        item.provenance_tag,
+        item.commit_sha,
     )
 
 

@@ -12,7 +12,7 @@ from src.core.mcp import channel as channel_events
 from src.core.argent import subagent_join
 from src.core.mcp import agent_tool_switches, aliases, federated, fingerprint_memo, instructions, tools
 from src.core.mcp.caller import AgentCaller
-from src.plugins.host import registry_files, sidecar_registry
+from src.plugins.host import registry_store, sidecar_registry
 from src.core.mcp_health.first_hand import LINKS
 
 SUPPORTED_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05", "2024-10-07")
@@ -31,7 +31,7 @@ SESSION_EXPIRED = -32001
 SESSION_ID_HEADER = "Mcp-Session-Id"
 FINGERPRINT_CHARS = 16
 
-registry_files.on_write(fingerprint_memo.clear)
+registry_store.on_write(fingerprint_memo.clear)
 sidecar_registry.on_install(fingerprint_memo.clear)
 
 def _error(msg_id: Any, code: int, message: str) -> dict:

@@ -8,10 +8,13 @@ export interface ApprovalComputer {
   label: string;
   answer: 'yes' | 'no' | null;
   pending: boolean;
+  decided_by?: 'here' | 'alpha';
+  alpha_yes?: boolean;
 }
 
 export interface ApprovalView {
   computers: ApprovalComputer[];
+  covers_pack?: boolean;
 }
 
 export const RELAY_APPROVAL_POLL_MS = 15000;

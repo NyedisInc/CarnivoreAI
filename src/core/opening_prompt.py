@@ -31,9 +31,13 @@ def prompt_launch(settings: Any, *, agent_type: Optional[str], project_name: Opt
     if not auto_start:
         raise ValueError("an opening prompt needs the agent to start (auto_start_claude)")
     resolved = launch_agent_type(settings, agent_type, project_name)
+    from src.core.agy.identity import is_agy_agent_type
+
+    if is_agy_agent_type(resolved, settings.get_launch_profiles()):
+        return resolved, ["--prompt-interactive", text]
     wrappers = settings.load_auth_config().agents.wrappers or []
     family, _wrapper = resolve_agent_type(resolved, wrappers)
     if family.name not in PROMPT_FAMILIES:
         raise ValueError(
-            f"an opening prompt is for claude and codex sessions; this one launches {family.name}")
+            f"an opening prompt is for claude, codex and agy sessions; this one launches {family.name}")
     return resolved, [text]

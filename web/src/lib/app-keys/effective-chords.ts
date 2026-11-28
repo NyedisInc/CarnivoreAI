@@ -1,6 +1,7 @@
 import { formatChord, parse } from '../../../../client/js/keymap/chord.js';
 import type { KeymapOverrides } from '../keymap/keymap-overrides';
 import type { KeyboardFamily } from '../keymap/keymap-view';
+import { resolvePluginChords } from '../plugins/slot-actions';
 import type { AppChord } from './router';
 
 export const registryId = (chordId: string): string => (chordId === 'palette.open.other' ? 'palette.open' : chordId);
@@ -39,4 +40,15 @@ export function effectiveAppChords(built: readonly AppChord[], overrides: Keymap
         for (const stored1 of stored) out.push(entryFor(carrier, stored1));
     }
     return out;
+}
+
+export function effectiveChordsWithPlugins(
+    built: readonly AppChord[],
+    overrides: KeymapOverrides,
+    family: KeyboardFamily,
+    getSessionRef: () => string | null = () => null,
+): AppChord[] {
+    const base = effectiveAppChords(built, overrides, family);
+    const plugin = resolvePluginChords(family, base, getSessionRef);
+    return plugin.length ? [...base, ...plugin] : base;
 }

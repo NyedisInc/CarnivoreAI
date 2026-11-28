@@ -12,6 +12,7 @@ import structlog
 from fastapi import HTTPException
 
 from src.core import db
+from src.core.swarm.types import CreateRefused, ProjectMissing, TurnOnError
 from src.core.swarm import body, body_create, memory, project_agent, seats, store, thread_port
 from src.core.swarm.names import shown_name
 
@@ -23,7 +24,7 @@ PROMOTE_ORDERS = ("You were this project's lead session and are now its Swarm pr
 NOT_CLAUDE = ("codex", "shell")
 
 
-class PromoteRefused(project_agent.TurnOnError):
+class PromoteRefused(TurnOnError):
     pass
 
 
@@ -108,7 +109,7 @@ def _write(conn: sqlite3.Connection, found: Dict[str, Any], state_dir: Path, kin
     boss = store.get_agent(conn, agent["parent_id"]) if agent.get("parent_id") is not None else None
     try:
         body_create.write_files(state_dir, agent, boss["display_name"] if boss else None, boss["slug"] if boss else None)
-    except (body_create.CreateRefused, memory.SwarmFileError, OSError) as exc:
+    except (CreateRefused, memory.SwarmFileError, OSError) as exc:
         store.tear_down(conn, agent["id"])
         raise PromoteRefused(f"the agent's files could not be written: {exc}") from exc
     return agent
@@ -119,7 +120,7 @@ async def promote_session(app_state: Any, session_uuid: str, project_id: int, ki
 
     found = await body.run_db(lambda c: _read(c, session_uuid, project_id, kind))
     if found["project"] is None:
-        raise project_agent.ProjectMissing("no such project")
+        raise ProjectMissing("no such project")
     session, existing, owner = found["session"], found["existing"], found["owner"]
     if session is None:
         raise PromoteRefused("no such session")

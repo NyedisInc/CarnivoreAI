@@ -31,4 +31,6 @@ export const saveOrder = (order: readonly string[]): Promise<boolean> => write('
 
 export const setEligible = (machine: string, eligible: boolean): Promise<boolean> => write(`eligible:${machine}`, () => put('/pack/eligible', { machine, eligible }));
 
+export const setLinkPeers = (machine: string, on: boolean): Promise<boolean> => write(`link:${machine}`, () => put('/pack/link-peers', { machine, on }));
+
 export const confirmInterim = (): Promise<boolean> => write('confirm', () => authFetch('/pack/interim/confirm', { method: 'POST' }));

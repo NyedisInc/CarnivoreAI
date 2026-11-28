@@ -11,8 +11,11 @@ from typing import Any, Callable, Dict, Optional, Set, Tuple
 import structlog
 
 from src.core.agent_family_display import resolve_family_for_display
+from src.core.attention.agy_conversation import agy_pid_under, conversation_for_pane
+from src.core.copilot.conversation import conversation_for_pane as copilot_conversation_for_pane
 from src.core.attention.codex_gather import gather_codex_evidence, rollout_path_in_sessions
 from src.core.attention.codex_pane_home import pane_codex_home
+from src.core.approvals import cli_trust
 from src.core.approvals.extract import DIALOG_SCROLLBACK_LINES, extract_dialog_scrolled
 from src.core.attention.codex_pane import classify_codex_pane
 from src.core.attention.codex_reader import CodexEvidence
@@ -26,6 +29,7 @@ from src.core.attention.prompt_suggestion import PromptSuggestions
 from src.core.attention.record_identity import RecordIdentity
 from src.core.attention.restart_floor import RestartFloors
 from src.core.attention.registry_record import REG_IDLE
+from src.core.attention import registry_index as _registry_index_mod
 from src.core.attention.registry_index import read_registry_index
 from src.core.attention.resolve import resolve_attention
 from src.core.attention.screen_demand import ScreenDemand, decide, stays_sticky
@@ -35,9 +39,10 @@ from src.core.attention.startup_screen import StartupScreenMemory, read_startup_
 from src.core.claude_config.profile_roots import registry_file_path
 from src.core.attention.output_holders import open_file_path
 from src.core.background_work.measured import (
-    UNREADABLE, ProcessSnapshot, measure_background,
+    STATE_NONE, STATE_RUNNING, UNREADABLE, ProcessSnapshot, measure_background,
 )
 from src.core.background_work.open_count import BackgroundCountReader
+from src.core.background_work.servers import ServerProbe
 from src.core.attention.watcher import WatchTarget
 from src.core.hosts.identity import is_remote_backend
 from src.core.hosts.remote_attention import RemotePass, read_remote_evidence
@@ -90,9 +95,11 @@ class AttentionEvidenceReader:
         self._skills = SkillTallyCache()
         self._parked = ParkedWorkReader()
         self._background = BackgroundCountReader()
+        self._servers = ServerProbe()
         self._paths: Dict[str, Tuple[str, ...]] = {}
         self._transcripts: Dict[str, Tuple[str, str]] = {}
         self._codex_rollouts: Dict[str, str] = {}
+        self._agy_transcripts: Dict[str, str] = {}
         self._startup_screens = StartupScreenMemory()
         self._remote = RemotePass()
         self._pane_facts = PaneFactsWatch()
@@ -100,11 +107,23 @@ class AttentionEvidenceReader:
         self._demand = ScreenDemand()
         self._suggestions = PromptSuggestions()
         self._ask_open = ask_open
-        self._record_identity = record_identity if record_identity is not None else RecordIdentity()
+        self._owns_record_identity = record_identity is not None
+        self._record_identity = record_identity if record_identity is not None else _registry_index_mod._IDENTITY
 
-    def _pass(self, now: datetime) -> Tuple[Any, Any, Any]:
+    PASS_REUSE_SECONDS = 0.75
+
+    def prepare_pass(self, now: datetime, *, allow_reuse: bool = False) -> None:
+        self._pass(now, allow_reuse=allow_reuse)
+
+    def _pass(self, now: datetime, *, allow_reuse: bool = False) -> Tuple[Any, Any, Any]:
         with self._lock:
-            if self._pass_at != now:
+            reusable = (
+                allow_reuse
+                and self._pass_at is not None
+                and self._status_map is not None
+                and 0.0 <= (now - self._pass_at).total_seconds() < self.PASS_REUSE_SECONDS
+            )
+            if self._pass_at != now and not reusable:
                 status_map = self._manager._build_tmux_status_map()
                 registry_index = read_registry_index()
                 wrappers = self._manager._wrappers_reader()
@@ -112,9 +131,18 @@ class AttentionEvidenceReader:
                 if self._publish_status_map is not None:
                     self._publish_status_map(status_map)
                 self._registry_index = registry_index
-                self._record_identity.refresh(
-                    (record.pid, record.proc_start) for record in (registry_index or {}).values()
-                    if getattr(record, "known", False) and getattr(record, "proc_start", None))
+                if self._owns_record_identity:
+                    self._record_identity.refresh(
+                        (record.pid, record.proc_start) for record in (registry_index or {}).values()
+                        if getattr(record, "known", False) and getattr(record, "proc_start", None))
+                else:
+                    unproven = [
+                        (record.pid, record.proc_start) for record in (registry_index or {}).values()
+                        if getattr(record, "known", False) and getattr(record, "proc_start", None)
+                        and self._record_identity.proven(record.pid, record.proc_start) is None
+                    ]
+                    if unproven:
+                        self._record_identity.refresh(unproven)
                 self._wrappers = wrappers
                 self._instances = self._read_instances(status_map)
                 if getattr(status_map, "complete", False):
@@ -260,11 +288,20 @@ class AttentionEvidenceReader:
                 registry, transcript, now, process_started_at=started,
                 process_parents=lambda: self._process_parents(now),
                 skip_task_ids=leftovers or frozenset(),
+                process_commands=lambda: self._process_snapshot(now).commands,
             )
             if family_name == FAMILY_CLAUDE or registry.known:
                 background_process = measure_background(
                     claude_pid, self._process_snapshot(now), stdout_of=lambda pid: open_file_path(pid, 1),
+                    is_server=self._servers.is_server,
                 )
+        agent_bind_uuid = None
+        if liveness == LIVENESS_LIVE and family_name != FAMILY_CODEX and not registry.known and pane_row.get("pid") is not None:
+            snapshot = self._process_snapshot(now)
+            measured = conversation_for_pane(pane_row.get("pid"), snapshot.parents, snapshot.commands)
+            measured = measured or copilot_conversation_for_pane(pane_row.get("pid"), snapshot.parents, snapshot.commands)
+            if measured and measured != uuid:
+                agent_bind_uuid = measured
         timers = self._timers.tally(
             family_name, uuid, str(cwd) if cwd else None, registry, now,
         )
@@ -273,16 +310,43 @@ class AttentionEvidenceReader:
             tmux_liveness=liveness, agent_family=family_name,
             registry=registry, transcript=transcript, pane=None, codex=codex,
             now=now, identity=EvidenceIdentity(socket, name, epoch, pane_row.get("pid"), uuid),
-            codex_bind_uuid=picked_uuid, subagents=subagents, timers=timers, skills=skills,
+            codex_bind_uuid=picked_uuid, agent_bind_uuid=agent_bind_uuid, subagents=subagents, timers=timers, skills=skills,
             parked_work=parked, background_open=background_open,
             background_process=background_process, background_leftovers=leftovers,
             process_floor_at=evidence_process_floor(epoch, restarted_at),
         )
         if liveness == LIVENESS_LIVE and family_name not in (None, FAMILY_CLAUDE, FAMILY_CODEX):
-            evidence = replace(evidence, manifest=read_manifest(
-                pane_row.get("pid"), self._process_snapshot(now),
-                lambda: self._screen_text(socket, name, pane_row),
-                escape_notices.NOTICES.status_for(target.session_id)))
+            snapshot = self._process_snapshot(now)
+            seen: list = []
+
+            def screen() -> Optional[str]:
+                seen.append(self._screen_text(socket, name, pane_row))
+                return seen[-1]
+
+            manifest = read_manifest(
+                pane_row.get("pid"), snapshot, screen,
+                escape_notices.NOTICES.status_for(target.session_id))
+            agy_bg_process = evidence.background_process
+            agy_bg_open = evidence.background_open
+            if manifest is not None and manifest.cli == "agy":
+                from src.core.agy import transcripts as agy_transcripts
+
+                agy_cid = agent_bind_uuid or uuid
+                agy_path = agy_transcripts.transcript_path(agy_cid) if agy_cid else None
+                self._remember_agy_transcript(target.session_id, str(agy_path) if agy_path is not None else None)
+                agy_pid = agy_pid_under(pane_row.get("pid"), snapshot.parents, snapshot.commands)
+                if agy_pid is not None:
+                    agy_bg_process = measure_background(
+                        agy_pid, snapshot, stdout_of=lambda pid: open_file_path(pid, 1),
+                        is_server=self._servers.is_server, agent_kind="agy",
+                    )
+                    if agy_bg_process.state in (STATE_RUNNING, STATE_NONE):
+                        agy_bg_open = agy_bg_process.count
+            evidence = replace(
+                evidence, manifest=manifest,
+                background_process=agy_bg_process, background_open=agy_bg_open,
+                dialog=cli_trust.decode(seen[-1]) if seen and seen[-1] else None,
+            )
         if liveness != LIVENESS_LIVE or family_name not in (None, FAMILY_CLAUDE, FAMILY_CODEX):
             return replace(evidence, startup_screen=self._startup_screen(
                 target.session_id, None, evidence, None, pane_row, now))
@@ -376,6 +440,17 @@ class AttentionEvidenceReader:
         with self._lock:
             return self._codex_rollouts.get(session_id)
 
+    def _remember_agy_transcript(self, session_id: str, path: Optional[str]) -> None:
+        with self._lock:
+            if path:
+                self._agy_transcripts[session_id] = path
+            else:
+                self._agy_transcripts.pop(session_id, None)
+
+    def agy_transcript_for(self, session_id: str) -> Optional[str]:
+        with self._lock:
+            return self._agy_transcripts.get(session_id)
+
     def watch_paths(self, session_ids: Set[str]) -> Dict[str, Tuple[str, ...]]:
         self._pane_facts.retain(session_ids)
         self._demand.retain_only(session_ids)
@@ -384,10 +459,13 @@ class AttentionEvidenceReader:
             self._paths = {k: v for k, v in self._paths.items() if k in session_ids}
             self._transcripts = {k: v for k, v in self._transcripts.items() if k in session_ids}
             self._codex_rollouts = {k: v for k, v in self._codex_rollouts.items() if k in session_ids}
+            self._agy_transcripts = {k: v for k, v in self._agy_transcripts.items() if k in session_ids}
             watched = dict(self._paths)
             if self._watch_codex_rollouts():
                 for session_id, rollout in self._codex_rollouts.items():
                     watched[session_id] = watched.get(session_id, ()) + (rollout,)
+            for session_id, agy_path in self._agy_transcripts.items():
+                watched[session_id] = watched.get(session_id, ()) + (agy_path,)
             return watched
 
     def _process_parents(self, now: datetime) -> dict[int, int]:
@@ -426,7 +504,7 @@ class AttentionEvidenceReader:
             getattr(record, "pid", None) for record in (self._registry_index or {}).values()
         )
         marks = []
-        for path in sorted({p for paths in self._paths.values() for p in paths}):
+        for path in sorted({p for paths in self._paths.values() for p in paths if not p.endswith(".jsonl")}):
             try:
                 st = os.stat(path)
             except OSError:

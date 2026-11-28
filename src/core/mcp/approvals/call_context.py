@@ -15,7 +15,7 @@ GATED_TOOLS = frozenset({
     "project_rename", "company_create", "company_rename", "company_parent_set",
     "company_hq_set", "company_folder_set", "project_company_set", "company_delete", "project_archive", "project_unarchive", "project_move", "project_pack", "project_unpack", "board_import", "pipeline_plugin_rebuild",
     "cplug_update",
-    "session_wake", "session_shell_open", "session_interrupt", "session_dialog_answer", "session_dialog_questions_answer", "project_create", "project_delete", "project_replica_add", "project_replica_remove", "project_air_gap_set", "dashboard_delete",
+    "session_wake", "session_shell_open", "session_interrupt", "session_dialog_answer", "session_dialog_questions_answer", "project_create", "project_delete", "project_merge_run", "project_storage_check", "company_accounts_set", "project_replica_add", "project_replica_remove", "project_air_gap_set", "dashboard_delete",
     "project_sync", "project_github_account_set", "project_publish_repo", "pack_gh_login_add",
     "project_migrate", "company_migrate", "project_migrate_back", "session_move", "session_folder_move", "session_send",
     "mod_enabled_set", "mod_remove", "skill_copy", "skill_remove",

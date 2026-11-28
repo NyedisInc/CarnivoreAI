@@ -10,10 +10,10 @@ from typing import Any, Dict, Optional
 import structlog
 
 from src.core.db import transaction
+from src.core.swarm.types import CreateRefused, ProjectMissing, TurnOnError
 from src.core.swarm import body, body_create, definition, delivery, memory, profiles, push, seats, slugs, store, switch, thread_port, wake_prompt
 from src.core.swarm import settings as swarm_settings
 from src.core.session_label import InvalidLabel, set_label
-from src.plugins.sdk.swarm import SwarmError
 
 logger = structlog.get_logger()
 
@@ -29,14 +29,6 @@ NAMING_ORDERS = (
     "they approve, spawn with plain names only.")
 PLAIN_ORDERS = ("You were just turned on as the project agent. Name every agent you spawn by the agent-name rules in your "
                 "standing rules: a task agent by its general task, a feature agent by its specialty.")
-
-
-class TurnOnError(SwarmError):
-    pass
-
-
-class ProjectMissing(TurnOnError):
-    pass
 
 
 def _project(conn: sqlite3.Connection, project_id: int) -> Optional[sqlite3.Row]:
@@ -88,7 +80,7 @@ def _ensure_project_repo(root: str) -> None:
         raise TurnOnError(refusal)
     try:
         body_create.ensure_repo(root)
-    except body_create.CreateRefused as exc:
+    except CreateRefused as exc:
         raise TurnOnError(str(exc)) from exc
 
 

@@ -5,9 +5,11 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 
-from src.core.computers import add_over_ssh, store
+from src.core.computers import add_over_ssh, mesh, store
 from src.core.db_reuse.kept_read import hot_read
 from src.core.federation import peer_hosts
+from src.core.pack.machines import capabilities
+from src.core.pack.meshdata import gossip
 
 FID_SHORT_LEN = 6
 UNREACHABLE_NOTE_HOURS = 24
@@ -115,7 +117,7 @@ def build_view(rt: Any, links: Any) -> Dict[str, Any]:
     state = rt.link_state
     live = rt.invites.live() if rt.invites is not None else []
     fid = rt.fed_key.device_id if rt.fed_key is not None else ""
-    return {
+    out: Dict[str, Any] = {
         "self": {
             "install_id": rt.iid, "label": rt.label, "fid_short": fid[:FID_SHORT_LEN], "role": role,
             "link": {"state": _member_link(rt)["state"] if role == "member" else "off" if state == "stopped" else state,
@@ -132,3 +134,7 @@ def build_view(rt: Any, links: Any) -> Dict[str, Any]:
                      "attempts_left": i.attempts_left} for i in live],
         "add_jobs": add_over_ssh.JOBS.snapshot(),
     }
+    if capabilities.mesh_on():
+        out["mesh"] = mesh.snapshot()
+        out["heard"] = gossip.heard_now()
+    return out

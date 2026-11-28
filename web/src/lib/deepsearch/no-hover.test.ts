@@ -20,7 +20,7 @@ test('a result row, a hit and an agent row paint nothing on hover: the mock\'s `
     const hoverOnResults = results.filter((r) => r.sel.includes(':hover') && !r.sel.includes('.acm-')).map((r) => r.sel);
     expect(hoverOnResults, 'no hover rule on a hit, a prompt or a head').toEqual([]);
     const resets = rules(read('sidebar-shell/search-sections.css')).filter((r) => r.sel.includes(':hover')).map((r) => r.sel).join(' | ');
-    expect(resets).toContain(".session-sidebar-row:not([data-search-cursor='1']):hover");
+    expect(resets).toContain(".session-sidebar-row:not([data-search-hit]):not([data-search-cursor='1']):hover");
     expect(resets).toContain("[data-search-section='agents'] .session-sidebar-row");
 });
 

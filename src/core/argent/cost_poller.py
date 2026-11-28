@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Set, Tuple
 import structlog
 
 from src.core import resource_push
-from src.core.argent import cost_split, budget, fallback_spend, notices, row_state, timeline, work_items
+from src.core.argent import cost_split, budget, budget_requests, fallback_spend, notices, row_state, timeline, work_items
 from src.core.argent import settings as settings_module
 from src.core.argent.client import ArgentClient, ArgentError, NotFound, Unauthorized, error_code
 from src.core.argent.fallback_spend import CursorStore
@@ -99,8 +99,10 @@ async def local_extra(tenant: str, wanted: Set[str], sessions: Mapping[str, Tupl
         tether = await asyncio.to_thread(row_state.lookup, tenant, session.tmux)
         if tether["state"] not in UNTETHERED_STATES:
             continue
+        from src.core.perf_hooks import executors as _executors
+
         since = await asyncio.to_thread(cursors.get, tenant, row_id)
-        rows = await asyncio.to_thread(read, session.subject, since)
+        rows = await _executors.run_in(_executors.maintenance_executor(), read, session.subject, since)
         if rows is None:
             for item in {d["work_item_id"] for d in declared} & wanted:
                 extra[item] = None
@@ -144,14 +146,14 @@ async def _notify(tenant: str, item_id: str, level: Optional[str], standing: bud
         notices.budget_hold(item_id, name, standing.owner_name or standing.governing_item_title, spent, cap)
 
 
-def _client(server_url: str, ca_path: str, token: Optional[str]) -> ArgentClient:
+def _client(server_url: str, token: Optional[str]) -> ArgentClient:
     store = get_runtime().store
 
     def expired() -> None:
         store.mark_login_expired()
         resource_push.notify(topics.ARGENT_STATUS)
 
-    return ArgentClient(server_url, lambda: token, ca_path=ca_path, transport=_state.transport, on_unauthorized=expired)
+    return ArgentClient(server_url, lambda: token, transport=_state.transport, on_unauthorized=expired)
 
 
 async def _get(client: ArgentClient, path: str, params: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
@@ -311,7 +313,10 @@ async def pass_once() -> float:
     if await asyncio.to_thread(runtime.store.login_expired):
         return SLOW_SECONDS
     try:
-        return await poll_once(client, tenant, await live_sessions())
+        wait = await poll_once(client, tenant, await live_sessions())
+        if await budget_requests.sync(client, tenant, min_gap=wait):
+            poke()
+        return wait
     except Unauthorized:
         return SLOW_SECONDS
     except (sqlite3.Error, OSError) as exc:

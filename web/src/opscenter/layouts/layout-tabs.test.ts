@@ -1,6 +1,25 @@
 /** @vitest-environment jsdom */
-import { describe, expect, it } from 'vitest';
-import { addable, closeTab, layoutTabs, noteOpen, setTabs, visibleTabs, withTab, LAYOUT_TABS_KEY } from './layout-tabs.svelte';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  addable,
+  closeTab,
+  layoutTabs,
+  noteOpen,
+  setTabs,
+  startLayoutTabsSync,
+  syncLayoutTabsFromPreferences,
+  visibleTabs,
+  withTab,
+  LAYOUT_TABS_KEY,
+  LAYOUT_TABS_PREF_FIELD,
+} from './layout-tabs.svelte';
+
+afterEach(() => {
+  localStorage.clear();
+  delete (globalThis as Record<string, unknown>).PreferenceBridge;
+  delete (globalThis as Record<string, unknown>).Preferences;
+  setTabs([]);
+});
 
 describe('layout tabs', () => {
   it('adds a tab once and appends it', () => {
@@ -36,5 +55,47 @@ describe('layout tabs', () => {
     noteOpen('a');
     expect(layoutTabs.uuids).toEqual(['a', 'b']);
     expect(JSON.parse(localStorage.getItem(LAYOUT_TABS_KEY) ?? '[]')).toEqual(['a', 'b']);
+  });
+
+  it('mirrors setTabs to ui_preferences.layout_tabs and applies live preferences.changed without echoing (#3385)', () => {
+    let remoteHandler: ((value: unknown) => void) | null = null;
+    let shared: unknown = ['s1', 's2'];
+    const writeSpy = vi.fn(async (_field: string, value: string[], local: () => void) => {
+      local();
+      shared = value;
+      return { status: 'committed' };
+    });
+    const unsubSpy = vi.fn();
+    (globalThis as Record<string, unknown>).PreferenceBridge = {
+      read: (field: string, fallback: () => unknown) => (field === LAYOUT_TABS_PREF_FIELD ? shared : fallback()),
+      write: writeSpy,
+      follow: (field: string, apply: (value: unknown) => void) => {
+        if (field === LAYOUT_TABS_PREF_FIELD) remoteHandler = apply;
+        return unsubSpy;
+      },
+    };
+
+    const stop = startLayoutTabsSync(null);
+    expect(layoutTabs.uuids).toEqual(['s1', 's2']);
+    expect(JSON.parse(localStorage.getItem(LAYOUT_TABS_KEY) ?? '[]')).toEqual(['s1', 's2']);
+    expect(writeSpy).not.toHaveBeenCalled();
+
+    noteOpen('s3');
+    expect(layoutTabs.uuids).toEqual(['s1', 's2', 's3']);
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+    expect(writeSpy).toHaveBeenCalledWith(LAYOUT_TABS_PREF_FIELD, ['s1', 's2', 's3'], expect.any(Function));
+
+    remoteHandler!(['r1', 'r2']);
+    expect(layoutTabs.uuids).toEqual(['r1', 'r2']);
+    expect(JSON.parse(localStorage.getItem(LAYOUT_TABS_KEY) ?? '[]')).toEqual(['r1', 'r2']);
+    expect(writeSpy).toHaveBeenCalledTimes(1);
+
+    shared = undefined;
+    syncLayoutTabsFromPreferences();
+    remoteHandler!(null);
+    expect(layoutTabs.uuids).toEqual(['r1', 'r2']);
+
+    stop();
+    expect(unsubSpy).toHaveBeenCalledTimes(1);
   });
 });

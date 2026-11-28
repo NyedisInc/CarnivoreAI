@@ -74,7 +74,7 @@
 {#if open}
     {#snippet rosterActions()}<RosterActions />{/snippet}
     {#snippet rosterBar()}<RosterBar />{/snippet}
-    <Page class="pledger mgr pack-page" title={t('pack.page.title')} onClose={close} bind:titleEl frame="column" scroll="self" actions={tab === 'computers' ? rosterActions : undefined} bar={tab === 'computers' ? rosterBar : undefined}>
+    <Page class="pledger mgr pack-page" title={t('pack.page.title')} onClose={close} bind:titleEl frame="column" scroll="self" toolRow="line" actions={tab === 'computers' ? rosterActions : undefined} bar={tab === 'computers' ? rosterBar : undefined}>
         {#snippet tabs()}
             <Tabs tabs={tabDefs} active={tab} onSelect={pick} label={t('pack.tabs.label')} idBase="pack" />
         {/snippet}

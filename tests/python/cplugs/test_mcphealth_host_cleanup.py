@@ -8,7 +8,8 @@ import pytest
 
 from src.core.mcp_health.host_methods import basename
 from src.plugins.host import sidecar_boot
-from src.plugins.host.sidecar_boot import MCP_HEALTH_ID
+
+PLUGIN_ID = "healthmon"
 
 
 @pytest.mark.parametrize("command,expected", [
@@ -38,10 +39,10 @@ def test_a_stop_withdraws_the_host_port_except_idle_and_restart(tmp_path, reason
             calls.append((plugin_id, enabled))
 
         rt.mcp_health_switched = switched
-        await rt.supervisor.disable(MCP_HEALTH_ID, reason)
+        await rt.supervisor.disable(PLUGIN_ID, reason)
         return calls
 
-    assert asyncio.run(go()) == ([(MCP_HEALTH_ID, False)] if withdrawn else [])
+    assert asyncio.run(go()) == ([(PLUGIN_ID, False)] if withdrawn else [])
 
 
 def test_a_stop_ends_the_plugins_flow_feed_leases_and_only_its_own(tmp_path, monkeypatch):
@@ -56,7 +57,7 @@ def test_a_stop_ends_the_plugins_flow_feed_leases_and_only_its_own(tmp_path, mon
         live.watch_for("uuid-stop:feed")
         live.watch_for("uuid-stop:runs")
         live.watch_for("uuid-other:feed")
-        await rt.supervisor.disable(MCP_HEALTH_ID, "uninstalled")
+        await rt.supervisor.disable(PLUGIN_ID, "uninstalled")
         return sorted(live._OWNERS)
 
     assert asyncio.run(go()) == ["uuid-other:feed"]

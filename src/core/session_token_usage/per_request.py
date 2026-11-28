@@ -21,7 +21,7 @@ from src.models.per_request_usage import RequestUsageRow, SessionRequestUsage
 
 logger = structlog.get_logger(__name__)
 
-MAX_FILES = 1024
+MAX_FILES = 16384
 MAX_ROWS_PER_FILE = 20000
 DEFAULT_LIMIT = 1000
 MAX_LIMIT = 5000
@@ -35,7 +35,10 @@ class _FileState:
 
     head: bytes = b""
     offset: int = 0
+    stat_sig: Optional[Tuple[int, int, int]] = None
     rows: List[RequestUsageRow] = field(default_factory=list)
+    row_epochs: List[float] = field(default_factory=list)
+    max_epoch: float = 0.0
     seen: Set[str] = field(default_factory=set)
 
 
@@ -77,13 +80,31 @@ def _row(record: Dict[str, Any], agent_id: str, workflow: Optional[str]) -> Opti
     )
 
 
-def _advance(path: Path, state: _FileState, agent_id: str, workflow: Optional[str]) -> bool:
+_MTIME_SKEW_SECONDS = 300.0
+
+
+def _advance(
+    path: Path,
+    state: _FileState,
+    agent_id: str,
+    workflow: Optional[str],
+    *,
+    min_mtime: Optional[float] = None,
+) -> bool:
     try:
+        st = os.stat(path)
+        sig = (st.st_ino, st.st_size, st.st_mtime_ns)
+        if state.stat_sig == sig:
+            return True
+        if min_mtime is not None and state.stat_sig is None and st.st_mtime < min_mtime:
+            return True
         with open(path, "rb") as handle:
-            size = os.fstat(handle.fileno()).st_size
+            fst = os.fstat(handle.fileno())
+            size = fst.st_size
+            sig = (fst.st_ino, size, fst.st_mtime_ns)
             head = handle.read(_HEAD_BYTES)
             if state.offset and (size < state.offset or not head.startswith(state.head)):
-                state.offset, state.rows, state.seen = 0, [], set()
+                state.offset, state.rows, state.row_epochs, state.max_epoch, state.seen = 0, [], [], 0.0, set()
             if not state.offset:
                 state.head = head
             handle.seek(state.offset)
@@ -92,6 +113,8 @@ def _advance(path: Path, state: _FileState, agent_id: str, workflow: Optional[st
                 if not line or not line.endswith(b"\n"):
                     break
                 state.offset += len(line)
+                if b'"usage"' not in line or b'"assistant"' not in line:
+                    continue
                 try:
                     record = json.loads(line)
                 except (ValueError, UnicodeDecodeError):
@@ -100,9 +123,17 @@ def _advance(path: Path, state: _FileState, agent_id: str, workflow: Optional[st
                 if found is None or found[0] in state.seen:
                     continue
                 state.seen.add(found[0])
+                ep = _epoch(found[1].timestamp)
                 state.rows.append(found[1])
+                state.row_epochs.append(ep)
+                if ep > state.max_epoch:
+                    state.max_epoch = ep
             if len(state.rows) > MAX_ROWS_PER_FILE:
-                del state.rows[: len(state.rows) - MAX_ROWS_PER_FILE]
+                trim = len(state.rows) - MAX_ROWS_PER_FILE
+                del state.rows[:trim]
+                del state.row_epochs[:trim]
+                state.max_epoch = max(state.row_epochs, default=0.0)
+            state.stat_sig = sig
     except OSError as exc:
         logger.debug("per_request_usage_file_unreadable", error=str(exc))
         return False
@@ -142,28 +173,34 @@ def read_conversation_requests(
     if not 1 <= limit <= MAX_LIMIT:
         raise ValueError(f"limit must be 1 to {MAX_LIMIT}")
     floor = datetime.fromisoformat(since).timestamp() if since else None
-    rows: List[RequestUsageRow] = []
+    min_mtime = (floor - _MTIME_SKEW_SECONDS) if floor is not None else None
+    matched: List[Tuple[float, RequestUsageRow]] = []
     seen: Set[str] = set()
     for path, agent_id, workflow in _files(transcript):
         key = os.fspath(path)
         with _lock:
             state = _states.pop(key, None) or _FileState()
         try:
-            _advance(path, state, agent_id, workflow)
-            snapshot = list(state.rows)
+            _advance(path, state, agent_id, workflow, min_mtime=min_mtime)
+            if floor is not None and state.max_epoch <= floor:
+                snapshot: List[Tuple[float, RequestUsageRow]] = []
+            else:
+                snapshot = list(zip(state.row_epochs, state.rows))
         finally:
             with _lock:
                 _states[key] = state
                 while len(_states) > MAX_FILES:
                     _states.popitem(last=False)
-        for row in snapshot:
+        for ep, row in snapshot:
+            if floor is not None and ep <= floor:
+                continue
             dedup = row.request_id or row.message_id or ""
             if dedup in seen:
                 continue
             seen.add(dedup)
-            if floor is None or _epoch(row.timestamp) > floor:
-                rows.append(row)
-    rows.sort(key=lambda r: _epoch(r.timestamp))
+            matched.append((ep, row))
+    matched.sort(key=lambda pair: pair[0])
+    rows = [row for _, row in matched]
     return rows[:limit], len(rows), len(rows) > limit
 
 

@@ -31,6 +31,7 @@ from src.api.ws_startup_paint import paint_on_attach
 from src.api.ws_receive import receive_messages
 from src.api import terminal_socket_role as socket_role
 from src.core import viewer_fanout
+from src.core.attention import viewer_focus
 from src.core.bounded_stream import OFFER_ACCEPTED, BoundedStream
 
 logger = structlog.get_logger()
@@ -86,14 +87,6 @@ async def websocket_terminal(websocket: WebSocket):
 
     await connection_manager.connect(websocket, viewer_stream)
     connection_manager.bind_session(websocket, target_sid)
-    if role.marks_viewed and target_sid and hasattr(
-            session_manager, "mark_session_viewed"):
-        try:
-            session_manager.mark_session_viewed(target_sid)
-        except Exception as exc:
-            logger.warning(
-                "mark_session_viewed_failed", session_id=target_sid, error=str(exc)
-            )
 
     local_servers_queue = local_servers.subscribe()
 
@@ -103,6 +96,7 @@ async def websocket_terminal(websocket: WebSocket):
         handshake_cols: Optional[int] = None
         handshake_rows: Optional[int] = None
         handshake_hidden = False
+        handshake_focus = None
         if role.awaits_handshake:
             await websocket.send_text(json.dumps({
                 "type": WSMessageType.REQUEST_DIMS,
@@ -142,7 +136,14 @@ async def websocket_terminal(websocket: WebSocket):
                         except (KeyError, ValueError, TypeError):
                             logger.warning("ws_handshake_bad_dims", msg=msg)
                         break
+                    if msg.get("type") == WSMessageType.VIEWER_FOCUS and isinstance(msg.get("focused"), bool):
+                        handshake_focus = msg["focused"]
+                        continue
                     continue
+
+        if handshake_focus is not None:
+            viewer_focus.report_focus(
+                session_manager, target_sid, websocket, handshake_focus, marks_viewed=role.marks_viewed)
 
         if handshake_cols and handshake_rows:
             logger.info(
@@ -177,7 +178,8 @@ async def websocket_terminal(websocket: WebSocket):
             )
 
             if not handshake_hidden:
-                size_frame = await measured_size_frame(_resolve_backend(registry, target_sid))
+                reused_grid = measured if (not outcome.issued and not outcome.failed and measured is not None) else None
+                size_frame = await measured_size_frame(_resolve_backend(registry, target_sid), known_grid=reused_grid)
                 if size_frame is not None:
                     try:
                         await websocket.send_text(size_frame)

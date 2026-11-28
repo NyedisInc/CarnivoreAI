@@ -18,6 +18,8 @@
     import { mcpServers } from './mcp';
     import ModFacts from './ModFacts.svelte';
     import CplugFacts from './CplugFacts.svelte';
+    import FlaggedWarningBox from './FlaggedWarningBox.svelte';
+    import { flaggedMetaFromSheet } from './permission-diff';
     import { pluginFacts } from './plugin-facts';
     import LoadoutMembers from './LoadoutMembers.svelte';
     import { loadoutFacts } from './loadout-facts';
@@ -48,6 +50,7 @@
     let modTrust = $state(false);
     let modFlagged = $state(false);
     let cplugAccepted = $state(false);
+    let cplugFlaggedAccepted = $state(false);
     let advancedOpen = $state(false);
 
     function request(consented = false): InstallRequest {
@@ -68,14 +71,21 @@
             };
         }
         if (consented && card.isCplug && cplugReady) {
-            body.consent = {
+            const cplugConsent: InstallRequest['consent'] & Record<string, unknown> = {
                 ...consentBlock(preview)!,
                 cplug_accepted: true,
                 cplug_facts_sha: preview!.cplug_facts_sha!,
             };
+            if (cplugFlaggedMeta.requiresWarningAck && cplugFlaggedAccepted) {
+                cplugConsent.cplug_flagged_ack = true;
+                cplugConsent.acknowledge_flagged = true;
+            }
+            body.consent = cplugConsent;
         }
         return body;
     }
+
+    const cplugFlaggedMeta = $derived(card.isCplug ? flaggedMetaFromSheet(preview, card) : flaggedMetaFromSheet(null));
 
     const scripts = $derived(scriptFiles(preview));
     const consentRequired = $derived(needsScriptConsent(preview) && !card.isMod && !card.isCplug);
@@ -94,7 +104,8 @@
             !!preview?.cplug_facts_sha &&
             !!preview?.cplug_facts &&
             consentBlock(preview) !== null &&
-            cplugAccepted,
+            cplugAccepted &&
+            (!cplugFlaggedMeta.requiresWarningAck || cplugFlaggedAccepted),
     );
 
     const consentExpressible = $derived(consentBlock(preview) !== null);
@@ -156,6 +167,7 @@
         modTrust = false;
         modFlagged = false;
         cplugAccepted = false;
+        cplugFlaggedAccepted = false;
         try {
             preview = await host.previewInstall(request());
         } catch (error) {
@@ -232,6 +244,7 @@
 
 <ModalShell
     title={t(SKILL_KEYS.sheetTitle, { name: card.headline || card.id || '' })}
+    width={card.isCplug ? 'min(560px, 92vw)' : undefined}
     dismissable={!busy}
     onCancel={cancel}
 >
@@ -346,6 +359,17 @@
             {/if}
 
             {#if card.isCplug}
+                {#if cplugFlaggedMeta.flagged || cplugFlaggedMeta.requiresWarningAck}
+                    <FlaggedWarningBox
+                        summary={cplugFlaggedMeta.summary}
+                        warningReasons={cplugFlaggedMeta.warningReasons}
+                        warnings={cplugFlaggedMeta.warnings}
+                        bind:accepted={cplugFlaggedAccepted}
+                        {busy}
+                        requireAck={cplugFlaggedMeta.requiresWarningAck}
+                        {t}
+                    />
+                {/if}
                 <CplugFacts
                     facts={preview.cplug_facts ?? null}
                     accepted={cplugAccepted}

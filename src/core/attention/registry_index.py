@@ -81,11 +81,7 @@ def _keepable(record: RegistryRecord) -> bool:
     return record.verdict != REG_UNREADABLE
 
 
-def read_registry_index(
-    directory: Optional[str] = None,
-    *,
-    limit: int = DEFAULT_SCAN_LIMIT,
-) -> Mapping[str, RegistryRecord]:
+def _scan_registry(directory: Optional[str], limit: int) -> List[Tuple[str, RegistryRecord]]:
     bases = (
         [directory]
         if directory is not None
@@ -105,7 +101,31 @@ def read_registry_index(
     _FILES.retain_only(path for _, path in entries[:limit])
     loaded = [(name, _FILES.load(path, name, _load_registry_file, _keepable))
               for name, path in entries[:limit]]
+    return loaded
+
+
+def read_registry_index(
+    directory: Optional[str] = None,
+    *,
+    limit: int = DEFAULT_SCAN_LIMIT,
+) -> Mapping[str, RegistryRecord]:
+    loaded = _scan_registry(directory, limit)
     return index_registry_records(loaded, _reuse_aware_probe(loaded))
+
+
+def live_session_uuids(
+    directory: Optional[str] = None,
+    *,
+    limit: int = DEFAULT_SCAN_LIMIT,
+) -> Optional[frozenset]:
+    loaded = _scan_registry(directory, limit)
+    if any(r.verdict in (REG_UNREADABLE, REG_SHAPE_UNRECOGNIZED) for _, r in loaded):
+        return None
+    probe = _reuse_aware_probe(loaded)
+    return frozenset(
+        r.session_uuid for _, r in loaded
+        if r.verdict == REG_OK and r.session_uuid and probe(r.pid) is not False
+    )
 
 
 def index_registry_records(

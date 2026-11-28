@@ -11,7 +11,7 @@ from src.plugins.host import runtime, state as owner_state
 
 logger = structlog.get_logger()
 
-SWARM_ID = "huddle"
+SWARM_ID = "taskmanager"
 
 
 def migrate(state_dir: Path, fresh_install: bool) -> Optional[bool]:
@@ -19,6 +19,9 @@ def migrate(state_dir: Path, fresh_install: bool) -> Optional[bool]:
         return None
     definition = runtime.find(SWARM_ID)
     if definition is None:
+        return None
+    if owner_state.carry_blocked(state_dir, definition.manifest):
+        logger.warning("cplug_swarm_default_deferred", reason="renamed entry not carried yet", old=definition.manifest.renamed_from)
         return None
     on = fresh_install is True
     owner_state.update(state_dir, definition.manifest, None, lambda st: replace(

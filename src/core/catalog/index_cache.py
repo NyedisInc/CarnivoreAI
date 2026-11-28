@@ -5,7 +5,7 @@ import asyncio
 import sqlite3
 from contextlib import closing
 from datetime import datetime, timezone
-from typing import Awaitable, Callable, Optional, Union
+from typing import Awaitable, Callable, Dict, Optional, Set, Tuple, Union
 
 import structlog
 
@@ -42,6 +42,16 @@ INDEX_FLIGHT_ATTR = "_index_refresh_flight"
 INDEX_FLIGHT_NAME = "catalog_index"
 
 
+def _norm_repo(val: str) -> str:
+    text = (val or "").strip().lower().rstrip("/")
+    if text.endswith(".git"):
+        text = text[:-4]
+    for prefix in ("https://github.com/", "http://github.com/", "github.com/"):
+        if text.startswith(prefix):
+            text = text[len(prefix) :]
+    return text
+
+
 class IndexCache:
 
     def __init__(
@@ -60,8 +70,10 @@ class IndexCache:
         self._snapshot = EMPTY_SNAPSHOT
         self._etag: Optional[str] = None
         self._etag_loaded = False
+        self._repo_to_item_ids: Dict[str, Set[str]] = {}
         self._fetched_monotonic: Optional[float] = None
         self.after_refresh: Optional[Callable[[], Awaitable[None]]] = None
+        self.after_index_sync: Optional[Callable[[IndexSnapshot], Awaitable[None]]] = None
         self.after_refresh_task: Optional["asyncio.Task[None]"] = None
 
     @property
@@ -171,6 +183,31 @@ class IndexCache:
         versions = frozenset(r.subject for r in effective if r.kind == KIND_VERSION)
         return keys, versions
 
+    def _record_repo_mappings(self, verified: VerifiedIndex) -> None:
+        for item in (*getattr(verified, "items", ()), *getattr(verified, "untrusted_items", ())):
+            iid = getattr(item, "id", "")
+            if not iid:
+                continue
+            for ver in getattr(item, "versions", ()) or ():
+                prov = getattr(ver, "provenance", None)
+                repo = _norm_repo(getattr(prov, "repo", "") if prov is not None else "")
+                if repo:
+                    self._repo_to_item_ids.setdefault(repo, set()).add(iid)
+        for ref in getattr(verified, "refused", ()) or ():
+            iid = getattr(ref, "item_id", "")
+            if not iid:
+                continue
+            for repo_raw in getattr(ref, "provenance_repos", ()) or ():
+                repo = _norm_repo(repo_raw)
+                if repo:
+                    self._repo_to_item_ids.setdefault(repo, set()).add(iid)
+
+    def item_ids_for_repo(self, repo_slug: str) -> Tuple[str, ...]:
+        norm = _norm_repo(repo_slug)
+        if not norm:
+            return ()
+        return tuple(sorted(self._repo_to_item_ids.get(norm, ())))
+
     def _persist(self, verified: VerifiedIndex, etag: Optional[str]) -> None:
         stamp = (
             datetime.fromtimestamp(self._clock.now(), tz=timezone.utc)
@@ -206,7 +243,13 @@ class IndexCache:
     async def _refresh(self) -> None:
         before = content_fingerprint(self.snapshot())
         await self._round_trip()
-        if content_fingerprint(self.snapshot()) != before:
+        after = self.snapshot()
+        if after.verified is not None and after.refusal is None and self.after_index_sync is not None:
+            try:
+                await self.after_index_sync(after)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("catalog_index_sync_hook_failed", error=str(exc))
+        if content_fingerprint(after) != before:
             resource_push.notify(resource_topics.CATALOG)
 
     async def _round_trip(self) -> None:
@@ -259,6 +302,7 @@ class IndexCache:
 
         self._etag = fetched.etag
         self._persist(result, fetched.etag)
+        self._record_repo_mappings(result)
         self._snapshot = IndexSnapshot(
             verified=result,
             refusal=None,

@@ -14,6 +14,13 @@ describe('resolveSectionOrder', () => {
         expect(DEFAULT_SECTION_ORDER.length).toBe(10);
     });
 
+    it('puts pack first by default and leaves a stored order alone (#3104)', () => {
+        expect(resolveSectionOrder(undefined).slice(0, 2)).toEqual(['pack', 'pinned']);
+        expect(resolveSectionOrder([])[0]).toBe('pack');
+        const chosen = ['pinned', 'layouts', 'groups', 'companies', 'rogue', 'terminals', 'browsers', 'files', 'review', 'pack'];
+        expect(resolveSectionOrder(chosen)).toEqual(chosen);
+    });
+
     it('puts a section missing from an old stored order right after its default predecessor', () => {
         const old = ['browsers', 'terminals', 'rogue', 'companies', 'groups', 'layouts', 'pinned'];
         expect(resolveSectionOrder(old)).toEqual(['browsers', 'files', 'review', 'pack', 'terminals', 'rogue', 'companies', 'groups', 'layouts', 'pinned']);
@@ -46,7 +53,7 @@ describe('a stored order and a section it does not name (#1863)', () => {
     it('moving GROUPS (the block) leaves every other section in place', () => {
         const order = resolveSectionOrder(null);
         const moved = moveSection(order, 'groups', 'pinned', order);
-        expect(moved[0]).toBe('groups');
+        expect(moved.slice(0, 2)).toEqual(['pack', 'groups']);
         expect(moved.filter((x) => x !== 'groups')).toEqual(order.filter((x) => x !== 'groups'));
     });
 });

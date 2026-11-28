@@ -9,12 +9,16 @@ export function readSheet(cplugId: string, fetcher: typeof authFetch = defaultFe
 }
 
 export function sheetStamp(sheet: CplugSheet): string {
-    return `${sheet.digest}|${sheet.body_sha}|${sheet.grants_sha}`;
+    return sheet.ui_slots_sha !== undefined
+        ? `${sheet.digest}|${sheet.body_sha}|${sheet.grants_sha}|${sheet.ui_slots_sha}`
+        : `${sheet.digest}|${sheet.body_sha}|${sheet.grants_sha}`;
 }
 
 export interface GrantOptions {
     readonly enable?: boolean;
     readonly seen?: CplugSheet;
+    readonly slotTicks?: readonly string[];
+    readonly uiSlots?: readonly string[];
 }
 
 export async function grantCplug(
@@ -28,11 +32,28 @@ export async function grantCplug(
     const path = `${CPLUGS_ROUTE}/${encodeURIComponent(cplugId)}`;
     const current = await fetcher<CplugRow>(path);
     const sheet = options.seen ?? (await fetcher<CplugSheet>(`${path}/sheet`));
+    const sheetSlots = (sheet.ui_slots ?? []).map((s) => s.slot);
+    const uiSlots = options.uiSlots ?? (sheetSlots.length > 0 ? sheetSlots : current.ui_contribute ? Object.keys(current.ui_contribute) : []);
+    const includeSlots = uiSlots.length > 0 || (options.slotTicks?.length ?? 0) > 0 || sheet.ui_slots_sha !== undefined;
     const body = {
         revision: current.revision ?? 0,
         ...(options.enable ? { enabled: true } : {}),
-        grants: { app: [...(current.permissions?.app ?? [])] },
-        consent: { digest: sheet.digest, body_sha: sheet.body_sha, grants_sha: sheet.grants_sha, ticks: [...ticks] },
+        grants: {
+            app: [...(current.permissions?.app ?? [])],
+            ...(includeSlots && uiSlots.length > 0 ? { ui_slots: [...uiSlots] } : {}),
+        },
+        consent: {
+            digest: sheet.digest,
+            body_sha: sheet.body_sha,
+            grants_sha: sheet.grants_sha,
+            ticks: [...ticks],
+            ...(includeSlots
+                ? {
+                      ...(sheet.ui_slots_sha !== undefined ? { ui_slots_sha: sheet.ui_slots_sha } : {}),
+                      slot_ticks: [...(options.slotTicks ?? [])],
+                  }
+                : {}),
+        },
     };
     let row: CplugRow;
     try {

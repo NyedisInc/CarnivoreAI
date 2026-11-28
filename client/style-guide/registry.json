@@ -261,7 +261,7 @@
     "web/src/opscenter/shell/fixtures/": "vitest fixtures that mount CellFrame for tests; never rendered by the app",
     "web/src/opscenter/cells/plugin-view/fixtures/": "vitest fixture: the plugin-view cell under a host title strip for Cell.header.test.ts; never rendered by the app",
     "web/src/opscenter/cells/terminal-group/fixtures/": "vitest fixtures for the page tab tests (Cell.pages.test.ts); never rendered by the app",
-    "web/src/plugins/huddle/style-guide/": "the huddle plugin's own live specimens, listed to the guide through web/src/plugins/style-guide.ts (#1630)",
+    "web/src/plugins/taskmanager/style-guide/": "the huddle plugin's own live specimens, listed to the guide through web/src/plugins/style-guide.ts (#1630)",
     "web/src/style-guide/": "this guide's own specimen harness",
     "web/src/lib/sidebar-widgets/fixtures/": "vitest fixtures for the sidebar rail tests (rail.test.ts); never rendered by the app",
     "web/src/opscenter/cells/files/fixtures/": "vitest fixtures that mount the files widget under a host for Cell.test.ts; never rendered by the app",
@@ -270,7 +270,7 @@
     "web/src/lib/dialog-frame/fixtures/": "vitest fixtures that open AnchoredPopup for anchored-popup.test.ts; never rendered by the app",
     "web/src/lib/right-drawer/fixtures/": "vitest fixtures: a notes cell stand-in for right-drawer-zone.test.ts; never rendered by the app",
     "web/src/opscenter/ui/fixtures/": "vitest fixture: mounts RunChartTable with a cell snippet for RunChartTable.render.test.ts; never rendered by the app",
-    "web/src/opscenter/cells/task-manager-mk2/fixtures/": "vitest fixtures that mount a TM Mark II cell under a frame header for Cell.render.test.ts; never rendered by the app",
+    "web/src/plugins/taskmanager/mk2/fixtures/": "vitest fixtures that mount a TM Mark II cell under a frame header for Cell.render.test.ts; never rendered by the app",
     "web/src/opscenter/engine/rects/AbsSurface.fixture.svelte": "vitest fixture: a host that mounts AbsSurface with bare cells for AbsSurface.render.test.ts; never rendered by the app",
     "web/src/opscenter/engine/rects/AbsSurface.terminal.fixture.svelte": "vitest fixture: a host that mounts AbsSurface with the terminal page's real CellHost cells for AbsSurface.terminal.test.ts; never rendered by the app"
   },
@@ -419,7 +419,6 @@
       "classes": [
         "ai-entry--fresh",
         "asw-spark",
-        "band-fx",
         "cloude-attach-menu",
         "cloude-touch-copy",
         "config-editor-modal-content",
@@ -427,6 +426,7 @@
         "connected",
         "effort-level",
         "hdtl-fill",
+        "kaw-icon",
         "kaw-steam",
         "mg-sheen",
         "modal-content",
@@ -438,6 +438,7 @@
         "oc-tab-workflow",
         "pf-sheen",
         "pkp-drag-plop",
+        "session-sidebar-row-keep-awake",
         "pkp-it",
         "popup-focus",
         "popup-focus-turn",
@@ -774,6 +775,7 @@
         "session-sidebar-group__project-led",
         "session-sidebar-heading",
         "session-sidebar-list--dragging",
+        "session-sidebar-newgroup",
         "session-sidebar-projects",
         "session-sidebar-rename-edit",
         "session-sidebar-rename-error",
@@ -795,7 +797,11 @@
       "section": "chrome",
       "classes": [
         "session-sidebar-group__chevron",
-        "session-sidebar-layout__toggle"
+        "session-sidebar-layout__toggle",
+        "session-sidebar-row",
+        "session-sidebar-row-main",
+        "session-sidebar-row-provider",
+        "session-sidebar-row-subtitle"
       ]
     },
     "client/css/session-sidebar-rail.css": {
@@ -843,22 +849,21 @@
     "client/css/session-sidebar-rows.css": {
       "section": "chrome",
       "classes": [
+        "oc-timer-glyph",
+        "oc-timer-state",
         "session-row-menu-trigger",
         "session-row__subagent-count",
         "session-sidebar-panel",
         "session-sidebar-row",
         "session-sidebar-row-agents-icon",
         "session-sidebar-row-auto",
+        "session-sidebar-row-automations-icon",
         "session-sidebar-row-badge",
         "session-sidebar-row-closed",
         "session-sidebar-row-controls-cluster",
-        "session-sidebar-row-automations-icon",
-        "oc-timer-state",
-        "oc-timer-glyph",
         "session-sidebar-row-delete",
         "session-sidebar-row-host",
         "session-sidebar-row-keep-awake",
-        "session-sidebar-row-main",
         "session-sidebar-row-name",
         "session-sidebar-row-optional-icons",
         "session-sidebar-row-shells-icon",
@@ -1406,6 +1411,19 @@
         "bcm-ring"
       ]
     },
+    "web/src/lib/argent-topbar/ArgentTopBarMark.svelte": {
+      "section": "icons",
+      "classes": []
+    },
+    "web/src/lib/argent-cost/BudgetAskForm.svelte": {
+      "section": "swarm-page",
+      "classes": [
+        "baf",
+        "baf-actions",
+        "baf-fields",
+        "baf-note"
+      ]
+    },
     "web/src/lib/argent-cost/HeldLift.svelte": {
       "section": "swarm-page",
       "classes": [
@@ -1598,6 +1616,44 @@
         "card-image__note",
         "card-image__note--bad",
         "modal-btn"
+      ]
+    },
+    "web/src/lib/catalog/CardScreenshotsRow.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "card-shots",
+        "card-shots__acts",
+        "card-shots__caption",
+        "card-shots__controls",
+        "card-shots__heading",
+        "card-shots__hint",
+        "card-shots__meta",
+        "card-shots__note",
+        "card-shots__note--bad",
+        "card-shots__slot"
+      ]
+    },
+    "web/src/lib/catalog/ScreenshotGallery.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "ss-gal",
+        "ss-gal__cap",
+        "ss-gal__cap-text",
+        "ss-gal__frame",
+        "ss-gal__grid",
+        "ss-gal__heading",
+        "ss-gal__img",
+        "ss-gal__thumb"
+      ]
+    },
+    "web/src/lib/catalog/ScreenshotLightbox.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "ss-gal__bar",
+        "ss-gal__full",
+        "ss-gal__meta",
+        "ss-gal__nav",
+        "ss-gal__stage"
       ]
     },
     "web/src/lib/account-switch/AutoSwitchPanel.svelte": {
@@ -2074,18 +2130,12 @@
         "catalog-row__verdict"
       ]
     },
-    "web/src/lib/catalog/DetailGrip.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "detail-grip",
-        "detail-grip--on"
-      ]
-    },
     "web/src/lib/catalog/CatalogDetail.svelte": {
       "section": "ledger-catalog",
       "classes": [
         "detail",
         "detail-sec",
+        "detail__tins--bare",
         "detail__titletext",
         "detail__advanced",
         "detail__art",
@@ -2146,15 +2196,11 @@
       "classes": [
         "cat",
         "cat-col",
-        "oc-page__bar",
-        "rows",
         "screen__back",
         "screen__backbtn",
         "screen__backtitle",
         "screen__body",
         "screen__body--flush",
-        "screen__body--rail",
-        "screen__body--reading",
         "screen__detail",
         "screen__installed",
         "screen__menu",
@@ -2175,14 +2221,7 @@
     "web/src/lib/catalog/CatalogToolbar.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "bar__flag",
-        "bar__kind",
-        "cat",
-        "cat-rows",
-        "oc-field",
-        "oc-titlebar__back",
-        "oc-titlebar__omni-row",
-        "wik"
+        "cat-rows"
       ]
     },
     "web/src/lib/catalog/ConfirmSheet.svelte": {
@@ -2198,6 +2237,8 @@
         "confirm__lines",
         "confirm__missing",
         "confirm__size",
+        "confirm__technical",
+        "confirm__technical-body",
         "modal-btn"
       ]
     },
@@ -2407,19 +2448,49 @@
       "section": "ledger-catalog",
       "classes": [
         "cplugfacts",
-        "cplugfacts__accept",
+        "cplugfacts__ack",
         "cplugfacts__desc",
+        "cplugfacts__empty",
         "cplugfacts__item",
         "cplugfacts__item--risk",
+        "cplugfacts__item-head",
         "cplugfacts__label",
         "cplugfacts__list",
+        "cplugfacts__meta",
         "cplugfacts__name",
         "cplugfacts__note",
         "cplugfacts__reason",
-        "cplugfacts__risk",
         "cplugfacts__schema",
+        "cplugfacts__section",
         "cplugfacts__tool",
         "cplugfacts__trust"
+      ]
+    },
+    "web/src/lib/catalog/UpdateSummary.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "usum",
+        "usum__arrow",
+        "usum__cap",
+        "usum__frame",
+        "usum__ico",
+        "usum__ico--accent",
+        "usum__ico--info",
+        "usum__ico--ok",
+        "usum__ico--warn",
+        "usum__item",
+        "usum__label",
+        "usum__list",
+        "usum__notes",
+        "usum__pills",
+        "usum__shot",
+        "usum__shots",
+        "usum__strip",
+        "usum__text",
+        "usum__top",
+        "usum__v-new",
+        "usum__v-old",
+        "usum__ver"
       ]
     },
     "web/src/lib/catalog/ModFacts.svelte": {
@@ -2759,8 +2830,11 @@
       "section": "dialogs",
       "classes": [
         "modal-body",
+        "modal-content--capped",
         "modal-content--fill",
+        "modal-footer",
         "modal-header",
+        "modal-titlerow",
         "ms-label",
         "text-prompt-modal__head"
       ]
@@ -2878,6 +2952,7 @@
         "ldp",
         "ldp-account",
         "ldp-accounts",
+        "ldp-accounts-count",
         "ldp-auto",
         "ldp-caption",
         "ldp-dim",
@@ -2889,6 +2964,7 @@
         "ldp-marker",
         "ldp-meter",
         "ldp-mini",
+        "ldp-mini--stacked",
         "ldp-name",
         "ldp-notice",
         "ldp-open-count",
@@ -2901,9 +2977,8 @@
         "ldp-row",
         "ldp-title",
         "ldp-total",
-        "ldp-total-head",
-        "ldp-total-label",
-        "ldp-window"
+        "ldp-window",
+        "ldp-window-key"
       ]
     },
     "web/src/lib/ledger-drawer/LedgerGlanceView.svelte": {
@@ -2939,7 +3014,6 @@
     "web/src/lib/ledger/LedgerAccountsEditor.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "ledger-editor__colors",
         "ledger-editor__form",
         "ledger-editor__help",
         "oc-form-field"
@@ -2987,7 +3061,6 @@
       "classes": [
         "ledger-edit",
         "ledger-edit__actions",
-        "ledger-edit__colors",
         "ledger-edit__fact",
         "ledger-edit__fact--wide",
         "ledger-edit__facts",
@@ -3152,7 +3225,213 @@
     "web/src/lib/plugins-page/PluginsScreen.svelte": {
       "section": "ledger-catalog",
       "classes": [
+        "plug-card__badges",
+        "plug-page__actions",
         "plugin-catalog-pane"
+      ]
+    },
+    "web/src/lib/plugins-page/GithubSourcePicker.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "pl-gh-picker",
+        "pl-gh-picker__act",
+        "pl-gh-picker__advanced",
+        "pl-gh-picker__main",
+        "pl-gh-picker__row"
+      ]
+    },
+    "web/src/lib/plugins-page/CapabilityCards.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "pl-cap",
+        "pl-cap__blocked",
+        "pl-cap__desc",
+        "pl-cap__disclosure",
+        "pl-cap__empty",
+        "pl-cap__item",
+        "pl-cap__item-body",
+        "pl-cap__item-head",
+        "pl-cap__item-row",
+        "pl-cap__label",
+        "pl-cap__list",
+        "pl-cap__name",
+        "pl-cap__reason",
+        "pl-cap__schema",
+        "pl-cap__subhead",
+        "pl-cap__summary",
+        "pl-cap__warn"
+      ]
+    },
+    "web/src/lib/plugins-page/InlineSecretsFields.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "pl-secrets",
+        "pl-secrets__head",
+        "pl-secrets__list",
+        "pl-secrets__name",
+        "pl-secrets__row",
+        "pl-secrets__top"
+      ]
+    },
+    "web/src/lib/plugins-page/PluginInstallSheet.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "pl-sheet",
+        "pl-sheet__error",
+        "pl-sheet__footer",
+        "pl-sheet__footer-acts",
+        "pl-sheet__footer-left",
+        "pl-sheet__ident",
+        "pl-sheet__ident-item",
+        "pl-sheet__legend",
+        "pl-sheet__meta",
+        "pl-sheet__note",
+        "pl-sheet__runtime",
+        "pl-sheet__scope",
+        "pl-sheet__status",
+        "pl-sheet__unverified",
+        "pl-sheet__unverified-copy",
+        "pl-sheet__unverified-head"
+      ]
+    },
+    "web/src/lib/plugins-page/PluginHealthPill.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "pl-health-pill",
+        "pl-health-pill__actions",
+        "pl-health-pill__call",
+        "pl-health-pill__error",
+        "pl-health-pill__metrics",
+        "pl-health-pill__stat"
+      ]
+    },
+    "web/src/lib/plugins-page/DevInspectorDrawer.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugins-page/InspectorPanels.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugins-page/dev-inspector.css": {
+      "section": "ledger-catalog",
+      "classes": [
+        "pl-inspector__actions",
+        "pl-inspector__badges",
+        "pl-inspector__banner",
+        "pl-inspector__banner-detail",
+        "pl-inspector__banner-text",
+        "pl-inspector__chips",
+        "pl-inspector__controls",
+        "pl-inspector__error",
+        "pl-inspector__fact-term",
+        "pl-inspector__fact-val",
+        "pl-inspector__facts",
+        "pl-inspector__head",
+        "pl-inspector__head-actions",
+        "pl-inspector__head-main",
+        "pl-inspector__kicker",
+        "pl-inspector__label",
+        "pl-inspector__list",
+        "pl-inspector__muted",
+        "pl-inspector__panel",
+        "pl-inspector__row",
+        "pl-inspector__row-detail",
+        "pl-inspector__row-error",
+        "pl-inspector__row-main",
+        "pl-inspector__row-meta",
+        "pl-inspector__row-top",
+        "pl-inspector__row-ts",
+        "pl-inspector__section",
+        "pl-inspector__section-head",
+        "pl-inspector__sublabel",
+        "pl-inspector__subsection",
+        "pl-inspector__title"
+      ]
+    },
+    "web/src/lib/plugin-studio/MultiThemePreview.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugin-studio/ReadinessChecklist.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugin-studio/StudioActionsBar.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugin-studio/StudioInspectorPane.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugin-studio/StudioModal.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugin-studio/StudioScreen.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugin-studio/StudioTerminalPane.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/plugin-studio/plugin-studio.css": {
+      "section": "ledger-catalog",
+      "classes": [
+        "ps-actions-bar",
+        "ps-actions-bar__group",
+        "ps-banner",
+        "ps-banner__actions",
+        "ps-banner__detail",
+        "ps-banner__head",
+        "ps-banner__title",
+        "ps-check-list",
+        "ps-check-row",
+        "ps-check-row__detail",
+        "ps-check-row__label",
+        "ps-check-row__top",
+        "ps-file-list",
+        "ps-file-row",
+        "ps-file-row__path",
+        "ps-findings",
+        "ps-form",
+        "ps-form__label",
+        "ps-kv-grid",
+        "ps-kv-grid__key",
+        "ps-kv-grid__val",
+        "ps-pane",
+        "ps-pane__bar",
+        "ps-pane__controls",
+        "ps-pane__heading",
+        "ps-pre",
+        "ps-preview-controls",
+        "ps-publish-panel",
+        "ps-publish-panel__grid",
+        "ps-rail",
+        "ps-rail__count",
+        "ps-rail__heading",
+        "ps-rail__headrow",
+        "ps-rail__section",
+        "ps-right-body",
+        "ps-shell",
+        "ps-stage",
+        "ps-stage__canvas",
+        "ps-stage__frame",
+        "ps-stage__head",
+        "ps-stage__name",
+        "ps-terminal-fallback",
+        "ps-terminal-files",
+        "ps-terminal-host",
+        "ps-terminal-wrap",
+        "ps-theme-grid",
+        "ps-theme-picker",
+        "ps-workbench",
+        "ps-workspace-item",
+        "ps-workspace-item__meta",
+        "ps-workspace-item__pick",
+        "ps-workspace-list"
       ]
     },
     "web/src/lib/plugins-page/PermissionSheet.svelte": {
@@ -3176,10 +3455,6 @@
       "classes": []
     },
     "web/src/lib/plugins-page/PluginSettings.svelte": {
-      "section": "ledger-catalog",
-      "classes": []
-    },
-    "web/src/lib/plugins-page/HuddleSwarmSettings.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
@@ -3701,17 +3976,12 @@
     "web/src/lib/themes-page/ThemesScreen.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "oc-chip",
-        "oc-field",
-        "oc-label",
-        "oc-page__bar",
         "themes-active",
         "themes-layout",
         "themes-layout--detail",
         "themes-main",
         "themes-grid",
         "themes-now",
-        "themes-screen",
         "themes-side"
       ]
     },
@@ -3755,6 +4025,10 @@
       "section": "settings",
       "classes": []
     },
+    "web/src/lib/pack-jobs/ActivityRow.svelte": {
+      "section": "settings",
+      "classes": []
+    },
     "web/src/lib/pack-jobs/JobsNumbers.svelte": {
       "section": "settings",
       "classes": []
@@ -3763,9 +4037,46 @@
       "section": "settings",
       "classes": []
     },
+    "web/src/lib/pack-jobs/PackComputerStrip.svelte": {
+      "section": "settings",
+      "classes": []
+    },
     "web/src/lib/pack-jobs/StopJobDialog.svelte": {
       "section": "settings",
       "classes": []
+    },
+    "web/src/lib/pack-jobs/pack-activity.css": {
+      "section": "settings",
+      "classes": [
+        "pa-bar",
+        "pa-bar__fill",
+        "pa-bar__track",
+        "pa-bar__val",
+        "pa-bars",
+        "pa-comp-body",
+        "pa-comp-counts",
+        "pa-comp-foot",
+        "pa-comp-metric",
+        "pa-comp-metric__lbl",
+        "pa-comp-metric__num",
+        "pa-comp-wrap",
+        "pa-computers",
+        "pa-deck",
+        "pa-fanout",
+        "pa-filter-chips",
+        "pa-head-actions",
+        "pa-kpis",
+        "pa-lead-tags",
+        "pa-meta",
+        "pa-meta__item",
+        "pa-meta__k",
+        "pa-meta__v",
+        "pa-reason",
+        "pa-section",
+        "pa-section__count",
+        "pa-section__head",
+        "pa-section__title"
+      ]
     },
     "web/src/lib/pack-machines/MachineAllowLists.svelte": {
       "section": "settings",
@@ -3869,7 +4180,8 @@
         "pt-replica",
         "pt-replica-list",
         "pt-replicas",
-        "pt-row"
+        "pt-row",
+        "pt-jobs"
       ]
     },
     "web/src/opscenter/ui/MachineBadge.svelte": {
@@ -4137,8 +4449,6 @@
         "oc-facet__key",
         "oc-facet__select",
         "oc-field",
-        "oc-page__detail",
-        "oc-page__scroll",
         "oc-rank__name",
         "oc-toolbar",
         "pn-band",
@@ -4169,10 +4479,8 @@
         "t-no",
         "wp-add",
         "wp-body",
-        "wp-body--reading",
         "wp-card",
         "wp-card__titles",
-        "wp-detail",
         "wp-grid",
         "wp-group",
         "wp-hero__none",
@@ -4411,8 +4719,7 @@
     "web/src/opscenter/cells/plugin-view/Cell.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "cu-panelcell",
-        "cu-panelcell__mark"
+        "cu-panelcell"
       ]
     },
     "web/src/opscenter/cells/notes/Cell.svelte": {
@@ -5061,7 +5368,8 @@
       "section": "icons",
       "classes": [
         "oc-wicon",
-        "oc-wicon-globe"
+        "oc-wicon-globe",
+        "oc-wicon-img"
       ]
     },
     "web/src/opscenter/ui/PhoneSummary.svelte": {
@@ -5158,14 +5466,28 @@
         "group-colour-picker__title",
         "group-icon-picker",
         "group-icon-picker__body",
-        "band-fx",
-        "band-fx-host",
         "session-sidebar-group",
+        "session-sidebar-group__body",
         "session-sidebar-group__header",
         "session-sidebar-group__headerrow",
+        "session-sidebar-group__icon",
         "session-sidebar-group__label",
+        "session-sidebar-layout__members",
         "session-sidebar-row",
-        "session-sidebar-row-name"
+        "session-sidebar-row-name",
+        "session-sidebar-row-provider"
+      ]
+    },
+    "web/src/lib/comet/comet.css": {
+      "section": "motion",
+      "classes": [
+        "bottom",
+        "comet-bar",
+        "comet-edge",
+        "comet-ribbon-ring",
+        "left",
+        "right",
+        "top"
       ]
     },
     "web/src/lib/blueprints/BlueprintEditorModal.svelte": {
@@ -5314,27 +5636,15 @@
         "mgr-actions__why",
         "mgr-facts",
         "mgr__detail-bar",
-        "mgr__detail-body--fill",
         "mgr__detail-kicker",
         "mgr__detail-name",
         "mgr__detail-title",
         "mgr__detail-title--kicked",
         "oc-btn",
-        "oc-chip",
         "oc-ibtn",
-        "oc-page--embedded",
-        "oc-page__away",
-        "oc-page__bar",
-        "oc-page__chips",
-        "oc-page__detail-body",
         "oc-page__flip",
-        "oc-page__main",
-        "oc-page__search",
-        "oc-page__tools--end",
         "oc-page__view",
-        "oc-titlebar__controls",
-        "pl-titlebar",
-        "settings-page"
+        "pl-titlebar"
       ]
     },
     "web/src/lib/skills-page/SkillsScreen.svelte": {
@@ -5485,13 +5795,22 @@
       "section": "chrome",
       "classes": []
     },
+    "web/src/lib/sidebar-shell/NewGroupTarget.svelte": {
+      "section": "chrome",
+      "classes": []
+    },
     "web/src/lib/sidebar-shell/LeaderBand.svelte": {
       "section": "chrome",
       "classes": []
     },
     "web/src/lib/sidebar-shell/Heading.svelte": {
       "section": "chrome",
-      "classes": []
+      "classes": [
+        "sb-head-meta",
+        "sb-head-meta__live",
+        "sb-head-pack-cols",
+        "sb-head-proj-count"
+      ]
     },
     "web/src/lib/item-menu/ItemMenuHost.svelte": {
       "section": "chrome",
@@ -5506,6 +5825,12 @@
     "web/src/lib/sidebar-shell/HeadingRenameEditor.svelte": {
       "section": "chrome",
       "classes": []
+    },
+    "web/src/lib/sidebar-shell/NewGroupModal.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "new-group-modal__fields"
+      ]
     },
     "web/src/lib/sidebar-shell/ShowPathModal.svelte": {
       "section": "dialogs",
@@ -5541,25 +5866,33 @@
     "client/css/session-sidebar-row-bodies.css": {
       "section": "chrome",
       "classes": [
-        "session-sidebar-row",
-        "session-sidebar-row-main",
+        "sb-row-stack",
+        "sb-row-stack__top",
         "session-row-body",
         "session-row-body--cozy",
-        "session-row-body__line",
-        "session-row-body__model",
+        "session-row-body__ctx",
+        "session-row-body__ctx-bar",
+        "session-row-body__ctx-pct",
         "session-row-body__effort",
         "session-row-body__ended",
         "session-row-body__flag",
         "session-row-body__flag-words",
         "session-row-body__foot",
-        "session-row-body__when",
-        "session-row-body__right",
+        "session-row-body__line",
+        "session-row-body__model",
         "session-row-body__rank",
+        "session-row-body__right",
+        "session-row-body__state",
+        "session-row-body__status-line",
+        "session-row-body__when",
         "session-row-live",
-        "session-row-live__part",
         "session-row-live__count",
+        "session-row-live__none",
+        "session-row-live__part",
         "session-row-live__unit",
-        "session-row-live__none"
+        "session-sidebar-row",
+        "session-sidebar-row-main",
+        "session-sidebar-row-name"
       ]
     },
     "web/src/lib/sidebar-shell/RowCozyBody.svelte": {
@@ -5591,9 +5924,9 @@
         "sb-pack-row__name",
         "sb-pack-row__state",
         "sb-pack-row__stats",
+        "sb-pack-row__stats--cols",
         "sb-pack-row__wolf",
         "sb-pack-stat",
-        "sb-pack-stat__k",
         "sb-pack-stat__v",
         "session-sidebar-panel"
       ]
@@ -5876,7 +6209,6 @@
       "section": "settings",
       "classes": [
         "info-tip",
-        "info-tip__btn",
         "info-tip__note"
       ]
     },
@@ -6215,6 +6547,54 @@
       "section": "ledger-catalog",
       "classes": [
         "dep-note"
+      ]
+    },
+    "web/src/lib/catalog/RevokedBanner.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "revoked-banner",
+        "revoked-banner__act",
+        "revoked-banner__head",
+        "revoked-banner__notice",
+        "revoked-banner__reason",
+        "revoked-banner__since"
+      ]
+    },
+    "web/src/lib/catalog/PermissionDiffPanel.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "perm-diff",
+        "perm-diff--blocked",
+        "perm-diff__ack",
+        "perm-diff__alert",
+        "perm-diff__block",
+        "perm-diff__block--danger",
+        "perm-diff__head",
+        "perm-diff__item",
+        "perm-diff__item--add",
+        "perm-diff__item--rem",
+        "perm-diff__label",
+        "perm-diff__list",
+        "perm-diff__meta",
+        "perm-diff__title"
+      ]
+    },
+    "web/src/lib/catalog/FlaggedWarningBox.svelte": {
+      "section": "ledger-catalog",
+      "classes": [
+        "flagged-box",
+        "flagged-box__ack",
+        "flagged-box__chips",
+        "flagged-box__fold",
+        "flagged-box__head",
+        "flagged-box__lead",
+        "flagged-box__panel",
+        "flagged-box__reason",
+        "flagged-box__reason-file",
+        "flagged-box__reason-kind",
+        "flagged-box__reason-text",
+        "flagged-box__reasons",
+        "flagged-box__summary"
       ]
     },
     "web/src/lib/skills-page/SkillHealth.svelte": {
@@ -7788,8 +8168,14 @@
         "oc-ms-fill--warn",
         "oc-ms-label",
         "oc-ms-meter",
+        "oc-ms-pack",
+        "oc-ms-pack-label",
+        "oc-ms-pack-row",
+        "oc-ms-pack-stat",
         "oc-ms-sub",
-        "oc-ms-sub--below"
+        "oc-ms-sub--below",
+        "oc-ms-wrap",
+        "oc-ms-wrap--pack"
       ]
     },
     "web/src/lib/byoai/ModelPicker.svelte": {
@@ -7898,11 +8284,11 @@
       "section": "cells",
       "classes": []
     },
-    "web/src/plugins/huddle/swarm/characters/Character.svelte": {
+    "web/src/plugins/taskmanager/swarm/characters/Character.svelte": {
       "section": "swarm-characters",
       "classes": []
     },
-    "web/src/plugins/huddle/swarm/characters/characters.css": {
+    "web/src/plugins/taskmanager/swarm/characters/characters.css": {
       "section": "swarm-characters",
       "classes": [
         "pk-bd",
@@ -7931,11 +8317,11 @@
         "pk-tl"
       ]
     },
-    "web/src/plugins/huddle/swarm/NodeMenu.svelte": {
+    "web/src/plugins/taskmanager/swarm/NodeMenu.svelte": {
       "section": "swarm-characters",
       "classes": []
     },
-    "web/src/plugins/huddle/HuddleBody.svelte": {
+    "web/src/plugins/taskmanager/HuddleBody.svelte": {
       "section": "chrome",
       "classes": [
         "hd",
@@ -7972,7 +8358,7 @@
         "hd-scroll--stack"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerRow.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerRow.svelte": {
       "section": "chrome",
       "classes": [
         "hdr",
@@ -8019,7 +8405,7 @@
         "tkm-marker"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerSchedule.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerSchedule.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-sched",
@@ -8031,13 +8417,13 @@
         "tkm-sched-note--failed"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerActionTag.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerActionTag.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-action"
       ]
     },
-    "web/src/plugins/huddle/HuddleReview.svelte": {
+    "web/src/plugins/taskmanager/HuddleReview.svelte": {
       "section": "chrome",
       "classes": [
         "hdr",
@@ -8055,7 +8441,7 @@
         "tkm-review-link"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerSend.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerSend.svelte": {
       "section": "chrome",
       "classes": [
         "hdtl",
@@ -8076,7 +8462,7 @@
         "hdtl-asks"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerSections.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerSections.svelte": {
       "section": "chrome",
       "classes": [
         "hds-section",
@@ -8096,7 +8482,7 @@
         "hd-drop"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerProjectHead.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerProjectHead.svelte": {
       "section": "chrome",
       "classes": [
         "hd-group",
@@ -8111,11 +8497,11 @@
         "hd-stack-top"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerTail.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerTail.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/task-manager-tail.css": {
+    "web/src/plugins/taskmanager/task-manager-tail.css": {
       "section": "chrome",
       "classes": [
         "hd-slot",
@@ -8126,7 +8512,7 @@
         "hd-tail-over"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerSubHead.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerSubHead.svelte": {
       "section": "chrome",
       "classes": [
         "hds-sub",
@@ -8137,7 +8523,7 @@
         "hds-count"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerEmptyGroup.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerEmptyGroup.svelte": {
       "section": "chrome",
       "classes": [
         "hdeg-head",
@@ -8147,7 +8533,7 @@
         "hdeg-line"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerStatusSections.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerStatusSections.svelte": {
       "section": "chrome",
       "classes": [
         "hss-section",
@@ -8171,7 +8557,7 @@
         "hdr-agent-page"
       ]
     },
-    "web/src/plugins/huddle/HuddleViewSwitch.svelte": {
+    "web/src/plugins/taskmanager/HuddleViewSwitch.svelte": {
       "section": "chrome",
       "classes": [
         "hdv",
@@ -8180,7 +8566,7 @@
         "hdv-key--icon"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerStatusFilter.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerStatusFilter.svelte": {
       "section": "chrome",
       "classes": [
         "hdf",
@@ -8191,14 +8577,14 @@
         "hdf-needs"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerNewGroup.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerNewGroup.svelte": {
       "section": "chrome",
       "classes": [
         "hdg",
         "hdg-input"
       ]
     },
-    "web/src/plugins/huddle/HuddleThread.svelte": {
+    "web/src/plugins/taskmanager/HuddleThread.svelte": {
       "section": "chrome",
       "classes": [
         "hdt",
@@ -8213,11 +8599,11 @@
         "hdt-reply"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerTargetPick.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerTargetPick.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/HuddleReply.svelte": {
+    "web/src/plugins/taskmanager/HuddleReply.svelte": {
       "section": "chrome",
       "classes": [
         "oc-inline-field",
@@ -8233,7 +8619,7 @@
         "hdt-send--ready"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerRowPeek.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerRowPeek.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-peek",
@@ -8244,7 +8630,7 @@
         "tkm-latest-text"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerAsk.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerAsk.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-ask",
@@ -8254,7 +8640,7 @@
         "tkm-ask-q"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerAnswerBox.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerAnswerBox.svelte": {
       "section": "chrome",
       "classes": [
         "hda",
@@ -8262,7 +8648,7 @@
         "hda-body"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerFormAnswer.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerFormAnswer.svelte": {
       "section": "chrome",
       "classes": [
         "hdfa",
@@ -8272,7 +8658,7 @@
         "hdfa-note"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerCommandBox.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerCommandBox.svelte": {
       "section": "chrome",
       "classes": [
         "hcb",
@@ -8287,7 +8673,7 @@
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/TaskManagerMarkdown.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerMarkdown.svelte": {
       "section": "chrome",
       "classes": [
         "hmd",
@@ -8307,7 +8693,7 @@
         "hmd-kv"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerRowPosts.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerRowPosts.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-posts",
@@ -8325,7 +8711,7 @@
         "tkm-post-files"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerTitleEdit.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerTitleEdit.svelte": {
       "section": "chrome",
       "classes": [
         "hdr-title",
@@ -8928,7 +9314,6 @@
       "classes": [
         "ledger-headroom",
         "ledger-headroom__item",
-        "ledger-headroom__swatch",
         "oc-stat-tile"
       ]
     },
@@ -8936,9 +9321,6 @@
       "section": "ledger-catalog",
       "classes": [
         "cat",
-        "oc-page__bar",
-        "oc-toolbar",
-        "sk-hub",
         "warez-act"
       ]
     },
@@ -9119,7 +9501,7 @@
         "hero-art__svg"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatWidget.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatWidget.svelte": {
       "section": "chrome",
       "classes": [
         "hdc",
@@ -9170,7 +9552,7 @@
         "oc-ibtn"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatBar.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatBar.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-bar",
@@ -9187,7 +9569,7 @@
         "hdc-brain"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatAskForm.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatAskForm.svelte": {
       "section": "chrome",
       "classes": [
         "hca",
@@ -9213,7 +9595,7 @@
         "hca-x"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatCard.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatCard.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-card",
@@ -9244,7 +9626,7 @@
         "hdt-name"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatAvatar.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatAvatar.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-av",
@@ -9256,7 +9638,7 @@
         "pk-gw"
       ]
     },
-    "web/src/plugins/huddle/chat/AuthorPath.svelte": {
+    "web/src/plugins/taskmanager/chat/AuthorPath.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-crumb",
@@ -9270,7 +9652,7 @@
         "hdc-path--lead"
       ]
     },
-    "web/src/plugins/huddle/chat/WaitingTray.svelte": {
+    "web/src/plugins/taskmanager/chat/WaitingTray.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-wait",
@@ -9302,13 +9684,13 @@
         "hdc-wait-sub"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatMarkdown.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatMarkdown.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-md"
       ]
     },
-    "web/src/plugins/huddle/SwarmDecisionKeys.svelte": {
+    "web/src/plugins/taskmanager/SwarmDecisionKeys.svelte": {
       "section": "chrome",
       "classes": [
         "hdk-actions",
@@ -9317,7 +9699,7 @@
         "hdk-refusal"
       ]
     },
-    "web/src/plugins/huddle/swarm/SwarmPanel.svelte": {
+    "web/src/plugins/taskmanager/swarm/SwarmPanel.svelte": {
       "section": "swarm-characters",
       "classes": [
         "pkp",
@@ -9348,17 +9730,17 @@
         "pkp-drag-plop"
       ]
     },
-    "web/src/plugins/huddle/swarm/SwarmTitleActions.svelte": {
+    "web/src/plugins/taskmanager/swarm/SwarmTitleActions.svelte": {
       "section": "swarm-characters",
       "classes": [
-        "pta-page"
+        "pta"
       ]
     },
-    "web/src/plugins/huddle/swarm/SwarmPanelLive.svelte": {
+    "web/src/plugins/taskmanager/swarm/SwarmPanelLive.svelte": {
       "section": "swarm-characters",
       "classes": []
     },
-    "web/src/plugins/huddle/chat/TrafficCard.svelte": {
+    "web/src/plugins/taskmanager/chat/TrafficCard.svelte": {
       "section": "chrome",
       "classes": [
         "hdx",
@@ -9376,7 +9758,7 @@
         "hdx-toggle"
       ]
     },
-    "web/src/plugins/huddle/chat/EventCard.svelte": {
+    "web/src/plugins/taskmanager/chat/EventCard.svelte": {
       "section": "chrome",
       "classes": [
         "hde",
@@ -9384,7 +9766,7 @@
         "hde-text"
       ]
     },
-    "web/src/plugins/huddle/chat/RewindView.svelte": {
+    "web/src/plugins/taskmanager/chat/RewindView.svelte": {
       "section": "chrome",
       "classes": [
         "hdw",
@@ -9402,11 +9784,11 @@
         "hdw-when"
       ]
     },
-    "web/src/plugins/huddle/chat/RewindPicker.svelte": {
+    "web/src/plugins/taskmanager/chat/RewindPicker.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/swarm/SwarmLedger.svelte": {
+    "web/src/plugins/taskmanager/swarm/SwarmLedger.svelte": {
       "section": "swarm-page",
       "classes": [
         "pkg-alert",
@@ -9429,7 +9811,7 @@
         "pkg-who"
       ]
     },
-    "web/src/plugins/huddle/swarm/SwarmOrg.svelte": {
+    "web/src/plugins/taskmanager/swarm/SwarmOrg.svelte": {
       "section": "swarm-page",
       "classes": [
         "pko",
@@ -9447,7 +9829,7 @@
         "pko-stage"
       ]
     },
-    "web/src/plugins/huddle/swarm/SwarmSettingsForm.svelte": {
+    "web/src/plugins/taskmanager/swarm/SwarmSettingsForm.svelte": {
       "section": "swarm-page",
       "classes": [
         "pkg-look",
@@ -9463,7 +9845,7 @@
         "pkg-set-text"
       ]
     },
-    "web/src/plugins/huddle/swarm/SwarmSeatRefusal.svelte": {
+    "web/src/plugins/taskmanager/swarm/SwarmSeatRefusal.svelte": {
       "section": "swarm-page",
       "classes": [
         "pkg-refusal"
@@ -9882,13 +10264,13 @@
         "ps-drawer-open"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatWidgetHost.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatWidgetHost.svelte": {
       "section": "chrome",
       "classes": [
         "hdw"
       ]
     },
-    "web/src/plugins/huddle/agents/AgentChatFrame.svelte": {
+    "web/src/plugins/taskmanager/agents/AgentChatFrame.svelte": {
       "section": "chrome",
       "classes": [
         "had-topgap",
@@ -9908,7 +10290,7 @@
         "ap-notice"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerScheduleEditor.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerScheduleEditor.svelte": {
       "section": "chrome",
       "classes": [
         "hse-body",
@@ -9921,14 +10303,14 @@
         "hse-day--on"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerForkDialog.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerForkDialog.svelte": {
       "section": "chrome",
       "classes": [
         "hfk-body",
         "hfk-field"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerTickConfirm.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerTickConfirm.svelte": {
       "section": "chrome",
       "classes": [
         "htc",
@@ -9940,20 +10322,20 @@
         "htc-foot"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerFromProject.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerFromProject.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-from"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerTagged.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerTagged.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-tagged",
         "tkm-tagged--open"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerWait.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerWait.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-wait",
@@ -9961,14 +10343,14 @@
         "tkm-wait-on"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerGithubIssue.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerGithubIssue.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-issue",
         "tkm-issue-link"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerInboxRow.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerInboxRow.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-inbox",
@@ -9977,7 +10359,7 @@
         "tkm-inbox-text"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerFromInbox.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerFromInbox.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-inbox-from",
@@ -9985,14 +10367,14 @@
         "tkm-inbox-from-text"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerForkedFrom.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerForkedFrom.svelte": {
       "section": "chrome",
       "classes": [
         "tkm-fork",
         "tkm-fork-link"
       ]
     },
-    "web/src/plugins/huddle/CrosstalkTrail.svelte": {
+    "web/src/plugins/taskmanager/CrosstalkTrail.svelte": {
       "section": "chrome",
       "classes": [
         "hdt-trail",
@@ -10004,7 +10386,7 @@
         "hdt-trail-who"
       ]
     },
-    "web/src/plugins/huddle/ask/ask-form.css": {
+    "web/src/plugins/taskmanager/ask/ask-form.css": {
       "section": "chrome",
       "classes": [
         "hdq",
@@ -10055,53 +10437,53 @@
         "modal-overlay"
       ]
     },
-    "web/src/plugins/huddle/ask/AskQuestion.svelte": {
+    "web/src/plugins/taskmanager/ask/AskQuestion.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/TaskManagerAskBubble.svelte": {
+    "web/src/plugins/taskmanager/ask/TaskManagerAskBubble.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/TaskManagerAskForm.svelte": {
+    "web/src/plugins/taskmanager/ask/TaskManagerAskForm.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/TaskManagerAskInline.svelte": {
+    "web/src/plugins/taskmanager/ask/TaskManagerAskInline.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/TaskManagerAskPanel.svelte": {
+    "web/src/plugins/taskmanager/ask/TaskManagerAskPanel.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/fields/AskChoice.svelte": {
+    "web/src/plugins/taskmanager/ask/fields/AskChoice.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/fields/AskPasteZone.svelte": {
+    "web/src/plugins/taskmanager/ask/fields/AskPasteZone.svelte": {
       "section": "chrome",
       "classes": [
         "hdq-paste"
       ]
     },
-    "web/src/plugins/huddle/ask/fields/AskRank.svelte": {
+    "web/src/plugins/taskmanager/ask/fields/AskRank.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/fields/AskText.svelte": {
+    "web/src/plugins/taskmanager/ask/fields/AskText.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/fields/AskWhen.svelte": {
+    "web/src/plugins/taskmanager/ask/fields/AskWhen.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/ask/fields/AskYesNo.svelte": {
+    "web/src/plugins/taskmanager/ask/fields/AskYesNo.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/TaskManagerArtifactCard.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerArtifactCard.svelte": {
       "section": "chrome",
       "classes": [
         "hda",
@@ -10112,7 +10494,7 @@
         "hda-open"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerBoardCard.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerBoardCard.svelte": {
       "section": "chrome",
       "classes": [
         "hdbc-text",
@@ -10124,7 +10506,7 @@
         "hdbc-type"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerRoundCard.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerRoundCard.svelte": {
       "section": "chrome",
       "classes": [
         "hdrc",
@@ -10134,7 +10516,7 @@
         "hdrc-open"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerArtifactDialog.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerArtifactDialog.svelte": {
       "section": "chrome",
       "classes": [
         "hda-dlg-popout",
@@ -10142,7 +10524,7 @@
         "hda-dlg-note"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerFiles.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerFiles.svelte": {
       "section": "chrome",
       "classes": [
         "hdf",
@@ -10153,14 +10535,14 @@
         "hdf-size"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerScheduleOffer.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerScheduleOffer.svelte": {
       "section": "chrome",
       "classes": [
         "hdo",
         "hdo-when"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerSteps.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerSteps.svelte": {
       "section": "chrome",
       "classes": [
         "hds",
@@ -10170,7 +10552,7 @@
         "hds-list"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerProgress.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerProgress.svelte": {
       "section": "chrome",
       "classes": [
         "hdp",
@@ -10183,24 +10565,24 @@
         "hdp-age"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerBubble.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerBubble.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/plugins/huddle/task-manager-tree.css": {
+    "web/src/plugins/taskmanager/task-manager-tree.css": {
       "section": "chrome",
       "classes": [
         "hd-block"
       ]
     },
-    "web/src/plugins/huddle/task-manager-bubble.css": {
+    "web/src/plugins/taskmanager/task-manager-bubble.css": {
       "section": "chrome",
       "classes": [
         "hb-k--form_answer",
         "tkm-fa-icon"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerChips.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerChips.svelte": {
       "section": "chrome",
       "classes": [
         "hdc",
@@ -10210,20 +10592,20 @@
         "hdc-remove"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerThumb.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerThumb.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-thumb"
       ]
     },
-    "web/src/plugins/huddle/chat/ChatSentImages.svelte": {
+    "web/src/plugins/taskmanager/chat/ChatSentImages.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-sent-images",
         "hdc-sent-gone"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerImagePreview.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerImagePreview.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-preview",
@@ -10237,13 +10619,6 @@
         "oc-chg-letter",
         "oc-chg-path",
         "oc-list__row"
-      ]
-    },
-    "web/src/opscenter/cells/task-manager/Cell.svelte": {
-      "section": "cells",
-      "classes": [
-        "oc-hdl",
-        "oc-hdl-note"
       ]
     },
     "web/src/opscenter/cells/tasks/Cell.svelte": {
@@ -10402,12 +10777,6 @@
       "section": "cells",
       "classes": [
         "oc-aut-all"
-      ]
-    },
-    "web/src/opscenter/cells/task-manager-all/Cell.svelte": {
-      "section": "cells",
-      "classes": [
-        "oc-hdl-all"
       ]
     },
     "web/src/opscenter/cells/crosstalk/Cell.svelte": {
@@ -10633,15 +11002,6 @@
         "keys-menu",
         "oc-facet",
         "oc-facet__select"
-      ]
-    },
-    "web/src/lib/catalog/FilterGroup.svelte": {
-      "section": "ledger-catalog",
-      "classes": [
-        "filter-group",
-        "filter-group__label",
-        "oc-seg",
-        "oc-seg__item"
       ]
     },
     "web/src/lib/catalog/ReadonlyActions.svelte": {
@@ -11122,11 +11482,7 @@
         "sc-sub__who"
       ]
     },
-    "web/src/opscenter/cells/task-list/Cell.svelte": {
-      "section": "cells",
-      "classes": []
-    },
-    "web/src/opscenter/cells/task-list/ListRow.svelte": {
+    "web/src/lib/task-status-list/ListRow.svelte": {
       "section": "cells",
       "classes": [
         "hl-age",
@@ -11145,7 +11501,7 @@
         "hl-who--claude"
       ]
     },
-    "web/src/opscenter/cells/task-list/MissingPopup.svelte": {
+    "web/src/lib/task-status-list/MissingPopup.svelte": {
       "section": "cells",
       "classes": [
         "hl-warn",
@@ -11153,7 +11509,7 @@
         "hl-warn__row"
       ]
     },
-    "web/src/opscenter/cells/task-list/ListRowOpen.svelte": {
+    "web/src/lib/task-status-list/ListRowOpen.svelte": {
       "section": "cells",
       "classes": [
         "hl-open",
@@ -11308,10 +11664,8 @@
     "web/src/lib/sessions-page/sessions-panel.css": {
       "section": "sessions-page",
       "classes": [
-        "oc-titlebar",
         "pl-label",
         "session-row-menu-trigger",
-        "sp-hosts",
         "sp-page",
         "sp-pic",
         "sp-pic-cup",
@@ -11321,11 +11675,8 @@
         "sp-pn",
         "sp-pn-actions",
         "sp-pn-arm",
-        "sp-pn-bar",
-        "sp-pn-bar-l",
         "sp-pn-began",
         "sp-pn-body",
-        "sp-pn-cdate",
         "sp-pn-chips",
         "sp-pn-conv",
         "sp-pn-dim",
@@ -11523,13 +11874,17 @@
         "modal-overlay"
       ]
     },
-    "web/src/opscenter/cells/task-list/ApproveKey.svelte": {
+    "web/src/lib/task-status-list/ApproveKey.svelte": {
       "section": "cells",
       "classes": [
         "hl-approve"
       ]
     },
     "web/src/lib/confirm-ok/ConfirmOkModal.svelte": {
+      "section": "dialogs",
+      "classes": []
+    },
+    "web/src/lib/offload-prompt/OffloadPrompt.svelte": {
       "section": "dialogs",
       "classes": []
     },
@@ -11540,7 +11895,7 @@
         "session-sidebar-row"
       ]
     },
-    "web/src/opscenter/cells/task-list/ListBody.svelte": {
+    "web/src/lib/task-status-list/ListBody.svelte": {
       "section": "cells",
       "classes": [
         "hl-cell",
@@ -11551,11 +11906,11 @@
         "hl-list"
       ]
     },
-    "web/src/opscenter/cells/task-list/StatusList.svelte": {
+    "web/src/lib/task-status-list/StatusList.svelte": {
       "section": "cells",
       "classes": []
     },
-    "web/src/plugins/huddle/TaskManagerStatusModal.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerStatusModal.svelte": {
       "section": "chrome",
       "classes": [
         "hd-status-modal__list"
@@ -11592,6 +11947,10 @@
       "classes": []
     },
     "web/src/lib/deepsearch/ConvTags.svelte": {
+      "section": "tables",
+      "classes": []
+    },
+    "web/src/lib/deepsearch/RestoreAction.svelte": {
       "section": "tables",
       "classes": []
     },
@@ -11655,20 +12014,20 @@
         "dps__tag--exported"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerMarker.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerMarker.svelte": {
       "section": "chrome",
       "classes": [
         "hdm"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerMarkerFilter.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerMarkerFilter.svelte": {
       "section": "chrome",
       "classes": [
         "hdm-set",
         "hdm-key"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerSearch.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerSearch.svelte": {
       "section": "chrome",
       "classes": [
         "hds-key",
@@ -11822,14 +12181,11 @@
         "ap-ct__n",
         "ap-ctb",
         "ap-dr",
-        "ap-dr-scroll",
         "ap-logdock",
         "ap-logdock__h",
         "ap-note",
         "ap-num",
         "ap-page",
-        "ap-pn",
-        "ap-pn-bar",
         "ap-state",
         "ap-state--error",
         "ap-strip",
@@ -11837,10 +12193,6 @@
         "ap-tab",
         "ap-tabrow",
         "oc-check__box",
-        "oc-page__away",
-        "oc-page__tabs",
-        "oc-titlebar",
-        "oc-titlebar__sub",
         "pl-label",
         "pl-titlebar",
         "pledger",
@@ -12155,17 +12507,13 @@
       "section": "automations",
       "classes": [
         "ap-cmd-full",
-        "ap-listcol",
         "ap-page",
         "ap-pn",
         "ap-pn-actions",
         "ap-pn-bad",
-        "ap-pn-bar",
-        "ap-pn-bar-l",
         "ap-pn-bodysec",
         "ap-pn-chip",
         "ap-pn-chips",
-        "ap-pn-close",
         "ap-pn-dim",
         "ap-pn-dl",
         "ap-pn-ed",
@@ -12341,9 +12689,8 @@
     "web/src/lib/catalog/menu/InstalledKindScreen.svelte": {
       "section": "ledger-catalog",
       "classes": [
-        "oc-page",
-        "oc-page--embedded",
         "wik",
+        "wik__empty",
         "wik__panel",
         "wik__tabs"
       ]
@@ -12379,7 +12726,6 @@
       "section": "ledger-catalog",
       "classes": [
         "modal-btn",
-        "oc-titlebar",
         "skp",
         "skp-cards",
         "skp-col",
@@ -12810,6 +13156,18 @@
       "section": "settings",
       "classes": []
     },
+    "web/src/lib/pack-roster/RemovedLogins.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-roster/LeftoverStats.svelte": {
+      "section": "settings",
+      "classes": []
+    },
+    "web/src/lib/pack-roster/RotateWalk.svelte": {
+      "section": "settings",
+      "classes": []
+    },
     "web/src/lib/pack-roster/SettingsPanel.svelte": {
       "section": "settings",
       "classes": []
@@ -13002,7 +13360,10 @@
         "rs-screen",
         "rs-scroll",
         "rs-self",
-        "rs-state"
+        "rs-state",
+        "pp-k--sec",
+        "pp-swrow__col",
+        "pp-swrow__ctl"
       ]
     },
     "web/src/lib/pack-roster/RosterBar.svelte": {
@@ -13036,11 +13397,31 @@
       "section": "ledger-catalog",
       "classes": []
     },
+    "web/src/lib/cplug-ui/CodeBlock.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
     "web/src/lib/cplug-ui/CplugSurface.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
+    "web/src/lib/cplug-ui/DeclarativeWidgetCell.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/EmptyState.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/Form.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
     "web/src/lib/cplug-ui/HostFrame.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/Input.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
@@ -13060,6 +13441,10 @@
       "section": "ledger-catalog",
       "classes": []
     },
+    "web/src/lib/cplug-ui/MarkdownSafe.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
     "web/src/lib/cplug-ui/Meter.svelte": {
       "section": "ledger-catalog",
       "classes": []
@@ -13068,11 +13453,27 @@
       "section": "ledger-catalog",
       "classes": []
     },
+    "web/src/lib/cplug-ui/Progress.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
     "web/src/lib/cplug-ui/Renderer.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
     "web/src/lib/cplug-ui/Section.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/SelectNode.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/SlotHost.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/Sparkline.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
@@ -13088,19 +13489,41 @@
       "section": "ledger-catalog",
       "classes": []
     },
+    "web/src/lib/cplug-ui/Tabs.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
     "web/src/lib/cplug-ui/Text.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/Textarea.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/Toggle.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
     "web/src/lib/cplug-ui/cplug-ui.css": {
       "section": "ledger-catalog",
       "classes": [
-        "cu-badge",
-        "cu-chip",
-        "cu-box",
         "cu-action",
         "cu-action__ask",
         "cu-action__line",
+        "cu-badge",
+        "cu-box",
+        "cu-chip",
+        "cu-code",
+        "cu-code__head",
+        "cu-code__lang",
+        "cu-code__pre",
+        "cu-code__text",
+        "cu-control",
+        "cu-empty",
+        "cu-form",
+        "cu-form__actions",
+        "cu-form__line",
         "cu-frame",
         "cu-frame--fill",
         "cu-frame__bar",
@@ -13113,28 +13536,63 @@
         "cu-list",
         "cu-list__empty",
         "cu-list__item",
+        "cu-md",
+        "cu-md__code",
+        "cu-md__em",
+        "cu-md__h",
+        "cu-md__hr",
+        "cu-md__item",
+        "cu-md__link",
+        "cu-md__list",
+        "cu-md__p",
+        "cu-md__pre",
+        "cu-md__quote",
+        "cu-md__refused",
+        "cu-md__strong",
         "cu-meter",
         "cu-meter__fill",
         "cu-meter__label",
         "cu-meter__track",
         "cu-overlay",
+        "cu-page",
+        "cu-page--main",
+        "cu-page__off",
+        "cu-page__step",
+        "cu-progress",
+        "cu-progress__fill",
+        "cu-progress__fill--indeterminate",
+        "cu-progress__head",
+        "cu-progress__label",
+        "cu-progress__pct",
+        "cu-progress__track",
         "cu-root",
         "cu-section",
         "cu-section__title",
+        "cu-slot",
+        "cu-slot--row",
+        "cu-slot__desc",
+        "cu-slot__empty",
+        "cu-slot__error",
+        "cu-slot__head",
+        "cu-slot__item",
+        "cu-slot__label",
+        "cu-sparkline",
+        "cu-sparkline__label",
+        "cu-sparkline__line",
+        "cu-sparkline__svg",
         "cu-stat",
         "cu-stat__delta",
         "cu-stat__label",
         "cu-stat__unit",
-        "cu-view",
         "cu-stat__value",
         "cu-table",
         "cu-table-wrap",
         "cu-table__empty",
+        "cu-tabpanel",
+        "cu-tabset",
         "cu-text",
-        "cu-page",
-        "cu-page--main",
-        "cu-page__step",
-        "cu-page__off"
+        "cu-toggle",
+        "cu-view"
       ]
     },
     "web/src/lib/automations/advanced/AdvancedHead.svelte": {
@@ -13168,15 +13626,11 @@
       "section": "automations",
       "classes": [
         "ap-dr",
-        "ap-dr-bar",
-        "ap-dr-lab",
         "ap-dr-name",
-        "ap-dr-scroll",
         "ap-dr-st",
         "ap-dr-sum",
         "ap-dr-title",
-        "ap-page",
-        "ap-pn"
+        "ap-page"
       ]
     },
     "client/css/desktop-chrome.css": {
@@ -13272,10 +13726,6 @@
       "section": "chrome",
       "classes": []
     },
-    "web/src/lib/sidebar-shell/SearchAgentRow.svelte": {
-      "section": "chrome",
-      "classes": []
-    },
     "web/src/lib/sidebar-shell/SearchHead.svelte": {
       "section": "chrome",
       "classes": []
@@ -13301,8 +13751,7 @@
         "ssr-line",
         "ssr-none",
         "ssr-none__acts",
-        "ssr-none__line",
-        "ssr-row"
+        "ssr-none__line"
       ]
     },
     "web/src/lib/deepsearch/search-d.css": {
@@ -13332,12 +13781,7 @@
         "sd-list",
         "sd-mark",
         "sd-more",
-        "sd-r",
-        "sd-r__body",
-        "sd-r__meta",
-        "sd-r__name",
         "sd-r__sub",
-        "sd-r__top",
         "sd-rule",
         "sd-scope",
         "sd-why",
@@ -13500,7 +13944,8 @@
     "web/src/lib/base/segmented.css": {
       "section": "base-set",
       "classes": [
-        "oc-segmented"
+        "oc-segmented",
+        "oc-segmented__caption"
       ]
     },
     "web/src/lib/catalog/menu/WarezPane.svelte": {
@@ -13834,19 +14279,19 @@
       "section": "base-set",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2Discussion.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2Discussion.svelte": {
       "section": "cells",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2Count.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2Count.svelte": {
       "section": "cells",
       "classes": []
     },
-    "web/src/plugins/huddle/task-manager-design/SharedThumb.svelte": {
+    "web/src/plugins/taskmanager/task-manager-design/SharedThumb.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2Crosstalk.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2Crosstalk.svelte": {
       "section": "cells",
       "classes": [
         "mk2-xt",
@@ -13858,21 +14303,21 @@
         "mk2-xt-who"
       ]
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2DeleteClosedModal.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2DeleteClosedModal.svelte": {
       "section": "cells",
       "classes": [
         "mk2-closed-purge__ask"
       ]
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2MarkRead.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2MarkRead.svelte": {
       "section": "cells",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2Details.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2Details.svelte": {
       "section": "cells",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2Bar.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2Bar.svelte": {
       "section": "cells",
       "classes": [
         "mk2-bar",
@@ -13885,7 +14330,7 @@
         "mk2-search"
       ]
     },
-    "web/src/opscenter/cells/task-manager-mk2/mk2-design.css": {
+    "web/src/plugins/taskmanager/mk2/mk2-design.css": {
       "section": "cells",
       "classes": [
         "ask",
@@ -13933,7 +14378,7 @@
         "tn-tag"
       ]
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2TaskTabs.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2TaskTabs.svelte": {
       "section": "cells",
       "classes": [
         "mk2-actionable",
@@ -13945,7 +14390,7 @@
         "mk2-worker--stale"
       ]
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2ReviewChecks.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2ReviewChecks.svelte": {
       "section": "cells",
       "classes": [
         "mk2-checks"
@@ -13965,7 +14410,7 @@
       "section": "base-set",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2-all/Cell.svelte": {
+    "web/src/plugins/taskmanager/mk2-all/Cell.svelte": {
       "section": "cells",
       "classes": [
         "oc-hdl-all"
@@ -13975,7 +14420,7 @@
       "section": "ledger-catalog",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2Subtasks.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2Subtasks.svelte": {
       "section": "cells",
       "classes": [
         "mk2-sub",
@@ -13995,21 +14440,21 @@
         "oc-inline-field__select"
       ]
     },
-    "web/src/opscenter/cells/task-manager-mk2/Cell.svelte": {
+    "web/src/plugins/taskmanager/mk2/Cell.svelte": {
       "section": "cells",
       "classes": [
         "oc-hdl"
       ]
     },
-    "web/src/plugins/huddle/TaskManagerScheduleKeys.svelte": {
+    "web/src/plugins/taskmanager/TaskManagerScheduleKeys.svelte": {
       "section": "chrome",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2SharedViewer.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2SharedViewer.svelte": {
       "section": "cells",
       "classes": []
     },
-    "web/src/opscenter/cells/task-manager-mk2/Mk2Frame.svelte": {
+    "web/src/plugins/taskmanager/mk2/Mk2Frame.svelte": {
       "section": "cells",
       "classes": [
         "hd-add",
@@ -14034,7 +14479,7 @@
         "swarm-row-face"
       ]
     },
-    "web/src/plugins/huddle/chat/MemoryPanel.svelte": {
+    "web/src/plugins/taskmanager/chat/MemoryPanel.svelte": {
       "section": "chrome",
       "classes": [
         "hdc-memory",
@@ -14056,6 +14501,10 @@
       "classes": []
     },
     "web/src/lib/cplug-ui/PageSwitch.svelte": {
+      "section": "ledger-catalog",
+      "classes": []
+    },
+    "web/src/lib/cplug-ui/PluginTabBody.svelte": {
       "section": "ledger-catalog",
       "classes": []
     },
@@ -14412,8 +14861,10 @@
         "oc-page__body",
         "oc-page__body--detail",
         "oc-page__col",
+        "oc-page__detail--fill",
         "oc-page__detail--frame",
         "oc-page__detail-actions",
+        "oc-page__detail-body",
         "oc-page__detail-head",
         "oc-page__detail-title",
         "oc-page__fill",
@@ -14427,7 +14878,31 @@
         "oc-titlebar",
         "oc-titlebar--find",
         "oc-titlebar__actions",
-        "oc-titlebar__find"
+        "oc-titlebar__find",
+        "oc-titlebar__sub"
+      ]
+    },
+    "web/src/opscenter/page-tools.css": {
+      "section": "controls",
+      "classes": [
+        "oc-chip",
+        "oc-page",
+        "oc-page--embedded",
+        "oc-page--inset",
+        "oc-page__away",
+        "oc-page__bar",
+        "oc-page__chips",
+        "oc-page__detail-body",
+        "oc-page__detail-body--fill",
+        "oc-page__main",
+        "oc-page__search",
+        "oc-page__tools--end",
+        "oc-page__view",
+        "oc-titlebar",
+        "oc-titlebar__back",
+        "oc-titlebar__controls",
+        "oc-titlebar__omni-row",
+        "oc-toolbar"
       ]
     },
     "web/src/opscenter/page-pair.css": {
@@ -14463,6 +14938,148 @@
         "new-project-tree"
       ]
     },
+    "web/src/lib/new-agent-wizard/CloneProjectStep.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "naw-cta-inner",
+        "naw-heading",
+        "naw-path-box",
+        "naw-path-group",
+        "naw-path-hint",
+        "naw-path-value",
+        "naw-primary-cta",
+        "naw-section-label",
+        "naw-step"
+      ]
+    },
+    "web/src/lib/new-agent-wizard/FolderPickerStep.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "naw-chip-row",
+        "naw-crumb-current",
+        "naw-crumb-label",
+        "naw-crumb-sep",
+        "naw-crumbs",
+        "naw-current-bar",
+        "naw-current-path",
+        "naw-ellipsis",
+        "naw-error",
+        "naw-field-group",
+        "naw-footer-spread",
+        "naw-fp-chevron",
+        "naw-fp-empty",
+        "naw-fp-icon",
+        "naw-fp-list",
+        "naw-fp-row",
+        "naw-fp-row-inner",
+        "naw-fp-row-left",
+        "naw-fp-toolbar",
+        "naw-grow",
+        "naw-heading",
+        "naw-label",
+        "naw-new-folder-box",
+        "naw-new-folder-row",
+        "naw-step"
+      ]
+    },
+    "web/src/lib/new-agent-wizard/LaunchFields.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "naw-brand-icon",
+        "naw-chip-row",
+        "naw-empty-note",
+        "naw-field-group",
+        "naw-fields-stack",
+        "naw-label",
+        "naw-more-left",
+        "naw-more-panel",
+        "naw-more-summary",
+        "naw-more-toggle-inner",
+        "naw-more-wrap",
+        "naw-profile-cell",
+        "naw-profile-grid",
+        "naw-profile-inner",
+        "naw-profile-name",
+        "naw-wt-row"
+      ]
+    },
+    "web/src/lib/new-agent-wizard/NewAgentWizardModal.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "naw-alt-label",
+        "naw-alt-links",
+        "naw-choice-arrow",
+        "naw-choice-arrow--featured",
+        "naw-choice-copy",
+        "naw-choice-icon",
+        "naw-choice-icon--featured",
+        "naw-choice-inner",
+        "naw-choice-item",
+        "naw-choice-list",
+        "naw-choice-sub",
+        "naw-choice-title",
+        "naw-context-line",
+        "naw-context-path",
+        "naw-cta-inner",
+        "naw-divider",
+        "naw-empty-actions",
+        "naw-empty-box",
+        "naw-empty-sub",
+        "naw-empty-title",
+        "naw-error",
+        "naw-head-extra",
+        "naw-heading",
+        "naw-host",
+        "naw-path-box",
+        "naw-path-group",
+        "naw-path-hint",
+        "naw-path-meta",
+        "naw-path-value",
+        "naw-primary-cta",
+        "naw-proj-chevron",
+        "naw-proj-dot",
+        "naw-proj-inner",
+        "naw-proj-left",
+        "naw-proj-list",
+        "naw-proj-name",
+        "naw-proj-row",
+        "naw-proj-section",
+        "naw-project-scroll",
+        "naw-section-label",
+        "naw-step",
+        "naw-step-badge",
+        "naw-title-block"
+      ]
+    },
+    "web/src/lib/new-agent-wizard/OpenFolderStep.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "naw-cta-inner",
+        "naw-error",
+        "naw-heading",
+        "naw-path-box",
+        "naw-path-group",
+        "naw-path-value",
+        "naw-primary-cta",
+        "naw-section-label",
+        "naw-step"
+      ]
+    },
+    "web/src/lib/new-agent-wizard/ProjectKindStep.svelte": {
+      "section": "dialogs",
+      "classes": [
+        "naw-choice-arrow",
+        "naw-choice-copy",
+        "naw-choice-icon",
+        "naw-choice-inner",
+        "naw-choice-item",
+        "naw-choice-list",
+        "naw-choice-sub",
+        "naw-choice-title",
+        "naw-heading",
+        "naw-step"
+      ]
+    },
     "web/src/lib/new-project/NewCompanyBox.svelte": {
       "section": "dialogs",
       "classes": [
@@ -14491,6 +15108,35 @@
     "web/src/lib/pack-transport/ProjectGithub.svelte": {
       "section": "settings",
       "classes": []
+    },
+    "web/src/lib/comet/CometPanel.svelte": {
+      "section": "motion",
+      "classes": [
+        "cm",
+        "cm__row"
+      ]
+    },
+    "web/src/lib/sidebar-shell/RowAvatar.svelte": {
+      "section": "chrome",
+      "classes": [
+        "sb-avatar",
+        "sb-avatar--asleep",
+        "sb-avatar--md",
+        "sb-avatar--merged",
+        "sb-avatar--sm",
+        "sb-avatar__badge",
+        "sb-avatar__face"
+      ]
+    },
+    "web/src/lib/sidebar-shell/SleepFoldRow.svelte": {
+      "section": "chrome",
+      "classes": [
+        "sb-sleep-fold",
+        "sb-sleep-fold__chev",
+        "sb-sleep-fold__chev--open",
+        "sb-sleep-fold__count",
+        "sb-sleep-fold__moon"
+      ]
     }
   }
 }

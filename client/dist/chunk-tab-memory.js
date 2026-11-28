@@ -1,0 +1,1 @@
+import{n as e,r as t}from"./chunk-stored-choice.js";var n=`carnivore.tabs.`;function r(t,r,i){return e(n+t,r,i)}function i(e,r){t(n+e,r)}export{i as n,r as t};

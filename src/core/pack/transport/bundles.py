@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import re
 import sqlite3
+import subprocess
 from typing import List, Optional, Sequence
 
 import structlog
@@ -38,6 +39,27 @@ def ref_tips(repo: str, *, air_gap: bool) -> List[str]:
 def is_repo(path: str) -> bool:
     done = ladder.run(["git", "-C", path, "rev-parse", "--show-toplevel"], air_gap=False, timeout=30.0)
     return done.returncode == 0 and os.path.realpath(done.stdout.decode().strip()) == os.path.realpath(path)
+
+
+def inside_other_repo(path: str, *, air_gap: bool = False) -> bool:
+    probe = os.path.realpath(path)
+    while not os.path.isdir(probe):
+        parent = os.path.dirname(probe)
+        if parent == probe:
+            return True
+        probe = parent
+    try:
+        found = ladder.run(["git", "-C", probe, "rev-parse", "--absolute-git-dir"], air_gap=air_gap, timeout=30.0)
+        if found.returncode == 127:
+            return True
+        if found.returncode != 0:
+            return False
+        top = ladder.run(["git", "-C", probe, "rev-parse", "--show-toplevel"], air_gap=air_gap, timeout=30.0)
+        if top.returncode != 0:
+            return True
+        return not os.path.samefile(top.stdout.decode().strip(), path)
+    except (subprocess.TimeoutExpired, OSError):
+        return True
 
 
 def origin_url(repo: str) -> Optional[str]:

@@ -19,7 +19,7 @@ MANAGED_ROOT = "~/.carnivore/accounts"
 SHORT_NAME_MAX = 32
 _COLOR_SHAPE = re.compile(r"^#[0-9a-f]{6}$")
 
-ProviderKind = Literal["claude", "codex"]
+ProviderKind = Literal["claude", "codex", "antigravity"]
 
 _ID_SHAPE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -139,7 +139,13 @@ def pointer_field_for(provider: Optional[str]) -> str:
     return "claude_config_dir" if provider == "claude" else "codex_home"
 
 
+def has_profile_dir(provider: Optional[str]) -> bool:
+    return provider in ("claude", "codex")
+
+
 def profile_dir_for(account: ProviderAccount) -> str:
+    if account.provider == "antigravity":
+        return ""
     if account.managed:
         return managed_dir_for(account.id)
     if account.provider == "claude":

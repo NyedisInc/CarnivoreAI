@@ -35,20 +35,24 @@ def _stage(tmp_path: Path, publisher: str, effects):
     return item, staged_dir, lambda: _stage_now(archive, staged_dir, item=item, allow_scripts=True)
 
 
-def test_theme_code_is_refused_for_community_and_staged_for_first_party(tmp_path):
-    item, staged_dir, run = _stage(tmp_path, "someone", EFFECTS)
-    assert not is_first_party_item(item)
-    with pytest.raises(ArchiveRefused) as refused:
-        run()
-    assert refused.value.code == "scripts_not_supported"
-    assert not staged_dir.exists()
+def test_theme_code_stages_for_both_community_and_first_party_with_code_gate_flagged(tmp_path):
+    from src.core.skills.code_gate import staged_plugin_declares_code
+    from src.core.skills.kinds import KIND_THEME
 
-    item, staged_dir, run = _stage(tmp_path, "nyedis", EFFECTS)
+    item, _staged_dir, run = _stage(tmp_path, "someone", EFFECTS)
+    assert not is_first_party_item(item)
+    staged_comm = run()
+    assert (staged_comm.path / "effects.js").read_bytes() == EFFECTS
+    assert staged_plugin_declares_code(KIND_THEME, staged_comm.path) is True
+
+    item, _staged_dir, run = _stage(tmp_path, "nyedis", EFFECTS)
     assert is_first_party_item(item)
     assert (run().path / "effects.js").read_bytes() == EFFECTS
 
     _, _, run = _stage(tmp_path, "plain", None)
-    assert (run().path / "theme.json").is_file()
+    staged_plain = run()
+    assert (staged_plain.path / "theme.json").is_file()
+    assert staged_plugin_declares_code(KIND_THEME, staged_plain.path) is False
 
 
 def _theme_dir(root: Path, extra: dict) -> Path:
@@ -61,15 +65,22 @@ def _theme_dir(root: Path, extra: dict) -> Path:
 
 @pytest.mark.parametrize("publisher", ["someone", "nyedis"])
 @pytest.mark.parametrize("license_name", ["LICENSE", "LICENSE.md"])
-def test_metadata_files_pass_and_unknown_extras_are_refused(tmp_path, publisher, license_name):
+def test_metadata_and_scripts_pass_while_symlinks_and_unknown_keys_are_refused(tmp_path, publisher, license_name):
     from src.core.catalog.first_party import refuse_theme_code
 
     item = CatalogItem.model_construct(**theme_item_for(build_theme(tmp_path / "pkg", publisher=publisher, name="snes"), publisher=publisher, name="snes"))
-    ok = _theme_dir(tmp_path / "ok", {license_name: b"MIT", "carnivore.json": b"{}"})
+    ok = _theme_dir(tmp_path / "ok", {license_name: b"MIT", "carnivore.json": b"{}", "effects.js": b"export default () => {};"})
     refuse_theme_code(item, ok)
 
-    for bad in ("evil.js", "LICENSE.js", "license", "license.md", "Carnivore.json", "LICENSE.txt"):
-        folder = _theme_dir(tmp_path / f"bad-{bad}", {bad: b"x"})
-        with pytest.raises(ArchiveRefused) as refused:
-            refuse_theme_code(item, folder)
-        assert refused.value.code == "scripts_not_supported"
+    bad_key = tmp_path / "bad-key"
+    bad_key.mkdir(parents=True)
+    (bad_key / "theme.json").write_text('{"id": "snes", "name": "snes", "bogus": 1}', encoding="utf-8")
+    with pytest.raises(ArchiveRefused) as refused:
+        refuse_theme_code(item, bad_key)
+    assert refused.value.code == "scripts_not_supported"
+
+    bad_link = _theme_dir(tmp_path / "bad-link", {})
+    (bad_link / "escape.js").symlink_to(tmp_path / "pkg")
+    with pytest.raises(ArchiveRefused) as refused:
+        refuse_theme_code(item, bad_link)
+    assert refused.value.code == "scripts_not_supported"

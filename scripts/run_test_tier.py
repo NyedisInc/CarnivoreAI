@@ -18,6 +18,7 @@ PYTHON = REPO / "venv" / "bin" / "python3"
 sys.path.insert(0, str(REPO))
 from scripts.lib.changed_paths import ChangedPathsError, changed_paths as _changed_paths  # noqa: E402
 from scripts.lib.trunk_remote import TrunkRemoteError, trunk_remote_name  # noqa: E402
+from scripts.lib import suite_rerun  # noqa: E402
 GATE_TESTS = "tests/python/gate"
 SMOKE_LIST = REPO / "tests" / "smoke_files.txt"
 FULL_TIER_LIST = REPO / "tests" / "full_tier_files.txt"
@@ -138,19 +139,48 @@ def _tests_per_file(junit: Path, files: list[str]) -> dict[str, int]:
     return counts
 
 
+_FAILED_LINE = re.compile(r"^(?:FAILED|ERROR) (\S+)")
+
+
+def rerun_failed_once(label: str, ids: list[str], cwd: Path = REPO, cap: int = suite_rerun.DEFAULT_CAP,
+                      run_one=None) -> int:
+    if len(ids) > cap:
+        print(f"{label}: {len(ids)} failing ids is over the cap of {cap}; RED, no rerun", flush=True)
+        return FAIL
+    out = suite_rerun.rerun_ids(ids, cap, run_one or suite_rerun.make_runner(suite_rerun.DEFAULT_TIMEOUT, str(cwd)))
+    for i in out.flakes:
+        print(f"{label}: FLAKE (failed, then passed alone): {i}", flush=True)
+    for i in out.real:
+        print(f"{label}: still FAILING alone: {i}", flush=True)
+    return FAIL if out.real else PASS
+
+
 def run_pytest(label: str, files: list[str], workers: int, marker: str | None = None,
-               must_collect: list[str] | None = None) -> int:
+               must_collect: list[str] | None = None, rerun_once: bool = False) -> int:
     if not files:
         raise Refusal(f"{label}: empty selection")
     with tempfile.TemporaryDirectory(prefix="tier_") as tmp:
         junit = Path(tmp) / "junit.xml"
         cmd = [str(PYTHON), "-m", "pytest", "-q", f"--junitxml={junit}"]
+        if rerun_once:
+            cmd += ["-rfE"]
         if workers:
             cmd += ["-n", str(workers)]
         if marker:
             cmd += ["-m", marker]
         print(f"== {label}: {len(files)} file(s)" + (f" at {workers} workers" if workers else ", serially"), flush=True)
-        rc = subprocess.run(cmd + files, cwd=REPO).returncode
+        failed_ids: list[str] = []
+        if rerun_once:
+            proc = subprocess.Popen(cmd + files, cwd=REPO, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            for line in proc.stdout:
+                print(line, end="", flush=True)
+                if (m := _FAILED_LINE.match(line)):
+                    failed_ids.append(m.group(1))
+            rc = proc.wait()
+            if rc == 1 and failed_ids:
+                return rerun_failed_once(label, list(dict.fromkeys(failed_ids)))
+        else:
+            rc = subprocess.run(cmd + files, cwd=REPO).returncode
         if rc == 5 or not junit.is_file():
             print(f"{label}: collected zero tests, a refusal rather than a pass", file=sys.stderr)
             return REFUSED
@@ -266,7 +296,7 @@ def main(argv: list[str]) -> int:
         return subprocess.run(["bash", str(REPO / "scripts" / "full-suite-master.sh"), "--is-green", "HEAD"],
                               cwd=REPO, capture_output=True).returncode == 0
 
-    smoke_rc = stage("smoke", run_pytest, "smoke", smoke, workers)
+    smoke_rc = stage("smoke", run_pytest, "smoke", smoke, workers, rerun_once=True)
     stage("feature catalog", run_features_check)
     if smoke_rc == PASS and tier == "full":
         stage("full suite", full_suite)

@@ -43,7 +43,7 @@ beforeEach(() => {
   barLead.edge = null;
   follow('widget_bars', null);
   follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }] });
-  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }] });
+  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager-mk2' }] });
 });
 afterEach(() => {
   unmountRails();
@@ -179,15 +179,15 @@ test('show off hides the bar and closes its panel; one at a time folds the other
   keyIn('side', 'core.files').click();
   flushSync();
   expect(barLead.edge).toBe('side');
-  keyIn('bottom', 'core.task-manager').click();
+  keyIn('bottom', 'core.task-manager-mk2').click();
   flushSync();
   expect(barLead.edge).toBe('bottom');
   expect(railSlideout.shown('side')).toEqual([]);
-  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager']);
+  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager-mk2']);
   expect(stateOf('side')).toBe('folded');
   open('side');
   expect(stateOf('side')).toBe('peek');
-  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager']);
+  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager-mk2']);
   expect(barLead.edge).toBe('bottom');
   railSlideout.close('bottom');
   flushSync();
@@ -221,10 +221,10 @@ test('one at a time on load with both bars pinned leads with the side bar and fo
 test('switching to one at a time with both panels open closes the folded bar panel', () => {
   keyIn('side', 'core.files').click();
   flushSync();
-  keyIn('bottom', 'core.task-manager').click();
+  keyIn('bottom', 'core.task-manager-mk2').click();
   flushSync();
   expect(railSlideout.shown('side')).toEqual(['core.files']);
-  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager']);
+  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager-mk2']);
   follow('widget_bars', { ...AUTOHIDE_BARS, together: 'one' });
   flushSync();
   expect(stateOf('bottom')).toBe('held');
@@ -234,7 +234,7 @@ test('switching to one at a time with both panels open closes the folded bar pan
 
 test('a widget\'s "show it" action takes the lead in one-at-a-time mode, so the fold does not close the panel it opened (#1593)', () => {
   follow('widget_bars', { ...AUTOHIDE_BARS, together: 'one' });
-  keyIn('bottom', 'core.task-manager').click();
+  keyIn('bottom', 'core.task-manager-mk2').click();
   flushSync();
   expect(barLead.edge).toBe('bottom');
   railSlideout.open('core.files');
@@ -245,15 +245,15 @@ test('a widget\'s "show it" action takes the lead in one-at-a-time mode, so the 
 
 test('the fold only hides a pinned panel: it is not closed, so its pin survives the other bar taking the lead (#1593)', () => {
   follow('widget_bars', { ...AUTOHIDE_BARS, together: 'one' });
-  keyIn('bottom', 'core.task-manager').click();
+  keyIn('bottom', 'core.task-manager-mk2').click();
   flushSync();
-  panelPins.pin('bottom', 'core.task-manager', 7);
+  panelPins.pin('bottom', 'core.task-manager-mk2', 7);
   keyIn('side', 'core.files').click();
   flushSync();
   expect(barLead.edge).toBe('side');
   expect(stateOf('bottom')).toBe('folded');
-  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager']);
-  expect(panelPins.pinnedRow('bottom', 'core.task-manager')).toBe(7);
+  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager-mk2']);
+  expect(panelPins.pinnedRow('bottom', 'core.task-manager-mk2')).toBe(7);
   panelPins.unpin('bottom');
 });
 

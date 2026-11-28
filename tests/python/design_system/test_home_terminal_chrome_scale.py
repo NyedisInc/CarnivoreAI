@@ -13,6 +13,7 @@ SCOPE_DIRS = (
     "opscenter", "lib/terminal-search", "lib/session-control", "lib/terminal-foot-bar",
     "lib/terminal-empty", "lib/terminal-notice", "lib/terminal-background",
 )
+PLUGIN_CELL_DIRS = ("plugins/taskmanager/mk2", "plugins/taskmanager/mk2-all")
 CSS_FILES = ("lib/session-control/control-center.css",)
 COLOUR_LITERALS = {"lib/terminal-search/SearchPanel.svelte": 0}
 UNLAYERED = {
@@ -38,14 +39,15 @@ LEGACY_OVERRIDES: dict[str, dict[str, tuple[str, ...]]] = {
         ".bt-row :global([data-btn])": ("flex", "min-height", "padding", "font-size"),
     },
 }
-LITERAL_BASELINE = 118
+LITERAL_BASELINE = 106
+PLUGIN_CELL_LITERAL_BASELINE = 2
 _ANY_PX = ANY_PX
 _COLOUR = COLOUR
 
 
-def styled_components() -> dict[str, str]:
+def styled_components(scopes: tuple[str, ...] = SCOPE_DIRS + PLUGIN_CELL_DIRS) -> dict[str, str]:
     found: dict[str, str] = {}
-    for scope in SCOPE_DIRS:
+    for scope in scopes:
         for path in sorted((SRC / scope).rglob("*")):
             rel = str(path.relative_to(SRC))
             if "fixtures" in path.parts or not (path.suffix == ".svelte" or rel in CSS_FILES):
@@ -102,8 +104,16 @@ def test_on_scale_values_use_the_tokens() -> None:
 
 
 def test_off_scale_literals_only_fall() -> None:
-    total = sum(len(_ANY_PX.findall(c)) for c in styled_components().values())
+    total = sum(len(_ANY_PX.findall(c)) for c in styled_components(SCOPE_DIRS).values())
     assert total == LITERAL_BASELINE, f"{total} literal spacing/type declarations, baseline {LITERAL_BASELINE}; fewer: lower it"
+
+
+def test_plugin_cell_off_scale_literals_only_fall() -> None:
+    comps = styled_components(PLUGIN_CELL_DIRS)
+    assert "plugins/taskmanager/mk2/Mk2Frame.svelte" in comps, "the plugin cell scan walked nothing: is PLUGIN_CELL_DIRS still the Mark II folders?"
+    assert "plugins/taskmanager/mk2/Mk2Frame.svelte" in styled_components(), "the layer, token and colour checks no longer cover the plugin cells"
+    total = sum(len(_ANY_PX.findall(c)) for c in comps.values())
+    assert total == PLUGIN_CELL_LITERAL_BASELINE, f"{total} literal spacing/type declarations in {PLUGIN_CELL_DIRS}, baseline {PLUGIN_CELL_LITERAL_BASELINE}; fewer: lower it"
 
 
 def test_no_colour_literals_in_component_styles() -> None:

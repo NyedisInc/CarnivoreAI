@@ -1,7 +1,10 @@
 
 import { authFetch } from './auth.svelte';
+import { isOffloadedAnswer, promptRestore } from '../../lib/offload-prompt/offload-prompt';
 import { pushedRows, resource, type Resource } from './poll.svelte';
 import type { SessionRecord } from './types';
+import { liveRowAfterNotAsleep, WAKE_NOT_ASLEEP } from './wake-answer';
+import { reachWokenSession } from './sessions.svelte';
 
 export const ASLEEP_POLL_MS = 5000;
 
@@ -12,6 +15,8 @@ export const asleep: Resource<SessionRecord[]> = resource<SessionRecord[]>(
 
 /* pick a wrapper */
 export const WAKE_WRAPPER_NEEDED = 'wrapper_needed';
+
+export { WAKE_NOT_ASLEEP };
 
 export const WAKE_TRANSCRIPT_MISSING = 'transcript_missing';
 
@@ -32,6 +37,7 @@ export interface WakeResult {
   detail: string;
   code?: string | null;
   wrapper_options?: string[];
+  session_id?: string | null;
 }
 
 export async function wakeSession(sessionUuid: string, agentType?: string, startFresh?: boolean): Promise<WakeResult> {
@@ -59,9 +65,27 @@ export function wakeOrPick(sessionUuid: string, name: string, label: string): Pr
 const wakesInFlight = new Map<string, Promise<WakeResult | null>>();
 
 async function wakeOrPickOnce(sessionUuid: string, name: string, label: string): Promise<WakeResult | null> {
-  const host = globalThis as { NavigationGeneration?: { begin(t: string): unknown }; WakeFocus?: { afterWake(u: string, n: unknown): unknown } };
+  const host = globalThis as { NavigationGeneration?: { begin(t: string): unknown }; WakeFocus?: { afterWake(u: string, n: unknown, id?: string | null): unknown } };
   const nav = host.NavigationGeneration ? host.NavigationGeneration.begin(`wake:${name}`) : null;
+  let answer: WakeResult | null;
+  try {
+    answer = await wakeResolved(sessionUuid, name, label);
+    if (answer?.status === 'started') await reachWokenSession(sessionUuid);
+  } catch (failure) {
+    const live = await liveRowAfterNotAsleep(failure, sessionUuid);
+    if (!live) throw failure;
+    answer = { status: 'started', detail: '', session_id: live.session.id };
+  }
+  if (answer?.status === 'started') void host.WakeFocus?.afterWake(sessionUuid, nav, answer.session_id ?? null);
+  return answer;
+}
+
+async function wakeResolved(sessionUuid: string, name: string, label: string): Promise<WakeResult | null> {
   let answer = await wakeSession(sessionUuid);
+  if (answer.status === 'refused' && isOffloadedAnswer(answer)) {
+    if (!(await promptRestore({ sessionUuid, label }))) return null;
+    answer = await wakeSession(sessionUuid);
+  }
   if (answer.status === 'refused' && answer.code === WAKE_WRAPPER_NEEDED) {
     const legacy = (globalThis as { SessionRowMenuSleep?: LegacySleep }).SessionRowMenuSleep;
     if (legacy && typeof legacy.pickAndWake === 'function') {
@@ -74,6 +98,5 @@ async function wakeOrPickOnce(sessionUuid: string, name: string, label: string):
     const legacy = (globalThis as { SessionRowMenuSleep?: LegacySleep }).SessionRowMenuSleep;
     if (legacy && typeof legacy.offerFresh === 'function') answer = (await legacy.offerFresh(name, label, sessionUuid)) ?? answer;
   }
-  if (answer.status === 'started') void host.WakeFocus?.afterWake(sessionUuid, nav);
   return answer;
 }

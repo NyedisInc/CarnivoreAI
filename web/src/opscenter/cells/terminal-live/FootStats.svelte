@@ -3,6 +3,7 @@
   import { t } from '../../../lib/i18n/index.svelte';
   import Icon from '../../ui/Icon.svelte';
   import LimitGauge from '../../ui/LimitGauge.svelte';
+  import { modelColorKey } from '../../../lib/model-color';
   import { effortClass } from '../../../lib/effort/effort-level';
   import { statsGroups } from './foot-stats';
   import type { AgentCostGroup, ArgentCostView } from '../../../lib/argent-cost/cost-view';
@@ -70,7 +71,7 @@
                 </span>
                 {#if cell.resetAt}<span class="oc-tfs-dim">{cell.resetAt}</span>{/if}
               {:else if cell.kind === 'model'}
-                <span class="oc-tfs-model" data-tier={cell.row.spans?.[0]?.tier ?? ''}
+                <span class="oc-tfs-model" data-tier={cell.row.spans?.[0]?.tier ?? ''} data-color={modelColorKey(cell.row.spans?.[0]?.text)}
                   >{cell.row.spans?.[0]?.text}</span>
                 {#if cell.effort}
                   <span class="oc-tfs-effort {effortClass(payload?.effort)}" data-word={cell.effort}>{cell.effort}</span>
@@ -291,6 +292,15 @@
     }
 
     .oc-tfs-model { color: var(--oc-text-primary); white-space: nowrap; }
+
+    .oc-tfs-model[data-color='fable'], .oc-tfs-model[data-color='mythos'] { color: var(--oc-coral); }
+    .oc-tfs-model[data-color='opus'] { color: color-mix(in oklab, var(--oc-yellow-bright) 55%, var(--oc-coral)); }
+    .oc-tfs-model[data-color='sonnet'] { color: var(--oc-yellow-bright); }
+    .oc-tfs-model[data-color='haiku'] { color: var(--oc-cyan); }
+    .oc-tfs-model[data-color='neon'] { color: var(--oc-model-neon); }
+    .oc-tfs-model[data-color='carbon'] { color: var(--oc-model-carbon); }
+    .oc-tfs-model[data-color='argon'] { color: var(--oc-model-argon); }
+    .oc-tfs-model[data-color='hydrogen'] { color: var(--oc-model-hydrogen); }
 
     .oc-tfs-model[data-tier='1'] { color: var(--oc-green-bright); }
 

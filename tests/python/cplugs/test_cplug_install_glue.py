@@ -33,13 +33,12 @@ TOOL_TEXT = "Return the current time as an ISO string. Reads the system clock an
 
 
 def cplug_files(name: str = NAME, *, extra: dict = None) -> dict:
-    cplug = {"schema": 1, "id": name, "name": "Clock", "description": "Tells the time.", "version": "1.0.0", "entry": "main.py",
-             "tools": [{"name": "clock_now", "description": TOOL_TEXT, "gate": "read", "inputSchema": {"type": "object", "properties": {}}}],
-             "permissions": {"app": ["notify"]}}
-    side = {"kind": "cplug", "id": ITEM_ID, "name": "Clock", "version": "1.0.0", "api_version": 1, "min_app_version": "1.12.20",
-            "author": PUBLISHER, "license": "MIT", "tier": "catalog", "scope": ["global"], "icon": "plug", "default_enabled": False,
-            "permissions": [{"name": "notify", "reason": "tells you when the time is up"}], "owns": {}, "data": []}
-    files = {"cplug.json": json.dumps(cplug).encode(), "carnivore.json": json.dumps(side).encode(), "main.py": b"print('tick')\n"}
+    doc = {"schema": 2, "kind": "plugin", "id": name, "name": "Clock", "description": "Tells the time.", "version": "1.0.0",
+           "api_version": 1, "min_app_version": "1.12.20", "author": PUBLISHER, "license": "MIT", "tier": "catalog",
+           "icon": "plug", "default_enabled": False, "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+           "mcp": {"tools": [{"name": "clock_now", "description": TOOL_TEXT, "gate": "read", "inputSchema": {"type": "object", "properties": {}}}]},
+           "permissions": {"write": ["notify"], "reasons": {"notify": "tells you when the time is up"}}, "owns": {}, "data": []}
+    files = {"carnivore.json": json.dumps(doc).encode(), "main.py": b"print('tick')\n"}
     files.update(extra or {})
     return files
 
@@ -105,7 +104,7 @@ def test_preview_then_install_leaves_a_disabled_registered_plugin_then_uninstall
         (row,) = ledger_rows(app)
         assert row.kind == kinds.KIND_CPLUG and row.item_id == ITEM_ID
         root = state / "plugins" / NAME
-        assert (root / "cplug.json").is_file() and (root / "main.py").is_file()
+        assert (root / "carnivore.json").is_file() and (root / "main.py").is_file()
         (skill_target,) = app.services.install_roots.targets_for(kinds.KIND_SKILL, SCOPE_GLOBAL, None)[:1]
         assert skill_target.leaf_dir != state / "plugins"
 
@@ -204,8 +203,7 @@ def test_a_plugin_update_asking_for_consent_carries_its_declared_facts(tmp_path)
         second_commit = "f" * 40
         index_kp, publisher_kp, _stranger = keys
         files = cplug_files()
-        for member in ("cplug.json", "carnivore.json"):
-            files[member] = json.dumps({**json.loads(files[member]), "version": "1.0.1"}).encode()
+        files["carnivore.json"] = json.dumps({**json.loads(files["carnivore.json"]), "version": "1.0.1"}).encode()
         second = build_skill(tmp_path, publisher=PUBLISHER, name=NAME, files=files, commit=second_commit, label="v2",
                              folder=kinds.archive_folder(kinds.KIND_CPLUG))
         serve_archive(served, second.tar_bytes, commit=second_commit)

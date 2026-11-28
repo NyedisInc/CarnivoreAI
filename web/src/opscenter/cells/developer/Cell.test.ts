@@ -6,6 +6,7 @@ const NOW = Math.floor(Date.now() / 1000);
 let runs: Record<string, unknown>[] = [];
 let automations: Record<string, unknown>[] = [];
 const reads: string[] = [];
+/* the Task Manager */
 let taskManagerAnswer: 'items' | 'hang' | 'fail' = 'items';
 let automationsAnswer: 'rows' | 'fail' = 'rows';
 let projects: Record<string, unknown>[] = [];
@@ -252,7 +253,7 @@ describe('the developer widget tabs', () => {
   });
 
   test('with the huddle plugin off, sessions says so in a plain line and its route is never read', async () => {
-    cplugEnablement.enabled = { huddle: false };
+    cplugEnablement.enabled = { taskmanager: false };
     const target = await scheduled();
     (target.querySelector('[data-scope="sessions"]') as HTMLElement).click();
     await settle();

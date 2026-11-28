@@ -14,7 +14,7 @@
 
     interface Status {
         feature_on: boolean;
-        settings: { server_url: string; gateway_url: string; ca_path: string; enabled: boolean; refuse_direct_launch: boolean };
+        settings: { server_url: string; gateway_url: string; ca_path: string; enabled: boolean; refuse_direct_launch: boolean; codex_auth_mode: string };
         state: string;
         refusal: { code: string; message: string } | null;
         login: { state: string; display_name: string; flow: { state: string; user_code?: string; verification_uri?: string; reason?: string } };
@@ -99,13 +99,26 @@
         if (status?.settings.enabled === next) await review();
     };
     const saveAddresses = () => put({ server_url: server, gateway_url: gateway, ca_path: caPath }).then(() => (edited = false));
-    const openInBrowser = async (url: string) => {
+    let blockedUrl = $state('');
+    async function startLogin(): Promise<void> {
+        const tab = window.open('', '_blank');
+        if (tab) tab.opener = null;
+        busy = true;
+        problem = '';
+        blockedUrl = '';
         try {
-            await fetcher('/browsers/open', { method: 'POST', body: JSON.stringify({ url, title: t('argent.shell.login.page_title') }) });
+            const flow = await fetcher<{ verification_uri?: string }>(`${ROUTE}/login/start`, { method: 'POST' });
+            const url = flow.verification_uri ?? '';
+            if (url && tab) tab.location.href = url;
+            else if (url && !window.open(url, '_blank', 'noopener,noreferrer')) blockedUrl = url;
+            await load();
         } catch (error) {
+            tab?.close();
             problem = failureReason(error);
+        } finally {
+            busy = false;
         }
-    };
+    }
 </script>
 
 <div class="tm" data-argent="panel">
@@ -130,14 +143,11 @@
         <p class="tm__sub" role="status" data-argent="login">
             {t(`argent.shell.login.${login}`, { name: status.login.display_name })}
         </p>
-        {#if login === 'pending' && flow?.user_code && flow.verification_uri}
+        {#if login === 'pending' && flow?.user_code}
             <p class="tm__sub" data-argent="code">{t('argent.shell.login.code', { code: flow.user_code })}</p>
-            <div class="tm__actions">
-                <Button size="sm" variant="confirm" disabled={busy} data-argent="open" onclick={() => void openInBrowser(flow.verification_uri ?? '')}>
-                    {t('argent.shell.login.open')}
-                </Button>
-                <a href={flow.verification_uri} target="_blank" rel="noopener noreferrer" data-argent="link">{t('argent.shell.login.link')}</a>
-            </div>
+            {#if blockedUrl}
+                <a href={blockedUrl} target="_blank" rel="noopener noreferrer" data-argent="link">{t('argent.shell.login.link')}</a>
+            {/if}
         {/if}
         {#if flow && ['expired', 'denied', 'failed'].includes(flow.state)}
             <State kind="warn" inline title={t(`argent.shell.login.flow.${flow.state}`)} data-argent="flow" />
@@ -145,7 +155,7 @@
         <div class="tm__actions">
             {#if login !== 'pending'}
                 <Button size="sm" disabled={busy || !status.feature_on || !status.settings.server_url} data-argent="log-in"
-                    onclick={() => void act('/login/start', { method: 'POST' })}>
+                    onclick={() => void startLogin()}>
                     {t(login === 'logged_out' ? 'argent.shell.login.start' : 'argent.shell.login.again')}
                 </Button>
             {/if}
@@ -167,6 +177,9 @@
         <Switch label={t('argent.shell.refuse_direct')} hint={t('argent.shell.refuse_direct_hint')}
             bind:checked={() => status?.settings.refuse_direct_launch ?? false, (next) => void put({ refuse_direct_launch: next })}
             disabled={busy} data-argent="refuse-direct" />
+        <Switch label={t('argent.shell.codex_passthrough')} hint={t('argent.shell.codex_passthrough_hint')}
+            bind:checked={() => status?.settings.codex_auth_mode === 'passthrough', (next) => void put({ codex_auth_mode: next ? 'passthrough' : 'token' })}
+            disabled={busy} data-argent="codex-passthrough" />
         <ArgentBudgetPanel {t} {fetcher} {pollMs} />
         <ArgentWriteback {t} {fetcher} {pollMs} />
         <ClassifierChange {t} {fetcher} />

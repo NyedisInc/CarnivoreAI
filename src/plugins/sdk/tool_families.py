@@ -5,7 +5,7 @@ from typing import Mapping, Tuple
 
 TASK_MANAGER = "task_manager"
 WIDGET_LAB = "widget_lab"
-TOOL_FAMILIES: Mapping[str, Tuple[str, ...]] = {TASK_MANAGER: ("huddle", "reviewboard", "tmdevtools"), WIDGET_LAB: ("devwidgetlab",)}
+TOOL_FAMILIES: Mapping[str, Tuple[str, ...]] = {TASK_MANAGER: ("taskmanager", "reviewboard", "tmdevtools"), WIDGET_LAB: ("devwidgetlab",)}
 
 
 def family_prefix(family: str) -> str:

@@ -1,6 +1,7 @@
 import * as Density from './density';
 import * as StatsVisibility from './stats-visibility.svelte';
 import * as SectionVisibility from './section-visibility.svelte';
+import * as SleepFold from './sleep-fold.svelte';
 import * as ClosedVisibility from './closed-visibility.svelte';
 
 export interface FlipTarget {
@@ -12,6 +13,7 @@ export function reapplyForViewClass(ctrl: FlipTarget): void {
     Density.init();
     StatsVisibility.init();
     SectionVisibility.init();
+    SleepFold.init();
     ClosedVisibility.init();
     if (ctrl.refreshNow() === undefined) ctrl.repaint();
 }

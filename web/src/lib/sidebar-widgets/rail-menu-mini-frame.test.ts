@@ -19,7 +19,7 @@ import { mount, unmount } from 'svelte';
 import MiniRail from '../mini-rail/MiniRail.svelte';
 import { closeRailMenu } from './rail-menu.svelte';
 import { railBtn, railOn, setupRail, teardownRail } from './fixtures/rail-harness';
-import { registerSwarmFlyout } from '../../plugins/huddle/swarm-flyout';
+import { registerSwarmFlyout } from '../../plugins/taskmanager/swarm-flyout';
 
 // The swarm slide-out is the Task Manager plugin's, so the test registers it; the harness no longer does.
 registerSwarmFlyout();

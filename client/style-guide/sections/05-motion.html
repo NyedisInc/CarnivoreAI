@@ -14,6 +14,7 @@ sheen. Everything else moves only enough to explain a change, and every motion s
                 <tr data-sg-token="--oc-motion"><td><code>--oc-motion</code></td><td class="sg-token__value"></td><td>a control changing state</td></tr>
                 <tr data-sg-token="--oc-motion-slow"><td><code>--oc-motion-slow</code></td><td class="sg-token__value"></td><td>a panel opening</td></tr>
                 <tr data-sg-token="--oc-focus-breathe"><td><code>--oc-focus-breathe</code></td><td class="sg-token__value"></td><td>one lap of the popup focus sheen</td></tr>
+                <tr data-sg-token="--oc-amb-join-dur"><td><code>--oc-amb-join-dur</code></td><td class="sg-token__value"></td><td>1ms finite join duration for the shared 24 fps ambient clock</td></tr>
             </tbody>
         </table>
         </div>
@@ -67,6 +68,15 @@ sheen. Everything else moves only enough to explain a change, and every motion s
         <code>visibility: hidden</code> is added to that list.
         Sidebar rows are not special-cased: every row's status light, effort mark and keep-awake steam animate while the window is focused, and calm (below) holds them when it is not.
         One opt-out: the setting "status lights on resting rows" (<code>ui_preferences.row_lights_animate</code>, on by default) set to off puts <code>data-row-lights="still"</code> on <code>&lt;html&gt;</code>, and <code>client/css/resting-row-lights.css</code> then holds the status light and keep-awake steam (<code>.session-sidebar-row-keep-awake</code>, <code>.kaw-steam</code>) of a row that is not selected, hovered or focused still.</dd>
+</dl>
+<h3 class="sg-h3" id="motion-comet">attention comet</h3>
+<dl class="sg-facts">
+    <dt>use</dt>
+    <dd>One comet, a white-hot head with a long fading tail, laps the border of a terminal window (the whole frame, when the session is the showing tab) or of a background tab whose session is finished unread (the green outline) or asleep and flagged for follow-up (the green moon, which keeps no ring of its own), asking you something (yellow) or wanting your attention (light blue). It stops the moment the state clears, with no timer. Every comet runs on one shared lap clock (<code>cometDelay</code> in <code>web/src/lib/comet/comet.ts</code>), so they move in sync, and each laps at an even speed on every edge, short or long, and its tail keeps one length on any box shape. Sidebar rows, the phone strip and popped-out windows do not wear it.</dd>
+    <dt>how</dt>
+    <dd><code>web/src/lib/comet/comet.ts</code> writes <code>data-comet="unread|question|notice"</code> from the same light the status LED draws and mounts a <code>.comet-ribbon-ring</code> carrying four 45°-mitered <code>.comet-edge</code> strips (<code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code>), each holding a pre-painted 2×perimeter periodic <code>.comet-bar</code> translated strictly via GPU <code>translate3d</code> on the shared 24 fps clock (<code>client/js/ambient-ticker.js</code>), over a faint still glow on <code>::before</code>. Zero <code>@property</code>, zero <code>atan2()</code>, zero <code>conic-gradient</code>, zero infinite CSS; Reduce Motion and calm keep only the still glow. Colors are the <code>--oc-comet-head</code>, <code>--oc-comet-unread-mid</code>, <code>--oc-comet-unread-tail</code>, <code>--oc-comet-unread-green</code>, <code>--oc-comet-question</code> and <code>--oc-comet-notice</code> tokens in <code>web/src/opscenter/tokens.css</code>; the celestial look is the same on every theme. <code>--oc-comet-width</code> is the ring's thickness, <code>--oc-comet-mask</code> the mask ink that cuts it, <code>--oc-comet-lap</code> the seconds per lap (the setting writes it on the root) and <code>--oc-comet-delay</code> the per-element shared-clock offset.</dd>
+    <dt>setting</dt>
+    <dd>Settings > appearance > motion, "comet on attention" (<code>CometPanel.svelte</code>, classes <code>cm</code> and <code>cm__row</code>): a switch (on by default), a lap time in seconds (0.5 to 30, default 3) and the unread comet's color (celestial, unread green, theme accent). They sync through <code>ui_preferences</code> as <code>comet_on</code>, <code>comet_lap_seconds</code> and <code>comet_unread_color</code>.</dd>
 </dl>
 <h3 class="sg-h3" id="motion-types">animation types</h3>
 <dl class="sg-facts">

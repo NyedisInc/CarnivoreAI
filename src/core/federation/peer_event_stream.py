@@ -12,7 +12,7 @@ import structlog
 from websockets.exceptions import WebSocketException
 
 from src.core import session_change_notice
-from src.core.federation import peer_hosts, peer_links, peer_listing, peer_listing_push
+from src.core.federation import mesh_peers, peer_hosts, peer_links, peer_listing, peer_listing_push
 from src.core.federation.peer_client import PeerClient
 from src.core.federation.peer_terminal_proxy import PeerUnavailable, connect_upstream
 from src.core.hosts.identity import remote_session_id
@@ -66,7 +66,7 @@ def offer_to_engine(frame: Dict[str, Any]) -> None:
 
 
 async def _apply_listing(frame: Dict[str, Any], install_id: str, open_db: Callable[[], sqlite3.Connection]) -> None:
-    peer = next((p for p in await asyncio.to_thread(peer_listing.read_peers, open_db) if p.peer_install_id == install_id), None)
+    peer = next((p for p in await asyncio.to_thread(peer_listing.read_peers, open_db, True) if p.peer_install_id == install_id), None)
     if peer is None or not await peer_listing_push.apply(frame, peer, open_db):
         raise PeerUnavailable()
 
@@ -122,10 +122,11 @@ async def _follow(app_state: Any, host_key: str, client: PeerClient, install_id:
 def sync(app_state: Any, open_db: Callable[[], sqlite3.Connection]) -> None:
     links = peer_links.LINKS
     wanted: Dict[str, Tuple[str, PeerClient]] = {}
-    if links is not None and links.connected_clients():
+    clients = mesh_peers.session_clients(links)
+    if clients:
         with closing(open_db()) as conn:
-            for install_id, client in links.connected_clients():
-                row = peer_hosts.get(conn, install_id)
+            for install_id, client in clients:
+                row = peer_hosts.get(conn, install_id, include_mesh=True)
                 if row is not None:
                     wanted[row.key] = (install_id, client)
     for key in [k for k in _TASKS if k not in wanted or _TASKS[k].done() or _STARTED_WITH.get(k) is not wanted[k][1]]:

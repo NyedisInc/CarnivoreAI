@@ -3,13 +3,16 @@ from __future__ import annotations
 
 import os
 import re
+import threading
 import tomllib
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, Iterable, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 import structlog
+
+from ._pattern_safety import MAX_PATTERN_LEN, validate_pattern_ast
 
 try:
     from re import _parser as _sre_parse  # type: ignore[attr-defined]
@@ -22,6 +25,8 @@ ENGINE_VERSION = 2
 RULES_DIR = Path(__file__).with_name("rules")
 MAX_LINES = 60
 MAX_LINE_CHARS = 400
+MAX_GATE_DEPTH = 16
+MAX_RULES = 128
 STATES = ("working", "blocked", "idle")
 RUNTIMES = frozenset({"node", "bun", "deno", "python", "python3"})
 _REGION_COUNT = re.compile(r"^(bottom_non_empty_lines|bottom_lines)\((\d{1,3})\)$")
@@ -70,74 +75,112 @@ class Match:
     version: str
 
 
-def _nested_quantifier(items: Iterable, inside: bool = False) -> bool:
-    for op, av in items:
-        name = str(op)
-        if name in ("MAX_REPEAT", "MIN_REPEAT", "POSSESSIVE_REPEAT"):
-            if inside:
-                return True
-            if _nested_quantifier(av[2], av[1] > 1):
-                return True
-        elif name == "SUBPATTERN":
-            if _nested_quantifier(av[-1], inside):
-                return True
-        elif name == "BRANCH":
-            if any(_nested_quantifier(b, inside) for b in av[1]):
-                return True
-        elif name in ("ASSERT", "ASSERT_NOT"):
-            if _nested_quantifier(av[1], inside):
-                return True
-    return False
-
-
-def compile_pattern(pattern: str) -> re.Pattern:
+def compile_pattern(pattern: str, *, whole_region: bool = False) -> re.Pattern:
+    if not isinstance(pattern, str):
+        raise RuleFileError("pattern must be a string")
+    if len(pattern) > MAX_PATTERN_LEN:
+        raise RuleFileError(f"pattern exceeds {MAX_PATTERN_LEN} characters")
     try:
-        if _nested_quantifier(_sre_parse.parse(pattern)):
-            raise RuleFileError("nested quantifier in %r" % pattern)
+        parsed = _sre_parse.parse(pattern)
+        validate_pattern_ast(parsed, pattern, whole_region=whole_region, error_cls=RuleFileError)
         return re.compile(pattern)
-    except re.error as exc:
+    except (re.error, RecursionError, OverflowError) as exc:
         raise RuleFileError("bad pattern %r: %s" % (pattern, exc)) from exc
 
 
-def _gate(raw: Mapping) -> Gate:
+def _str_seq(raw: Mapping[str, Any], key: str) -> Tuple[str, ...]:
+    val = raw.get(key, ())
+    if not isinstance(val, (list, tuple)) or not all(isinstance(s, str) for s in val):
+        raise RuleFileError(f"{key} must be a list of strings")
+    return tuple(val)
+
+
+def _gate_seq(raw: Mapping[str, Any], key: str, depth: int) -> Tuple[Gate, ...]:
+    val = raw.get(key, ())
+    if not isinstance(val, (list, tuple)):
+        raise RuleFileError(f"{key} must be a list of tables")
+    return tuple(_gate(g, depth + 1) for g in val)
+
+
+def _gate(raw: Mapping, depth: int = 0) -> Gate:
+    if depth > MAX_GATE_DEPTH:
+        raise RuleFileError(f"gate nesting exceeds {MAX_GATE_DEPTH}")
+    if not isinstance(raw, Mapping):
+        raise RuleFileError("gate must be a table")
     known = {"contains", "regex", "line_regex", "all", "any", "not"}
     extra = set(raw) - known - {"id", "state", "priority", "region", "visible_idle", "visible_blocker",
                                 "visible_working", "skip_state_update"}
     if extra:
         raise RuleFileError("unknown keys %s" % sorted(extra))
     return Gate(
-        contains=tuple(str(s).lower() for s in raw.get("contains", ())),
-        regex=tuple(compile_pattern(p) for p in raw.get("regex", ())),
-        line_regex=tuple(compile_pattern(p) for p in raw.get("line_regex", ())),
-        all=tuple(_gate(g) for g in raw.get("all", ())),
-        any=tuple(_gate(g) for g in raw.get("any", ())),
-        not_=tuple(_gate(g) for g in raw.get("not", ())),
+        contains=tuple(s.lower() for s in _str_seq(raw, "contains")),
+        regex=tuple(compile_pattern(p, whole_region=True) for p in _str_seq(raw, "regex")),
+        line_regex=tuple(compile_pattern(p, whole_region=False) for p in _str_seq(raw, "line_regex")),
+        all=_gate_seq(raw, "all", depth),
+        any=_gate_seq(raw, "any", depth),
+        not_=_gate_seq(raw, "not", depth),
     )
 
 
 def parse_manifest(text: str) -> Optional[Manifest]:
+    if not isinstance(text, str):
+        raise RuleFileError("manifest text must be a string")
     try:
         raw = tomllib.loads(text)
-    except tomllib.TOMLDecodeError as exc:
+    except (tomllib.TOMLDecodeError, RecursionError) as exc:
         raise RuleFileError(str(exc)) from exc
-    if int(raw.get("min_engine_version", 1)) > ENGINE_VERSION:
+    if not isinstance(raw, dict):
+        raise RuleFileError("manifest must be a TOML table")
+    min_ver = raw.get("min_engine_version", 1)
+    if isinstance(min_ver, bool) or not isinstance(min_ver, int):
+        raise RuleFileError("min_engine_version must be an integer")
+    if min_ver > ENGINE_VERSION:
         return None
+    manifest_id = raw.get("id")
+    if not isinstance(manifest_id, str) or not manifest_id:
+        raise RuleFileError("manifest id must be a non-empty string")
+    version = raw.get("version", "")
+    if not isinstance(version, str):
+        raise RuleFileError("manifest version must be a string")
+    aliases = _str_seq(raw, "aliases")
+    raw_rules = raw.get("rules", [])
+    if not isinstance(raw_rules, (list, tuple)) or len(raw_rules) > MAX_RULES:
+        raise RuleFileError(f"rules must be a list of at most {MAX_RULES} items")
     rules = []
-    for item in raw.get("rules", ()):
-        state, region = item.get("state"), str(item.get("region", "whole_recent")).strip()
-        if state not in STATES:
-            raise RuleFileError("rule %s: state %r" % (item.get("id"), state))
+    for item in raw_rules:
+        if not isinstance(item, Mapping):
+            raise RuleFileError("each rule must be a table")
+        rule_id = item.get("id")
+        if not isinstance(rule_id, str) or not rule_id:
+            raise RuleFileError("rule id must be a non-empty string")
+        state = item.get("state")
+        if not isinstance(state, str) or state not in STATES:
+            raise RuleFileError("rule %s: state %r" % (rule_id, state))
+        raw_region = item.get("region", "whole_recent")
+        if not isinstance(raw_region, str):
+            raise RuleFileError("rule %s: region must be a string" % rule_id)
+        region = raw_region.strip()
         if region != "whole_recent" and not _REGION_COUNT.match(region):
-            raise RuleFileError("rule %s: region %r" % (item.get("id"), region))
-        if item.get("skip_state_update"):
+            raise RuleFileError("rule %s: region %r" % (rule_id, region))
+        priority = item.get("priority", 0)
+        if isinstance(priority, bool) or not isinstance(priority, int):
+            raise RuleFileError("rule %s: priority must be an integer" % rule_id)
+        skip = item.get("skip_state_update", False)
+        if not isinstance(skip, bool):
+            raise RuleFileError("rule %s: skip_state_update must be a boolean" % rule_id)
+        if skip:
             continue
-        rules.append(Rule(str(item["id"]), state, int(item.get("priority", 0)), region, _gate(item)))
-    names = (str(raw["id"]),) + tuple(str(a) for a in raw.get("aliases", ()))
-    return Manifest(str(raw["id"]), str(raw.get("version", "")), names, tuple(rules))
+        rules.append(Rule(rule_id, state, priority, region, _gate(item)))
+    names = (manifest_id,) + aliases
+    return Manifest(manifest_id, version, names, tuple(rules))
+
+
+_plugin_lock = threading.RLock()
+_plugin_manifests: Dict[str, Tuple[Manifest, ...]] = {}
 
 
 @lru_cache(maxsize=1)
-def manifests() -> Tuple[Manifest, ...]:
+def _builtin_manifests() -> Tuple[Manifest, ...]:
     out: List[Manifest] = []
     for path in sorted(RULES_DIR.glob("*.toml")):
         try:
@@ -150,6 +193,36 @@ def manifests() -> Tuple[Manifest, ...]:
             continue
         out.append(manifest)
     return tuple(out)
+
+
+def register_plugin_manifests(plugin_id: str, items: Sequence[Manifest]) -> None:
+    builtin_names = {name for m in _builtin_manifests() for name in m.names}
+    with _plugin_lock:
+        other_names = {
+            name
+            for pid, pitems in _plugin_manifests.items()
+            if pid != plugin_id
+            for m in pitems
+            for name in m.names
+        }
+        taken = builtin_names | other_names
+        for item in items:
+            collision = sorted(set(item.names) & taken)
+            if collision:
+                raise RuleFileError(f"harness name(s) {collision} already registered")
+            taken.update(item.names)
+        _plugin_manifests[plugin_id] = tuple(items)
+
+
+def unregister_plugin_manifests(plugin_id: str) -> None:
+    with _plugin_lock:
+        _plugin_manifests.pop(plugin_id, None)
+
+
+def manifests() -> Tuple[Manifest, ...]:
+    with _plugin_lock:
+        plugin_items = tuple(m for items in _plugin_manifests.values() for m in items)
+    return _builtin_manifests() + plugin_items
 
 
 def _by_name() -> Dict[str, Manifest]:

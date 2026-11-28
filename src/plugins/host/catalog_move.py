@@ -10,7 +10,8 @@ import structlog
 
 from src.core.app_alerts import constants as alert_constants
 from src.plugins.host import state as owner_state
-from src.plugins.host.adoption import BUILTIN_SOURCE, KIND_CPLUG, NAME_PREFIX
+from src.plugins.host.adoption import BUILTIN_SOURCE, KIND_CPLUG
+from src.plugins.host.ledger_names import NAME_PREFIX
 from src.core.skills.ledger_types import GLOBAL_PROJECT_PATH, SCOPE_GLOBAL, LedgerError
 
 logger = structlog.get_logger()

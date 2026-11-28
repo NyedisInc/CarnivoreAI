@@ -4,6 +4,8 @@
     import PluginsScreen from '../../plugins-page/PluginsScreen.svelte';
     import SkillsScreen from '../../skills-page/SkillsScreen.svelte';
     import ThemesScreen from '../../themes-page/ThemesScreen.svelte';
+    import WidgetsScreen from '../../widgets-page/WidgetsScreen.svelte';
+    import Button from '../../base/Button.svelte';
     import Tabs, { panelAttrs, type TabDef } from '../../../opscenter/ui/Tabs.svelte';
     import PackSkillsTab from '../../skills-hub/pack/PackSkillsTab.svelte';
     import { packMachines } from '../../pack-machines/pack-machines-store.svelte';
@@ -59,7 +61,7 @@
     {#if kind === 'theme'}
         <ThemesScreen embedded storeOnly {focusId} onLibrary={toStore} onSelect={pick} {onChanged} />
     {:else if kind === 'plugin'}
-        <PluginsScreen embedded storeOnly {focusId} {focusTab} onSelect={pick} {onChanged} />
+        <PluginsScreen embedded storeOnly scope="plugins" {focusId} {focusTab} onSelect={pick} {onChanged} />
     {:else if kind === 'skill'}
         {#if !focusId}
             <div class="wik__tabs"><Tabs tabs={tabDefs} active={view} onSelect={pickTab} label={t('warez.skills.tabs')} idBase="wskills" /></div>
@@ -70,6 +72,12 @@
             {:else}
                 <SkillsScreen embedded storeOnly skillPage tab={view === 'stats' && !focusId ? 'census' : 'skills'} {highlights} {focusId} openCatalogPage={toStore} onSelect={pick} onBack={toList} {onChanged} />
             {/if}
+        </div>
+    {:else if kind === 'widget'}
+        <WidgetsScreen embedded />
+    {:else if kind === 'loadout'}
+        <div class="wik__empty">
+            <Button variant="secondary" onclick={toStore}>{t('warez.installed.browse', { kind: t('warez.kind.chip.loadout') })}</Button>
         </div>
     {:else}
         <ModsScreen embedded {focusId} onGetMore={toStore} onSelect={pick} />
@@ -99,10 +107,7 @@
         min-height: 0;
     }
 
-    .wik :global(.oc-page.oc-page--embedded) {
-        flex: 1 1 auto;
-        min-height: 0;
-        border: 0;
-        border-radius: 0;
+    .wik__empty {
+        padding: var(--oc-space-4);
     }
 </style>

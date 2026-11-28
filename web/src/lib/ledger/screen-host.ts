@@ -1,16 +1,27 @@
 import { ensurePanel, panelInstance, unmountPanel } from '../mount';
 import { whenLegacyBootComplete } from '../legacy-boot';
-import LedgerScreen from './LedgerScreen.svelte';
 import type { Component } from 'svelte';
 
 export const LEDGER_SCREEN_CONTAINER = 'ledger-screen';
 
 export const LEDGER_HASH = '#ledger';
 
-const LEDGER_SCREEN_PANEL = LedgerScreen as unknown as Component<
-    Record<string, never>,
-    Record<string, unknown>
->;
+let loadedLedgerPanel: Component<Record<string, never>, Record<string, unknown>> | null = null;
+let ledgerLoadPromise: Promise<Component<Record<string, never>, Record<string, unknown>> | null> | null = null;
+let pendingLedgerOpen: { account?: string } | null = null;
+
+function ensureLedgerLoaded(): Promise<Component<Record<string, never>, Record<string, unknown>> | null> {
+    if (loadedLedgerPanel) return Promise.resolve(loadedLedgerPanel);
+    ledgerLoadPromise ??= import('./LedgerScreen.svelte').then((mod) => {
+        loadedLedgerPanel = mod.default as unknown as Component<Record<string, never>, Record<string, unknown>>;
+        return loadedLedgerPanel;
+    }).catch((err) => {
+        ledgerLoadPromise = null;
+        console.error('ledger-host: failed to load LedgerScreen', err);
+        return null;
+    });
+    return ledgerLoadPromise;
+}
 
 interface ScreenHandle {
     show?: (account?: string) => void;
@@ -20,23 +31,42 @@ interface ScreenHandle {
 
 /* the home screen */
 export function mountLedgerScreen(): Record<string, unknown> | null {
-    return ensurePanel(LEDGER_SCREEN_CONTAINER, LEDGER_SCREEN_PANEL, {});
+    if (!loadedLedgerPanel) {
+        void ensureLedgerLoaded();
+        return panelInstance(LEDGER_SCREEN_CONTAINER);
+    }
+    return ensurePanel(LEDGER_SCREEN_CONTAINER, loadedLedgerPanel, {});
 }
 
 export function unmountLedgerScreen(): boolean {
+    pendingLedgerOpen = null;
     return unmountPanel(LEDGER_SCREEN_CONTAINER);
 }
 
 export function openLedgerScreen(account?: string): boolean {
-    const handle = (mountLedgerScreen() ?? panelInstance(LEDGER_SCREEN_CONTAINER)) as
-        | ScreenHandle
-        | null;
-    if (!handle || typeof handle.show !== 'function') return false;
-    handle.show(account);
+    if (loadedLedgerPanel) {
+        const handle = (mountLedgerScreen() ?? panelInstance(LEDGER_SCREEN_CONTAINER)) as ScreenHandle | null;
+        if (!handle || typeof handle.show !== 'function') return false;
+        handle.show(account);
+        return true;
+    }
+    if (typeof document === 'undefined' || !document.getElementById(LEDGER_SCREEN_CONTAINER)) return false;
+    const ticket = { account };
+    pendingLedgerOpen = ticket;
+    void ensureLedgerLoaded().then((panel) => {
+        if (!panel || pendingLedgerOpen !== ticket) return;
+        pendingLedgerOpen = null;
+        const handle = (mountLedgerScreen() ?? panelInstance(LEDGER_SCREEN_CONTAINER)) as ScreenHandle | null;
+        handle?.show?.(ticket.account);
+    });
     return true;
 }
 
 export function closeLedgerScreen(): boolean {
+    if (pendingLedgerOpen) {
+        pendingLedgerOpen = null;
+        return true;
+    }
     const handle = panelInstance(LEDGER_SCREEN_CONTAINER) as ScreenHandle | null;
     if (!handle || typeof handle.close !== 'function') return false;
     handle.close();

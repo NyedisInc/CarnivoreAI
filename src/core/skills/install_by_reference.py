@@ -15,7 +15,7 @@ from src.core.skills.code_gate import staged_plugin_declares_code
 from src.core.skills.consent_via_ddl import CONSENT_PACK
 from src.core.skills.digest import hash_file
 from src.core.skills.install_types import CHOICE_REPLACE, InstallRefusal
-from src.core.skills.kinds import KIND_CPLUG, manifest_name
+from src.core.skills.kinds import KIND_CPLUG, resolve_manifest_path
 from src.core.skills.ledger_types import SCOPE_GLOBAL, AlreadyInstalled
 from src.core.skills.records import SIDECAR_NAME, read_sidecar
 
@@ -237,7 +237,11 @@ async def install_exact(services: Any, ref: Ref, *, families: Optional[tuple[str
         try:
             if check_digest(version.digest, staged.digest) is not None:
                 return Outcome(CONFLICT, "digest_differs", started=started)
-            body_sha = (await asyncio.to_thread(hash_file, staged.path / manifest_name(item.kind)))[0]
+            body_sha = (
+                await asyncio.to_thread(
+                    lambda: hash_file(resolve_manifest_path(item.kind, staged.path))
+                )
+            )[0]
             allow = version.scripts > 0 or await asyncio.to_thread(staged_plugin_declares_code, item.kind, staged.path)
             if allow and not install_consent_satisfied(InstallConsent(digest=ref.digest, body_sha=ref.body_sha, scripts=True),
                                                        digest=staged.digest, body_sha=body_sha):

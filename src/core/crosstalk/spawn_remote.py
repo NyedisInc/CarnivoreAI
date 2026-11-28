@@ -6,10 +6,10 @@ import os
 import time
 import uuid
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Callable, Optional
 
-from src.core.crosstalk import bus, spawn_rules
-from src.core.federation import peer_links
+from src.core.crosstalk import bus, spawn_peer_folder as peer_folder, spawn_rules
+from src.core.federation import mesh_peers, peer_links
 from src.core.flow_data import spawn_links
 from src.core.federation.peer_client import PeerRefused, PeerUnreachable
 from src.core.hosts.identity import remote_session_id
@@ -23,6 +23,34 @@ def same_created_child(child: Any, created: dict, peer_install_id: str, *, epoch
     return (child is not None and isinstance(expected_uuid, str) and bool(expected_uuid)
             and child.session_uuid == shadow_rows.shadow_uuid(peer_install_id, expected_uuid)
             and (not epoch_known or child.session.tmux_created_epoch == created.get('epoch')))
+
+
+CONFIRM_SECONDS = 20.0
+CONFIRM_POLL_SECONDS = 1.0
+
+
+class CreatedUnconfirmed(ToolError):
+
+    def __init__(self, session_id: str, message: str) -> None:
+        super().__init__(message)
+        self.session_id = session_id
+
+
+async def confirm_created_child(peer: Any, created: dict, pick: Callable[[Any], bool], *, epoch_known: bool = True,
+                                timeout: float = CONFIRM_SECONDS, interval: float = CONFIRM_POLL_SECONDS) -> Optional[Any]:
+    from src.api import peer_auth
+    from src.core.federation import peer_listing
+    from src.core.mcp import federated
+
+    deadline = time.monotonic() + timeout
+    while True:
+        await peer_listing.refresh(peer, peer_links.LINKS, peer_auth.open_db, force=True)
+        child = next((i for i in await federated.peer_infos(force=True) if pick(i)), None)
+        if same_created_child(child, created, peer.peer_install_id, epoch_known=epoch_known):
+            return child
+        if time.monotonic() + interval >= deadline:
+            return None
+        await asyncio.sleep(interval)
 
 
 @dataclass
@@ -131,16 +159,23 @@ async def spawn(view: Any, caller: AgentCaller, body: Any, *, owner_approved: bo
                            'working_dir': got.session.get('working_dir'),
                            **({'epoch': got.session['epoch']} if 'epoch' in got.session else {})}
             else:
-                client = links.client(peer.peer_install_id) if links is not None else None
+                client = mesh_peers.session_client(links, peer.peer_install_id)
                 if client is None:
                     raise ToolError(f'{peer.label} is not connected right now')
                 payload = peer_spawn_payload(body, beast_mode.approval_skip('agent_spawn'))
-                try:
-                    answer = await client.request('POST', '/api/v1/crosstalk/peer-spawn', json=payload, timeout=45)
-                except (PeerUnreachable, PeerRefused) as exc:
-                    raise ToolError(f'{peer.label} did not confirm spawn; inspect its sessions before retrying ({type(exc).__name__})') from exc
+                async def ask(sent: dict) -> Any:
+                    try:
+                        return await client.request('POST', '/api/v1/crosstalk/peer-spawn', json=sent, timeout=45)
+                    except (PeerUnreachable, PeerRefused) as exc:
+                        raise ToolError(f'{peer.label} did not confirm spawn; inspect its sessions before retrying ({type(exc).__name__})') from exc
+
+                answer = await ask(payload)
+                if answer.status_code != 200 and body.working_dir and peer_folder.missing_folder(answer):
+                    mapped = await asyncio.to_thread(peer_folder.replica_folder, os.path.realpath(os.path.expanduser(body.working_dir)), peer.peer_install_id)
+                    if mapped and mapped != body.working_dir:
+                        answer = await ask({**payload, 'working_dir': mapped})
                 if answer.status_code != 200:
-                    raise ToolError(f'{peer.label} refused spawn ({answer.status_code})')
+                    raise peer_folder.refusal_reason(peer.label, answer, answer.status_code, body.working_dir)
                 created = answer.json()
                 tmux = created.get('tmux_name')
                 if not isinstance(tmux, str) or not tmux:
@@ -150,12 +185,9 @@ async def spawn(view: Any, caller: AgentCaller, body: Any, *, owner_approved: bo
         finally:
             async with write_tools._create_lock:
                 write_tools._reserved.remove(caller.tmux_name)
-        from src.api import peer_auth
-        from src.core.federation import peer_listing
-        await peer_listing.refresh(peer, links, peer_auth.open_db, force=True)
-        child = next((i for i in await federated.peer_infos(force=True) if i.session.id == wire_id), None)
-        if not same_created_child(child, created, peer.peer_install_id, epoch_known='epoch' in created):
-            raise ToolError(f'{wire_id} was created but its pane identity was not confirmed for task delivery')
+        child = await confirm_created_child(peer, created, lambda i: i.session.id == wire_id, epoch_known='epoch' in created)
+        if child is None:
+            raise CreatedUnconfirmed(wire_id, f'{wire_id} was created but its pane identity was not confirmed for task delivery')
         try:
             message = await bus.send(fresh.fresh(), caller, to=wire_id, text=task,
                                      expect_reply=body.report_back, owner_approved=True, action='agent_spawn')

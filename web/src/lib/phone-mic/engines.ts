@@ -1,9 +1,9 @@
 import { authFetch } from '../../opscenter/api/auth.svelte';
 import { fetchConfig } from '../byoai/api';
 import { onNativeMessage, shellHasSpeech, postToNative } from '../native-shell/shell';
-import type { EngineEvents, EngineStarter } from './controller.svelte';
+import { glueText, type EngineEvents, type EngineStarter } from './controller.svelte';
 
-interface SpeechResultList { length: number; [i: number]: { 0: { transcript: string }; length: number } }
+interface SpeechResultList { length: number; [i: number]: { 0: { transcript: string }; length: number; isFinal?: boolean } }
 interface Recognizer {
     continuous: boolean; interimResults: boolean; lang: string;
     onresult: ((ev: { results: SpeechResultList }) => void) | null;
@@ -22,31 +22,58 @@ export function speechStarter(): EngineStarter | null {
     const Ctor = recognizerCtor();
     if (!Ctor) return null;
     return (events: EngineEvents) => {
-        const rec = new Ctor();
-        let heard = '';
+        let rec = new Ctor();
+        let committed = '';
+        let fin = 0;
+        let lastLen = 0;
+        let live = '';
         let dead = false;
-        rec.continuous = true;
-        rec.interimResults = true;
-        rec.lang = navigator.language || 'en-US';
-        rec.onstart = () => { if (!dead) events.ready(); };
-        rec.onresult = (ev) => {
-            let all = '';
-            for (let i = 0; i < ev.results.length; i += 1) all += ev.results[i]?.[0]?.transcript ?? '';
-            heard = all;
-            if (!dead) events.text(all);
+        let stopped = false;
+        let quiet = 0;
+        const shown = () => glueText(committed, live);
+        const wire = (r: Recognizer) => {
+            r.continuous = true;
+            r.interimResults = true;
+            r.lang = navigator.language || 'en-US';
+            r.onstart = () => { if (!dead) events.ready(); };
+            r.onresult = (ev) => {
+                const list = ev.results;
+                quiet = 0;
+                if (list.length < lastLen || list.length < fin) { committed = shown(); live = ''; fin = 0; }
+                lastLen = list.length;
+                while (fin < list.length && list[fin]?.isFinal) { committed = glueText(committed, list[fin]?.[0]?.transcript ?? ''); fin += 1; }
+                let rest = '';
+                for (let i = fin; i < list.length; i += 1) rest += list[i]?.[0]?.transcript ?? '';
+                live = rest;
+                if (!dead) events.text(shown());
+            };
+            r.onerror = (ev) => {
+                if (dead || ev.error === 'no-speech' || ev.error === 'aborted') return;
+                events.error(ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ? 'blocked' : 'failed');
+            };
+            r.onend = () => {
+                if (dead) return;
+                committed = shown();
+                live = ''; fin = 0; lastLen = 0;
+                quiet += 1;
+                if (stopped || quiet > 5) { events.end(committed); return; }
+                rec = new Ctor();
+                wire(rec);
+                try { rec.start(); } catch { events.end(committed); }
+            };
         };
-        rec.onerror = (ev) => {
-            if (dead || ev.error === 'no-speech' || ev.error === 'aborted') return;
-            events.error(ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ? 'blocked' : 'failed');
-        };
-        rec.onend = () => { if (!dead) events.end(heard); };
+        wire(rec);
         try { rec.start(); } catch { events.error('failed'); }
         return {
-            stop: () => rec.stop(),
+            stop: () => { stopped = true; rec.stop(); },
             abort: () => { dead = true; try { rec.abort(); } catch {  } },
         };
     };
 }
+
+function firstWord(t: string): string { return (t.trim().split(/\s+/)[0] ?? '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, ''); }
+function wordCount(t: string): number { return t.trim().split(/\s+/).filter(Boolean).length; }
+
 
 export function utteranceJoiner(): { feed(text: string): string; value(): string } {
     let committed = '';
@@ -58,6 +85,7 @@ export function utteranceJoiner(): { feed(text: string): string; value(): string
                 if (prev) { committed = joined(); prev = ''; }
                 return joined();
             }
+            if (prev && text !== prev && firstWord(text) !== firstWord(prev) && wordCount(text) < wordCount(prev)) { committed = joined(); prev = ''; }
             if (!prev && committed && text.startsWith(committed)) committed = '';
             prev = text;
             return joined();

@@ -157,7 +157,7 @@ def test_the_computers_and_pack_machines_providers_answer_what_their_routes_answ
     view = {"machines": [{"id": "studio", "install_id": "studio-iid", "roster_v1": False, "load": 0.5}], "master_install_id": "m"}
     touched = []
     from src.core.pack.machines.interim_policy import HomeState
-    custody = SimpleNamespace(roster=lambda: None, home_state=HomeState)
+    custody = SimpleNamespace(roster=lambda: None, held_lists=lambda: None, home_state=HomeState)
     wired = SimpleNamespace(runtime=SimpleNamespace(touch=lambda: touched.append(1), view=lambda peers: view, custody=custody), peers=lambda: [])
     monkeypatch.setattr(pack_machines_routes, "_wired", lambda: wired)
     computers_view = {"computers": [], "self": {"role": "alpha"}}

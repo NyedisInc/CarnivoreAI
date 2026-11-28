@@ -119,6 +119,12 @@ class IdleClock:
         start = run.since if unread else (run.read_since or run.since)
         return max(0.0, (now - start).total_seconds())
 
+    def idle_since(self, session_id: str, *, unread: bool) -> Optional[datetime]:
+        run = self._runs.get(session_id)
+        if run is None:
+            return None
+        return run.since if unread else (run.read_since or run.since)
+
     def is_unread(self, session_id: str) -> bool:
         run = self._runs.get(session_id)
         return bool(run and run.unread)

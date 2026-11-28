@@ -33,7 +33,7 @@
     "spacing": 3
    },
    "client/css/effort-level.css": {
-    "duration": 10
+    "duration": 5
    },
    "client/css/header-menu.css": {
     "font": 1,
@@ -113,7 +113,7 @@
     "line-height": 2
    },
    "client/css/session-sidebar-band-structure.css": {
-    "border-width": 2,
+    "border-width": 1,
     "font": 3,
     "spacing": 1,
     "tracking": 1
@@ -121,7 +121,7 @@
    "client/css/session-sidebar-colours.css": {
     "border-width": 2,
     "duration": 4,
-    "fallback": 3,
+    "fallback": 2,
     "font": 1,
     "spacing": 5
    },
@@ -129,7 +129,7 @@
     "border-width": 2,
     "font": 9,
     "line-height": 3,
-    "spacing": 13,
+    "spacing": 12,
     "tracking": 1,
     "weight": 2
    },
@@ -145,8 +145,7 @@
    },
    "client/css/session-sidebar-keep-awake.css": {
     "border-width": 1,
-    "duration": 4,
-    "fallback": 2
+    "duration": 2
    },
    "client/css/session-sidebar-layouts.css": {
     "duration": 1
@@ -157,11 +156,11 @@
    "client/css/session-sidebar-row-bodies.css": {
     "font": 2,
     "line-height": 1,
-    "spacing": 5
+    "spacing": 4
    },
    "client/css/session-sidebar-row-controls.css": {
     "border-width": 2,
-    "duration": 5,
+    "duration": 4,
     "line-height": 3
    },
    "client/css/session-sidebar-rows.css": {
@@ -438,7 +437,7 @@
   }
  },
  "totals": {
-  "css_raw_values": 1069,
+  "css_raw_values": 1055,
   "dialog_frames": 10,
   "js_controls": 183,
   "tablists": 2,

@@ -116,6 +116,7 @@
     border-color: var(--_post);
   }
 
+  /* the Task Manager */
   .hb--owner-side {
     border-color: var(--oc-line-frame);
     background: var(--oc-ground-raised);

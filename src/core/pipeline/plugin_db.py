@@ -36,6 +36,9 @@ def _connect(path: Path) -> sqlite3.Connection:
     conn = sqlite3.connect(str(path), isolation_level=None, timeout=30.0)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA cache_size=-32000")
+    conn.execute("PRAGMA temp_store=MEMORY")
+    conn.execute("PRAGMA mmap_size=134217728")
     return conn
 
 
@@ -44,6 +47,7 @@ def _framework_tables(conn: sqlite3.Connection) -> None:
                  "family TEXT NOT NULL, file_kind TEXT NOT NULL, offset INTEGER NOT NULL, lines INTEGER NOT NULL, "
                  "last_serial TEXT, last_serial_offset INTEGER, inherit_state TEXT NOT NULL, "
                  "inherited_start INTEGER NOT NULL, inherited_end INTEGER NOT NULL, updated_at REAL NOT NULL)")
+    conn.execute(f"CREATE INDEX IF NOT EXISTS ix_{C.CURSORS_TABLE}_conversation ON {C.CURSORS_TABLE} (conversation_id)")
     conn.execute(f"CREATE TABLE IF NOT EXISTS {C.META_TABLE} (key TEXT PRIMARY KEY, value TEXT)")
 
 

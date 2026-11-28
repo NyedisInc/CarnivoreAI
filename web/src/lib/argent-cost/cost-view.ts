@@ -55,7 +55,7 @@ export function argentCostView(snap: ArgentCostSnapshot | null | undefined, rowI
 }
 
 export interface CardCostItem { id: string; name: string; costText: string; pctText: string; scale: number | null; held: boolean; lift: LiftView }
-export interface LiftView { isOwner: boolean; owner: string; governingId: string; governingTitle: string }
+export interface LiftView { isOwner: boolean; owner: string; governingId: string; governingTitle: string; capMicros?: number | null; spentMicros?: number | null }
 export interface CardCostShare { rowId: number; costText: string }
 export interface CardCostView extends ArgentCostView { held: boolean; items: CardCostItem[]; split: CardCostShare[] }
 
@@ -80,6 +80,8 @@ export function cardCostView(snap: ArgentCostSnapshot | null | undefined, rowId:
         owner: it?.budget?.owner_name ?? '',
         governingId: it?.budget?.governing_item_id ?? '',
         governingTitle: it?.budget?.governing_item_title ?? '',
+        capMicros: it?.budget?.cap_micros ?? null,
+        spentMicros: it?.budget?.effective_spent_micros ?? it?.budget?.spent_micros ?? null,
       },
     };
   });

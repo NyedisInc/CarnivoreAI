@@ -19,7 +19,7 @@ import { cplugEnablement } from '../../plugins/host/enablement.svelte';
 
 // Task Manager is on by default for a clean install since 2026-10-05 (docs/cplugs.md section 9 question 1, superseded);
 // these tests pin its enablement explicitly instead of leaning on the default.
-cplugEnablement.enabled = { huddle: true };
+cplugEnablement.enabled = { taskmanager: true };
 import type { DynamicTabDef } from './types';
 
 let app: ReturnType<typeof mount> | null = null;

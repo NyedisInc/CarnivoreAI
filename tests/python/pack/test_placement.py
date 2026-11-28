@@ -41,6 +41,9 @@ class FakeRuntime:
     def settings(self):
         return self._settings
 
+    def operating_settings(self):
+        return self._settings
+
     def own_snapshot(self):
         return self.own
 

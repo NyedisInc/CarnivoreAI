@@ -22,9 +22,14 @@ from websockets.asyncio.server import serve, unix_serve  # noqa: E402
 
 from src.api import peer_ws_auth  # noqa: E402
 from src.api.websocket import router  # noqa: E402
-from src.core.federation import peer_hosts, peer_links, peer_terminal_proxy as proxy  # noqa: E402
+from src.core.federation import mesh_peers, peer_hosts, peer_links, peer_terminal_proxy as proxy  # noqa: E402
 from src.core.federation.peer_client import Route  # noqa: E402
 from tests.test_ws_subprotocol_auth import _mint_token, patched_auth_config  # noqa: E402,F401
+
+
+@pytest.fixture(autouse=True)
+def _star_links_only(monkeypatch):
+    monkeypatch.setattr(mesh_peers, "REGISTRY", None)
 
 INSTALL_ID = "iid-studio-0001"
 HOST_KEY = "peer-legacy"
@@ -107,7 +112,7 @@ def viewer(tmp_path, monkeypatch):
         client = FakeClient(sock, made["owner"].port)
         monkeypatch.setattr(peer_links, "LINKS", SimpleNamespace(connected_clients=lambda: [(INSTALL_ID, client)]))
         monkeypatch.setattr(proxy.peer_auth, "open_db", lambda: SimpleNamespace(close=lambda: None))
-        monkeypatch.setattr(proxy.peer_hosts, "get", lambda _conn, iid: SimpleNamespace(key=STORED_KEY) if iid == INSTALL_ID else None)
+        monkeypatch.setattr(proxy.peer_hosts, "get", lambda _conn, iid, include_mesh=False: SimpleNamespace(key=STORED_KEY) if iid == INSTALL_ID else None)
         app = FastAPI()
         app.include_router(router)
         app.state.session_manager = SimpleNamespace()

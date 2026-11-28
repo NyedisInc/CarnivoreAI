@@ -16,7 +16,7 @@ def _state_dir(state_dir: Optional[Path]) -> Path:
 
 
 def is_on(cplug_id: str, state_dir: Optional[Path] = None) -> bool:
-    definition = runtime.find(cplug_id)
+    definition = runtime.find(runtime.canonical_id(cplug_id))
     if definition is None:
         return False
     return owner_state.get(_state_dir(state_dir), definition.manifest).enabled
@@ -25,6 +25,7 @@ def is_on(cplug_id: str, state_dir: Optional[Path] = None) -> bool:
 def blocked_by(cplug_id: str, state_dir: Optional[Path] = None) -> Tuple[str, ...]:
     root = _state_dir(state_dir)
     blocked: list = []
+    cplug_id = runtime.canonical_id(cplug_id)
     seen: Set[str] = {cplug_id}
     definition = runtime.find(cplug_id)
     queue = list(definition.manifest.requires) if definition is not None else []

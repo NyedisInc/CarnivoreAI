@@ -16,7 +16,8 @@ OWNER_PREFIX = "/api/v1/cplug-owner/"
 SAFE_MODE_PATH = "/api/v1/cplugs/safe-mode"
 SECRETS_SEGMENT = "/secrets/"
 PLUGIN_FORWARD_MODULE = "src/plugins/host/sidecar_routes.py::"
-UI_ASSET_SEGMENTS = ("/ui/", "/preview", "/view/")
+INSPECTOR_MODULE = "src/plugins/host/inspector_routes.py::"
+UI_ASSET_SEGMENTS = ("/ui/", "/preview", "/view/", "/slots", "/icon", "/screenshots/")
 
 EXTRA_REACH: Dict[str, FrozenSet[str]] = {
     "plugin_sideload_add": frozenset({"src.plugins.host.sideload_git_routes:post_sideload_git"}),
@@ -41,6 +42,8 @@ REASON_FITS: Dict[str, Callable[[Dict[str, str]], bool]] = {
     "plugin-owned": lambda r: cp.first_ticked(r["Where"]).startswith(PLUGIN_FORWARD_MODULE),
     "ui-asset": lambda r: any(s in cp.first_ticked(r["Path"]) for s in UI_ASSET_SEGMENTS) and cp.first_ticked(r["Inputs"]) == cp.NONE_CELL,
     "platform": lambda r: cp.first_ticked(r["Path"]).startswith(CATALOG_PREFIX),
+    "webhook": lambda r: "/webhook/" in cp.first_ticked(r["Path"]),
+    "inspector": lambda r: cp.first_ticked(r["Where"]).startswith(INSPECTOR_MODULE) and cp.first_ticked(r["Path"]).endswith(("/inspector", "/pause", "/resume")),
 }
 
 

@@ -22,8 +22,8 @@ function response(name) {
 }
 
 const EXPECT = {
-  yesno: ['question on nostromo', 'carnivore-ask', false, [], 'type an answer', true],
-  choice: ['pick one on nostromo', 'carnivore-ask', false, [], 'type an answer', true],
+  yesno: ['', 'carnivore-ask', false, [], 'type an answer', true],
+  choice: ['', 'carnivore-ask', false, [], 'type an answer', true],
   permission: ['permission on studio', 'carnivore-ask', false, [], null, true],
   file: ['file on nostromo', 'carnivore-soft', false, ['open_file', 'save_file'], null, false],
   link: ['link on nostromo', 'carnivore-soft', false, ['open_link', 'copy_link'], null, false],

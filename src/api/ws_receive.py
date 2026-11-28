@@ -17,6 +17,7 @@ from src.api.resize_negotiation import apply_negotiated_resize, measured_size_fr
 from src.api import ws_repaint
 from src.api import terminal_socket_role as socket_role
 from src.core import db, viewer_fanout
+from src.core.attention import viewer_focus
 from src.core.pack.reserve import session_demote
 from src.core.perf_hooks.monitor import PERF
 from src.api.ws_input_pipeline import InputPipeline
@@ -136,6 +137,12 @@ async def receive_messages(
 
                         elif msg_type == WSMessageType.REPAINT:
                             await ws_repaint.repaint(websocket, session_id, stream)
+
+                        elif msg_type == WSMessageType.VIEWER_FOCUS:
+                            if session_id and isinstance(msg.get("focused"), bool):
+                                viewer_focus.report_focus(
+                                    session_manager, session_id, websocket, msg["focused"],
+                                    marks_viewed=role.marks_viewed)
 
                         elif msg_type == WSMessageType.PAUSE and viewer_fanout.is_viewer_stream(stream):
                             stream.paused = True

@@ -17,6 +17,7 @@ from src.core.db import connect, db_path_for, set_meta
 from src.core.exports.store import crate_written_key
 from src.core.project_move.paths import PathMapping
 from src.core.stats.plugin.extract import project_key
+from src.core.work import folders
 from src.plugins.crate.handle import JobHandle
 from src.plugins.crate.plan import build_plan as build_export_plan
 from src.plugins.crate.writer import run_export
@@ -117,9 +118,9 @@ def test_a_messages_file_path_follows_the_new_item_id(tmp_path: Path) -> None:
     new_item = message["item_id"]
     assert new_item != crate.world.item_a
     assert json.loads(message["parts"])["files"][0]["path"] == f"files/{new_item}/x.html"
-    placed = install.state / "cplugs" / "huddle" / "files" / str(new_item) / "x.html"
+    placed = install.state / "cplugs" / folders.CURRENT_ID / "files" / str(new_item) / "x.html"
     assert placed.read_text() == "<p>artifact</p>"
-    assert not (install.state / "cplugs" / "huddle" / "files" / str(crate.world.item_a)).exists() or new_item == crate.world.item_a
+    assert not (install.state / "cplugs" / folders.CURRENT_ID / "files" / str(crate.world.item_a)).exists() or new_item == crate.world.item_a
     assert receipt.task_files["written"] == 3 - receipt.task_files["no_item"] and receipt.task_files["failed"] == []
 
 

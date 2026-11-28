@@ -1,5 +1,7 @@
 
 <script lang="ts">
+    import IconButton from '../base/IconButton.svelte';
+
     interface Props {
         text: string;
         label: string;
@@ -12,12 +14,14 @@
 </script>
 
 <span class="info-tip" data-open={open ? '1' : undefined}>
-    <button
-        type="button"
-        class="info-tip__btn"
-        aria-label={label}
+    <IconButton
+        variant="secondary"
+        label={label}
+        tooltip={text}
+        active={open}
         aria-expanded={open}
         aria-controls={noteId}
+        data-info-tip-btn=""
         onclick={() => (open = !open)}
         onkeydown={(event) => {
             if (event.key === 'Escape' && open) {
@@ -25,7 +29,7 @@
                 open = false;
             }
         }}
-    >i</button>
+    >i</IconButton>
     {#if open}
         <span class="info-tip__note" id={noteId} role="note">{text}</span>
     {/if}
@@ -41,28 +45,6 @@
         min-width: 0;
     }
 
-    .info-tip__btn {
-        box-sizing: border-box;
-        width: 16px;
-        height: 16px;
-        padding: 0;
-        border: 1px solid var(--oc-line-panel);
-        border-radius: var(--oc-radius-sm);
-        background: transparent;
-        color: var(--oc-text-muted);
-        font-family: var(--font-mono);
-        font-size: 10px;
-        font-style: italic;
-        line-height: 1;
-        cursor: pointer;
-    }
-
-    .info-tip__btn:hover,
-    .info-tip[data-open] .info-tip__btn {
-        border-color: var(--oc-orange);
-        color: var(--oc-orange);
-    }
-
     .info-tip__note {
         min-width: 0;
         max-width: 60ch;
@@ -70,14 +52,6 @@
         font-family: var(--font-mono);
         font-size: var(--oc-fs-hint);
         line-height: 1.5;
-    }
-
-    @media (max-width: 767px) {
-        .info-tip__btn {
-            width: var(--oc-tap, 28px);
-            height: var(--oc-tap, 28px);
-            font-size: 13px;
-        }
     }
   }
 </style>

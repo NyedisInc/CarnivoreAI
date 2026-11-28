@@ -1,0 +1,29 @@
+schema = 2
+api_version = 1
+id = "share"
+name = "share read only"
+description = "hand out a link that lets someone watch a session without typing into it. needs a carnivore account"
+name_key = "cplug.share.name"
+description_key = "cplug.share.description"
+version = "1.0.0"
+kind = "plugin"
+icon = "link"
+author = "Alex (example-owner)"
+license = "MIT"
+min_app_version = "1.12.20"
+tier = "builtin"
+default_enabled = true
+data = []
+
+[ui]
+plugins = ["session-card-action"]
+
+[owns]
+strings = ["cplug.share."]
+tests = ["tests/python/cplugs/share/", "web/src/cplugs/share/"]
+style_guide = ["web/src/cplugs/share/ShareModal.svelte"]
+contributions = ["session.card_action"]
+
+[settings_schema]
+version = 1
+fields = {}

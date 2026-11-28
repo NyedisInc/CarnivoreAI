@@ -1,81 +1,7 @@
-/* the detail pane */
-@property --ap-dr-w {
-    syntax: '<length>';
-    inherits: true;
-    initial-value: 0px;
-}
-
 @layer components {
-    .ap-page > * {
-        --ap-dr-w: min(420px, 100cqi);
-    }
-
     .ap-page .ap-dr {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        z-index: var(--oc-z-sheet);
-        display: flex;
-        flex-direction: column;
-        width: var(--ap-dr-w);
-        max-width: 100%;
         min-width: 0;
-        background: var(--oc-ground-panel);
-        box-shadow: -1px 0 0 0 var(--oc-line-rule);
         outline: none;
-        transform: translateX(100%);
-        visibility: hidden;
-        transition:
-            transform var(--oc-motion) ease-out,
-            visibility 0s linear var(--oc-motion);
-    }
-
-    .ap-page[data-pane-open] .ap-dr {
-        margin-right: var(--ap-pn-dock);
-    }
-
-    .ap-page .ap-dr[data-open] {
-        transform: none;
-        visibility: visible;
-        transition:
-            transform var(--oc-motion) ease-out,
-            visibility 0s;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        .ap-page .ap-dr,
-        .ap-page .ap-dr[data-open] {
-            transition: none;
-        }
-    }
-
-    @container ap-page (max-width: 1100px) {
-        .ap-page > * {
-            --ap-dr-w: 100cqi;
-        }
-    }
-
-    @container ap-page (min-width: 1100.02px) {
-        .ap-page[data-drawer-open] > :not(.ap-dr):not(.ap-pn) {
-            margin-right: var(--ap-dr-w);
-        }
-    }
-
-    .ap-page .ap-dr-bar {
-        flex: none;
-        justify-content: space-between;
-    }
-
-    .ap-page .ap-dr-lab {
-        margin-right: auto;
-    }
-
-    .ap-page .ap-dr-scroll {
-        flex: 1 1 0;
-        min-height: 0;
-        overflow-y: auto;
-        overscroll-behavior: contain;
     }
 
     .ap-page .ap-dr-st {
@@ -117,42 +43,5 @@
         color: var(--oc-text-secondary);
         overflow-wrap: anywhere;
         margin: 0;
-    }
-
-    @media (max-width: 767px) {
-        .ap-page .ap-dr {
-            position: sticky;
-            order: -1;
-            flex: none;
-            align-self: stretch;
-            width: auto;
-            height: calc(100dvh - var(--overlay-top, 0px));
-            margin-bottom: calc(-1 * (100dvh - var(--overlay-top, 0px)));
-        }
-
-        .ap-page .ap-dr-lab {
-            margin-right: 0;
-        }
-
-        .ap-page .ap-dr-bar {
-            justify-content: flex-start;
-        }
-
-    }
-
-    .ap-page [data-dr-back] {
-        display: none;
-    }
-
-    @media (max-width: 767px) {
-        .ap-page [data-dr-back] {
-            display: inline-flex;
-            min-width: 44px;
-            min-height: 44px;
-        }
-
-        .ap-page [data-dr-close]:not([data-dr-back]) {
-            display: none;
-        }
     }
 }

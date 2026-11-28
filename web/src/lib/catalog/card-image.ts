@@ -7,6 +7,9 @@ export const MAX_IMAGE_SIDE = 8192;
 export const MAX_IMAGE_PIXELS = 16_000_000;
 export const RATIO_MIN = 1.5;
 export const RATIO_MAX = 3.0;
+export const SCREENSHOT_MIN_SIDE = 360;
+export const SCREENSHOT_RATIO_MIN = 0.5;
+export const SCREENSHOT_RATIO_MAX = 3.2;
 
 const IMAGE_KINDS: readonly string[] = ['skill', 'theme', 'plugin'];
 
@@ -74,6 +77,24 @@ export function checkHeroImage(bytes: Uint8Array, size: number): HeroCheck {
     }
     const ratio = w / h;
     if (ratio < RATIO_MIN || ratio > RATIO_MAX) {
+        return { ok: false, key: 'skill.publish.card_image.bad_shape', params: { ratio: ratio.toFixed(1) } };
+    }
+    return { ok: true, type, w, h };
+}
+
+export function checkScreenshotImage(bytes: Uint8Array, size: number): HeroCheck {
+    if (size > MAX_IMAGE_BYTES) return { ok: false, key: 'skill.publish.hero.too_big' };
+    const found = readImageSize(bytes);
+    if (!found) return { ok: false, key: 'skill.publish.refused.bad_image' };
+    const { type, w, h } = found;
+    if (Math.min(w, h) < SCREENSHOT_MIN_SIDE) {
+        return { ok: false, key: 'skill.publish.card_image.too_small', params: { w: String(w), h: String(h) } };
+    }
+    if (w > MAX_IMAGE_SIDE || h > MAX_IMAGE_SIDE || w * h > MAX_IMAGE_PIXELS) {
+        return { ok: false, key: 'skill.publish.card_image.too_many_px', params: { w: String(w), h: String(h) } };
+    }
+    const ratio = w / h;
+    if (ratio < SCREENSHOT_RATIO_MIN || ratio > SCREENSHOT_RATIO_MAX) {
         return { ok: false, key: 'skill.publish.card_image.bad_shape', params: { ratio: ratio.toFixed(1) } };
     }
     return { ok: true, type, w, h };

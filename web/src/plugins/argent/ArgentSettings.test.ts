@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { afterEach, describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test, vi } from 'vitest';
 import { flushSync, mount, tick, unmount } from 'svelte';
 
 import ArgentSettings from './ArgentSettings.svelte';
@@ -9,7 +9,7 @@ setLocale('en');
 
 interface Call { path: string; method: string; body: unknown }
 
-function harness(over: Record<string, unknown> = {}, refuse = false) {
+function harness(over: Record<string, unknown> = {}, refuse = false, answers: Record<string, unknown> = {}) {
     const status = {
         feature_on: true,
         settings: { server_url: 'https://cp.example', gateway_url: 'https://gw.example', ca_path: '', enabled: false, refuse_direct_launch: false },
@@ -21,6 +21,7 @@ function harness(over: Record<string, unknown> = {}, refuse = false) {
     const fetcher = (async (path: string, init?: RequestInit) => {
         const body = init?.body ? JSON.parse(String(init.body)) : null;
         calls.push({ path, method: init?.method ?? 'GET', body });
+        if (path in answers) return answers[path];
         if (path === '/argent/rollout/preview') return { enabled: true, direction: 'on', total: 0, tethered: 0, pending: 0, will_restart: 0, adopted: 0, subagents: 0, background: 0, excluded: {}, reasons: {} };
         if (path === '/argent/rollout') return { enabled: true, state: 'none', direction: '', epoch: 0, reason: '', counts: {}, reasons: {}, rows: [] };
         if (path === '/argent/settings' && init?.method === 'PUT') {
@@ -86,14 +87,21 @@ describe('ArgentSettings', () => {
         expect(el(root, 'refusal')!.textContent).toContain('the gateway body cap is too low');
     });
 
-    test('log in starts the device login, and a pending login shows its code and address', async () => {
-        const h = harness({ login: { state: 'logged_out', display_name: '', flow: { state: 'idle' } } });
+    test('log in starts the device login and opens its page in the browser, and a pending login shows its code and a cancel', async () => {
+        const url = 'https://cp.example/device';
+        const tab = { location: { href: '' }, close: vi.fn(), opener: {} };
+        const open = vi.spyOn(window, 'open').mockReturnValue(tab as unknown as Window);
+        const h = harness({ login: { state: 'logged_out', display_name: '', flow: { state: 'idle' } } }, false, { '/argent/login/start': { state: 'pending', user_code: 'ABCD-EFGH', verification_uri: url } });
         const root = await render(h);
         el(root, 'log-in')!.click();
         await settle();
         expect(h.calls.some((c) => c.path === '/argent/login/start' && c.method === 'POST')).toBe(true);
-        const pending = await render(harness({ login: { state: 'pending', display_name: '', flow: { state: 'pending', user_code: 'ABCD-EFGH', verification_uri: 'https://cp.example/device?user_code=ABCD-EFGH' } } }));
+        expect(tab.location.href).toBe(url);
+        expect(el(root, 'link')).toBeNull();
+        open.mockRestore();
+        const pending = await render(harness({ login: { state: 'pending', display_name: '', flow: { state: 'pending', user_code: 'ABCD-EFGH', verification_uri: url } } }));
         expect(el(pending, 'code')!.textContent).toContain('ABCD-EFGH');
-        expect(el(pending, 'link')!.getAttribute('href')).toContain('/device');
+        expect(el(pending, 'open')).toBeNull();
+        expect(el(pending, 'log-out')!.textContent).toContain('cancel');
     });
 });

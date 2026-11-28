@@ -127,6 +127,23 @@ def _is_synthetic_turn(record: Dict[str, Any]) -> bool:
     return record.get("type") == "assistant" and isinstance(message, dict) and message.get("model") == SYNTHETIC_MODEL
 
 
+_RELEVANT_LINE_BYTES: Tuple[bytes, ...] = (
+    b'"usage"',
+    b"local_command",
+    b"<local-command-stdout>",
+    b"ultra_effort_",
+)
+
+
+def _may_affect_totals(stripped: bytes) -> bool:
+    if stripped[0:1] != b"{" or stripped[-1:] != b"}" or b'"type":' not in stripped:
+        return True
+    for marker in _RELEVANT_LINE_BYTES:
+        if marker in stripped:
+            return True
+    return False
+
+
 def scan_lines(handle: BinaryIO, totals: TranscriptTotals) -> Tuple[TranscriptTotals, int]:
     offset = handle.tell()
     while True:
@@ -138,6 +155,8 @@ def scan_lines(handle: BinaryIO, totals: TranscriptTotals) -> Tuple[TranscriptTo
         offset += len(line)
         stripped = line.strip()
         if not stripped:
+            continue
+        if not _may_affect_totals(stripped):
             continue
         try:
             record = json.loads(stripped)

@@ -1,0 +1,37 @@
+  # Swarm agent instructions (imported file text)
+  - rule 1: keep the desk tidy and report through swarm_say, never guess.
+  - rule 2: keep the desk tidy and report through swarm_say, never guess.
+  - rule 3: keep the desk tidy and report through swarm_say, never guess.
+  - rule 4: keep the desk tidy and report through swarm_say, never guess.
+  - rule 5: keep the desk tidy and report through swarm_say, never guess.
+  - rule 6: keep the desk tidy and report through swarm_say, never guess.
+  - rule 7: keep the desk tidy and report through swarm_say, never guess.
+  - rule 8: keep the desk tidy and report through swarm_say, never guess.
+  - rule 9: keep the desk tidy and report through swarm_say, never guess.
+  - rule 10: keep the desk tidy and report through swarm_say, never guess.
+  - rule 11: keep the desk tidy and report through swarm_say, never guess.
+  - rule 12: keep the desk tidy and report through swarm_say, never guess.
+  - rule 13: keep the desk tidy and report through swarm_say, never guess.
+  - rule 14: keep the desk tidy and report through swarm_say, never guess.
+  - rule 15: keep the desk tidy and report through swarm_say, never guess.
+  - rule 16: keep the desk tidy and report through swarm_say, never guess.
+  - rule 17: keep the desk tidy and report through swarm_say, never guess.
+  - rule 18: keep the desk tidy and report through swarm_say, never guess.
+  - rule 19: keep the desk tidy and report through swarm_say, never guess.
+  - rule 20: keep the desk tidy and report through swarm_say, never guess.
+  - rule 21: keep the desk tidy and report through swarm_say, never guess.
+  - rule 22: keep the desk tidy and report through swarm_say, never guess.
+  - rule 23: keep the desk tidy and report through swarm_say, never guess.
+  - rule 24: keep the desk tidy and report through swarm_say, never guess.
+  - rule 25: keep the desk tidy and report through swarm_say, never guess.
+  - rule 26: keep the desk tidy and report through swarm_say, never guess.
+  - rule 27: keep the desk tidy and report through swarm_say, never guess.
+  - rule 28: keep the desk tidy and report through swarm_say, never guess.
+  - rule 29: keep the desk tidy and report through swarm_say, never guess.
+  - rule 30: keep the desk tidy and report through swarm_say, never guess.
+────────────────────────────────────────────────────────────────────────────────────────────────────
+
+  ❯ No, disable external imports
+    Yes, allow external imports
+
+  Enter to confirm · Esc to cancel

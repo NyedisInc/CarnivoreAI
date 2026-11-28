@@ -14,7 +14,7 @@
     import { refreshAccount } from './account-store.svelte';
     import { openRegisterModal } from './open-register';
     import { openSignInModal } from './open-signin';
-    import { signOutOfAccount } from './sign-in-door';
+    import { signOutOfAccount, signOutOfEverywhere } from './sign-in-door';
 
     interface Props {
         host?: CatalogHost;
@@ -28,6 +28,7 @@
     let newsNote = $state<string | null>(null);
     let signOutNote = $state<string | null>(null);
     let working = $state(false);
+    let confirmAll = $state(false);
 
     const facts = $derived(catalogAccount.facts);
     const signedIn = $derived(facts?.signedIn === true);
@@ -74,6 +75,18 @@
         signOutNote = null;
         try {
             if (!(await signOutOfAccount(host))) signOutNote = t('account.page.signout_failed');
+        } finally {
+            working = false;
+        }
+    }
+
+    async function signOutAll(): Promise<void> {
+        if (working) return;
+        working = true;
+        signOutNote = null;
+        try {
+            if (await signOutOfEverywhere(host as Parameters<typeof signOutOfEverywhere>[0])) confirmAll = false;
+            else signOutNote = t('account.page.signout_failed');
         } finally {
             working = false;
         }
@@ -135,6 +148,21 @@
             <Button data-account-signout disabled={working} onclick={() => void signOut()}>
                 {t('account.page.signout')}
             </Button>
+            {#if !confirmAll}
+                <Button data-account-signout-all disabled={working} onclick={() => (confirmAll = true)}>
+                    {t('account.page.signout_all')}
+                </Button>
+            {:else}
+                <p class="acctpage__note" role="alert" data-account-signout-all-confirm>
+                    {t(catalogAccount.viaLink ? 'account.page.signout_all_confirm_phone' : 'account.page.signout_all_confirm')}
+                </p>
+                <Button data-account-signout-all-yes disabled={working} onclick={() => void signOutAll()}>
+                    {t('account.page.signout_all_yes')}
+                </Button>
+                <Button data-account-signout-all-no disabled={working} onclick={() => (confirmAll = false)}>
+                    {t('account.page.signout_all_no')}
+                </Button>
+            {/if}
             {#if signOutNote}
                 <p class="acctpage__note" role="status">{signOutNote}</p>
             {/if}

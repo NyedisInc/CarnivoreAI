@@ -1,4 +1,4 @@
-import { ALL_LIST, TASK_MANAGER_FAMILY, type HuddleItem, type TaskManagerRepeat } from '../../plugins/huddle/huddle-model';
+import { ALL_LIST, TASK_MANAGER_FAMILY, type HuddleItem, type TaskManagerRepeat } from '../../plugins/taskmanager/huddle-model';
 import { authFetch } from '../../opscenter/api/auth.svelte';
 
 export const TASK_MANAGER_SCHEDULED_ROUTE = '/cplugs/huddle/scheduled';

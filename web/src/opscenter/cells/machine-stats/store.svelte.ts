@@ -2,6 +2,42 @@
 import { authFetch } from '../../api/auth.svelte';
 import { resource, type Resource } from '../../api/poll.svelte';
 
+export interface MachineVitalsEntry {
+  install_id: string;
+  label: string;
+  is_self: boolean;
+  cpu_percent: number | null;
+  cpu_count: number | null;
+  memory_percent: number | null;
+  memory_used_bytes: number | null;
+  memory_total_bytes: number | null;
+  disk_percent: number | null;
+  disk_free_bytes: number | null;
+  disk_total_bytes: number | null;
+  load_1: number | null;
+  load_5: number | null;
+  load_15: number | null;
+  uptime_seconds: number | null;
+  live_agents: number | null;
+}
+
+export interface MachineVitalsAggregate {
+  machine_count: number;
+  cpu_percent: number | null;
+  cpu_count: number | null;
+  memory_percent: number | null;
+  memory_used_bytes: number | null;
+  memory_total_bytes: number | null;
+  disk_percent: number | null;
+  disk_free_bytes: number | null;
+  disk_total_bytes: number | null;
+  load_1: number | null;
+  load_5: number | null;
+  load_15: number | null;
+  uptime_seconds: number | null;
+  live_agents: number | null;
+}
+
 export interface MachineStats {
   cpu_percent: number | null;
   cpu_count: number | null;
@@ -15,6 +51,8 @@ export interface MachineStats {
   load_5: number | null;
   load_15: number | null;
   uptime_seconds: number | null;
+  machines?: MachineVitalsEntry[];
+  pack_aggregate?: MachineVitalsAggregate | null;
 }
 
 export const MACHINE_STATS_FALLBACK_MS = 15000;

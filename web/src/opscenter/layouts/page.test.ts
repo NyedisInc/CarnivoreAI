@@ -324,3 +324,27 @@ test('opening a Layout records it as the last view, and it holds its anchor but 
   expect(layoutPageApi.holds('s-a', 'cloude_api')).toBe(true);
   expect(layoutPageApi.holds('s-q', 'cloude_other')).toBe(false);
 });
+
+test('when TerminalHistoryGate is loaded, bindAnchor enters the terminal immediately without blocking on scrollback (#3341)', async () => {
+  let releaseCapture!: () => void;
+  capture.gate = new Promise<void>((resolve) => { releaseCapture = resolve; });
+  const received: Array<{ session?: { id?: string }; initial_scrollback_pending?: Promise<string | null> }> = [];
+  win.TerminalHistoryGate = { begin: () => undefined };
+  win.App = {
+    currentScreen: 'terminal',
+    returnToExistingTerminal: (row: { session?: { id?: string }; initial_scrollback_pending?: Promise<string | null> }) => {
+      received.push(row);
+      entered.push(row.session?.id ?? '');
+    },
+  };
+  try {
+    await openLayout('L1');
+    expect(entered).toEqual(['s-a']);
+    expect(received[0]?.initial_scrollback_pending).toBeInstanceOf(Promise);
+    releaseCapture();
+    await received[0]!.initial_scrollback_pending;
+  } finally {
+    delete win.TerminalHistoryGate;
+    capture.gate = null;
+  }
+});

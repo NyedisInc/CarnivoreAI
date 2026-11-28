@@ -377,4 +377,57 @@ describe('an off plugin that needs the owner\'s consent (#2572)', () => {
         expect(root.querySelector('[data-perm-tick]')).toBeNull();
         expect(root.querySelector('[data-cplug-grant]')).toBeNull();
     });
+
+    test('renders ui_slots ticks on the permission sheet and forwards slotTicks + uiSlots on grant', async () => {
+        const slotRow: CplugRow = {
+            ...SIDELOAD,
+            permissions: { app: ['sessions.read'] },
+            needs: [],
+            risks: { 'sessions.read': 'low' },
+            ui_contribute: { 'terminal.toolbar': [{ id: 'btn', label: 'Run', route: 'run' }] },
+        };
+        const slotSheet: CplugSheet = {
+            digest: 'slot-d',
+            body_sha: 'slot-b',
+            grants_sha: 'slot-g',
+            permissions: [{ name: 'sessions.read', risk: 'low', granted: false }],
+            ui_slots: [
+                {
+                    slot: 'terminal.toolbar',
+                    count: 1,
+                    risk: 'medium',
+                    reason: 'show run shortcut',
+                    granted: false,
+                    needs_tick: true,
+                },
+            ],
+            ui_slots_sha: 'slot-sha-1',
+        };
+        const grant = vi.fn(async () => ({}));
+        const root = await openPane([slotRow], 'flowview', {
+            grant,
+            loadSheet: async () => slotSheet,
+        });
+        await openPermissions(root);
+
+        const slotTick = root.querySelector<HTMLInputElement>('[data-perm-slot-tick="terminal.toolbar"]')!;
+        const button = root.querySelector<HTMLButtonElement>('[data-cplug-grant]')!;
+        expect(slotTick).not.toBeNull();
+        expect(slotTick.checked).toBe(false);
+        expect(root.querySelector('[data-perm-slot-reason]')?.textContent).toContain('show run shortcut');
+        expect(button.disabled).toBe(true);
+
+        slotTick.click();
+        await settle();
+        expect(button.disabled).toBe(false);
+
+        button.click();
+        await settle();
+        expect(grant).toHaveBeenCalledExactlyOnceWith('flowview', [], {
+            enable: true,
+            seen: slotSheet,
+            slotTicks: ['terminal.toolbar'],
+            uiSlots: ['terminal.toolbar'],
+        });
+    });
 });

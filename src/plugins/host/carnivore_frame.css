@@ -1,0 +1,166 @@
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--oc-ground-page);
+    color: var(--oc-text-primary);
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+    line-height: var(--oc-lh-body);
+}
+
+body {
+    padding: var(--oc-space-4);
+}
+
+h1,
+h2,
+h3,
+h4 {
+    margin: 0 0 var(--oc-space-2) 0;
+    color: var(--oc-text-bright);
+    line-height: var(--oc-lh-tight);
+}
+
+h1 {
+    font-size: var(--oc-fs-heading);
+}
+
+h2 {
+    font-size: var(--oc-fs-card-name);
+}
+
+h3,
+h4 {
+    font-size: var(--oc-fs-status);
+}
+
+p {
+    margin: 0 0 var(--oc-space-3) 0;
+    color: var(--oc-text-secondary);
+}
+
+a {
+    color: var(--oc-cyan);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+hr {
+    border: 0;
+    border-top: var(--oc-border) solid var(--oc-line-rule);
+    margin: var(--oc-space-3) 0;
+}
+
+code,
+pre {
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-body);
+    background: var(--oc-ground-field);
+    color: var(--oc-text-primary);
+    border: var(--oc-border) solid var(--oc-line-faint);
+    border-radius: var(--oc-radius-control);
+}
+
+code {
+    padding: 0 var(--oc-space-1);
+}
+
+pre {
+    margin: 0 0 var(--oc-space-3) 0;
+    padding: var(--oc-space-3);
+    overflow: auto;
+}
+
+pre code {
+    border: 0;
+    padding: 0;
+}
+
+button {
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-control);
+    line-height: var(--oc-lh-tight);
+    color: var(--oc-text-bright);
+    background: var(--oc-ground-raised);
+    border: var(--oc-border) solid var(--oc-line-button);
+    border-radius: var(--oc-radius-control);
+    padding: var(--oc-space-1-5) var(--oc-space-3);
+    cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+    background: var(--oc-ground-hover);
+    border-color: var(--oc-line-button-hover);
+}
+
+button:disabled {
+    color: var(--oc-text-dim);
+    cursor: not-allowed;
+}
+
+input,
+textarea,
+select {
+    font-family: var(--oc-font);
+    font-size: var(--oc-fs-control);
+    line-height: var(--oc-lh-body);
+    color: var(--oc-text-primary);
+    background: var(--oc-ground-field);
+    border: var(--oc-border) solid var(--oc-line-control);
+    border-radius: var(--oc-radius-control);
+    padding: var(--oc-space-1-5) var(--oc-space-2);
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+button:focus-visible {
+    outline: var(--oc-border) solid var(--oc-cyan);
+}
+
+label {
+    display: block;
+    color: var(--oc-text-secondary);
+    font-size: var(--oc-fs-label);
+    margin-bottom: var(--oc-space-1);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 var(--oc-space-3) 0;
+    background: var(--oc-ground-panel);
+    border: var(--oc-border) solid var(--oc-line-panel);
+}
+
+th,
+td {
+    text-align: left;
+    padding: var(--oc-space-2) var(--oc-space-3);
+    border-bottom: var(--oc-border) solid var(--oc-line-faint);
+    color: var(--oc-text-primary);
+    font-size: var(--oc-fs-body);
+}
+
+th {
+    color: var(--oc-text-muted);
+    background: var(--oc-ground-raised);
+}
+
+ul,
+ol {
+    margin: 0 0 var(--oc-space-3) 0;
+    padding-left: var(--oc-space-5);
+    color: var(--oc-text-secondary);
+}

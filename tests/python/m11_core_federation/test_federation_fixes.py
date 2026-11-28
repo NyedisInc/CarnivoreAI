@@ -118,6 +118,7 @@ def test_the_crown_path_encodes_the_name_and_client_id_and_survives_an_empty_bod
             return _Reply(404, bad_json=True)
 
     monkeypatch.setattr(peer_terminal_proxy, "_peer_client", lambda _key: Client())
+    monkeypatch.setattr(peer_terminal_proxy.mesh_peers, "REGISTRY", None)
     status, data = asyncio.run(peer_terminal_proxy.forward_crown("peer-ab", "a/b?c", "GET", "wire", client_id="x y&z=1"))
     assert seen["path"] == "/sessions/a%2Fb%3Fc/size-master?client_id=x+y%26z%3D1"
     assert (status, data) == (404, {})
@@ -132,7 +133,7 @@ def test_sync_restarts_a_follower_when_the_link_gets_a_new_client(monkeypatch: p
 
     connected = {"clients": []}  # type: Dict[str, list]
     monkeypatch.setattr(peer_event_stream, "_follow", follow)
-    monkeypatch.setattr(peer_event_stream.peer_hosts, "get", lambda _c, iid: SimpleNamespace(key="peer-" + iid))
+    monkeypatch.setattr(peer_event_stream.peer_hosts, "get", lambda _c, iid, **kw: SimpleNamespace(key="peer-" + iid))
     monkeypatch.setattr(peer_event_stream.peer_links, "LINKS",
                         SimpleNamespace(connected_clients=lambda: list(connected["clients"])))
 

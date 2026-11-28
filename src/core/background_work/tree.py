@@ -1,6 +1,7 @@
 
 from __future__ import annotations
 
+import os
 import subprocess
 import time
 from dataclasses import dataclass
@@ -50,8 +51,13 @@ class PaneTree:
     agent_pid: Optional[int]
 
 
+def is_agy_command(command: str) -> bool:
+    words = (command or "").split(None, 1)
+    return bool(words and os.path.basename(words[0]) == "agy")
+
+
 def is_agent_command(command: str) -> bool:
-    return is_claude_command(command) or is_codex_command(command)
+    return is_claude_command(command) or is_codex_command(command) or is_agy_command(command)
 
 
 def probe_pane_pids(
@@ -144,6 +150,6 @@ def measure(
 
 __all__ = [
     "MAX_ANCESTRY_HOPS", "PaneNotFound", "PaneTree", "TreeError", "TreeUnmeasured",
-    "ancestry", "find_agent", "is_agent_command", "is_strictly_below", "measure",
+    "ancestry", "find_agent", "is_agent_command", "is_agy_command", "is_strictly_below", "measure",
     "probe_pane_pids", "start_instant", "start_token",
 ]

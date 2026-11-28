@@ -35,12 +35,20 @@ function writeNotices(appPath, trees) {
   return out;
 }
 
-function stagePayload(appPath) {
+function archesForContext(context) {
+  const dir = path.basename(String((context && context.appOutDir) || ''));
+  if (dir === 'mac-universal') return [...TREE_ARCHES];
+  if (dir === 'mac-arm64' || (context && (context.arch === 3 || context.arch === 'arm64'))) return ['arm64'];
+  if (dir === 'mac' || dir === 'mac-x64' || (context && (context.arch === 1 || context.arch === 'x64'))) return ['x86_64'];
+  return [...TREE_ARCHES];
+}
+
+function stagePayload(appPath, arches = TREE_ARCHES) {
   const out = buildOutDir();
   const dest = path.join(appPath, 'Contents', 'Resources', 'payload');
   fs.rmSync(dest, { recursive: true, force: true });
   fs.mkdirSync(dest, { recursive: true });
-  const trees = TREE_ARCHES.map((arch) => {
+  const trees = arches.map((arch) => {
     if (!built.has(arch)) {
       ensureTree({ arch, out, key: cacheKey(arch), force: process.env.CARNIVORE_PAYLOAD_REBUILD === '1',
         build: (tmpOut) => run('bash', [BUILD_SCRIPT, arch, tmpOut]), log: console.log });
@@ -55,7 +63,7 @@ function stagePayload(appPath) {
   return trees;
 }
 
-function signPayload(appPath, identitySigned = false) {
+function signPayload(appPath, identitySigned = false, arches = TREE_ARCHES) {
   const sha1 = process.env.CARNIVORE_PAYLOAD_SIGN_SHA1;
   const keychain = process.env.CARNIVORE_PAYLOAD_SIGN_KEYCHAIN;
   if (!sha1 || !keychain) {
@@ -65,9 +73,9 @@ function signPayload(appPath, identitySigned = false) {
     return false;
   }
   const dest = path.join(appPath, 'Contents', 'Resources', 'payload');
-  run('bash', [SIGN_SCRIPT, ...TREE_ARCHES.map((arch) => path.join(dest, `payload-${arch}`)), '--identity', sha1, '--keychain', keychain]);
-  console.log(`[payload] wrote ${writeManifest(dest)}`);
+  run('bash', [SIGN_SCRIPT, ...arches.map((arch) => path.join(dest, `payload-${arch}`)), '--identity', sha1, '--keychain', keychain]);
+  console.log(`[payload] wrote ${writeManifest(dest, arches)}`);
   return true;
 }
 
-module.exports = { stagePayload, signPayload, buildOutDir, writeNotices };
+module.exports = { stagePayload, signPayload, archesForContext, buildOutDir, writeNotices };

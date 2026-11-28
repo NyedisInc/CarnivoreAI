@@ -5,7 +5,7 @@ import os
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Mapping, NamedTuple, Optional
 
 import structlog
 
@@ -161,55 +161,25 @@ def _socket_listing(socket_name: str, name: str) -> Any:
         return TmuxListing.unavailable("probe_error", detail=str(exc))
 
 
-def _row_to_take_from(
-    conn: Any,
-    *,
-    session_id: str,
+class TakeFrom(NamedTuple):
+
+    row_id: int
+    retired_no_pane: bool
+
+
+def _measure_against_socket(
+    facts: Mapping[str, Any],
+    holder: Mapping[str, Any],
     socket: str,
     tmux_name: str,
-    epoch: Optional[int],
-    registry_uuid: str,
     listing_reader: Optional[Callable[[], Any]],
     pane_probe: Optional[Callable[[str, str, Optional[int]], Optional[bool]]],
-) -> Optional[int]:
+) -> Any:
     from src.core.session_conversation_takeover import (
-        REASON_INCUMBENT_IS_THE_LIVE_ROW,
-        REASON_INCUMBENT_RUNNING,
         REASON_NAME_PRESENT,
         decide_conversation_takeover,
         probe_dead_instance_panes,
     )
-    from src.core.session_lineage import row_for_claude_uuid
-    from src.core.session_store import get_instance
-    from src.core.tmux_backend import SESSION_PREFIX
-
-    holder = row_for_claude_uuid(conn, registry_uuid)
-    if holder is None:
-        return None
-    anchor = get_instance(conn, socket=socket, name=tmux_name, epoch=epoch)
-
-    facts = {
-        "incumbent_row_id": holder.get("id"),
-        "incumbent_lifecycle": holder.get("lifecycle"),
-        "incumbent_tmux_name": holder.get("tmux_name"),
-        "live_row_id": None if anchor is None else anchor.get("id"),
-        "live_tmux_name": tmux_name,
-        "namespace_prefix": SESSION_PREFIX,
-    }
-    settled = decide_conversation_takeover(
-        listing_ok=False, listing_complete=False, names=None, **facts
-    )
-    if settled.reason in (
-        REASON_INCUMBENT_IS_THE_LIVE_ROW,
-        REASON_INCUMBENT_RUNNING,
-    ):
-        logger.debug(
-            "conversation_takeover_declined",
-            session_id=session_id,
-            tmux_name=tmux_name,
-            reason=settled.reason,
-        )
-        return None
 
     listing = listing_reader() if listing_reader is not None else _socket_listing(
         socket, tmux_name
@@ -227,6 +197,73 @@ def _row_to_take_from(
             listing_ok=True, listing_complete=True,
             names=list(getattr(listing, "sessions", None) or []),
             incumbent_panes_dead=dead, **facts,
+        )
+    return decision
+
+
+def _row_to_take_from(
+    conn: Any,
+    *,
+    session_id: str,
+    socket: str,
+    tmux_name: str,
+    epoch: Optional[int],
+    registry_uuid: str,
+    listing_reader: Optional[Callable[[], Any]],
+    pane_probe: Optional[Callable[[str, str, Optional[int]], Optional[bool]]],
+) -> Optional[TakeFrom]:
+    from src.core.session_conversation_takeover import (
+        REASON_INCUMBENT_IS_THE_LIVE_ROW,
+        REASON_INCUMBENT_RUNNING,
+        REASON_RETIRED_NO_PANE,
+        decide_conversation_takeover,
+    )
+    from src.core.session_lineage import row_for_claude_uuid
+    from src.core.session_store import get_instance
+    from src.core.tmux_backend import SESSION_PREFIX
+
+    holder = row_for_claude_uuid(conn, registry_uuid)
+    if holder is None:
+        return None
+    from src.core.sessions.adopt_takeover import recreate_in_flight
+
+    in_flight = recreate_in_flight(holder)
+    if in_flight is not None:
+        logger.debug("conversation_takeover_declined", session_id=session_id, tmux_name=tmux_name,
+                     reason="recreate_in_flight", detail=in_flight)
+        return None
+    anchor = get_instance(conn, socket=socket, name=tmux_name, epoch=epoch)
+
+    facts = {
+        "incumbent_row_id": holder.get("id"),
+        "incumbent_lifecycle": holder.get("lifecycle"),
+        "incumbent_tmux_name": holder.get("tmux_name"),
+        "live_row_id": None if anchor is None else anchor.get("id"),
+        "live_tmux_name": tmux_name,
+        "namespace_prefix": SESSION_PREFIX,
+        "incumbent_archived_at": holder.get("archived_at"),
+        "incumbent_tmux_epoch": holder.get("tmux_created_epoch"),
+    }
+    settled = decide_conversation_takeover(
+        listing_ok=False, listing_complete=False, names=None, **facts
+    )
+    if settled.reason in (
+        REASON_INCUMBENT_IS_THE_LIVE_ROW,
+        REASON_INCUMBENT_RUNNING,
+    ):
+        logger.debug(
+            "conversation_takeover_declined",
+            session_id=session_id,
+            tmux_name=tmux_name,
+            reason=settled.reason,
+        )
+        return None
+
+    if settled.may_take:
+        decision = settled
+    else:
+        decision = _measure_against_socket(
+            facts, holder, socket, tmux_name, listing_reader, pane_probe
         )
     if not decision.may_take:
         logger.info(
@@ -251,7 +288,9 @@ def _row_to_take_from(
         detail=decision.detail,
     )
     row_id = holder.get("id")
-    return None if row_id is None else int(row_id)
+    if row_id is None:
+        return None
+    return TakeFrom(int(row_id), decision.reason == REASON_RETIRED_NO_PANE)
 
 
 def _session_key(manager: Any, row_id: Optional[int]) -> Optional[str]:
@@ -356,7 +395,8 @@ def rebind_conversation_uuid(
                 claude_uuid=registry_uuid,
                 source=SESSION_CLAUDE_UUID_SOURCE_REGISTRY,
                 replaces_uuid=row_uuid,
-                takes_from_row_id=takes_from,
+                takes_from_row_id=None if takes_from is None else takes_from.row_id,
+                release_requires_retired_no_pane=bool(takes_from and takes_from.retired_no_pane),
             )
     except Exception as exc:  # noqa: BLE001
         logger.warning(
@@ -376,6 +416,14 @@ def rebind_conversation_uuid(
         except Exception:  # noqa: BLE001
             pass
 
+    if bind.outcome == BIND_REBOUND and takes_from is not None and takes_from.retired_no_pane:
+        logger.info(
+            "conversation_moved_off_archived_holder",
+            holder_row_id=takes_from.row_id,
+            live_row_id=bind.row_id,
+            claude_session_uuid=registry_uuid,
+            tmux_name=tmux_name,
+        )
     if bind.outcome != BIND_REBOUND:
         logger.info(
             "conversation_rebind_refused_by_writer",

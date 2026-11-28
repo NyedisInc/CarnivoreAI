@@ -10,7 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 os.environ.setdefault("DEFAULT_WORKING_DIR", "/tmp")
 
-from src.core.session_respawn import (  # noqa: E402
+from src.core.session_respawn import (
+    # noqa: E402
     ALL_PANE_STATES,
     PANE_ALIVE,
     PANE_DEAD,
@@ -23,9 +24,9 @@ from src.core.session_respawn import (  # noqa: E402
     RESPAWN_TRANSCRIPT_MISSING,
     pane_state_from_probe,
     project_restart_rung,
-    refuse_if_transcript_missing,
     resolve_respawn_plan,
 )
+from src.core.respawn.transcript_guard import refuse_if_transcript_missing
 from src.core.session_restart_preview import (  # noqa: E402
     WrapperOffer,
     build_restart_preview,

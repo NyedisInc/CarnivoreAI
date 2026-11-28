@@ -15,6 +15,7 @@ from src.core.launch_profiles.plan import LaunchDisplay
 from src.core.launch_profiles.resolve import LaunchProfileNotFound
 from src.core.launch_record import write_launch_record
 from src.core.sessions import launch_overlay
+from src.core.shell_init import rc_prefixed
 from src.core.session_agent_infer import restart_agent_type
 
 logger = structlog.get_logger()
@@ -112,7 +113,7 @@ async def replay_for_restart(
         if replayed is None and rebuild_adopted and not preview and launch_overlay.get() is not None:
             return await _rebuilt_replay(settings, socket, name, row, model=model, extra_args=extra_args, conversation_uuid=conversation_uuid)
         recorded = _record_profile(replayed.record) or _record_profile((row or {}).get("launch_record")) if replayed else None
-        return await _with_agent_resume(settings, replayed, name, recorded or "") if replayed else replayed
+        return await _with_agent_resume(settings, replayed, name, recorded or "", conversation_uuid) if replayed else replayed
     except agent_resume.ResumePrefixNotApproved as exc:
         exc.tmux_name, exc.ask = name, not preview
         raise
@@ -141,14 +142,16 @@ async def _rebuilt_replay(
     return launch
 
 
-async def _with_agent_resume(settings: Any, replayed: ReplayedLaunch, name: str, profile_id: str) -> ReplayedLaunch:
+async def _with_agent_resume(
+    settings: Any, replayed: ReplayedLaunch, name: str, profile_id: str, conversation_uuid: Optional[str] = None,
+) -> ReplayedLaunch:
     from pathlib import Path
 
     from src.core.launch_profiles import agent_resume
     from src.core.launch_profiles.store import LaunchProfileStore
     from src.core.session_output.escape_notices import NOTICES
 
-    resume_id = NOTICES.resume_id_for_tmux(name)
+    resume_id = NOTICES.resume_id_for_tmux(name) or conversation_uuid
     if not profile_id or resume_id is None:
         return replayed
     block = await asyncio.to_thread(LaunchProfileStore(Path(settings.auth_config_file).expanduser()).read)
@@ -156,6 +159,8 @@ async def _with_agent_resume(settings: Any, replayed: ReplayedLaunch, name: str,
     command = agent_resume.resume_command(profile.agent if profile else None, resume_id, block.approved_resume_prefixes)
     if command is None:
         return replayed
+    if profile.shell_profile:
+        command = rc_prefixed(command)
     logger.info("restart_agent_resume", profile=profile_id, name=name)
     return ReplayedLaunch(command=command, staged=replayed.staged, record=replayed.record, display=replayed.display)
 

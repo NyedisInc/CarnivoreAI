@@ -324,20 +324,6 @@
       }
     },
     {
-      "id": "core.task-manager",
-      "instancing": "singleton",
-      "fits": {
-        "sizes": [
-          "tall",
-          "medium",
-          "large",
-          "full"
-        ],
-        "anySize": true,
-        "max_per_surface": 1
-      }
-    },
-    {
       "id": "core.task-manager-mk2",
       "instancing": "singleton",
       "fits": {
@@ -353,20 +339,6 @@
     },
     {
       "id": "core.task-manager-mk2-all",
-      "instancing": "singleton",
-      "fits": {
-        "sizes": [
-          "tall",
-          "medium",
-          "large",
-          "full"
-        ],
-        "anySize": true,
-        "max_per_surface": 1
-      }
-    },
-    {
-      "id": "core.task-manager-all",
       "instancing": "singleton",
       "fits": {
         "sizes": [
@@ -575,20 +547,6 @@
       }
     },
     {
-      "id": "core.task-list",
-      "instancing": "singleton",
-      "fits": {
-        "sizes": [
-          "tall",
-          "medium",
-          "large",
-          "full"
-        ],
-        "anySize": true,
-        "max_per_surface": 1
-      }
-    },
-    {
       "id": "core.session-contents",
       "instancing": "singleton",
       "fits": {
@@ -678,13 +636,22 @@
       "core.questions"
     ],
     "core.huddle": [
-      "core.task-manager"
+      "core.task-manager-mk2"
     ],
     "core.huddle-all": [
-      "core.task-manager-all"
+      "core.task-manager-mk2-all"
     ],
     "core.huddle-list": [
-      "core.task-list"
+      "core.task-manager-mk2"
+    ],
+    "core.task-manager": [
+      "core.task-manager-mk2"
+    ],
+    "core.task-list": [
+      "core.task-manager-mk2"
+    ],
+    "core.task-manager-all": [
+      "core.task-manager-mk2-all"
     ]
   }
 }

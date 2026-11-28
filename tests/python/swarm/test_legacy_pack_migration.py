@@ -5,6 +5,7 @@ from src.core.db import connect, db_path_for
 from src.core.db_models import CURRENT_SCHEMA_VERSION
 from src.core.db_steps import run_chain
 from src.core.swarm import legacy_pack_migration as legacy
+from src.plugins.host import registry_store
 
 
 def _legacy_copy_of_v75(tmp_path) -> sqlite3.Connection:
@@ -19,7 +20,7 @@ def _legacy_copy_of_v75(tmp_path) -> sqlite3.Connection:
     for kind, name, sql in rows:
         if kind in ("table", "index") and "_fts_" not in name:
             old.execute(sql.replace("swarm_", "pack_"))
-    for (sql,) in fresh.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND (name LIKE 'messaging\\_%' ESCAPE '\\' OR name LIKE 'crosstalk\\_%' ESCAPE '\\') AND name NOT LIKE '%\\_fts%' ESCAPE '\\' AND sql IS NOT NULL"):
+    for (sql,) in fresh.execute("SELECT sql FROM sqlite_master WHERE type = 'table' AND (name = 'session_groups' OR name LIKE 'messaging\\_%' ESCAPE '\\' OR name LIKE 'crosstalk\\_%' ESCAPE '\\') AND name NOT LIKE '%\\_fts%' ESCAPE '\\' AND sql IS NOT NULL"):
         old.execute(sql)
     return old
 
@@ -56,8 +57,11 @@ def test_old_install_boots_into_swarm_names_and_a_second_boot_changes_nothing(tm
     state = tmp_path / "state"
     (state / "pack" / "settings").mkdir(parents=True)
     (state / "pack" / "settings" / "1.json").write_text("{}")
-    (state / "cplugs").mkdir()
-    (state / "cplugs" / "state.json").write_text(json.dumps({"cplugs": {"huddle": {"enabled": True, "grants": ["pack", "other"]}}}))
+    reg_path = registry_store.registry_path(state)
+    reg_path.parent.mkdir(parents=True, exist_ok=True)
+    doc = registry_store.new_document()
+    doc["items"]["huddle"] = {"kind": "feature", "enabled": True, "grants": ["pack", "other"]}
+    reg_path.write_text(json.dumps(doc))
     config = tmp_path / "config.json"
     config.write_text(json.dumps({
         "pack": {"flash_per_pack_per_hour": 7, "max_live_bodies": 3}, "pack_node_order": {"x": 1},
@@ -76,14 +80,14 @@ def test_old_install_boots_into_swarm_names_and_a_second_boot_changes_nothing(tm
     assert set(routing["global"]) == {"tick/screen/swarm.alert", "mute/swarm.flash", "default/other"}
     assert routing["global"]["mute/swarm.flash"] == {"val": True, "ver": [2, "i"]} and set(routing["local"]) == {"tick/screen/swarm.question_climbed"}
     assert (state / "swarm" / "settings" / "1.json").exists() and not (state / "pack").exists()
-    assert json.loads((state / "cplugs" / "state.json").read_text())["cplugs"]["huddle"]["grants"] == ["swarm", "other"]
+    assert json.loads(reg_path.read_text())["items"]["huddle"]["grants"] == ["swarm", "other"]
     assert legacy.migrate(config, state) == {"config": False, "folder": False, "grant": False}
 
 
 def test_move_grant_keeps_the_module_contract_and_never_raises_on_an_unreadable_store(tmp_path):
     state = tmp_path / "state"
-    (state / "cplugs").mkdir(parents=True)
-    broken = state / "cplugs" / "state.json"
+    broken = registry_store.registry_path(state)
+    broken.parent.mkdir(parents=True)
     broken.write_text("{ not json")
     assert legacy._move_grant(state) is False
     assert broken.read_text() == "{ not json"

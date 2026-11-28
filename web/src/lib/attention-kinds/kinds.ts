@@ -24,7 +24,7 @@ const FALLBACK_ICON = 'bell';
 
 const BUILT_IN: readonly AttentionKind[] = [
   { id: APPROVALS_KIND, labelKey: 'attention.kind.approvals', icon: 'check-circle', origin: 'approval', route: '/approvals', topics: ['approvals'] },
-  { id: TASK_MANAGER_KIND, labelKey: 'attention.kind.task_manager', icon: 'chat', origin: 'huddle', route: '/cplugs/huddle/aggregate', topics: ['cplug.huddle.delta', 'cplug.huddle.list'] },
+  { id: TASK_MANAGER_KIND, labelKey: 'attention.kind.task_manager', icon: 'chat', origin: 'huddle', route: '/cplugs/huddle/aggregate', topics: ['cplug.taskmanager.delta', 'cplug.taskmanager.list'] },
   { id: AUTOMATIONS_KIND, labelKey: 'attention.kind.automations', icon: 'clock', origin: 'automation', route: '/automations/runs', topics: ['automations', 'automation_runs'] },
 ];
 

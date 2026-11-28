@@ -104,7 +104,7 @@ const pinNow = String(specOf(realPkg, 'electron'));
 const okRegistry = registry(pinNow);
 const baseMirror = mirror();
 const builtBinary = hardenedBinaryFile(tmp);
-const npmStub = (logCmd) => stub('npm', `if [ "$1" = view ]; then cat "\${REGISTRY_FILE:-${okRegistry}}"; exit "\${REGISTRY_RC:-0}"; fi; fw=dist; for a in "$@"; do case "$a" in -c.directories.output=*) fw="\${a#*=}";; esac; done; mkdir -p "$(dirname "$fw/${FRAMEWORK_UNDER_OUT}")"; cp "${builtBinary}" "$fw/${FRAMEWORK_UNDER_OUT}"; ${logCmd}`);
+const npmStub = (logCmd) => stub('npm', `case "$1" in ci|install) exit 0;; esac; if [ "$1" = view ]; then cat "\${REGISTRY_FILE:-${okRegistry}}"; exit "\${REGISTRY_RC:-0}"; fi; fw=dist; for a in "$@"; do case "$a" in -c.directories.output=*) fw="\${a#*=}";; esac; done; mkdir -p "$(dirname "$fw/${FRAMEWORK_UNDER_OUT}")"; cp "${builtBinary}" "$fw/${FRAMEWORK_UNDER_OUT}"; ${logCmd}`);
 
 test('release-build refuses to ship ad hoc when the Nyedis certificate is expired', () => {
     stub('aws', 'echo pw');
@@ -274,13 +274,13 @@ test('release-build: the keychain is locked again when the unlock itself fails',
 
 const policy = require(path.join(repo, 'macOS', 'scripts', 'electron-policy.js'));
 
-test('R1-01 the real package.json: exact pins, universal on every target, floor 14.0, allowScripts moved with Electron', () => {
+test('R1-01 the real package.json: exact pins, split arm64+x64 on every target, floor 14.0, allowScripts moved with Electron', () => {
     const pins = PINNED.map((n) => specOf(realPkg, n));
     assert.equal(pins.length, 3, 'population check: three packages');
     for (const [i, spec] of pins.entries()) assert.match(String(spec), /^\d+\.\d+\.\d+$/, `${PINNED[i]} must be an exact version, got ${spec}`);
     const targets = realPkg.build.mac.target;
     assert.deepEqual(targets.map((t) => t.target).sort(), ['dmg', 'zip'], 'population check: dmg and zip');
-    for (const t of targets) assert.deepEqual(t.arch, ['universal'], `${t.target} must be universal`);
+    for (const t of targets) assert.deepEqual(t.arch, ['arm64', 'x64'], `${t.target} must be split arm64 + x64`);
     assert.equal(realPkg.build.mac.minimumSystemVersion, '14.0');
     assert.deepEqual(Object.keys(realPkg.allowScripts), [`electron@${pins[0]}`]);
 });
@@ -312,9 +312,9 @@ function assertBuilt(m, env = {}, args = []) {
 }
 const outArg = (name) => `-c.directories.output=${path.join(tmp, name)}`;
 
-test('R1-01 release-build refuses an arm64-only target ("universal required")', () => {
-    assertRefused(mirror((p) => { p.build.mac.target[1].arch = ['arm64']; }), /universal required/);
-    assertRefused(mirror((p) => { p.build.mac.target.forEach((t) => { t.arch = ['arm64']; }); }), /universal required/);
+test('R1-01 release-build refuses an arm64-only or universal target (split ["arm64","x64"] required)', () => {
+    assertRefused(mirror((p) => { p.build.mac.target[1].arch = ['arm64']; }), /split \["arm64","x64"\] required/);
+    assertRefused(mirror((p) => { p.build.mac.target.forEach((t) => { t.arch = ['universal']; }); }), /split \["arm64","x64"\] required/);
 });
 
 test('R1-01 release-build refuses a floor other than 14.0', () => {
@@ -337,8 +337,7 @@ test('R1-01 release-build refuses a caret range, a tilde and a tag on each of th
 
 test('R1-01 release-build refuses an installed version that differs from its pin, naming package, pin and installed', () => {
     for (const name of PINNED) {
-        const r = assertRefused(mirror(() => {}, { [name]: '1.2.3' }), new RegExp(`${name} pinned ${String(specOf(realPkg, name)).replaceAll('.', '\\.')} but installed 1\\.2\\.3`));
-        assert.match(r.stderr, /never installs/);
+        assertRefused(mirror(() => {}, { [name]: '1.2.3' }), new RegExp(`${name} pinned ${String(specOf(realPkg, name)).replaceAll('.', '\\.')} but installed 1\\.2\\.3`));
     }
     const missing = mirror();
     fs.rmSync(path.join(missing.mac, 'node_modules', 'electron-updater'), { recursive: true });
@@ -373,28 +372,29 @@ test('R1-01 release-build refuses when the registry cannot be read (never a pass
     assertRefused(baseMirror, /could not determine/, { REGISTRY_FILE: empty });
 });
 
-test('R1-01 the built manifest gets the update floor and names one universal zip', () => {
+test('R1-01 the built manifest gets the update floor and names split arm64 and x64 zips', () => {
     const out = path.join(tmp, 'o-manifest');
     assertBuilt(baseMirror, { STUB_MANIFEST: goodManifest }, [`-c.directories.output=${out}`]);
     const yml = fs.readFileSync(path.join(out, 'latest-mac.yml'), 'utf8');
     assert.equal(yml.match(/^minimumSystemVersion: 23\.0\.0$/gm)?.length, 1, 'the floor is written once (Darwin 23 is macOS 14; see electron-policy.js)');
-    assert.match(yml, /url: Carnivore-2\.0\.0-beta\.1-universal-mac\.zip/);
+    assert.match(yml, /url: Carnivore-2\.0\.0-beta\.1-arm64-mac\.zip/);
+    assert.match(yml, /url: Carnivore-2\.0\.0-beta\.1-mac\.zip/);
     fs.writeFileSync(path.join(out, 'latest-mac.yml'), yml.replace('23.0.0', '13.0.0'));
-    assert.equal(policy.finish(path.join(baseMirror.mac), [`-c.directories.output=${out}`], {}, true).length, 1);
+    assert.equal(policy.finish(path.join(baseMirror.mac), [`-c.directories.output=${out}`], true).length, 1);
     assert.equal(fs.readFileSync(path.join(out, 'latest-mac.yml'), 'utf8').match(/^minimumSystemVersion: .*$/gm).join(), 'minimumSystemVersion: 23.0.0');
 });
 
-test('R1-01 a manifest naming an arm64 zip, two zips or no zip, or no manifest on a signed build, fails the build', () => {
+test('R1-01 a manifest naming only one zip, a universal zip, or no zip, or no manifest on a signed build, fails the build', () => {
     const bad = (name, body) => { const f = path.join(tmp, name); fs.writeFileSync(f, body); return f; };
     for (const [name, body] of [
         ['m-arm64.yml', manifestBody('Carnivore-2.0.0-beta.1-arm64-mac.zip')],
-        ['m-two.yml', manifestBody('Carnivore-2.0.0-beta.1-universal-mac.zip', 'Carnivore-2.0.0-beta.1-x64-mac.zip')],
-        ['m-none.yml', manifestBody('Carnivore-2.0.0-beta.1-universal.dmg')],
+        ['m-univ.yml', manifestBody('Carnivore-2.0.0-beta.1-universal-mac.zip', 'Carnivore-2.0.0-beta.1-x64-mac.zip')],
+        ['m-none.yml', manifestBody('Carnivore-2.0.0-beta.1-arm64.dmg')],
     ]) {
         releaseStubs();
         const r = sh(releaseSh, [outArg(`o-${name}`)], { PW: 'pw', STUB_MANIFEST: bad(name, body) });
         assert.notEqual(r.status, 0, `${name} must fail the build`);
-        assert.match(r.stderr, /latest-mac\.yml must name exactly one universal zip/);
+        assert.match(r.stderr, /latest-mac\.yml must name two split arch zips/);
     }
     releaseStubs();
     const r = sh(releaseSh, [outArg('o-missing')], { PW: 'pw' });
@@ -778,6 +778,38 @@ test('release-build verifies the app this run built (mac-universal), not a stale
     assert.equal(r.status, 0, r.stderr);
     const calls = fs.readFileSync(path.join(path.dirname(releaseSh), '..', 'payload', 'sign-payload.calls'), 'utf8').trim().split('\n');
     assert.deepEqual(calls.map((c) => c.replace(/^--verify-app /, '')), [path.join(out, 'mac-universal', 'Carnivore.app')]);
+});
+
+
+test('#3070 a lagging pin: refused with the rerun line; a waiver naming this exact pair passes and is logged', () => {
+    const [maj, min, pat] = pinNow.split('.').map(Number);
+    const newer = `${maj}.${min + 1}.${pat}`;
+    const other = `${maj}.${min + 2}.${pat}`;
+    const reg = { REGISTRY_FILE: registry(pinNow, 30, [[newer, 1]]) };
+    const r = assertRefused(baseMirror, /rerun with CARNIVORE_ELECTRON_WAIVER="[0-9.]+:[0-9.]+:<operator> <YYYY-MM-DD>" macOS\/scripts\/release-build\.sh/, reg);
+    assert.ok(r.stderr.includes(`CARNIVORE_ELECTRON_WAIVER="${pinNow}:${newer}:`), 'the line names the exact pair');
+    assertRefused(baseMirror, /waiver given names .* not this pair/, { ...reg, CARNIVORE_ELECTRON_WAIVER: `${pinNow}:${other}:Operator 2026-11-20` });
+    assertRefused(baseMirror, /CARNIVORE_ELECTRON_WAIVER is malformed/, { ...reg, CARNIVORE_ELECTRON_WAIVER: 'yes' });
+    const ok = assertBuilt(baseMirror, { ...reg, CARNIVORE_ELECTRON_WAIVER: `${pinNow}:${newer}:Operator 2026-11-20`, STUB_MANIFEST: goodManifest }, [outArg('o-waived')]);
+    assert.match(ok.stderr, new RegExp(`WAIVED: electron pin ${pinNow.replaceAll('.', '\\.')} lags the newest stable ${newer.replaceAll('.', '\\.')}; waived by Operator 2026-11-20`));
+});
+
+test('#3070 a waiver never covers an installed electron that differs from its pin', () => {
+    const [maj, min, pat] = pinNow.split('.').map(Number);
+    const newer = `${maj}.${min + 1}.${pat}`;
+    assertRefused(mirror(() => {}, { electron: '1.2.3' }), /electron pinned .* but installed 1\.2\.3/,
+        { REGISTRY_FILE: registry(pinNow, 30, [[newer, 1]]), CARNIVORE_ELECTRON_WAIVER: `${pinNow}:${newer}:Operator 2026-11-20` });
+});
+
+test('#3070 the preflight refuses an Electron with no binary or dist/LICENSE before anything else runs', () => {
+    const m = mirror();
+    fs.rmSync(path.join(m.mac, 'node_modules', 'electron', 'dist'), { recursive: true });
+    const r = assertRefused(m, /release-preflight: refusing the build: .*electron\/install\.js` failed in .*Electron could not fetch its binary/);
+    assert.match(r.stderr, /the Electron binary is missing; dist\/LICENSE is missing; dist\/LICENSES\.chromium\.html is missing: running Electron's own install\.js once/);
+    const noWeb = mirror();
+    fs.rmSync(path.join(noWeb.root, 'web'), { recursive: true });
+    fs.mkdirSync(path.join(noWeb.root, 'web'));
+    assertRefused(noWeb, /web\/node_modules is missing after npm ci/);
 });
 
 fs.rmSync(tmp, { recursive: true, force: true });

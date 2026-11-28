@@ -34,6 +34,7 @@ export function dropIsNoop(cards: readonly CardView[], draggedId: number, before
   return beforeIdAt(cards, draggedId, at + 1, card.list_key) === before;
 }
 
+/* cannot be read */
 export const dragging = $state<{ card: CardView | null }>({ card: null });
 
 export const cardNotice = $state({ text: '', ok: true, at: 0 });

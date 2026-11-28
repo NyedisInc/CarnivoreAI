@@ -53,15 +53,23 @@ def _read_activity(stats_db: Path, lo: int, hi: int) -> Dict[str, Any]:
                 "SUM(working_seconds), MAX(CASE WHEN working_seconds > 0 THEN minute_ts END) "
                 "FROM activity_minutes WHERE minute_ts >= ? AND minute_ts < ? GROUP BY conversation_id, day",
                 (lo, hi)).fetchall()
+            conv_hours = {
+                (str(r[0]), int(r[1])) for r in conn.execute(
+                    "SELECT DISTINCT conversation_id, (minute_ts / 3600) * 3600 "
+                    "FROM activity_minutes WHERE minute_ts >= ? AND minute_ts < ?",
+                    (lo, hi),
+                ).fetchall()
+            }
             since = conn.execute("SELECT MIN(minute_ts) FROM activity_minutes").fetchone()[0]
         except sqlite3.OperationalError as exc:
             if "interrupted" in str(exc):
                 raise TimeoutError("session usage read over its time budget") from exc
             raise
-    return {"rows": rows, "since": since}
+    return {"rows": rows, "since": since, "conv_hours": conv_hours}
 
 
-def _fold(rows: List[Any], owners: Dict[str, Set[str]]) -> Dict[str, Dict[str, Any]]:
+def _fold(rows: List[Any], owners: Dict[str, Set[str]], *,
+          peer_rows: Optional[List[Any]] = None) -> Dict[str, Dict[str, Any]]:
     seconds: Dict[str, float] = {}
     days: Dict[str, Set[str]] = {}
     last: Dict[str, Optional[int]] = {}
@@ -74,18 +82,30 @@ def _fold(rows: List[Any], owners: Dict[str, Set[str]]) -> Dict[str, Dict[str, A
                 last[session] = max(last_ts, last.get(session) or 0)
             else:
                 last.setdefault(session, None)
+    for conversation, day, working, last_ts in (peer_rows or ()):
+        targets = owners.get(conversation) or {str(conversation)}
+        for session in targets:
+            seconds[session] = seconds.get(session, 0.0) + float(working or 0)
+            if working and working > 0:
+                days.setdefault(session, set()).add(day)
+            if last_ts is not None:
+                last[session] = max(last_ts, last.get(session) or 0)
+            else:
+                last.setdefault(session, None)
     return {s: {"worked_s": round(seconds[s], 1), "active_days": len(days.get(s, ())),
                 "last_worked_at": _iso(last[s]) if last.get(s) else None} for s in seconds}
 
 
 def build(days: int = DEFAULT_DAYS, *, now: Optional[datetime] = None, db: Optional[Path] = None,
-          stats_db: Optional[Path] = None) -> Dict[str, Any]:
+          stats_db: Optional[Path] = None, scope: str = "pack") -> Dict[str, Any]:
     from src.core.db import DatastoreUnreadableError, connect  # noqa: PLC0415
     from src.core.pipeline import plugin_db  # noqa: PLC0415
+    from src.core.stats import pack_queries  # noqa: PLC0415
     from src.core.stats.plugin.pipeline_plugin import STATS  # noqa: PLC0415
 
     days = max(MIN_DAYS, min(MAX_DAYS, int(days)))
     hi = int((now or datetime.now(timezone.utc)).timestamp())
+    lo = hi - days * 86400
     answer: Dict[str, Any] = {"state": OK, "days": days, "measured_since": None, "by_session": {}}
     if db is None:
         from src.config import settings  # noqa: PLC0415
@@ -93,22 +113,39 @@ def build(days: int = DEFAULT_DAYS, *, now: Optional[datetime] = None, db: Optio
 
         db = db_path_for(settings.get_state_dir())
     stats_db = stats_db or plugin_db.db_path(db.parent, STATS)
-    if not stats_db.exists():
-        return {**answer, "state": NO_STATS}
+    has_local_stats = stats_db.exists()
     try:
         with closing(connect(db, create=False)) as conn:
             owners = conversation_sessions(conn)
+            peer_read_only = pack_queries.session_usage_peer_activity(conn, lo, hi, set()) if (scope == "pack" and not has_local_stats) else None
     except (DatastoreUnreadableError, sqlite3.Error) as exc:
         logger.warning("session_usage_datastore_unreadable", error=str(exc))
         return {**answer, "state": NO_SESSIONS}
+    if not has_local_stats:
+        if peer_read_only and (peer_read_only["rows"] or peer_read_only["since"] is not None):
+            answer["measured_since"] = _iso(peer_read_only["since"]) if peer_read_only["since"] is not None else None
+            answer["by_session"] = _fold([], owners, peer_rows=peer_read_only["rows"])
+            return answer
+        return {**answer, "state": NO_STATS}
     try:
-        read = _read_activity(stats_db, hi - days * 86400, hi)
+        read = _read_activity(stats_db, lo, hi)
     except TimeoutError as exc:
         logger.warning("session_usage_stats_slow", error=str(exc))
         return {**answer, "state": UNREADABLE}
     except sqlite3.Error as exc:
         logger.warning("session_usage_stats_unreadable", error=str(exc))
         return {**answer, "state": NO_STATS}
-    answer["measured_since"] = _iso(read["since"]) if read["since"] is not None else None
-    answer["by_session"] = _fold(read["rows"], owners)
+    peer_rows: List[Any] = []
+    since = read["since"]
+    if scope == "pack":
+        try:
+            with closing(connect(db, create=False)) as conn:
+                peer = pack_queries.session_usage_peer_activity(conn, lo, hi, read["conv_hours"])
+            peer_rows = peer["rows"]
+            if peer["since"] is not None:
+                since = peer["since"] if since is None else min(since, peer["since"])
+        except (DatastoreUnreadableError, sqlite3.Error) as exc:
+            logger.warning("session_usage_pack_unreadable", error=str(exc))
+    answer["measured_since"] = _iso(since) if since is not None else None
+    answer["by_session"] = _fold(read["rows"], owners, peer_rows=peer_rows)
     return answer

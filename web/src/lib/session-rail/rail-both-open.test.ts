@@ -25,23 +25,23 @@ beforeEach(() => {
   railSlideout.reload();
   railOutSizes.reload();
   follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }] });
-  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }, { widget: 'core.ledger' }] });
+  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager-mk2' }, { widget: 'core.ledger' }] });
 });
 afterEach(() => unmountRails());
 
 test('opening the bottom slide-out leaves the side one out, and each closes alone', () => {
   keyIn('side', 'core.changes').click();
-  keyIn('bottom', 'core.task-manager').click();
+  keyIn('bottom', 'core.task-manager-mk2').click();
   flushSync();
   expect(panelFor('side')).not.toBeNull();
   expect(panelFor('bottom')).not.toBeNull();
   expect(railSlideout.shown('side')).toEqual(['core.changes']);
-  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager']);
+  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager-mk2']);
 
   keyIn('side', 'core.changes').click();
   flushSync();
   expect(railSlideout.shown('side')).toEqual([]);
-  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager']);
+  expect(railSlideout.shown('bottom')).toEqual(['core.task-manager-mk2']);
   expect(panelFor('bottom')).not.toBeNull();
 
   railSlideout.close('bottom');

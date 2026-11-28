@@ -271,10 +271,13 @@ def test_l6_an_unchanged_row_is_not_written_again(owner, monkeypatch):
     stamps = iter(f"2030-01-01T00:00:0{i}Z" for i in range(9))
     monkeypatch.setattr(shadow_rows, "utc_now", lambda: next(stamps))
     asyncio.run(peer_listing.peer_rows(owner.open_db, owner.links(), force=True))
-    first = owner.count("SELECT COUNT(*) FROM sessions WHERE origin='peer' AND updated_at = '2030-01-01T00:00:00Z'")
+    stamp_sql = "SELECT updated_at FROM sessions WHERE origin='peer'"
+    with closing(owner.open_db()) as conn:
+        first = conn.execute(stamp_sql).fetchone()[0]
     asyncio.run(peer_listing.peer_rows(owner.open_db, owner.links(), force=True))
-    assert first == 1
-    assert owner.count("SELECT COUNT(*) FROM sessions WHERE origin='peer' AND updated_at = '2030-01-01T00:00:00Z'") == 1
+    with closing(owner.open_db()) as conn:
+        again = conn.execute(stamp_sql).fetchone()[0]
+    assert first.startswith("2030-01-01") and again == first
 
 
 def test_l6_a_peer_reserving_our_own_session_is_refused(owner):

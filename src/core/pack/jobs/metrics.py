@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
+from src.core.pack.jobs import precheck_learn
 from src.core.pack.jobs.store import JobStore
 from src.core.pack.placement.workload import HEAVY_KINDS
 
@@ -39,6 +40,12 @@ def r3(store: JobStore, days: int, *, now: float) -> Dict[str, Any]:
     return {"window_days": days, "remote_minutes": round(remote, 1), "local_minutes": round(local, 1), "share": _share(remote, remote + local)}
 
 
+def guard(store: JobStore, *, now: float) -> Dict[str, Any]:
+    cutoff = now - P3_WINDOW_DAYS * DAY
+    calls = len(store.request_kinds_since(cutoff, store.marked_projects()))
+    return {"window_days": P3_WINDOW_DAYS, "gave_way": precheck_learn.giveways_since(store, cutoff), "delegate_calls": calls}
+
+
 def load(store: JobStore, *, now: float) -> Dict[str, Any]:
     hour = int(now // 3600) - (LOAD_HOURS - 1)
     return {"hours": store.load_hours_since(hour)}
@@ -46,4 +53,4 @@ def load(store: JobStore, *, now: float) -> Dict[str, Any]:
 
 def report(store: JobStore, days: int, *, now: float) -> Dict[str, Any]:
     days = max(1, min(KEEP_DAYS, int(days)))
-    return {"days": days, "p3": p3(store, now=now), "r3": r3(store, days, now=now), "load": load(store, now=now)}
+    return {"days": days, "p3": p3(store, now=now), "r3": r3(store, days, now=now), "guard": guard(store, now=now), "load": load(store, now=now)}

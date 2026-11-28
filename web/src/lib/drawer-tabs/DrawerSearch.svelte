@@ -345,13 +345,16 @@
     .ds-row {
       display: flex;
       flex-direction: column;
-      padding: var(--oc-space-1) var(--oc-space-2);
+      padding: var(--oc-space-2) var(--oc-space-3);
       background: var(--oc-ground-chrome);
-      border-bottom: var(--oc-border) solid var(--oc-line-panel);
+      border-bottom: var(--oc-border) solid color-mix(in oklab, var(--oc-line-panel) 70%, transparent);
     }
 
     .ds-row :global(.oc-search) {
       --oc-search-h: var(--drawer-field-h, var(--oc-control-h-sm));
+      border-radius: var(--oc-radius);
+      background: var(--oc-ground-field);
+      border-color: var(--oc-line-panel);
     }
 
     :global([data-ds-mode]) {

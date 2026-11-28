@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple
 from src.core.pack.errors.input_error import PackInputError
 
 TOOLS = ("python3.12", "python3", "node", "npm", "git", "gh", "docker", "tmux", "claude", "playwright", "playwright_browsers",
-         "ffmpeg", "ffprobe", "codex", "blender", "brew")
+         "ffmpeg", "ffprobe", "codex", "agy", "blender", "brew")
 _FLAGS = ("xcode", "ios_sim")
 _GPUS = ("gpu", "gpu:nvidia", "gpu:amd", "gpu:apple", "cuda")
 _MINS = ("vram_gb", "mem_gb", "cores", "disk_gb")
@@ -148,6 +148,9 @@ def meets(snapshot: Optional[Dict[str, Any]], need: Need) -> Optional[bool]:
         have_word = _os_arch(snapshot, can, need.kind)
         return None if have_word is None else have_word == need.name
     labels = can.get("labels") if can is not None else None
+    own_label = str(snapshot.get("label") or "").strip().lower()
+    if own_label and need.name == own_label:
+        return True
     return None if not isinstance(labels, list) else need.name in labels
 
 

@@ -5,10 +5,10 @@ import re
 from typing import Tuple
 
 SOFT_PALETTE: Tuple[str, ...] = (
-    "#966356", "#a7593d", "#a25e2b",
-    "#a17557", "#c07e45", "#817040",
-    "#4e69ba", "#7b75e2", "#7457c2",
-    "#a167cf", "#b765a1", "#ad3f7f",
+    "#e6495c", "#e67329", "#c99214",
+    "#6ea61c", "#1ea662", "#12a392",
+    "#1c9ed6", "#4a80eb", "#7a6af0",
+    "#ae62eb", "#de54be", "#e64e83",
 )
 
 _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")

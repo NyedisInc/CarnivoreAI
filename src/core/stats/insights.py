@@ -7,16 +7,14 @@ import statistics
 import time
 
 from src.core.session_token_usage.model_table import readable_model_name
-from src.core.stats import config
-from src.core.stats import project_groups
+from src.core.stats import config, pack_queries, pack_scope, project_groups
 from src.core.stats.project_groups import other_label
 from src.core.stats.queries import (
     DEADLINE_SECONDS, MAX_ROWS,
     _usage_source, _where,
 )
-from src.core.stats.query_buckets import QueryLimit
-from src.models.stats import StatsFilters
 from src.core.stats.store_port import StatsStoreLike
+from src.models.stats import StatsFilters
 
 CONVERSATION_CAP = 500
 """Most conversations the scatter returns (the costliest, then the largest)."""
@@ -37,28 +35,13 @@ _METRIC_SQL = {
 _UNITS = {"estimated_cost_nano_usd": "nano_usd", "usage_count": "observations"}
 
 
-def _grouped(store: StatsStoreLike, filters: StatsFilters, start: int, end: int, metric: str) -> list[sqlite3.Row]:
+def _grouped(store: StatsStoreLike, filters: StatsFilters, start: int, end: int, metric: str, *,
+             scope: str = "pack") -> list[sqlite3.Row]:
     deadline = time.monotonic() + DEADLINE_SECONDS
-    where, args = _where("minute_usage", filters, start, end)
-    source = _usage_source(filters, None)
-    db = store.connect(readonly=True)
-    try:
-        db.set_progress_handler(lambda: 1 if time.monotonic() > deadline else 0, 1000)
-        rows = db.execute(
-            f"SELECT conversation_id,project,model,{_METRIC_SQL[metric]} AS value,"
-            "SUM(input_tokens+cache_write_tokens+cache_read_tokens+output_tokens) AS tokens,"
-            "MIN(minute_ts) AS first_ts,MAX(minute_ts) AS last_ts "
-            f"FROM {source} WHERE {where} GROUP BY conversation_id,project,model "
-            "ORDER BY conversation_id,project,model LIMIT ?", (*args, MAX_ROWS + 1)).fetchall()
-        if len(rows) > MAX_ROWS:
-            raise QueryLimit("query exceeds row budget; narrow the range")
-        return rows
-    except sqlite3.OperationalError as exc:
-        if "interrupted" in str(exc):
-            raise QueryLimit("query deadline exceeded") from exc
-        raise
-    finally:
-        db.close()
+    return pack_queries.insights_grouped_with_pack(
+        store, filters, start, end, metric, _METRIC_SQL[metric], deadline, MAX_ROWS,
+        scope=scope, usage_source_fn=_usage_source, where_fn=_where,
+    )
 
 
 def _per_conversation(rows: list[sqlite3.Row]) -> dict[str, dict]:
@@ -77,19 +60,25 @@ def _per_conversation(rows: list[sqlite3.Row]) -> dict[str, dict]:
     return out
 
 
-def conversations(store: StatsStoreLike, *, start: int, end: int, filters: StatsFilters, limit: int = CONVERSATION_CAP) -> dict:
+def conversations(store: StatsStoreLike, *, start: int, end: int, filters: StatsFilters,
+                  limit: int = CONVERSATION_CAP, scope: str = "pack") -> dict:
     limit = max(1, min(limit, CONVERSATION_CAP))
-    grouped = _per_conversation(_grouped(store, filters, start, end, "estimated_cost_nano_usd"))
+    grouped = _per_conversation(_grouped(store, filters, start, end, "estimated_cost_nano_usd", scope=scope))
     ordered = sorted(grouped.items(), key=lambda pair: (pair[1]["value"] is None, -(pair[1]["value"] or 0),
                                                         -pair[1]["tokens"], pair[0]))[:limit]
     ids = [conversation for conversation, _ in ordered]
     meta: dict[str, tuple[int | None, int | None]] = {}
     if ids:
+        if scope == "pack":
+            meta.update(pack_queries.peer_conversation_meta(store, ids))
         with store.connect(readonly=True) as db:
             marks = ",".join("?" * len(ids))
-            meta = {row[0]: (row[1], row[2]) for row in db.execute(
-                f"SELECT conversation_id,first_minute,last_minute FROM conversation_meta WHERE conversation_id IN ({marks})", ids)}
+            for row in db.execute(
+                f"SELECT conversation_id,first_minute,last_minute FROM conversation_meta WHERE conversation_id IN ({marks})", ids):
+                meta[row[0]] = (row[1], row[2])
     groups = project_groups.groups_for(store) if ids else None
+    if groups is not None and scope == "pack":
+        groups = pack_scope.pack_groups(store, groups)
     items = []
     for conversation, entry in ordered:
         first, last = meta.get(conversation, (None, None))
@@ -138,7 +127,7 @@ def _mix_report(before: dict[str, int], after: dict[str, int]) -> dict:
 
 
 def impact(store: StatsStoreLike, *, annotation_id: str, metric: str, days: int, now: float | None = None,
-           iterations: int = BOOTSTRAP_ITERATIONS) -> dict:
+           iterations: int = BOOTSTRAP_ITERATIONS, scope: str = "pack") -> dict:
     if metric not in _METRIC_SQL or not 1 <= days <= 30:
         raise ValueError("unsupported impact metric or window")
     marker = config.get_annotation(store, annotation_id)
@@ -147,9 +136,9 @@ def impact(store: StatsStoreLike, *, annotation_id: str, metric: str, days: int,
     if at >= now:
         raise ValueError("the marker has not happened yet")
     start, end = at - days * 86400, min(at + days * 86400, int(now) // 60 * 60 + 60)
-    scope = {key: value for key, value in marker["scope"].items() if key != "window"}
-    filters = StatsFilters.model_validate(scope)
-    rows = _grouped(store, filters, start, end, metric)
+    marker_scope = {key: value for key, value in marker["scope"].items() if key != "window"}
+    filters = StatsFilters.model_validate(marker_scope)
+    rows = _grouped(store, filters, start, end, metric, scope=scope)
     per = _per_conversation(rows)
     samples: tuple[list[float], list[float]] = ([], [])
     counts = [0, 0]

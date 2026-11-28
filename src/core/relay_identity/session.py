@@ -309,6 +309,9 @@ class DeviceSession:
         nonce = secrets.token_bytes(16)
         return dk.link_id_for(self._key.device_id, nonce), dk.b64url(nonce)
 
+    async def post_signed(self, path: str, body: Dict[str, Any]) -> hosted_api.HostedAnswer:
+        return await self._post(path, body)
+
     async def _post(self, path: str, body: Dict[str, Any],
                     bearer: Optional[str] = None) -> hosted_api.HostedAnswer:
         auth = {"bearer": bearer} if bearer else {}

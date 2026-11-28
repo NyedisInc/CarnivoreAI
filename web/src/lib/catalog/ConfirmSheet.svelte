@@ -1,9 +1,21 @@
 <!-- the detail pane -->
 <script lang="ts">
+    import Fold from '../base/Fold.svelte';
     import ModalShell from '../dialog-frame/ModalShell.svelte';
     import CplugFacts from './CplugFacts.svelte';
+    import FlaggedWarningBox from './FlaggedWarningBox.svelte';
+    import PermissionDiffPanel from './PermissionDiffPanel.svelte';
+    import {
+        hasPermissionDiffChanges,
+        isProvenanceBlocked,
+        type FlaggedWarningMeta,
+        type PermissionDiffData,
+    } from './permission-diff';
+    import type { UpdateSummaryProps } from './installed-actions';
     import UpdateDiffView from './UpdateDiffView.svelte';
+    import UpdateSummary from './UpdateSummary.svelte';
     import type { CplugFactsData, UpdateDiff } from './types';
+    import { hasCplugCapabilities } from './update-notes';
     import { SKILL_KEYS } from '../../../../client/js/labels/skill.js';
     import type { Translate } from '../sessions/types';
 
@@ -20,6 +32,10 @@
         tickLabel?: string | null;
         diff?: UpdateDiff | null;
         cplugFacts?: CplugFactsData | null;
+        permissionDiff?: PermissionDiffData | null;
+        flaggedWarning?: FlaggedWarningMeta | null;
+        isPluginUpdate?: boolean;
+        updateSummary?: UpdateSummaryProps | null;
         /* could not be read */
         documentMissing?: string | null;
         t: Translate;
@@ -40,32 +56,91 @@
         documentMissing = null,
         diff = null,
         cplugFacts = undefined,
+        permissionDiff = null,
+        flaggedWarning = null,
+        isPluginUpdate = false,
+        updateSummary = null,
         t,
         close,
     }: Props = $props();
 
     let accepted = $state(false);
+    let permAccepted = $state(false);
+    let flaggedAccepted = $state(false);
+    let technicalOpen = $state(false);
 
-    /* could not be read */
+    const provenanceBlocked = $derived(isProvenanceBlocked(permissionDiff));
+    const showPermDiff = $derived(hasPermissionDiffChanges(permissionDiff));
+    const needsPermAck = $derived(Boolean(showPermDiff && permissionDiff?.requiresReconsent && !provenanceBlocked));
+    const needsFlaggedAck = $derived(Boolean(flaggedWarning?.requiresWarningAck));
+    const showCplugFacts = $derived(
+        cplugFacts !== undefined &&
+            (!isPluginUpdate || (hasCplugCapabilities(cplugFacts) && (showPermDiff || cplugFacts === null))),
+    );
+    const hasTechnicalDetails = $derived(Boolean(isPluginUpdate && (body || (diff && diff.changes.length > 0))));
+
     const canConfirm = $derived(
         !busy &&
-            (cplugFacts !== undefined ? !!body && !!cplugFacts && accepted : !tickLabel || (!!body && accepted)),
+            !provenanceBlocked &&
+            (!needsPermAck || permAccepted) &&
+            (!needsFlaggedAck || flaggedAccepted) &&
+            (showCplugFacts ? !!body && !!cplugFacts && accepted : !tickLabel || (!!body && accepted)),
     );
 </script>
 
-<ModalShell {title} dismissable={!busy} onCancel={() => close(null)}>
+<ModalShell
+    {title}
+    width={isPluginUpdate || flaggedWarning || showCplugFacts || showPermDiff ? 'min(560px, 92vw)' : undefined}
+    dismissable={!busy}
+    onCancel={() => close(null)}
+>
     <div class="confirm">
-        <p class="confirm__lead">{lead}</p>
-        {#if body}
-            <p class="confirm__heading">{t(SKILL_KEYS.sheetBodyHeading)}</p>
-            <p class="confirm__size">{t(SKILL_KEYS.sheetBodySize, { count: body.length })}</p>
-            <pre class="confirm__document">{body}</pre>
-        {:else if documentMissing}
-            
-            <p class="confirm__missing" role="status">{documentMissing}</p>
+        {#if isPluginUpdate && updateSummary}
+            <UpdateSummary
+                fromVersion={updateSummary.fromVersion}
+                toVersion={updateSummary.toVersion}
+                notes={updateSummary.notes}
+                screenshots={updateSummary.screenshots}
+                noPermissions={updateSummary.noPermissions}
+                noTools={updateSummary.noTools}
+                permissionsUnchanged={updateSummary.permissionsUnchanged}
+                {t}
+            />
+        {:else}
+            <p class="confirm__lead">{lead}</p>
         {/if}
-        {#if diff}
-            <UpdateDiffView {diff} {t} />
+        {#if !isPluginUpdate}
+            {#if body}
+                <p class="confirm__heading">{t(SKILL_KEYS.sheetBodyHeading)}</p>
+                <p class="confirm__size">{t(SKILL_KEYS.sheetBodySize, { count: body.length })}</p>
+                <pre class="confirm__document">{body}</pre>
+            {:else if documentMissing}
+                
+                <p class="confirm__missing" role="status">{documentMissing}</p>
+            {/if}
+            {#if diff}
+                <UpdateDiffView {diff} permissionDiff={null} {t} />
+            {/if}
+        {/if}
+        {#if showPermDiff && permissionDiff}
+            <PermissionDiffPanel
+                diff={permissionDiff}
+                bind:accepted={permAccepted}
+                {busy}
+                showAck={permissionDiff.requiresReconsent}
+                {t}
+            />
+        {/if}
+        {#if flaggedWarning && (flaggedWarning.flagged || flaggedWarning.requiresWarningAck)}
+            <FlaggedWarningBox
+                summary={flaggedWarning.summary}
+                warningReasons={flaggedWarning.warningReasons}
+                warnings={flaggedWarning.warnings}
+                bind:accepted={flaggedAccepted}
+                {busy}
+                requireAck={flaggedWarning.requiresWarningAck}
+                {t}
+            />
         {/if}
         
         {#if linesHeading}
@@ -79,14 +154,34 @@
                 {/each}
             </ul>
         {/if}
-        {#if cplugFacts !== undefined}
+        {#if showCplugFacts}
             <CplugFacts
-                facts={cplugFacts}
+                facts={cplugFacts ?? null}
                 {accepted}
                 {busy}
+                isUpdate={isPluginUpdate}
                 {t}
                 onAccept={(next) => { accepted = next; }}
             />
+        {/if}
+        {#if hasTechnicalDetails}
+            <div class="confirm__technical" data-update-technical-fold>
+                <Fold
+                    label={t(SKILL_KEYS.updateTechnicalFold)}
+                    count={diff?.changes.length || undefined}
+                    bind:open={technicalOpen}
+                >
+                    <div class="confirm__technical-body">
+                        {#if diff}
+                            <UpdateDiffView {diff} permissionDiff={null} {t} />
+                        {/if}
+                        {#if body}
+                            <p class="confirm__heading">{t(SKILL_KEYS.sheetBodyHeading)}</p>
+                            <pre class="confirm__document">{body}</pre>
+                        {/if}
+                    </div>
+                </Fold>
+            </div>
         {/if}
         {#if tickLabel}
             <label class="confirm__accept">
@@ -227,5 +322,17 @@
     .confirm__danger {
         border-color: var(--oc-coral);
         color: var(--oc-coral);
+    }
+
+    .confirm__technical {
+        border-top: var(--oc-border) solid var(--oc-line-faint);
+        padding-top: var(--oc-space-1-5);
+    }
+
+    .confirm__technical-body {
+        display: flex;
+        flex-direction: column;
+        gap: var(--oc-space-2);
+        padding-top: var(--oc-space-1-5);
     }
 </style>

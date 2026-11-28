@@ -44,8 +44,8 @@ async def redeem_totp_code(request: Request, code: str) -> AuthTokenResponse:
     try:
         await check_totp_code(code)
 
-        access_token, expires_in = create_access_token()
         refresh_token, refresh_jti, refresh_exp = create_refresh_token()
+        access_token, expires_in = create_access_token(family=refresh_jti)
 
         store = getattr(request.app.state, "refresh_store", None)
         if store is not None:
@@ -169,7 +169,7 @@ async def refresh_tokens(request: Request, response: Response, body: RefreshToke
             await store.revoke_chain(old_jti)
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
-    new_access, expires_in = create_access_token(user=user)
+    new_access, expires_in = create_access_token(user=user, family=await store.family_of(old_jti))
     new_refresh, new_jti, new_exp = create_refresh_token(user=user)
 
     ok = await store.rotate(old_jti, new_jti, user, new_exp)

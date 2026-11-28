@@ -9,9 +9,11 @@ import {
 } from './interaction-globals';
 import type { SidebarRow } from './legacy';
 import { BAND_PROJECT_PREFIX, groupByUuid, projectBandKeyFor } from '../drawer/group-store';
-import { isAgentKind, isBrowser } from '../drawer/bucketing';
+import { isAgentKind, isBrowser, isConsoleProject, isTerminal } from '../drawer/bucketing';
+import { rowsForGroup } from '../drawer/nested-groups';
 import { showPath } from './show-path';
 import { setProjectColorPreview } from '../project-colors/preview.svelte';
+import { projects } from '../../opscenter/api/projects.svelte';
 
 type Row = SidebarRow & {
     asleep?: boolean;
@@ -25,21 +27,35 @@ function allRows(): readonly Row[] {
 }
 
 export function projectRows(key: string): Row[] {
-    return allRows().filter((r) => {
+    const all = allRows();
+    const agents = all.filter((r) => {
         if (!isAgentKind(r)) return false;
         if (r.project_id === null || r.project_id === undefined) return false;
+        return projectBandKeyFor(r.project_id) === key;
+    });
+    if (agents.length > 0) return agents;
+    return all.filter((r) => {
+        if (!isTerminal(r) || r.asleep === true || r.closed === true || r.archived === true) return false;
+        if (r.project_id === null || r.project_id === undefined || isConsoleProject(r)) return false;
         return projectBandKeyFor(r.project_id) === key;
     });
 }
 
 export function groupRows(groupUuid: string): Row[] {
     const G = usableGroups();
-    return G ? allRows().filter((r) => G.groupOf(r.name) === groupUuid) : [];
+    if (!G) return [];
+    const group = G.groupByUuid(groupUuid);
+    if (group?.parent_key) return rowsForGroup(groupUuid, allRows(), companySource());
+    return allRows().filter((r) => G.groupOf(r.name) === groupUuid);
 }
 
 export function projectNameFor(key: string): string | null {
     const row = projectRows(key).find((r) => r.project_name);
-    return row ? (row.project_name as string) : (companySource().projectNameOf?.(key.slice(BAND_PROJECT_PREFIX.length)) ?? null);
+    if (row) return row.project_name as string;
+    const known = companySource().projectNameOf?.(key.slice(BAND_PROJECT_PREFIX.length)) ?? null;
+    if (known) return known;
+    const anyRow = allRows().find((r) => r.project_id != null && projectBandKeyFor(r.project_id) === key && r.project_name);
+    return anyRow ? (anyRow.project_name as string) : null;
 }
 
 /* no working directory */
@@ -136,6 +152,7 @@ export function sleepGroup(groupUuid: string): Promise<{ slept: number; failed: 
 
 async function closeRow(row: Row): Promise<void> {
     const api = hg().API!;
+    if (row.archived === true) return;
     if (row.asleep || row.closed === true) {
         if (!row.session_uuid) throw new Error('no session id recorded');
         await api.deleteSessionRecord(row.session_uuid);
@@ -186,6 +203,7 @@ export async function archiveProject(key: string): Promise<boolean> {
         return false;
     }
     await refetchDrawer();
+    if (projects.status === 'ok') void projects.refresh?.();
     announce(t('sidebar.project.archived', { name, count: rows.length }));
     return true;
 }

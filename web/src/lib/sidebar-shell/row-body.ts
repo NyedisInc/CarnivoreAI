@@ -32,6 +32,7 @@ export interface RowBodyPlan {
     rankTag: string | null;
     right: { text: string; tone: BodyTone | null; kind: 'state' } | null;
     flagTone: BodyTone | null;
+    statusWord: { text: string; tone: BodyTone } | null;
     model: ModelPlan | null;
     modelName: string;
     effort: string;
@@ -53,6 +54,7 @@ const STATE_WORDS: Record<InnerState, { key: string; tone: BodyTone }> = {
     disconnected: { key: 'sidebar.row.state.disconnected', tone: 'bad' },
     limit: { key: 'session.status.usage_limit', tone: 'bad' },
     asleep: { key: 'session.asleep.label', tone: 'muted' },
+    background: { key: 'session.status.background', tone: 'muted' },
     'asleep-unread': { key: 'session.asleep.label', tone: 'muted' },
     unknown: { key: 'opscenter.session.mark.not_measured', tone: 'muted' },
 };
@@ -66,6 +68,7 @@ export function stateWord(led: LedPlan): { text: string; tone: BodyTone } {
         host_offline: led.hostOffline,
         usage_limit: led.usageLimit,
         login_expired: led.loginExpired,
+        activity_hint: led.activityHint,
     }).inner;
     if (led.loginExpired && inner === 'notice') return { text: t('session.status.login_expired'), tone: 'info' };
     const w = STATE_WORDS[inner] ?? STATE_WORDS.unknown;
@@ -189,14 +192,16 @@ export function rowBodyPlan(r: SidebarRow, mode: string, led: LedPlan | null): R
     const epoch = epochFromIso(r.last_work_at);
     const model = modelPlan(r);
     const live = asleep || dead ? [] : liveParts(r, mode);
+    const word = stateWord(led);
     const body: RowBodyPlan = {
         mode,
         rankTag: null,
         right: null,
         flagTone: null,
+        statusWord: asleep || dead ? null : word,
         model: null,
-        modelName: '',
-        effort: '',
+        modelName: !asleep && !dead && model ? modelShortName(r.running_model) : '',
+        effort: !asleep && !dead && model && typeof r.running_model_effort === 'string' ? r.running_model_effort.trim() : '',
         live,
         noLiveWork: !asleep && !dead && live.length === 0 && measuredIdle(r),
         ended: asleep ? { text: asleepText(r), tone: 'muted', dead: false }
@@ -207,12 +212,9 @@ export function rowBodyPlan(r: SidebarRow, mode: string, led: LedPlan | null): R
     if (mode === 'cozy') {
         if (!asleep && !dead && model) {
             body.model = model;
-            body.modelName = modelShortName(r.running_model);
-            body.effort = typeof r.running_model_effort === 'string' ? r.running_model_effort.trim() : '';
         }
         return body;
     }
-    const word = stateWord(led);
     body.right = asleep ? null : { text: word.text, tone: word.tone, kind: 'state' };
     body.flags = asleep ? [] : rowFlags(r, led);
     body.flagTone = body.flags[0]?.tone ?? null;

@@ -3,14 +3,13 @@ import os
 import re
 import unicodedata
 import uuid
-from io import BytesIO
 from pathlib import Path, PureWindowsPath
 from typing import Tuple
 
 import structlog
 from fastapi import HTTPException
 from src.api.error_response import api_error
-from PIL import Image, UnidentifiedImageError
+from src.core.media.image_ops import verify_image_bytes
 
 from src.core.product_identity import UPLOAD_DIR_NAME
 from src.core.uploads.bucket_guard import BUCKET_GITIGNORE
@@ -27,7 +26,7 @@ _REPEATED_UNDERSCORE = re.compile(r"_{2,}")
 
 _FALLBACK_BASENAME: str = "upload"
 
-_EXT_TO_PIL_FORMAT: dict[str, str] = {
+_EXT_TO_IMAGE_FORMAT: dict[str, str] = {
     "png": "PNG",
     "jpg": "JPEG",
     "jpeg": "JPEG",
@@ -183,12 +182,10 @@ def validate_image(
     if len(data) == 0:
         raise HTTPException(status_code=400, detail="Empty image payload")
 
-    expected_format = _EXT_TO_PIL_FORMAT[ext]
+    expected_format = _EXT_TO_IMAGE_FORMAT[ext]
     try:
-        with Image.open(BytesIO(data)) as img:
-            actual_format = img.format
-            img.verify()
-    except (UnidentifiedImageError, Exception) as exc:
+        actual_format = verify_image_bytes(data)
+    except Exception as exc:
         raise api_error(400, "image_invalid", exc) from exc
 
     if actual_format != expected_format:

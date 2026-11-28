@@ -195,7 +195,7 @@ def install(app: Any, loop: asyncio.AbstractEventLoop) -> Reconciler:
 
 def request(gone_names: Iterable[str] = (), *, measure_agents: bool = False) -> None:
     rec = _active
-    if rec is None:
+    if rec is None or rec._loop.is_closed():
         return
     index = getattr(rec._app.state, "companion_index", None)
     if index is not None and index.loaded and not index.tmux_names():

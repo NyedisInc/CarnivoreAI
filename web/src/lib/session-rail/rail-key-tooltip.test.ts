@@ -24,12 +24,12 @@ beforeEach(() => {
   railSlideout.reload();
   railOutSizes.reload();
   follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }] });
-  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }, { widget: 'core.ledger' }] });
+  follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.task-manager-mk2' }, { widget: 'core.ledger' }] });
 });
 afterEach(() => unmountRails());
 
 test('a rail key carries a tooltip target while closed and while its slide-out is open, on both rails', () => {
-  for (const [edge, widget] of [['side', 'core.changes'], ['bottom', 'core.task-manager']] as const) {
+  for (const [edge, widget] of [['side', 'core.changes'], ['bottom', 'core.task-manager-mk2']] as const) {
     const key = keyIn(edge, widget);
     expect(key.getAttribute('aria-expanded')).toBe('false');
     expect(tooltipTargetFor(key), `${widget} closed`).toBe(key);

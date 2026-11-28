@@ -30,7 +30,7 @@ _CONFIRM_INFO = b"carnivore join v1 confirm"
 _SIG_PREFIX = b"carnivore federation v1 join-identity\x00"
 
 MODES = ("code", "invite")
-ERROR_CODES = ("wrong_code", "expired", "no_invite", "busy", "rate_limited", "refused", "incompatible", "paused")
+ERROR_CODES = ("wrong_code", "expired", "no_invite", "busy", "rate_limited", "refused", "incompatible", "paused", "pack_full")
 KNOCK_VERSION = 1
 ABORT_CODES = ("main_mismatch", "refused", "needs_owner", "join_has_peers")
 

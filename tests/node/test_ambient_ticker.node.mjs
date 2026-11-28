@@ -47,11 +47,11 @@ function boot({ calm = false, hidden = false, still = false, reduced = false, of
     };
 }
 
-test('one 250 ms timer while a wearer is visible, however many wearers join', () => {
+test('one 42 ms (~24 fps) timer while a wearer is visible, however many wearers join', () => {
     const t = boot(); const a = make(); const b = make();
     t.join(a); t.join(b, 'avatar-spiral');
     assert.equal(t.timers(), 1);
-    assert.equal([...t.state.timers.values()][0].ms, 250);
+    assert.equal([...t.state.timers.values()][0].ms, 42);
     assert.equal(a.attrs['data-amb'], '');
 });
 
@@ -174,6 +174,6 @@ test('no Motion helper on the page: the ticker installs nothing', () => {
 test('the sources carry no infinite animation for the ring', () => {
     const strip = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '');
     const ring = strip(fs.readFileSync(path.join(ROOT, 'css', 'popup-focus.css'), 'utf8'));
-    assert.doesNotMatch(ring, /popup-focus-turn\s+6s|@keyframes\s+popup-focus-turn/);
-    assert.match(ring, /\.popup-focus-turn > \.pf-sheen::before \{[^}]*transform: rotate\(calc\(var\(--amb-step, 0\) \* 15deg\)\)/);
+    assert.doesNotMatch(ring, /popup-focus-turn\s+6s|@keyframes\s+popup-focus-turn|@keyframes\s+popup-focus-orbit|@property\s+--pf-angle/);
+    assert.match(ring, /\.popup-focus-turn > \.pf-sheen::before \{[^}]*transform: rotate\(var\(--amb-sheen-deg, 0deg\)\)/);
 });

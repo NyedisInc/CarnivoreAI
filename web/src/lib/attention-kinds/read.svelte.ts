@@ -1,6 +1,7 @@
+/* the Task Manager */
 import { approvals, startApprovals } from '../approvals/approvals.svelte';
 import { isQuestionItem, type ApprovalItem } from '../approvals/approvals-model';
-import { holdAggregate, huddle, startTaskManager } from '../../plugins/huddle/huddle.svelte';
+import { holdAggregate, huddle, startTaskManager } from '../../plugins/taskmanager/huddle.svelte';
 import { alertCenter, startAlertCenter } from '../app-alerts/alerts.svelte';
 import { t } from '../i18n/index.svelte';
 import { acquireScheduledRuns, releaseScheduledRuns } from '../../opscenter/api/scheduled-runs.svelte';
@@ -11,6 +12,7 @@ let runs = $state.raw<ReturnType<typeof acquireScheduledRuns> | null>(null);
 
 let holders = 0;
 
+/* the Task Manager */
 export function startAttentionSources(): () => void {
   startApprovals();
   startTaskManager();

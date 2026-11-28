@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import os
+import sys
 import threading
 import time
 from collections import OrderedDict
 from typing import Dict, Tuple
 
-RACY_WINDOW_NS = 1_000_000_000
+RACY_WINDOW_NS = 50_000_000 if sys.platform == "darwin" else 1_000_000_000
 
 MAX_DIRECTORIES = 512
 

@@ -125,10 +125,72 @@ console.log('[TerminalAddons Module] Loading...');
         var dirty = false;
         var pollTimer = null;
         var redrawTimer = null;
+        var cachedPainted = null;
+        var canObserveTransitions = !!(doc && doc.body && typeof global.MutationObserver === 'function');
+        var bodyObserver = null;
+
+        function invalidate() {
+            cachedPainted = null;
+            if (!term.element || !term.element.isConnected) {
+                teardown();
+                return;
+            }
+            if (dirty && checkPainted()) {
+                scheduleRedraw();
+            } else if (!dirty && rec && !rec.live && !rec.retired && checkPainted()) {
+                schedulePass();
+            }
+        }
+
+        function checkPainted() {
+            var el = term.element;
+            if (!el || !el.isConnected) return false;
+            if (doc && doc.visibilityState === 'hidden') return false;
+            if (global.CarnivoreWindowHidden === true) return false;
+            if (!canObserveTransitions || !el.ownerDocument) {
+                return isPainted(el, doc);
+            }
+            if (cachedPainted === null) {
+                cachedPainted = isPainted(el, doc);
+            }
+            return cachedPainted;
+        }
+
+        function teardown() {
+            if (bodyObserver) {
+                bodyObserver.disconnect();
+                bodyObserver = null;
+            }
+            if (doc && typeof doc.removeEventListener === 'function') {
+                doc.removeEventListener('visibilitychange', invalidate);
+            }
+            if (typeof global.removeEventListener === 'function') {
+                global.removeEventListener('focus', invalidate);
+                global.removeEventListener('blur', invalidate);
+                global.removeEventListener('carnivore:window-hidden', invalidate);
+            }
+        }
+
+        if (canObserveTransitions) {
+            if (typeof doc.addEventListener === 'function') {
+                doc.addEventListener('visibilitychange', invalidate);
+            }
+            if (typeof global.addEventListener === 'function') {
+                global.addEventListener('focus', invalidate);
+                global.addEventListener('blur', invalidate);
+                global.addEventListener('carnivore:window-hidden', invalidate);
+            }
+            try {
+                bodyObserver = new global.MutationObserver(invalidate);
+                bodyObserver.observe(doc.body, { attributes: true, attributeFilter: ['class', 'data-menu-page'] });
+            } catch (err) {
+                canObserveTransitions = false;
+            }
+        }
 
         function redraw() {
             redrawTimer = null;
-            if (!term.element || !term.element.isConnected) return;
+            if (!term.element || !term.element.isConnected) { teardown(); return; }
             if (rec && !rec.live) { schedulePass(); return; }
             term.refresh(0, term.rows - 1);
         }
@@ -140,8 +202,9 @@ console.log('[TerminalAddons Module] Loading...');
 
         function poll() {
             pollTimer = null;
-            if (!term.element || !term.element.isConnected) return;
+            if (!term.element || !term.element.isConnected) { teardown(); return; }
             if (isPainted(term.element, doc)) {
+                cachedPainted = true;
                 scheduleRedraw();
                 return;
             }
@@ -149,9 +212,11 @@ console.log('[TerminalAddons Module] Loading...');
         }
 
         term.onRender(function () {
-            if (!isPainted(term.element, doc)) {
+            if (!checkPainted()) {
                 dirty = true;
-                if (pollTimer === null) pollTimer = setTimeout(poll, UNPAINTED_POLL_MS);
+                if (!canObserveTransitions && pollTimer === null) {
+                    pollTimer = setTimeout(poll, UNPAINTED_POLL_MS);
+                }
             } else if (dirty) {
                 scheduleRedraw();
             } else if (rec && !rec.live && !rec.retired) {

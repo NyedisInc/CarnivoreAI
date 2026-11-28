@@ -311,6 +311,15 @@ console.log('[AppEvents Module] Loading...');
             console.log('[AppEvents] events channel open');
             notify({ type: 'events.open' });
         };
+        var pendingDeltas = [];
+        var deltaRaf = null;
+        function flushPendingDeltas() {
+            deltaRaf = null;
+            if (!pendingDeltas.length) return;
+            var batch = pendingDeltas;
+            pendingDeltas = [];
+            for (var i = 0; i < batch.length; i++) handleFrame(batch[i]);
+        }
         ws.onmessage = function (event) {
             clearProbe();
             var frame;
@@ -320,6 +329,14 @@ console.log('[AppEvents Module] Loading...');
                 console.warn('[AppEvents] undecodable frame ignored');
                 return;
             }
+            if (frame && frame.type === 'listing.delta' && typeof globalThis.requestAnimationFrame === 'function') {
+                pendingDeltas.push(frame);
+                if (deltaRaf === null) {
+                    deltaRaf = globalThis.requestAnimationFrame(flushPendingDeltas);
+                }
+                return;
+            }
+            if (pendingDeltas.length) flushPendingDeltas();
             handleFrame(frame);
         };
         ws.onerror = function () {

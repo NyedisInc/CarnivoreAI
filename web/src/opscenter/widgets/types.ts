@@ -90,6 +90,7 @@ export interface BooleanSettingField {
   labelKey: string;
   hintKey?: string;
   keywordsKey?: string;
+  readonly hidden?: boolean;
   default: boolean;
   disabledWhen?: string;
 }
@@ -99,6 +100,7 @@ export interface NumberSettingField {
   labelKey: string;
   hintKey?: string;
   keywordsKey?: string;
+  readonly hidden?: boolean;
   default: number;
   min?: number;
   max?: number;
@@ -109,6 +111,7 @@ export interface EnumSettingField {
   labelKey: string;
   hintKey?: string;
   keywordsKey?: string;
+  readonly hidden?: boolean;
   options: readonly string[];
   default: string;
   control?: 'segmented' | 'select';
@@ -119,6 +122,7 @@ export interface StringSettingField {
   labelKey: string;
   hintKey?: string;
   keywordsKey?: string;
+  readonly hidden?: boolean;
   default: string;
   maxLength: number;
 }

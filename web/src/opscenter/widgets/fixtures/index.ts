@@ -16,9 +16,9 @@ import { scheduledTasksFixtures } from './core.scheduled-tasks';
 import { keepAwakeFixtures } from './core.keep-awake';
 import { machineStatsFixtures } from './core.machine-stats';
 import { changesFixtures } from './core.changes';
-import { taskManagerFixtures } from './core.task-manager';
+import { taskManagerFixtures } from './core.task-manager-mk2';
 import { questionsFixtures } from './core.questions';
-import { taskManagerListFixtures } from './core.task-list';
+import { taskManagerListFixtures } from './core.task-manager-mk2-all';
 import { sessionContentsFixtures } from './core.session-contents';
 import { terminalFixtures } from './core.terminal';
 import { browserFixtures } from './core.browser';
@@ -50,10 +50,8 @@ const TABLES: Readonly<Record<string, WidgetFixtures>> = {
   'core.keep-awake': keepAwakeFixtures,
   'core.machine-stats': machineStatsFixtures,
   'core.changes': changesFixtures,
-  'core.task-manager': taskManagerFixtures,
   'core.task-manager-mk2': taskManagerFixtures,
   'core.questions': questionsFixtures,
-  'core.task-list': taskManagerListFixtures,
   'core.session-contents': sessionContentsFixtures,
   'core.terminal': terminalFixtures,
   'core.timeline': timelineWidgetFixtures,
@@ -67,7 +65,6 @@ const TABLES: Readonly<Record<string, WidgetFixtures>> = {
   'core.crosstalk': crosstalkFixtures,
   'core.pipeline': pipelineFixtures,
   'core.developer': pipelineFixtures,
-  'core.task-manager-all': taskManagerListFixtures,
   'core.task-manager-mk2-all': taskManagerListFixtures,
   'core.shell': shellFixtures,
   'core.plugin-view': pluginViewFixtures,

@@ -3,7 +3,10 @@ import { SKILL_KEYS, isUnsupported } from '../../../../client/js/labels/skill.js
 import type { Translate } from '../sessions/types';
 import { MAX_PATH_CHARS, MAX_SCRIPT_FILES, boundedList, clipChars } from './bounds';
 import { refusalCodeOf, refusalPayloadOf } from './install-actions';
+import { hasPermissionDiffChanges, type FlaggedWarningMeta, type PermissionDiffData } from './permission-diff';
+import type { CardScreenshotView } from './card';
 import type { CplugFactsData, InstalledItem, UpdateDiff } from './types';
+import { buildUpdateNotes, hasCplugCapabilities, type UpdateNoteItem } from './update-notes';
 
 export type LedgerOutcome =
     | { kind: 'ok'; row: InstalledItem | null }
@@ -75,6 +78,7 @@ export interface ConsentText {
     diff: UpdateDiff | null;
     requiresConsent: boolean;
     cplugFacts: CplugFactsData | null;
+    releaseNotes: string | null;
 }
 
 function scriptsNamed(body: Record<string, unknown> | null): string[] {
@@ -101,6 +105,10 @@ export function consentSheetOf(
         cplugFacts:
             body && body.cplug_facts && typeof body.cplug_facts === 'object' && !Array.isArray(body.cplug_facts)
                 ? (body.cplug_facts as CplugFactsData)
+                : null,
+        releaseNotes:
+            body && typeof body.release_notes === 'string' && body.release_notes.trim() !== ''
+                ? body.release_notes.trim()
                 : null,
     };
 }
@@ -157,6 +165,23 @@ export function restoreSheet(name: string, version: string | null, t: Translate)
     };
 }
 
+export interface UpdateSheetMeta {
+    readonly fromVersion?: string | null;
+    readonly toVersion?: string | null;
+    readonly screenshots?: readonly CardScreenshotView[];
+    readonly releaseNotes?: string | null;
+}
+
+export interface UpdateSummaryProps {
+    readonly fromVersion: string | null;
+    readonly toVersion: string | null;
+    readonly notes: readonly UpdateNoteItem[];
+    readonly screenshots: readonly CardScreenshotView[];
+    readonly noPermissions: boolean;
+    readonly noTools: boolean;
+    readonly permissionsUnchanged: boolean;
+}
+
 export function updateConsentSheet(
     name: string,
     text: string | null,
@@ -164,29 +189,82 @@ export function updateConsentSheet(
     t: Translate,
     diff: UpdateDiff | null = null,
     cplugFacts: CplugFactsData | null | undefined = undefined,
+    permissionDiff: PermissionDiffData | null = null,
+    flaggedWarning: FlaggedWarningMeta | null = null,
+    meta: UpdateSheetMeta | null = null,
 ): Record<string, unknown> {
     const shipsScripts = scripts.length > 0;
     const isCplug = cplugFacts !== undefined;
+    const permChanges = hasPermissionDiffChanges(permissionDiff);
+    const hasCaps = hasCplugCapabilities(cplugFacts);
+    const fromVersion = meta?.fromVersion ?? diff?.from_version ?? null;
+    const toVersion = meta?.toVersion ?? diff?.to_version ?? null;
+    const updateSummary: UpdateSummaryProps | null = isCplug
+        ? {
+              fromVersion,
+              toVersion,
+              notes: buildUpdateNotes({
+                  releaseNotes: meta?.releaseNotes ?? null,
+                  diff,
+                  fromVersion,
+                  toVersion,
+                  t,
+              }),
+              screenshots: meta?.screenshots ?? [],
+              noPermissions: Boolean(cplugFacts && (cplugFacts.permissions?.length ?? 0) === 0),
+              noTools: Boolean(cplugFacts && (cplugFacts.tools?.length ?? 0) === 0),
+              permissionsUnchanged: Boolean(cplugFacts && hasCaps && !permChanges),
+          }
+        : null;
+    const ackOnly =
+        !text &&
+        !isCplug &&
+        Boolean(
+            flaggedWarning?.requiresWarningAck ||
+                permissionDiff?.requiresReconsent ||
+                permissionDiff?.provenance.commitShaMismatch,
+        );
     const listed = boundedList(scripts, MAX_SCRIPT_FILES);
     const paths = listed.shown.map((entry) => clipChars(entry, MAX_PATH_CHARS) ?? '');
-    const baseLead = t(isCplug ? SKILL_KEYS.updateConsentCplugLead : SKILL_KEYS.updateConsentLead);
+    const leadKey = isCplug
+        ? SKILL_KEYS.updateConsentCplugLead
+        : ackOnly
+          ? flaggedWarning?.requiresWarningAck && !permissionDiff
+              ? SKILL_KEYS.flaggedLead
+              : SKILL_KEYS.updateConsentCplugLead
+          : SKILL_KEYS.updateConsentLead;
+    const baseLead = isCplug
+        ? fromVersion && toVersion
+            ? t(SKILL_KEYS.updateFromTo, { from: fromVersion, to: toVersion })
+            : t(leadKey)
+        : t(leadKey);
+    const confirmLabel = isCplug
+        ? toVersion
+            ? t(SKILL_KEYS.updateConfirmVersion, { version: toVersion })
+            : t(SKILL_KEYS.updateConfirm)
+        : t(ackOnly ? SKILL_KEYS.updateConfirm : SKILL_KEYS.updateConsentConfirm);
     return {
         title: t(SKILL_KEYS.updateTitle, { name }),
         lead: shipsScripts ? `${baseLead} ${t(SKILL_KEYS.consentScriptsRun)}` : baseLead,
         document: text,
         diff,
         cplugFacts,
-        documentMissing: text ? null : t(SKILL_KEYS.updateConsentUnavailable),
+        isPluginUpdate: isCplug,
+        ...(updateSummary ? { updateSummary } : {}),
+        ...(permChanges && permissionDiff ? { permissionDiff } : {}),
+        ...(flaggedWarning ? { flaggedWarning } : {}),
+        documentMissing: text || ackOnly || isCplug ? null : t(SKILL_KEYS.updateConsentUnavailable),
         linesHeading: shipsScripts ? t(SKILL_KEYS.consentScriptsHeading) : null,
         lines: listed.hidden > 0
             ? [...paths, t(SKILL_KEYS.filesMore, { count: listed.hidden })]
             : paths,
-        tickLabel: isCplug
-            ? null
-            : shipsScripts
-              ? t(SKILL_KEYS.consentCheckbox)
-              : t(SKILL_KEYS.updateConsentCheckbox),
-        confirmLabel: t(SKILL_KEYS.updateConsentConfirm),
+        tickLabel:
+            isCplug || ackOnly
+                ? null
+                : shipsScripts
+                  ? t(SKILL_KEYS.consentCheckbox)
+                  : t(SKILL_KEYS.updateConsentCheckbox),
+        confirmLabel,
         busyLabel: t(SKILL_KEYS.updateWorking),
         t,
     };

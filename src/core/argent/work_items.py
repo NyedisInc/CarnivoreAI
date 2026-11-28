@@ -36,7 +36,7 @@ class _Pull:
     state: str = PENDING
     viewed_at: float = 0.0
     client: Optional[ArgentClient] = None
-    client_key: Tuple[str, str] = ("", "")
+    client_key: str = ""
     token: Optional[str] = None
     transport: Any = None
 
@@ -137,10 +137,10 @@ def current_tenant() -> str:
     return str(login["tenant_id"]) if login else ""
 
 
-def _client(server_url: str, ca_path: str) -> ArgentClient:
-    key = (server_url, ca_path)
+def _client(server_url: str) -> ArgentClient:
+    key = server_url
     if _pull.client is None or _pull.client_key != key:
-        _pull.client = ArgentClient(server_url, lambda: _pull.token, ca_path=ca_path, transport=_pull.transport, on_unauthorized=get_runtime().store.mark_login_expired)
+        _pull.client = ArgentClient(server_url, lambda: _pull.token, transport=_pull.transport, on_unauthorized=get_runtime().store.mark_login_expired)
         _pull.client_key = key
     return _pull.client
 
@@ -151,7 +151,7 @@ async def client_for_call() -> Tuple[ArgentClient, str]:
     if not (cfg.server_url and tenant and token):
         raise Unauthorized("log in to argent first", 401, "login_required")
     _pull.token = token
-    return _client(cfg.server_url, cfg.ca_path), tenant
+    return _client(cfg.server_url), tenant
 
 
 async def pull_once() -> str:

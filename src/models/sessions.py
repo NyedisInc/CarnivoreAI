@@ -7,7 +7,8 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 from src.core.hosts.ddl import HOST_STATE_UP, LOCAL_HOST_KEY, LOCAL_HOST_LABEL
 from src.models.activity_status import ActivityStatus, known_or_unknown
-from src.models.auto_sleep import SleepHoldInfo
+from src.models.auto_sleep import SleepHoldInfo, SleepVerdict
+from src.models.mcp_health import McpHealthInfo
 from src.models.session_marks import AutomationMark, CodexHelpersMark, MessagingMark, ScheduledMark, SkillLast
 from src.models.utc_time import as_aware_utc, utc_now
 
@@ -144,58 +145,6 @@ class AgentUpdateInfo(BaseModel):
     running: str = Field(description="Version this session's claude process is executing")
     installed: str = Field(description="Newest version installed on this computer")
     ready: bool = Field(description="True only when running is strictly older than installed")
-
-
-class McpDropInfo(BaseModel):
-    """One MCP server that is not connected, in the original shape (docs/session-status.md, "MCP drops")."""
-    name: str = Field(description="Server name; the exact config name when `exact`")
-    state: Literal["dropped", "failed", "needs_auth"] = Field(description="Why it is not connected")
-    at: Optional[str] = Field(default=None, description="ISO 8601 UTC time of the evidence saying so")
-    exact: bool = Field(description="True when `name` can be handed to `/mcp reconnect <name>` as is")
-    source: Literal["transcript", "server", "client_log", "process", "probe"] = Field(
-        default="transcript",
-        description=("Who said so: the transcript, this server's own first-hand record (carnivore), the session's "
-                     "MCP client log, the stdio process tree, or Carnivore's reachability probe"),
-    )
-
-
-class McpServerHealthInfo(BaseModel):
-    """One MCP server of a session with its measured state (#1678; docs/session-status.md, "MCP servers")."""
-    name: str = Field(description="Server name; the exact config name when `exact`")
-    transport: Literal["stdio", "http", "sse", "proxy", "unknown"] = Field(description="How the agent reaches it")
-    state: Literal["connected", "down", "needs_auth", "unknown"] = Field(
-        description="connected, down, needs_auth, or unknown (not measurable, or the link is not visible)"
-    )
-    reason: str = Field(description="Stable reason code; the catalog renders mcp.reason.<code>")
-    source: Literal["first_hand", "client_log", "process", "probe", "transcript"] = Field(
-        description="The evidence that decided the state"
-    )
-    detail: Optional[str] = Field(default=None, description="Short measured qualifier: an error code or HTTP status")
-    at: Optional[str] = Field(default=None, description="ISO 8601 UTC time of the deciding evidence")
-    exact: bool = Field(default=True, description="True when `name` can be handed to `/mcp reconnect <name>` as is")
-
-
-class CarnivoreLinkInfo(BaseModel):
-    """What THIS server process saw of a session's carnivore MCP client (docs/mcp-server.md, "Per-session link state")."""
-    state: Literal["connected", "dropped", "unknown"] = Field(description="The link's first-hand state")
-    initialized_at: Optional[str] = Field(default=None, description="ISO 8601 UTC time of its last initialize here")
-    last_request_at: Optional[str] = Field(default=None, description="ISO 8601 UTC time of its last accepted request here")
-
-
-class McpHealthInfo(BaseModel):
-    """A session's MCP servers, measured, or the field is null (not measured).
-
-    Mirrors ``src.core.mcp_health.fold.McpHealth``. ``servers`` is every configured or observed server with its
-    state; ``dropped`` is its down and needs-auth subset in the original shape. An empty ``dropped`` is a MEASURED
-    "nothing down"; null on the wrapper is "nothing measured", never "all well".
-    """
-    servers: List[McpServerHealthInfo] = Field(
-        default_factory=list, description="Every server with its measured state, by name; empty before the first measure"
-    )
-    dropped: List[McpDropInfo] = Field(default_factory=list, description="Servers down or needing auth")
-    carnivore: Optional[CarnivoreLinkInfo] = Field(
-        default=None, description="This server's first-hand view of the session's carnivore link, when judged"
-    )
 
 
 class BackgroundProcessesInfo(BaseModel):
@@ -483,6 +432,8 @@ class SessionInfo(BaseModel):
         default=None,
         description="Why auto-sleep will not touch this session (live work), or null.",
     )
+    sleep_verdict: Optional[SleepVerdict] = Field(
+        default=None, description="Why auto-sleep has not slept this session (last pass), or null.")
     skills_state: Optional[str] = Field(
         default=None,
         description=(
@@ -504,6 +455,10 @@ class SessionInfo(BaseModel):
             "The reason working_subagent is true because of a parked "
             "sub-agent's own background work, or null."
         ),
+    )
+    stalled_agents: Optional[int] = Field(
+        default=None,
+        description="Sub-agents whose Monitor expired with no notice and no later activity, or null.",
     )
     account_id: Optional[str] = Field(
         default=None,
@@ -582,6 +537,18 @@ class SessionInfo(BaseModel):
         default=None, description="install id of the computer that owns this row; set on a served or imported row")
     project_uid: Optional[str] = Field(default=None, description="projects.uid; set only on a listing served to a peer")
     company_uid: Optional[str] = Field(default=None, description="companies.uid; set only on a listing served to a peer")
+    parent_project_uid: Optional[str] = Field(
+        default=None, description="parent project's projects.uid; set only on a listing served to a peer")
+    last_work_at: Optional[str] = Field(
+        default=None, description="sessions.last_work_at; set on a listing served to a peer")
+    is_swarm: bool = Field(
+        default=False, description="True when this peer-served row is a read-only Swarm agent summary.")
+    swarm_role: Optional[str] = Field(
+        default=None, description="Read-only Swarm agent rank/role summary ('alpha', 'company', 'project', 'feature', 'task'), or null.")
+    hop: int = Field(
+        default=0, description="Read-only relay hop count (0 = local or direct peer, 1 = relayed via one hub; never > 1).")
+    origin_label: Optional[str] = Field(
+        default=None, description="Originating computer display label for a relayed peer session, or null.")
 
     @model_validator(mode="after")
     def _mirror_created_by_us(self) -> "SessionInfo":

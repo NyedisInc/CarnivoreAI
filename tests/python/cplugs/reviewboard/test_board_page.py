@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
 from src.core.browser_pages import open_pages, select
-from src.plugins.huddle import artifact_ticket
+from src.plugins.taskmanager import artifact_ticket
 from src.plugins.reviewboard import opener, ticket, viewer
 from src.plugins.reviewboard.mcp import TOOLS
 from src.plugins.sdk import sandboxed_html, signed_links

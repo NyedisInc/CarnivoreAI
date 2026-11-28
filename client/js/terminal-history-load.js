@@ -57,7 +57,8 @@
 
         var navToken = ctl ? ctl._navToken : null;
         var depth = opts && opts.scrollbackLines > 0 ? opts.scrollbackLines : 0;
-        if (!depth && alreadyLoaded(term, sessionId, navToken)) {
+        var held = !!(opts && opts.capturedB64);
+        if (!depth && !held && alreadyLoaded(term, sessionId, navToken)) {
             return result('already', measure(term));
         }
 
@@ -72,10 +73,11 @@
         var info;
         try {
             var api = global.API;
-            if (!api || typeof api.getSession !== 'function') {
+            if (opts && opts.capturedB64) {
+                info = { initial_scrollback_b64: opts.capturedB64 };
+            } else if (!api || typeof api.getSession !== 'function') {
                 return result('unavailable', 0, 'no_api');
-            }
-            info = await api.getSession(sessionId, {
+            } else info = await api.getSession(sessionId, {
                 includeScrollback: true,
                 cols: term.cols,
                 rows: term.rows,
@@ -124,8 +126,10 @@
         var written;
         var parsed = new Promise(function (resolve) { written = resolve; });
         var shim = shimFor(term, ctlNow, pinned, distance, sessionId, navToken, written);
-        var painted = await painter.paint(shim, b64, 'history',
-            { clearScrollback: true });
+        var painted = await painter.paint(shim, b64, 'history', {
+            clearScrollback: true,
+            stillValid: opts && typeof opts.stillValid === 'function' ? opts.stillValid : undefined
+        });
         if (painted !== 'painted') {
             return result('unavailable', 0, painted);
         }

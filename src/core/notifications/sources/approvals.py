@@ -1,11 +1,13 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, List, Optional, Tuple
+import asyncio
+from typing import Any, Callable, List, Optional, Set, Tuple
 
 import structlog
 
 from src.core.approvals.extract import KIND_TRUST
+from src.core.attention.beast_hold import HOLD_SECONDS, beast_handles
 from src.core.notifications import contracts
 from src.core.notifications.sources import common
 from src.core.session_startup_gate import detect_startup_prompt
@@ -27,10 +29,14 @@ def is_folder_trust_dialog(dialog: Any) -> bool:
 class ApprovalsSource:
 
     def __init__(self, get_watcher: Callable[[], Any], get_manager: Callable[[], Any],
-                 get_pending_store: Callable[[], Any]) -> None:
+                 get_pending_store: Callable[[], Any], *, hold_seconds: float = HOLD_SECONDS,
+                 handles: Callable[[str, Any], bool] = beast_handles) -> None:
         self._watcher = get_watcher
         self._manager = get_manager
         self._store = get_pending_store
+        self._hold_seconds = hold_seconds
+        self._handles = handles
+        self._held_tasks: Set[asyncio.Task] = set()
 
     def on_gain(self, gained: List[Tuple[str, str]]) -> None:
         for source, item_id in gained:
@@ -53,14 +59,45 @@ class ApprovalsSource:
             **common.session_fields(self._manager(), row.get("target_session_id") or None),
         )
 
+    def _trust_event(self, session_id: str, item_id: str) -> contracts.NotifyEvent:
+        return contracts.NotifyEvent(
+            type_id=TYPE_FOLDER_TRUST, kind="folder_trust", title=common.type_title(TYPE_FOLDER_TRUST),
+            ts=common.now(), severity=contracts.SEVERITY_WARN, instance_key=item_id,
+            **common.session_fields(self._manager(), session_id),
+        )
+
+    async def _emit_after_hold(self, session_id: str, item_id: str, expected_fp: str) -> None:
+        await asyncio.sleep(self._hold_seconds)
+        watcher = self._watcher()
+        observation = watcher.observation_for(session_id) if watcher is not None else None
+        dialog = getattr(getattr(observation, "evidence", None), "dialog", None)
+        if not is_folder_trust_dialog(dialog):
+            return
+        fp = str(getattr(dialog, "fingerprint", "") or "")
+        if expected_fp and fp and fp != expected_fp:
+            return
+        contracts.emit(self._trust_event(session_id, item_id))
+
     def _folder_trust(self, item_id: str) -> Optional[contracts.NotifyEvent]:
-        session_id, _ = item_id.removeprefix("dlg:").rsplit(":", 1)
+        session_id, item_fp = item_id.removeprefix("dlg:").rsplit(":", 1)
         watcher = self._watcher()
         observation = watcher.observation_for(session_id) if watcher is not None else None
         dialog = getattr(getattr(observation, "evidence", None), "dialog", None)
         if not is_folder_trust_dialog(dialog) or session_id.startswith("remote:"):
             return None
-        return contracts.NotifyEvent(
-            type_id=TYPE_FOLDER_TRUST, kind="folder_trust", title=common.type_title(TYPE_FOLDER_TRUST),
-            ts=common.now(), instance_key=item_id, **common.session_fields(self._manager(), session_id),
-        )
+        try:
+            handled = bool(self._handles(session_id, observation))
+        except Exception:  # noqa: BLE001
+            handled = False
+        if handled and self._hold_seconds > 0:
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+            if loop is not None:
+                expected_fp = str(getattr(dialog, "fingerprint", "") or item_fp)
+                task = loop.create_task(self._emit_after_hold(session_id, item_id, expected_fp))
+                self._held_tasks.add(task)
+                task.add_done_callback(self._held_tasks.discard)
+                return None
+        return self._trust_event(session_id, item_id)

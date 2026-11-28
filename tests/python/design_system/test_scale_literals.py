@@ -28,11 +28,11 @@ _PX = re.compile(r"(-?\d*\.?\d+)px")
 
 RADIUS_LITERALS_KNOWN: dict[str, int] = {
     "client/css/styles.css": 1,
-    "web/src/plugins/huddle/chat/ChatWidget.svelte": 1,
-    "web/src/plugins/huddle/swarm/SwarmLedger.svelte": 4,
-    "web/src/plugins/huddle/swarm/SwarmOrg.svelte": 4,
-    "web/src/plugins/huddle/swarm/SwarmPanel.svelte": 3,
-    "web/src/plugins/huddle/swarm/characters/characters.css": 7,
+    "web/src/plugins/taskmanager/chat/ChatWidget.svelte": 1,
+    "web/src/plugins/taskmanager/swarm/SwarmLedger.svelte": 4,
+    "web/src/plugins/taskmanager/swarm/SwarmOrg.svelte": 4,
+    "web/src/plugins/taskmanager/swarm/SwarmPanel.svelte": 3,
+    "web/src/plugins/taskmanager/swarm/characters/characters.css": 7,
     "web/src/lib/catalog/AccountPanel.svelte": 1,
     "web/src/lib/catalog/CardImageRow.svelte": 1,
     "web/src/lib/catalog/CatalogCard.svelte": 1,
@@ -44,8 +44,6 @@ RADIUS_LITERALS_KNOWN: dict[str, int] = {
     "web/src/lib/catalog/ConsentInstructions.svelte": 1,
     "web/src/lib/catalog/ConsentScripts.svelte": 1,
     "web/src/lib/catalog/ContentsBlock.svelte": 1,
-    "web/src/lib/catalog/CplugFacts.svelte": 1,
-    "web/src/lib/catalog/FilterGroup.svelte": 2,
     "web/src/lib/catalog/GradeBlock.svelte": 2,
     "web/src/lib/catalog/InstallChoices.svelte": 1,
     "web/src/lib/catalog/InstallPreview.svelte": 4,
@@ -82,7 +80,7 @@ RADIUS_LITERALS_KNOWN: dict[str, int] = {
     "web/src/lib/swarm-board/views/swimlanes/SwimLane.svelte": 1,
     "web/src/lib/swarm-board/views/timeline/TimelineGroup.svelte": 2,
     "web/src/lib/themes-page/ThemePreview.svelte": 1,
-    "web/src/opscenter/cells/task-manager-mk2/mk2-design.css": 2,
+    "web/src/plugins/taskmanager/mk2/mk2-design.css": 2,
     "web/src/opscenter/ui/tabs.css": 1,
 }
 Z_LITERALS_KNOWN: dict[str, int] = {

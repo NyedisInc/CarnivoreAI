@@ -33,9 +33,10 @@ def _stage(tmp_path: Path, publisher: str, effects, files=None):
     return _stage_now(archive, tmp_path / f"staged-{publisher}", item=item, allow_scripts=True)
 
 
-def test_community_xhtml_refused(tmp_path):
+def test_community_import_must_stay_in_folder(tmp_path):
+    bad = b"import { createEffect } from '../_shared/effects-base.js';\nexport default () => {};\n"
     with pytest.raises(ArchiveRefused) as refused:
-        _stage(tmp_path, "someone", None, {"login.xhtml": b"<html/>"})
+        _stage(tmp_path, "someone", bad, {"effects-base.js": BASE})
     assert refused.value.code == "scripts_not_supported"
     assert not (tmp_path / "staged-someone").exists()
 

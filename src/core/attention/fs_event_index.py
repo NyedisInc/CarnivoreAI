@@ -289,13 +289,34 @@ _index: Optional[FsEventIndex] = None
 _task: Optional["asyncio.Task[None]"] = None
 
 
-def default_roots() -> Tuple[str, str]:
+def default_roots() -> Tuple[str, ...]:
     from src.core.attention.codex_gather import DEFAULT_CODEX_HOME
 
-    return (
+    roots: List[str] = [
         str(Path.home() / ".claude" / "projects"),
         os.path.join(os.path.expanduser(DEFAULT_CODEX_HOME), "sessions"),
-    )
+    ]
+    accounts_dir = Path.home() / ".carnivore" / "accounts"
+    try:
+        if accounts_dir.is_dir():
+            for child in sorted(accounts_dir.iterdir()):
+                if not child.is_dir():
+                    continue
+                claude_proj = child / "projects"
+                if claude_proj.is_dir():
+                    roots.append(str(claude_proj))
+                codex_sess = child / "sessions"
+                if codex_sess.is_dir():
+                    roots.append(str(codex_sess))
+    except OSError:
+        pass
+    seen: set[str] = set()
+    unique: List[str] = []
+    for root in roots:
+        if root not in seen:
+            seen.add(root)
+            unique.append(root)
+    return tuple(unique)
 
 
 def start() -> FsEventIndex:

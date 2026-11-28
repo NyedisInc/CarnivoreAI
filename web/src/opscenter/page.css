@@ -134,6 +134,7 @@
 
   .oc-page__bar {
     display: flex;
+    flex: none;
     flex-wrap: wrap;
     align-items: flex-end;
     gap: var(--oc-space-2) var(--oc-space-4);
@@ -474,6 +475,8 @@
     height: var(--oc-titlerow-h-phone);
     min-height: var(--oc-titlerow-h-phone);
     padding: 0 var(--oc-page-gutter);
+    --oc-omni-field-h: 16px;
+    --oc-omni-field-mb: 0px;
   }
 
   .oc-titlebar .oc-titlebar__title {
@@ -544,7 +547,8 @@
 
   .oc-titlebar__omni-row .oc-field {
     min-height: 0;
-    height: 16px;
+    height: var(--oc-omni-field-h);
+    margin-block: var(--oc-omni-field-mb);
     padding: 0;
     border: 0;
     border-radius: 0;

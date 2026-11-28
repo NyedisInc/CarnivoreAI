@@ -1,0 +1,32 @@
+schema = 2
+id = "sample"
+name = "Sample Plugin"
+version = "1.2.3"
+kind = "plugin"
+description = "Verifies TOML 1.0 import through Vite."
+author = "Carnivore"
+tier = "builtin"
+default_enabled = true
+
+[permissions]
+read = ["sessions"]
+write = ["notify"]
+
+[ui]
+routes = true
+tabs = ["sample"]
+widgets = ["card"]
+
+[ui.contribute]
+"session.row_actions" = [{ id = "pin", label = "Pin" }]
+"terminal.toolbar" = [{ id = "snap", label = "Snap" }]
+
+[[mcp.tools]]
+name = "sample_ping"
+description = "Ping from TOML"
+gate = "read"
+inputSchema = { type = "object" }
+
+[widgets.card]
+instancing = "singleton"
+fits = { sizes = ["small", "medium"], anySize = false }

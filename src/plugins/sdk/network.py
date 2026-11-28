@@ -164,7 +164,8 @@ def _network_host(cplug_id: str, i: int, block: Any, secrets: Mapping[str, Secre
     auth = None
     if block.get("auth") is not None:
         raw = block["auth"]
-        if (not isinstance(raw, dict) or set(raw) != {"secret", "header", "scheme"} or raw["secret"] not in secrets
+        if (not isinstance(raw, dict) or set(raw) != {"secret", "header", "scheme"}
+                or not isinstance(raw["secret"], str) or raw["secret"] not in secrets
                 or not isinstance(raw["header"], str) or not _TOKEN.match(raw["header"])
                 or raw["header"].lower() in FORBIDDEN_HEADERS or raw["header"].lower().startswith(FORBIDDEN_HEADER_PREFIXES)
                 or not isinstance(raw["scheme"], str) or not re.match(r"^[A-Za-z0-9-]{0,32}$", raw["scheme"])):

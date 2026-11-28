@@ -19,7 +19,7 @@ from src.core.computers.link_listener import Member
 from src.core.computers.tls_identity import (CertRejected, LinkIdentity, client_link_ctx, pinned_certs, server_link_ctx,
                                              validate_peer_cert)
 from src.core.federation import grants, peer_hosts
-from src.core.pack.machines import settings_doc
+from src.core.pack.machines import roster_doc, settings_doc
 from src.core.trail_entry import utc_now
 from src.core.resource_push import topics
 
@@ -120,6 +120,7 @@ class _Undo:
 def _write_grant_pair(conn: sqlite3.Connection, undo: _Undo, *, peer: PeerId, own_grant_id: str, label: str, initiator: bool) -> None:
     old = grants.live_for_peer(conn, peer.install_id)
     old_host = peer_hosts.get(conn, peer.install_id)
+    before = old_host if old_host is not None else peer_hosts.get(conn, peer.install_id, include_mesh=True)
     if old is not None and old.grant_id == own_grant_id and old.public_key == peer.public_key:
         _set_remote_grant_id(conn, own_grant_id, peer.grant_id)
         undo.add(lambda c: _set_remote_grant_id(c, own_grant_id, old.remote_grant_id))
@@ -136,13 +137,13 @@ def _write_grant_pair(conn: sqlite3.Connection, undo: _Undo, *, peer: PeerId, ow
                 "protocol": old_host.peer_protocol, "back_kind": old_host.back_kind}
     peer_hosts.upsert(conn, install_id=peer.install_id, label=label, grant_id=peer.grant_id, fid=grants.get_grant(conn, own_grant_id).fid,  # type: ignore[union-attr]
                       initiator=initiator, **kept)
-    if old_host is None:
+    if before is None:
         undo.add(lambda c: peer_hosts.delete(c, peer.install_id))
     else:
-        undo.add(lambda c: peer_hosts.upsert(c, install_id=old_host.peer_install_id, label=old_host.label, grant_id=old_host.peer_grant_id,
-                                           fid=old_host.peer_fid, initiator=old_host.initiator, ssh_target=old_host.ssh_target,
-                                           ssh_port=old_host.ssh_port, peer_port=old_host.peer_port, protocol=old_host.peer_protocol,
-                                           back_kind=old_host.back_kind))
+        undo.add(lambda c: peer_hosts.upsert(c, install_id=before.peer_install_id, label=before.label, grant_id=before.peer_grant_id,
+                                           fid=before.peer_fid, initiator=before.initiator, ssh_target=before.ssh_target,
+                                           ssh_port=before.ssh_port, peer_port=before.peer_port, protocol=before.peer_protocol,
+                                           back_kind=before.back_kind))
 
 
 def _put_row(conn: sqlite3.Connection, undo: _Undo, row: store.LinkRow) -> None:
@@ -151,15 +152,23 @@ def _put_row(conn: sqlite3.Connection, undo: _Undo, row: store.LinkRow) -> None:
     undo.add(lambda c: store.put(c, before) if before is not None else store.delete(c, row.peer_install_id))
 
 
+def check_room(conn: sqlite3.Connection, joiner_iid: str) -> None:
+    rows = store.members_tls(conn)
+    limit = roster_doc.max_computers()
+    if all(r.peer_install_id != joiner_iid for r in rows) and len(rows) + 1 >= limit:
+        raise JoinRefused("pack_full", f"the pack is full: {limit} computers is the most it holds; remove one first")
+
+
 def classify_join(conn: sqlite3.Connection, *, own_iid: str, own_link_fid: str, joiner: PeerId) -> str:
     if joiner.install_id == own_iid or joiner.link_fid == own_link_fid:
         raise JoinRefused("refused", "the joining computer claims this computer's identity")
     live = grants.live_for_peer(conn, joiner.install_id)
-    if live is None:
-        return "new"
-    if live.public_key != joiner.public_key:
+    if live is not None and live.public_key != joiner.public_key:
         log.warning("peer_identity_changed", iid=joiner.install_id[:8])
         raise JoinRefused("peer_identity_changed", "that computer is already paired with another key; remove it first")
+    check_room(conn, joiner.install_id)
+    if live is None:
+        return "new"
     return "migrate"
 
 
@@ -376,7 +385,7 @@ async def joiner_final(open_db: OpenDb, main_iid: str, *, config_path: Path, rev
     return True
 
 
-def _revert_rows(conn: sqlite3.Connection, row: store.LinkRow, pack: PackSettingsPort, own_iid: str) -> None:
+def _revert_rows(conn: sqlite3.Connection, row: store.LinkRow, pack: PackSettingsPort, own_iid: str, keep_stats: bool = False) -> None:
     iid = row.peer_install_id
     if row.join_kind == "migrate":
         if row.prev_initiator is not None:
@@ -385,7 +394,7 @@ def _revert_rows(conn: sqlite3.Connection, row: store.LinkRow, pack: PackSetting
         live = grants.live_for_peer(conn, iid)
         if live is not None:
             grants.revoke(conn, live.grant_id)
-        peer_hosts.delete(conn, iid)
+        peer_hosts.delete(conn, iid, purge=not keep_stats)
     store.delete(conn, iid)
     if row.role == "main" and row.join_kind != "migrate":
         pack.mint({"master_install_id": own_iid})
@@ -396,13 +405,19 @@ async def sweep(open_db: OpenDb, *, identity: LinkIdentity, own_iid: str, pack: 
     def run() -> List[store.LinkRow]:
         done: List[store.LinkRow] = []
         with closing(open_db()) as conn:
+            from src.core.federation import mesh_peers
+
             for row in store.provisional_older_than(conn, max_age):
-                _revert_rows(conn, row, pack, own_iid)
+                _revert_rows(conn, row, pack, own_iid, keep_stats=mesh_peers.holds_live(row.peer_install_id))
                 done.append(row)
         return done
 
     reverted = await asyncio.to_thread(run)
     for row in reverted:
+        if row.join_kind != "migrate":
+            from src.core.federation import mesh_peers
+
+            await mesh_peers.star_row_gone(row.peer_install_id)
         if row.role == "main":
             await links.remove(row.peer_install_id)
             if row.join_kind == "migrate":

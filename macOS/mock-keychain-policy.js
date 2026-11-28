@@ -1,5 +1,6 @@
 'use strict';
 
+/* cannot be read */
 
 const { spawnSync } = require('child_process');
 const { bundleOf } = require('./proof-marker');

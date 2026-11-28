@@ -11,6 +11,7 @@ from src.core.timers.redact import redact
 
 FAMILY_CLAUDE = "claude"
 FAMILY_CODEX = "codex"
+FAMILY_CUSTOM = "custom"
 
 KIND_ASK = "ask_user_question"
 KIND_PLAN = "plan_approval"
@@ -388,6 +389,12 @@ def _footerless_ok(tail: List[str], cursor: Optional[int], question: str) -> boo
 
 def extract_dialog(text: str, family: Optional[str]) -> Optional[Dialog]:
     fam = FAMILY_CODEX if family == FAMILY_CODEX else FAMILY_CLAUDE
+    if family not in (None, FAMILY_CLAUDE, FAMILY_CODEX):
+        from src.core.approvals import cli_trust
+
+        other = cli_trust.decode(text)
+        if other is not None:
+            return other
     lines = (text or "").splitlines()
     if fam == FAMILY_CLAUDE and "new MCP servers found in this project" in (text or ""):
         from src.core.approvals import mcp_multi

@@ -247,7 +247,7 @@ def test_switch_off_polls_nothing_and_routes_refuse(env: Dict[str, Any], tmp_pat
     assert asyncio.run(cost_poller.pass_once()) == cost_poller.SLOW_SECONDS and argent.calls == [], "tether switch off: no call"
     assert not cost_poller.is_running(), "no task exists until the feature starts it"
     assert asyncio.run(routes.get_cost()) == {"enabled": False, "state": "off", "as_of": None, "sessions": {}, "items": {}}
-    for call in (routes.request_budget(routes.BudgetRequest(item_id="wi_story1")),
+    for call in (routes.request_budget(routes.BudgetRequest(item_id="wi_story1", amount_micros=5_000_000, reason="release week")),
                  routes.lift_budget(routes.BudgetLift(item_id="wi_story1"))):
         with pytest.raises(HTTPException) as refused:
             asyncio.run(call)
@@ -269,6 +269,43 @@ def test_lift_never_calls_argent_and_returns_the_noc_url(env: Dict[str, Any]) ->
     assert budget.noc_budget_url("", "wi_1") is None and budget.noc_budget_url(SERVER + "/", "wi_1") == f"{SERVER}/work/items?sel=wi_1"
 
 
+def _ask_env(env: Dict[str, Any], status: int, body: Dict[str, Any]) -> Dict[str, Any]:
+    argent = env["argent"]
+    argent.mode = "up"
+    argent.handler = lambda request: (argent.calls.append((request.method, request.url.path, {}, request.headers.get("authorization"))), httpx.Response(status, json=body))[1]
+    work_items._pull.transport, work_items._pull.client = httpx.MockTransport(argent.handler), None
+    ports.register(PORT_NAME, {"on": True})
+    return argent
+
+
+@pytest.mark.parametrize("status,body", [(401, {"error": {"code": "unauthorized", "message": "SECRET-RAW-TEXT"}}), (403, {"error": "SECRET-RAW-TEXT"}),
+                                          (400, {"error": {"code": "bad_request", "message": "SECRET-RAW-TEXT"}}), (404, {})])
+def test_budget_ask_is_refused_as_unavailable_and_never_expires_the_login(env: Dict[str, Any], status: int, body: Dict[str, Any]) -> None:
+    argent = _ask_env(env, status, body)
+    with pytest.raises(HTTPException) as refused:
+        asyncio.run(routes.request_budget(routes.BudgetRequest(item_id="wi_story1", amount_micros=5_000_000, reason="release week")))
+    assert refused.value.status_code == 501 and refused.value.detail["code"] == "budget_request_unavailable"
+    assert "SECRET-RAW-TEXT" not in json.dumps(refused.value.detail), "no raw argent text in a response body"
+    assert [c[1] for c in argent.calls] == ["/v1/my/cli/budget/requests"]
+    assert not cost_poller.get_runtime().store.login_expired(), "a refusal of this route is not a dead login"
+
+
+def test_a_401_from_any_other_argent_call_still_marks_the_login_expired(env: Dict[str, Any]) -> None:
+    _ask_env(env, 401, {})
+    with pytest.raises(HTTPException) as refused:
+        asyncio.run(routes._call("/v1/my/other", {}))
+    assert refused.value.status_code == 403 and refused.value.detail["code"] == "login_expired"
+    assert cost_poller.get_runtime().store.login_expired()
+
+
+def test_budget_ask_unreachable_keeps_its_code(env: Dict[str, Any]) -> None:
+    _ask_env(env, 502, {})
+    with pytest.raises(HTTPException) as refused:
+        asyncio.run(routes.request_budget(routes.BudgetRequest(item_id="wi_story1", amount_micros=5_000_000, reason="release week")))
+    assert refused.value.status_code == 502 and refused.value.detail["code"] == "argent_unreachable"
+    assert not cost_poller.get_runtime().store.login_expired()
+
+
 def test_non_owner_status_shape_is_read_and_a_paused_governing_item_holds(env: Dict[str, Any]) -> None:
     assert budget.viewer_is_owner("Fixture Owner", " fixture owner ") is True and budget.viewer_is_owner("Fixture Owner", "Fixture Person") is False
     assert budget.viewer_is_owner("", "Fixture Person") is None, "an unknown owner is never guessed to be the viewer"
@@ -287,6 +324,7 @@ def test_non_owner_status_shape_is_read_and_a_paused_governing_item_holds(env: D
     assert env["seen"]["hold"][-1][2] == "Platform migration", "the notice names what governs the hold when no owner is named"
     actions, _ = notices.hold_actions("wi_story1", "Story", "Fixture Owner", "$10.00", "$10.00")
     assert [a["id"] for a in actions] == ["argent_request_budget", "argent_open_budget"] and all(a.get("route") != "/argent/budget/lift" for a in actions)
+    assert actions[0]["href"] == "#settings/features/argent/settings?ask=wi_story1" and "route" not in actions[0], "the ask needs an amount and a reason, so the button opens the panel's form"
 
 
 def test_status_not_found_clears_the_hold_quietly_and_a_bare_404_keeps_it(env: Dict[str, Any]) -> None:

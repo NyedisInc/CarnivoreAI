@@ -248,6 +248,31 @@ describe('two accounts and a total', () => {
         expect(total).toContain(t('ledger.total.accounts', { count: 2 }));
     });
 
+    test('the total collapses multi-bucket providers to one 7d row per provider (#3368)', async () => {
+        await paint({
+            ...LEDGER,
+            total: {
+                accounts: 6,
+                windows: [
+                    { provider: 'claude', kind: 'five_hour', label: '5h', used_pct: 10, window_seconds: 18000, resets_at: at(3600), accounts: 3 },
+                    { provider: 'claude', kind: 'seven_day', label: '7d', used_pct: 44, window_seconds: 604800, resets_at: at(36000), accounts: 3 },
+                    { provider: 'codex', kind: 'primary', label: '7d', used_pct: 29, window_seconds: 604800, resets_at: at(72000), accounts: 2 },
+                    { provider: 'antigravity', kind: '3p-5h', label: '5h', used_pct: 0, window_seconds: 18000, resets_at: at(18000), accounts: 1 },
+                    { provider: 'antigravity', kind: '3p-weekly', label: '7d', used_pct: 0, window_seconds: 604800, resets_at: at(604800), accounts: 1 },
+                    { provider: 'antigravity', kind: 'gemini-5h', label: '5h', used_pct: 25, window_seconds: 18000, resets_at: at(1800), accounts: 1 },
+                    { provider: 'antigravity', kind: 'gemini-weekly', label: '7d', used_pct: 50, window_seconds: 604800, resets_at: at(440000), accounts: 1 },
+                ],
+            },
+        });
+        const totalRows = [...document.querySelectorAll('[data-ledger="total"] tr.ledger-window')];
+        expect(totalRows).toHaveLength(3);
+        const text = totalRows.map((row) => row.textContent?.replace(/\s+/g, ' ').trim());
+        expect(text[0]).toContain('44%');
+        expect(text[1]).toContain('29%');
+        expect(text[2]).toContain('50%');
+        expect(document.querySelector('[data-ledger="total"]')?.textContent ?? '').not.toContain('25%');
+    });
+
     test('THE LOOP IS ITS OWN LINE, because alive is not the same as current', async () => {
         await paint(LEDGER);
         const loop = document.querySelector('[data-ledger="loop"]');

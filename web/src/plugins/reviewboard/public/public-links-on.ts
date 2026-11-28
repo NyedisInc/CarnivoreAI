@@ -1,4 +1,4 @@
-import manifest from '../../../../../src/plugins/reviewboard/cplug.json';
+import manifest from '../../../../../src/plugins/reviewboard/carnivore.toml';
 import type { CplugManifest } from '../../sdk';
 import { cplugEnabled, cplugSetting } from '../../sdk';
 

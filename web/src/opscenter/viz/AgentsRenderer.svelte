@@ -37,7 +37,7 @@
   const chart = $derived(agentChart(answer));
   const looks = $derived(new Map(chart.lines.map((line) => [line.key, { color: line.color, dashed: line.other }])));
   const drawConfig = $derived<ChartConfig>({ ...config, display: { ...config.display, type: 'line', stacked: false, legend: true } });
-  const rows = $derived(liveAgents(live.data, sessions.data, agentP95(chart.result)));
+  const rows = $derived(liveAgents(live.data, sessions.data, agentP95(chart.result), chart.colors));
   const place = useHeaderGroup(() => (config.enabled ? windowGroup : null));
 
   function pick(next: (typeof AGENT_WINDOWS)[number]): void {

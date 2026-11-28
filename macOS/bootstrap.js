@@ -223,7 +223,73 @@ function rsyncDir(srcDir, dstDir, keep = []) {
   return { ok: true };
 }
 
-function syncBundledAssets({ serverDir, bundleResourcesDir, isPackaged }) {
+function rsyncDirAsync(srcDir, dstDir, keep = []) {
+  fs.mkdirSync(dstDir, { recursive: true });
+  return new Promise((resolve) => {
+    const { execFile } = require('child_process');
+    execFile(
+      '/usr/bin/rsync',
+      ['-a', '--delete', ...keep.map((n) => `--exclude=${n}`), `${srcDir}/`, `${dstDir}/`],
+      { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 },
+      (err, _stdout, stderr) => {
+        if (err) {
+          resolve({
+            ok: false,
+            code: typeof err.code === 'number' ? err.code : 1,
+            stderr: (stderr || err.message || '').trim(),
+          });
+          return;
+        }
+        resolve({ ok: true });
+      }
+    );
+  });
+}
+
+const SYNC_STAMP_FILE = '.carnivore-sync-stamp.json';
+
+function statFingerprint(p) {
+  try {
+    const st = fs.statSync(p);
+    return { exists: true, mtimeMs: st.mtimeMs, size: st.size, ino: st.ino };
+  } catch (_) {
+    return { exists: false };
+  }
+}
+
+function computeBundleStamp({ bundleResourcesDir, appVersion, bundlePackaged }) {
+  const items = RESYNC_ALLOWLIST.map((item) => ({
+    name: item.name,
+    isDir: Boolean(item.isDir),
+    keep: Array.isArray(item.keep) ? [...item.keep] : [],
+    stat: statFingerprint(path.join(bundleResourcesDir, item.name)),
+  }));
+  const bundleMeta = bundlePackaged
+    ? {
+      infoPlist: statFingerprint(path.join(bundleResourcesDir, '..', 'Info.plist')),
+      codeResources: statFingerprint(path.join(bundleResourcesDir, '..', '_CodeSignature', 'CodeResources')),
+    }
+    : null;
+  return {
+    schema: 1,
+    version: appVersion ? String(appVersion).trim() : null,
+    packaged: Boolean(bundlePackaged),
+    bundleResourcesDir,
+    bundleMeta,
+    items,
+  };
+}
+
+function targetsPresent(serverDir, items) {
+  for (const item of items) {
+    if (item.stat && item.stat.exists && !fs.existsSync(path.join(serverDir, item.name))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function syncBundledAssets({ serverDir, bundleResourcesDir, isPackaged, appVersion, bundlePackaged }) {
   if (!isPackaged) {
     console.log('[bootstrap] dev mode — skipping bundled-asset resync');
     return { ok: true, summary: 'dev-mode skip' };
@@ -237,6 +303,25 @@ function syncBundledAssets({ serverDir, bundleResourcesDir, isPackaged }) {
   }
 
   fs.mkdirSync(serverDir, { recursive: true });
+
+  const isPackagedBundle = typeof bundlePackaged === 'boolean'
+    ? bundlePackaged
+    : /\.app\/Contents\/Resources\/?$/.test(bundleResourcesDir || '');
+  const stampPath = path.join(serverDir, SYNC_STAMP_FILE);
+  const currentStamp = computeBundleStamp({ bundleResourcesDir, appVersion, bundlePackaged: isPackagedBundle });
+
+  if (isPackagedBundle) {
+    try {
+      if (fs.existsSync(stampPath)) {
+        const savedRaw = fs.readFileSync(stampPath, 'utf8');
+        if (savedRaw === JSON.stringify(currentStamp) && targetsPresent(serverDir, currentStamp.items)) {
+          console.log('[bootstrap] bundled assets up-to-date (stamp match), skipping resync');
+          return { ok: true, summary: 'stamp-match skip', skippedResync: true };
+        }
+      }
+    } catch (_) {
+    }
+  }
 
   const t0 = Date.now();
   const synced = [];
@@ -272,6 +357,93 @@ function syncBundledAssets({ serverDir, bundleResourcesDir, isPackaged }) {
         };
       }
     }
+  }
+
+  try {
+    atomicWriteFile(stampPath, JSON.stringify(currentStamp), 0o644);
+  } catch (err) {
+    console.warn(`[bootstrap] could not write sync stamp: ${err.message}`);
+  }
+
+  const elapsed = Date.now() - t0;
+  const summary =
+    `resynced ${synced.length} items in ${elapsed}ms ` +
+    `[${synced.join(', ')}]` +
+    (skipped.length ? ` skipped [${skipped.join(', ')}]` : '');
+  console.log(`[bootstrap] ${summary}`);
+  return { ok: true, summary };
+}
+
+async function syncBundledAssetsAsync({ serverDir, bundleResourcesDir, isPackaged, appVersion, bundlePackaged }) {
+  if (!isPackaged) {
+    console.log('[bootstrap] dev mode - skipping bundled-asset resync');
+    return { ok: true, summary: 'dev-mode skip' };
+  }
+
+  if (!fs.existsSync(bundleResourcesDir)) {
+    return {
+      ok: false,
+      details: `bundleResourcesDir does not exist: ${bundleResourcesDir}`,
+    };
+  }
+
+  fs.mkdirSync(serverDir, { recursive: true });
+
+  const isPackagedBundle = typeof bundlePackaged === 'boolean'
+    ? bundlePackaged
+    : /\.app\/Contents\/Resources\/?$/.test(bundleResourcesDir || '');
+  const stampPath = path.join(serverDir, SYNC_STAMP_FILE);
+  const currentStamp = computeBundleStamp({ bundleResourcesDir, appVersion, bundlePackaged: isPackagedBundle });
+
+  if (isPackagedBundle) {
+    try {
+      if (fs.existsSync(stampPath)) {
+        const savedRaw = fs.readFileSync(stampPath, 'utf8');
+        if (savedRaw === JSON.stringify(currentStamp) && targetsPresent(serverDir, currentStamp.items)) {
+          console.log('[bootstrap] bundled assets up-to-date (stamp match), skipping resync');
+          return { ok: true, summary: 'stamp-match skip', skippedResync: true };
+        }
+      }
+    } catch (_) {
+    }
+  }
+
+  const t0 = Date.now();
+  const results = await Promise.all(RESYNC_ALLOWLIST.map(async (item) => {
+    const src = path.join(bundleResourcesDir, item.name);
+    const dst = path.join(serverDir, item.name);
+    if (!fs.existsSync(src)) {
+      return { ok: true, skipped: `${item.name} (not in bundle)` };
+    }
+    if (item.isDir) {
+      const res = await rsyncDirAsync(src, dst, item.keep || []);
+      if (!res.ok) {
+        return {
+          ok: false,
+          details: `rsync failed for ${item.name}/ (exit ${res.code}): ${res.stderr.slice(-400)}`,
+        };
+      }
+      return { ok: true, synced: `${item.name}/` };
+    }
+    try {
+      await fs.promises.mkdir(path.dirname(dst), { recursive: true });
+      await fs.promises.copyFile(src, dst);
+      return { ok: true, synced: item.name };
+    } catch (err) {
+      return { ok: false, details: `copy failed for ${item.name}: ${err.message}` };
+    }
+  }));
+
+  const failed = results.find((r) => !r.ok);
+  if (failed) return failed;
+
+  const synced = results.filter((r) => r.synced).map((r) => r.synced);
+  const skipped = results.filter((r) => r.skipped).map((r) => r.skipped);
+
+  try {
+    atomicWriteFile(stampPath, JSON.stringify(currentStamp), 0o644);
+  } catch (err) {
+    console.warn(`[bootstrap] could not write sync stamp: ${err.message}`);
   }
 
   const elapsed = Date.now() - t0;
@@ -439,8 +611,9 @@ async function bootstrapIfNeeded({
   {
     emit('syncing-assets');
     fs.mkdirSync(serverDir, { recursive: true });
-    const sync = syncBundledAssets({
-      serverDir, bundleResourcesDir, isPackaged: true
+    const sync = await syncBundledAssetsAsync({
+      serverDir, bundleResourcesDir, isPackaged: true,
+      appVersion, bundlePackaged: packaged,
     });
     if (!sync.ok) {
       return {
@@ -633,6 +806,9 @@ module.exports = {
   findSuitablePython,
   sha256File,
   syncBundledAssets,
+  syncBundledAssetsAsync,
+  computeBundleStamp,
+  SYNC_STAMP_FILE,
   provisionUserThemesDir,
   writeVersionStamp,
   VERSION_FILE_HEADER,

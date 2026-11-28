@@ -39,7 +39,14 @@ def run_checked(command: Sequence[str], what: str) -> None:
 
 def create_archive(root: str, names: Sequence[str], out_path: str, level: int = K.COMPRESSION_LEVEL,
                    threads: int = 0) -> None:
-    run_checked(create_command(root, names, out_path, level, threads or zstd_threads()), "tar create")
+    try:
+        run_checked(create_command(root, names, out_path, level, threads or zstd_threads()), "tar create")
+    except ArchiveToolError as exc:
+        if "Undefined option" not in str(exc):
+            raise
+        fallback = [K.NICE_BIN, "-n", str(K.NICE_LEVEL), K.TAR_BIN, "--no-mac-metadata", "--format", "pax", "--zstd",
+                    "--options", f"zstd:compression-level={level}", "-cf", out_path, "-C", root, "--", *names]
+        run_checked(fallback, "tar create")
 
 
 def extract_archive(archive: str, dest: str) -> None:
@@ -65,7 +72,7 @@ def probe_works() -> str:
         (Path(work) / "probe.txt").write_text("probe")
         out = str(Path(work) / "probe.tar.zst")
         try:
-            run_checked(create_command(work, ["probe.txt"], out, 1, 1), "tar probe")
+            create_archive(work, ["probe.txt"], out, 1, 1)
             run_checked([K.TAR_BIN, "-tf", out], "tar probe read")
         except (ArchiveToolError, OSError) as exc:
             return str(exc)

@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from src.core.pack.errors.input_error import PackInputError
+from src.core.pack.jobs import recipe, snapshot
 from src.core.pack.jobs.store import JobStore
-from src.core.pack.jobs.types import JobRequest
+from src.core.pack.jobs.types import DepDir, JobRequest
 from src.core.pack.placement import needs as needs_mod, workload
 from src.core.pack.placement.needs import Need
 
@@ -51,7 +52,16 @@ def put(store: JobStore, project_uid: str, doc: Dict[str, Any]) -> None:
     store.needs_replace(project_uid, writes)
 
 
-def merge(store: JobStore, project_uid: str, req: JobRequest) -> Asks:
+def setup_filters(roots: Sequence[str], setup: Optional[Sequence[str]], air_gap: bool) -> List[Need]:
+    deps: Dict[str, DepDir] = {}
+    for root in dict.fromkeys(roots):
+        for dep in snapshot.dep_dirs_of(root):
+            deps.setdefault(dep.path, dep)
+    steps = recipe.plan("/slot", list(deps.values()), {}, setup, air_gap=air_gap)
+    return needs_mod.parse_all(recipe.tools_needed(steps), limit=MAX_WORDS)
+
+
+def merge(store: JobStore, project_uid: str, req: JobRequest, setup_needs: Sequence[Need] = ()) -> Asks:
     own = stored(store, project_uid, req.kind)
     command_strict, command_filters, command_prefer = needs_mod.from_command(req.command or "")
     if own is None:
@@ -63,4 +73,4 @@ def merge(store: JobStore, project_uid: str, req: JobRequest) -> Asks:
         project_strict, project_prefer = needs_mod.parse_all(own[0], limit=MAX_WORDS), needs_mod.parse_all(own[1], limit=MAX_WORDS)
     strict = needs_mod.parse_all(req.needs) + project_strict + command_strict
     prefer = needs_mod.parse_all(req.prefer) + project_prefer + command_prefer + default_prefer
-    return Asks(tuple(dict.fromkeys(strict)), tuple(dict.fromkeys([*command_filters, *default_filters])), tuple(dict.fromkeys(prefer)))
+    return Asks(tuple(dict.fromkeys(strict)), tuple(dict.fromkeys([*command_filters, *default_filters, *setup_needs])), tuple(dict.fromkeys(prefer)))

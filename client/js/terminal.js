@@ -403,15 +403,10 @@ class Terminal {
             this.flushing = false;
             return;
         }
-        let total = 0;
-        for (const c of this.queue) total += c.length;
-        const merged = new Uint8Array(total);
-        let o = 0;
-        while (this.queue.length) {
-            const c = this.queue.shift();
-            merged.set(c, o);
-            o += c.length;
-        }
+        const q = this.queue;
+        const merged = q.length === 1 ? q[0] : new Uint8Array(q.reduce((n, c) => n + c.length, 0));
+        if (q.length > 1) { let o = 0; for (const c of q) { merged.set(c, o); o += c.length; } }
+        q.length = 0;
         const follow = this._m('TerminalScroll')
             ? this._m('TerminalScroll').shouldFollowOutput(this.term)
             : this.autoScrollEnabled;
@@ -786,6 +781,7 @@ class Terminal {
 
             if (window.TerminalMetrics?.guardedFit) window.TerminalMetrics.guardedFit(this);
             this.sendResize('ws.onopen');
+            if (this._m('TerminalViewerFocus')) this._m('TerminalViewerFocus').attach(this);
 
             this._needsReplayCtrlL = false;
 

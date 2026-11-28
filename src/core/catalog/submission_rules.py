@@ -22,10 +22,14 @@ __all__ = [
     "NAME_RESERVED",
     "SCRIPTS_NOT_SUPPORTED",
     "SUBMISSION_INVALID",
+    "SCRIPT_DIRS",
+    "SCRIPT_EXTENSIONS",
+    "detect_script_files",
     "frontmatter",
     "refuse_manifest",
     "refuse_member_path",
     "refuse_name",
+    "refuses_for_scripts",
 ]
 
 MAX_SUBMISSION_BYTES = 1024 * 1024
@@ -50,6 +54,12 @@ BODY_TOO_LARGE = "body_too_large"
 _FRONTMATTER_RE = re.compile(r"^---[^\S\n]*\n(.*?\n)---[^\S\n]*\n", re.DOTALL)
 
 _SCRIPTS_DIR = "scripts"
+SCRIPT_DIRS = frozenset({"scripts", "hooks", "bin", "monitors"})
+SCRIPT_EXTENSIONS = frozenset({
+    ".sh", ".bash", ".zsh", ".fish", ".py", ".js", ".mjs", ".cjs",
+    ".ts", ".tsx", ".mts", ".cts", ".jsx", ".rb", ".pl", ".php",
+    ".ps1", ".bat", ".cmd", ".lua", ".r", ".tcl", ".awk", ".command",
+})
 
 
 @dataclass(frozen=True)
@@ -117,14 +127,28 @@ def refuse_member_path(path: str, seen: Dict[str, str]) -> Optional[Refusal]:
     return None
 
 
+def detect_script_files(
+    paths: List[str], members: Optional[Dict[str, bytes]] = None
+) -> List[str]:
+    found: List[str] = []
+    for path in sorted(paths):
+        parts = [p.lower() for p in path.split("/")]
+        low = path.lower()
+        is_script = (
+            any(seg in SCRIPT_DIRS for seg in parts[:-1])
+            or any(low.endswith(ext) for ext in SCRIPT_EXTENSIONS)
+        )
+        if not is_script and members is not None:
+            raw = members.get(path)
+            if raw is not None and raw.lstrip(b"\xef\xbb\xbf").startswith(b"#!"):
+                is_script = True
+        if is_script:
+            found.append(path)
+    return found
+
+
 def refuses_for_scripts(paths: List[str]) -> Optional[Refusal]:
-    for path in paths:
-        if path.split("/", 1)[0] == _SCRIPTS_DIR:
-            return Refusal(
-                SCRIPTS_NOT_SUPPORTED,
-                "this catalog does not publish executable content",
-                path,
-            )
+    _ = paths
     return None
 
 

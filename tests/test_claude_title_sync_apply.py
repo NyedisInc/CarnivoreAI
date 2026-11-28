@@ -455,3 +455,150 @@ def test_a_browser_rename_after_agreement_is_not_reverted(
 
     assert result.action == TITLE_UNCHANGED
     assert _read(db, row_id) == ("Browser Name", "Atlas-UI")
+
+
+def test_an_agy_rename_reaches_the_row_through_the_same_ladder(db, tmp_path, monkeypatch):
+    from src.core.agy import title as agy_title
+
+    cid = "f05f4030-c87e-4547-8258-bc873bb5e5eb"
+    note = tmp_path / "annotations" / f"{cid}.pbtxt"
+    note.parent.mkdir()
+    monkeypatch.setattr(agy_title, "AGY_HOME", tmp_path)
+    monkeypatch.setattr("src.core.agy.identity.row_is_agy", lambda row, profiles=None: row.get("agent_family") == "custom")
+    row_id = _row(db, claude_session_uuid=cid, title="My Tab")
+    db.execute("UPDATE sessions SET agent_family = 'custom', agent_type = 'agy-main' WHERE id = ?", (row_id,))
+    db.commit()
+    mgr = _FakeManager(db)
+
+    note.write_text('title:"Auto Made Name"')
+    assert sync_claude_title(mgr, "ses_test").action == TITLE_BASELINE_RECORDED
+    assert _read(db, row_id) == ("My Tab", "Auto Made Name")
+
+    note.write_text('title:"zebra \\"quoted\\""')
+    result = sync_claude_title(mgr, "ses_test")
+    assert (result.action, result.broadcast_title) == (TITLE_APPLIED, 'zebra "quoted"')
+    assert _read(db, row_id) == ('zebra "quoted"', 'zebra "quoted"')
+
+    db.execute("UPDATE sessions SET title = 'Browser Newer' WHERE id = ?", (row_id,))
+    db.commit()
+    assert sync_claude_title(mgr, "ses_test").action == TITLE_UNCHANGED
+    assert _read(db, row_id)[0] == "Browser Newer"
+
+
+def test_an_agy_first_sight_slash_rename_applies_immediately(db, tmp_path, monkeypatch):
+    from src.core.agy import title as agy_title
+
+    cid = "00000000-0000-4000-8000-000000000005"
+    note = tmp_path / "annotations" / f"{cid}.pbtxt"
+    note.parent.mkdir()
+    note.write_text('title:"Cv-DelProj"\n')
+    (tmp_path / "history.jsonl").write_text(
+        json.dumps({
+            "display": "/rename Cv-DelProj",
+            "timestamp": ROW_CREATED_MS + 60_000,
+            "workspace": "/tmp/proj",
+            "conversationId": cid,
+            "type": "slash_command",
+        }) + "\n"
+    )
+    monkeypatch.setattr(agy_title, "AGY_HOME", tmp_path)
+    monkeypatch.setattr("src.core.agy.identity.row_is_agy", lambda row, profiles=None: row.get("agent_family") == "custom")
+    row_id = _row(db, claude_session_uuid=cid, title="Cv-Startup", claude_title=None)
+    db.execute("UPDATE sessions SET agent_family = 'custom', agent_type = 'antigravity' WHERE id = ?", (row_id,))
+    db.commit()
+
+    result = sync_claude_title(_FakeManager(db), "ses_test")
+
+    assert (result.action, result.broadcast_title) == (TITLE_APPLIED, "Cv-DelProj")
+    assert _read(db, row_id) == ("Cv-DelProj", "Cv-DelProj")
+
+
+def test_an_agy_stuck_baseline_heals_from_history_rename(db, tmp_path, monkeypatch):
+    from src.core.agy import title as agy_title
+
+    cid = "00000000-0000-4000-8000-000000000005"
+    note = tmp_path / "annotations" / f"{cid}.pbtxt"
+    note.parent.mkdir()
+    note.write_text('title:"Cv-DelProj"\n')
+    (tmp_path / "history.jsonl").write_text(
+        json.dumps({
+            "display": "/rename Cv-DelProj",
+            "timestamp": ROW_CREATED_MS + 60_000,
+            "conversationId": cid,
+            "type": "slash_command",
+        }) + "\n"
+    )
+    monkeypatch.setattr(agy_title, "AGY_HOME", tmp_path)
+    monkeypatch.setattr("src.core.agy.identity.row_is_agy", lambda row, profiles=None: row.get("agent_family") == "custom")
+    row_id = _row(db, claude_session_uuid=cid, title="Cv-Startup", claude_title="Cv-DelProj")
+    db.execute("UPDATE sessions SET agent_family = 'custom', agent_type = 'antigravity' WHERE id = ?", (row_id,))
+    db.commit()
+
+    result = sync_claude_title(_FakeManager(db), "ses_test")
+
+    assert (result.action, result.broadcast_title) == (TITLE_APPLIED, "Cv-DelProj")
+    assert _read(db, row_id) == ("Cv-DelProj", "Cv-DelProj")
+
+
+def test_an_agy_old_history_rename_before_row_creation_still_baselines(db, tmp_path, monkeypatch):
+    from src.core.agy import title as agy_title
+
+    cid = "00000000-0000-4000-8000-000000000005"
+    note = tmp_path / "annotations" / f"{cid}.pbtxt"
+    note.parent.mkdir()
+    note.write_text('title:"Old Name"\n')
+    (tmp_path / "history.jsonl").write_text(
+        json.dumps({
+            "display": "/rename Old Name",
+            "timestamp": ROW_CREATED_MS - 600_000,
+            "conversationId": cid,
+            "type": "slash_command",
+        }) + "\n"
+    )
+    monkeypatch.setattr(agy_title, "AGY_HOME", tmp_path)
+    monkeypatch.setattr("src.core.agy.identity.row_is_agy", lambda row, profiles=None: row.get("agent_family") == "custom")
+    row_id = _row(db, claude_session_uuid=cid, title="Set In Browser", claude_title=None)
+    db.execute("UPDATE sessions SET agent_family = 'custom', agent_type = 'antigravity' WHERE id = ?", (row_id,))
+    db.commit()
+
+    result = sync_claude_title(_FakeManager(db), "ses_test")
+
+    assert result.action == TITLE_BASELINE_RECORDED
+    assert _read(db, row_id) == ("Set In Browser", "Old Name")
+
+
+def test_an_agy_browser_rename_after_agreement_is_not_reverted(db, tmp_path, monkeypatch):
+    from src.core import claude_rename_retry_store as retry_store
+    from src.core.agy import title as agy_title
+    from src.core.claude_rename_retry import RenameMark
+
+    cid = "00000000-0000-4000-8000-000000000005"
+    note = tmp_path / "annotations" / f"{cid}.pbtxt"
+    note.parent.mkdir()
+    note.write_text('title:"Cv-DelProj"\n')
+    (tmp_path / "history.jsonl").write_text(
+        json.dumps({
+            "display": "/rename Cv-DelProj",
+            "timestamp": ROW_CREATED_MS + 60_000,
+            "conversationId": cid,
+            "type": "slash_command",
+        }) + "\n"
+    )
+    monkeypatch.setattr(agy_title, "AGY_HOME", tmp_path)
+    monkeypatch.setattr("src.core.agy.identity.row_is_agy", lambda row, profiles=None: row.get("agent_family") == "custom")
+    row_id = _row(db, claude_session_uuid=cid, title="Browser Newer", claude_title="Cv-DelProj")
+    db.execute("UPDATE sessions SET agent_family = 'custom', agent_type = 'antigravity' WHERE id = ?", (row_id,))
+    db.commit()
+    state = tmp_path / "state"
+    state.mkdir()
+    retry_store.reset_cache()
+    monkeypatch.setattr(retry_store, "resolve_state_dir", lambda: state)
+    retry_store.save_mark(state, f"{cid}:{row_id}", RenameMark(agreed_title="Cv-DelProj"))
+
+    try:
+        result = sync_claude_title(_FakeManager(db), "ses_test")
+    finally:
+        retry_store.reset_cache()
+
+    assert result.action == TITLE_UNCHANGED
+    assert _read(db, row_id) == ("Browser Newer", "Cv-DelProj")

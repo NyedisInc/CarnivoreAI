@@ -139,6 +139,7 @@ def facts_from_window(
         turn_end_at=turn.at,
         newest_assistant_at=win.assistant_at,
         newest_append_at=state.newest_append.within(win.bound),
+        newest_activity_at=state.newest_activity.within(win.bound),
         blocked_on_tool=fields.blocked,
         queued_reinvoke=fields.queued,
         queued_reinvoke_at=fields.enqueue_at if fields.queued else None,

@@ -24,7 +24,7 @@ describe('the feature twin keys', () => {
     });
 
     test('every plugins.page sentence that says "plugin" has a twin, unless only a store or sideloaded item can show it', () => {
-        const STORE_ONLY = /^plugins\.page\.(limit\.catalog|catalog\.|third_party\.|sideload\.)/;
+        const STORE_ONLY = /^plugins\.page\.(limit\.catalog|catalog\.|third_party\.|sideload\.|install_sheet\.|github\.|build_plugin_cta$|health_pill\.|inspector\.|badge\.|filter\.)/;
         const missing = Object.keys(messages).filter(
             (key) => key.startsWith('plugins.page.') && /\bplugins?\b/i.test(JSON.stringify(messages[key])) && !STORE_ONLY.test(key) && !twins.includes(`features.page.${key.slice('plugins.page.'.length)}`),
         );

@@ -29,6 +29,7 @@ class SettingsBody(BaseModel):
     auto: Optional[StrictBool] = None
     claude: Optional[StrictBool] = None
     codex: Optional[StrictBool] = None
+    agy: Optional[StrictBool] = None
     panel: Optional[StrictBool] = None
 
 
@@ -81,6 +82,6 @@ async def post_sync(body: SyncBody, request: Request) -> Dict[str, Any]:
     if not chosen.get("enabled") and not chosen.get("panel"):
         raise HTTPException(409, {"code": "sync_off", "detail": "turn the global setup sync on first"})
     if not await asyncio.to_thread(sync.is_main):
-        raise HTTPException(409, {"code": "not_main", "detail": "only the Pack's main computer sends its setup"})
+        raise HTTPException(409, {"code": "not_main", "detail": "only the Pack's alpha computer sends its setup"})
     results = await sync.sync(body.install_ids or None, force=True)
     return {"results": results}

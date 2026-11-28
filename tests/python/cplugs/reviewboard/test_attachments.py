@@ -13,9 +13,10 @@ from fastapi.testclient import TestClient
 from src.api.auth import require_auth
 from src.config.uploads import UploadsConfig
 from src.core.mcp.caller import AgentCaller
-from src.plugins.huddle import board_port, routes as task_manager_routes
+from src.plugins.taskmanager import board_port, routes as task_manager_routes
 from src.plugins.sdk import uploads as sdk_uploads
 from tests.python.cplugs.reviewboard.harness import BASE, PANE, Env, task_manager_on, task_manager_store, make_env
+from tests.python.cplugs.owner import include_task_manager_routes
 
 TOKEN = AgentCaller("mcp-token:7", "mcp-token:7", "mcp-token:7", token_name="phone", scope="write")
 PDF = b"%PDF-1.4\n1 0 obj << /Type /Catalog >> endobj\ntrailer << /Root 1 0 R >>\n%%EOF\n"
@@ -31,7 +32,7 @@ def b64(data: bytes) -> str:
 def env(tmp_path: Path, monkeypatch) -> Env:
     monkeypatch.setattr(sdk_uploads, "settings", SimpleNamespace(load_auth_config=lambda: SimpleNamespace(uploads=UploadsConfig())))
     made = make_env(tmp_path)
-    made.app.include_router(task_manager_routes.router, prefix="/api/v1")
+    include_task_manager_routes(made.app, task_manager_routes.router)
     task_manager_on(made, monkeypatch)
     yield made
     board_port.unregister()
@@ -142,7 +143,7 @@ def test_a_missing_board_is_404(env: Env, client):
 
 
 def task_manager_files(env: Env) -> dict:
-    base = env.host.storage("huddle").path / "files"
+    base = env.host.storage("taskmanager").path / "files"
     return tree(base) if base.is_dir() else {}
 
 
@@ -160,7 +161,7 @@ def test_a_note_the_task_manager_would_refuse_is_refused_first_and_a_crlf_note_i
 
 
 def test_a_task_manager_refusal_after_the_files_are_saved_removes_them_and_answers_a_board_refusal(env: Env, client, board, monkeypatch):
-    from src.plugins.huddle.public import TaskManagerForbidden, TaskManagerStore
+    from src.plugins.taskmanager.public import TaskManagerForbidden, TaskManagerStore
 
     def refuse(self, *args, **kwargs):
         raise TaskManagerForbidden("the item is settled")

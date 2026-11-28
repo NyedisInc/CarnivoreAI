@@ -50,6 +50,13 @@ class ConversationMissing(RestartError):
     pass
 
 
+class ConversationOffloaded(ConversationMissing):
+
+    def __init__(self, body: dict) -> None:
+        super().__init__(str(body.get("detail") or "this conversation was offloaded to the backup vault"))
+        self.body = body
+
+
 class RowTakenOver(RestartError):
 
     def __init__(self, message: str, held_tmux_name: str) -> None:
@@ -157,7 +164,13 @@ async def _restart_unclaimed(app_state: Any, session_uuid: str,
     await _refuse_if_running(db_path, session_uuid)
     if source.outcome == session_restart.RESTART_CONVERSATION_MISSING:
         logger.warning("restart_refused_conversation_missing", replaced_session_uuid=session_uuid, replaced_session_id=source.parent_id,
-                       conversation_row_id=source.conversation_row_id, claude_session_uuid=source.claude_session_uuid)
+                       conversation_row_id=source.conversation_row_id, claude_session_uuid=source.claude_session_uuid, offloaded=source.offloaded)
+        if source.offloaded:
+            from src.core.backup_health import offload_guard
+
+            info = offload_guard.lookup(source.claude_session_uuid)
+            if info is not None:
+                raise ConversationOffloaded(offload_guard.refusal_body(info))
         raise ConversationMissing(source.detail or "the conversation this session names is not on disk")
     resumable = source.outcome == session_restart.RESTART_RESUMABLE
     label = (source.title or "").strip() or None

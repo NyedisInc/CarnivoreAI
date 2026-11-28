@@ -134,11 +134,14 @@ def unpack(archive: str, target_root: str, projects_root: Optional[Path] = None)
 
 
 def _unpack(archive: str, target_root: str, projects_root: Optional[Path]) -> Tuple[List[str], List[str], List[str]]:
-    dest = target_folder(target_root, projects_root)
+    return unpack_into(archive, target_folder(target_root, projects_root))
+
+
+def unpack_into(archive: str, dest: Path, allow: Optional[Any] = None) -> Tuple[List[str], List[str], List[str]]:
     with tarfile.open(archive, mode="r:gz") as tar:
         members = tar.getmembers()
         for m in members:
-            if not m.isfile() or m.name.startswith("/") or ".." in Path(m.name).parts:
+            if not m.isfile() or m.name.startswith("/") or ".." in Path(m.name).parts or (allow is not None and not allow(m.name)):
                 raise TranscriptError("unsafe_archive", "the conversation archive names a path outside its folder")
         verdicts: Dict[str, str] = {}
         clashes = []
@@ -174,5 +177,8 @@ def _unpack(archive: str, target_root: str, projects_root: Optional[Path]) -> Tu
 
 
 def verify(files: List[Dict[str, Any]], target_root: str, projects_root: Optional[Path] = None) -> List[str]:
-    dest = target_folder(target_root, projects_root)
+    return verify_in(files, target_folder(target_root, projects_root))
+
+
+def verify_in(files: List[Dict[str, Any]], dest: Path) -> List[str]:
     return [f["rel"] for f in files if not (dest / f["rel"]).is_file() or _sha256(dest / f["rel"]) != f["sha256"]]

@@ -14,7 +14,7 @@ from zoneinfo import ZoneInfo
 import structlog
 from pydantic import ValidationError
 
-from src.core.stats import activity_query, agent_names, answers, pack_scope, project_groups
+from src.core.stats import activity_query, agent_names, answers, pack_queries, pack_scope, project_groups
 from src.core.stats.batch_store import BatchStore
 from src.core.stats.catalog import METRICS, families_for
 from src.core.session_token_usage.model_table import readable_model_name
@@ -93,10 +93,10 @@ def _account_labels() -> dict[str, str]:
     return {account.id: account.name for account in poller.snapshot().accounts if account.name}
 
 
-def _fold_subagents(cells: dict) -> dict:
+def _fold_subagents(cells: dict, parents: dict[str, str] | None = None) -> dict:
     folded: dict = {}
     for (bucket, raw), cell in cells.items():
-        merge_cell(folded.setdefault((bucket, agent_names.root_of(raw)), empty_cell()), cell)
+        merge_cell(folded.setdefault((bucket, agent_names.root_of(raw, parents)), empty_cell()), cell)
     return folded
 
 
@@ -162,13 +162,16 @@ def _fetch(store: StatsStoreLike, table: str, filters: StatsFilters, start: int,
     if table == "minute_counters":
         cols = "minute_ts,host,provider,conversation_id,project,model,agent_kind,key,value AS counter_value"
     elif table == "quota_minutes":
-        cols = "minute_ts,provider,account_id,window,utilization,fetched_at,state"
+        cols = ("minute_ts,host,provider,account_id,window,utilization,fetched_at,state"
+                if arm and arm.source
+                else "minute_ts,provider,account_id,window,utilization,fetched_at,state")
     elif table == "activity_minutes":
+        global_col = ("global_observed_seconds" if arm and arm.source else
+                      "COALESCE((SELECT observed_seconds FROM stats_observation_coverage c "
+                      "WHERE c.minute_ts=activity_minutes.minute_ts),0) AS global_observed_seconds")
         cols = ("minute_ts,host,provider,conversation_id,project,model,agent_kind,"
                 "observed_seconds,working_seconds,running_seconds,starts,completions,"
-                "waiting_seconds,subagent_seconds,"
-                "COALESCE((SELECT observed_seconds FROM stats_observation_coverage c "
-                "WHERE c.minute_ts=activity_minutes.minute_ts),0) AS global_observed_seconds")
+                f"waiting_seconds,subagent_seconds,{global_col}")
     else:
         cols = ("minute_ts,host,provider,conversation_id,project,model,agent_kind,"
                 "input_tokens,cache_write_tokens,cache_read_tokens,output_tokens,"
@@ -261,13 +264,9 @@ def _value(row: sqlite3.Row, metric: str) -> float | int | None:
     return row[metric]
 
 
-def _new_coverage() -> dict:
-    return {"minute_rows": 0, "unknown_value_rows": 0, "quality_rows": 0,
-            "observed_minutes": set(), "price_versions": set(),
-            "known_agent_seconds": 0.0, "unknown_agent_seconds": 0.0,
-            "priced_usage_count": 0, "unpriced_usage_count": 0,
-            "priced_token_total": 0, "unpriced_token_total": 0,
-            "mixed_price_token_total": 0}
+_new_coverage = pack_queries.new_coverage_tally
+_finished_coverage = pack_queries.finished_coverage_dict
+_price_provenance = pack_queries.price_provenance
 
 
 def _aggregate_activity(rows: Sequence[sqlite3.Row], metric: str, resolution: str, zone: ZoneInfo,
@@ -353,26 +352,6 @@ def _aggregate(rows: Sequence[sqlite3.Row], metric: str, resolution: str, zone: 
     return cells, coverage
 
 
-def _finished_coverage(data: dict, start: int, end: int) -> dict:
-    return {
-        "minute_rows": data["minute_rows"],
-        "observed_minutes": len(data["observed_minutes"]),
-        "range_minutes": (end - start) // 60,
-        "unknown_value_rows": data["unknown_value_rows"],
-        "priced_usage_count": data["priced_usage_count"],
-        "unpriced_usage_count": data["unpriced_usage_count"],
-        "priced_token_total": data["priced_token_total"],
-        "unpriced_token_total": data["unpriced_token_total"],
-        "mixed_price_token_total": data["mixed_price_token_total"],
-        "quality_rows": data["quality_rows"],
-        "known_agent_seconds": data["known_agent_seconds"],
-        "unknown_agent_seconds": data["unknown_agent_seconds"],
-        "partial": bool(data["unknown_value_rows"] or data["quality_rows"] or
-                        data["unpriced_usage_count"] or data["unknown_agent_seconds"]),
-        "price_versions": sorted(data["price_versions"]),
-    }
-
-
 def _transformed(value: float | int | None, cell: dict, request: QueryRequest,
                  resolution: str, bucket: str, zone: ZoneInfo,
                  span_start: int, span_end: int) -> float | int | None:
@@ -387,26 +366,11 @@ def _transformed(value: float | int | None, cell: dict, request: QueryRequest,
     return value
 
 
-def _price_provenance(store: StatsStoreLike, versions: list[str]) -> list[dict]:
-    if not versions:
-        return []
-    db = store.connect(readonly=True)
-    try:
-        placeholders = ",".join("?" for _ in versions)
-        rows = db.execute(
-            f"SELECT version,source,source_date FROM price_versions WHERE version IN ({placeholders})",
-            versions,
-        ).fetchall()
-        return [dict(row) for row in rows]
-    finally:
-        db.close()
-
-
 def _read_span(store: StatsStoreLike, request: QueryRequest, table: str, start: int, end: int, deadline: float,
                arm: pack_scope.Arm | None) -> tuple[list, int | set]:
     if table == "minute_usage" and request.transform != "per_conversation":
         return _fetch_usage_aggregated(store, request.metric, request.filters, start, end, request.group_by, deadline, arm)
-    if table == "activity_minutes" and request.transform != "per_conversation":
+    if table == "activity_minutes" and request.transform != "per_conversation" and arm is None:
         where, args = _where(table, request.filters, start, end)
         return activity_query.fetch_aggregated(
             store, request.metric, where, args, request.filters.model_dump(exclude_none=True), start, end,
@@ -416,12 +380,14 @@ def _read_span(store: StatsStoreLike, request: QueryRequest, table: str, start: 
     return rows, (found if arm else len(found))
 
 
-def _pack_query(store: StatsStoreLike, request: QueryRequest, table: str) -> pack_scope.PackQuery | None:
+def _pack_query(store: StatsStoreLike, request: QueryRequest, table: str, *,
+                resolution: str | None = None, start: int | None = None,
+                end: int | None = None) -> pack_scope.PackQuery | None:
     if request.scope != "pack" or table not in pack_scope.PACK_TABLES:
         return None
     view = store if isinstance(store, BatchStore) else BatchStore(store)
     try:
-        return pack_scope.for_request(store, view, request, table)
+        return pack_scope.for_request(store, view, request, table, resolution=resolution, start=start, end=end)
     finally:
         if view is not store:
             view.release()
@@ -435,15 +401,22 @@ def execute(store: StatsStoreLike, request: QueryRequest, deadline: float | None
         raise ValueError(f"{request.group_by} grouping is unavailable for {request.metric}")
     if request.group_by == "key" and table != "minute_counters":
         raise ValueError(f"key grouping is unavailable for {request.metric}")
+    norm_filters = pack_scope.normalize_filters_for_self(store, request.filters)
+    if norm_filters is not request.filters:
+        request = request.model_copy(update={"filters": norm_filters})
     groups = project_groups.groups_for(store) if request.group_by == "project" else None
     project_labels = _project_labels(groups) if groups is not None else None
     other_members: dict[str, float] = defaultdict(float)
     account_labels = _account_labels() if request.group_by == "account_id" else None
     agent_labels = agent_names.names_for(store) if request.group_by == "conversation_id" else None
+    parent_map = agent_names.parent_map_for(store) if request.group_by == "conversation_id" else None
     start, end = minute_window(request)
     resolution = _resolution(start, end, request.resolution)
     zone = ZoneInfo(request.timezone)
-    pack = _pack_query(store, request, table)
+    pack = _pack_query(store, request, table, resolution=resolution, start=start, end=end)
+    if pack and groups is not None:
+        groups = pack_scope.pack_groups(store, groups)
+        project_labels = _project_labels(groups)
     spans = [(start, end)]
     if request.comparison:
         compare_start, compare_end = minute_window(request.comparison)
@@ -451,16 +424,33 @@ def execute(store: StatsStoreLike, request: QueryRequest, deadline: float | None
             raise ValueError("comparison ranges must have equal duration")
         spans.append((compare_start, compare_end))
     prepared = []
-    for span_start, span_end in spans:
+    for span_index, (span_start, span_end) in enumerate(spans):
         if time.monotonic() > deadline:
             raise QueryLimit("query deadline exceeded")
-        fast_activity = table == "activity_minutes" and request.transform != "per_conversation"
-        rows, conversation_count = _read_span(store, request, table, span_start, span_end, deadline,
-                                              pack.arms[0] if pack else None)
-        for arm in (pack.arms[1:] if pack else ()):
-            more, more_conversations = _read_span(store, request, table, span_start, span_end, deadline, arm)
-            rows, conversation_count = rows + more, conversation_count | more_conversations
-        if pack:
+        span_pack = pack if span_index == 0 else _pack_query(
+            store, request, table, resolution=resolution, start=span_start, end=span_end)
+        fast_activity = table == "activity_minutes" and request.transform != "per_conversation" and not span_pack
+        step = pack_scope.SPREAD_STEPS.get(resolution) if request.operation in ("timeline", "comparison") else None
+        if not span_pack:
+            rows, conversation_count = _read_span(store, request, table, span_start, span_end, deadline, None)
+        elif table == "quota_minutes":
+            local_quota: list = []
+            peer_quota: list[tuple[int, list]] = []
+            for arm in span_pack.arms:
+                more, _ = _read_span(store, request, table, span_start, span_end, deadline, arm)
+                if arm.source is None:
+                    local_quota.extend(more)
+                else:
+                    peer_quota.append((arm.grain, list(more)))
+            rows = pack_queries.dedupe_quota_rows(local_quota, peer_quota, step=step, end=span_end)
+            conversation_count = 0
+        else:
+            rows, conversation_count = [], set()
+            for arm in span_pack.arms:
+                more, more_conversations = _read_span(store, request, table, span_start, span_end, deadline, arm)
+                if arm.source and step:
+                    more = pack_scope.spread_hours(more, step, span_end, source_grain=arm.grain)
+                rows, conversation_count = rows + list(more), conversation_count | more_conversations
             conversation_count = len(conversation_count)
         aggregate = _aggregate_activity if fast_activity else _aggregate
         cells, coverage = aggregate(rows, request.metric, resolution, zone, request.group_by, deadline)
@@ -470,7 +460,7 @@ def execute(store: StatsStoreLike, request: QueryRequest, deadline: float | None
                 if groups.group_of(raw) == OTHER_GROUP:
                     other_members[raw] += value
         if request.group_by == "conversation_id":
-            cells = _fold_subagents(cells)
+            cells = _fold_subagents(cells, parent_map)
         buckets = all_buckets(span_start, span_end, resolution, zone)
         totals: dict[str, dict] = defaultdict(empty_cell)
         for (_, group), cell in cells.items():
@@ -613,36 +603,66 @@ def execute(store: StatsStoreLike, request: QueryRequest, deadline: float | None
     }
 
 
+_COV_LOCK = __import__("threading").Lock()
+_COV_INFLIGHT: dict[str, __import__("threading").Lock] = {}
+_COV_CACHE: dict[str, tuple[tuple, float, dict]] = {}
+_DIM_LOCK = __import__("threading").Lock()
+_DIM_INFLIGHT: dict[tuple, __import__("threading").Lock] = {}
+_DIM_CACHE: dict[tuple, tuple[int, float, dict]] = {}
+
+
+def _open_read_ctx(store: StatsStoreLike):
+    cr = getattr(store, "connect_read", None)
+    return cr() if callable(cr) else store.connect(readonly=True)
+
+
 def coverage(store: StatsStoreLike) -> dict:
-    db = store.connect(readonly=True)
-    try:
-        grain = ("SELECT u.t AS t, u.cost_nano AS cost FROM {table} u JOIN dim_model m ON m.id=u.model "
-                 "WHERE u.t {cmp} " + FLOOR_SQL + " AND (m.name!='<synthetic>' OR "
-                 "u.input+u.cache_write+u.cache_read+u.output!=0)")
-        usage = db.execute(
-            "SELECT MIN(t),MAX(t),COUNT(*),SUM(cost IS NULL) FROM ("
-            + grain.format(table="usage_minute", cmp=">=") + " UNION ALL "
-            + grain.format(table="usage_hour", cmp="<") + ")").fetchone()
-        sources = db.execute("SELECT 'tracked' AS status,'ok' AS quality,COUNT(*) AS count FROM plugin_cursors "
-                             "HAVING COUNT(*) > 0").fetchall()
-        spans = db.execute("SELECT start_ts,end_ts FROM stats_disabled_spans ORDER BY start_ts DESC LIMIT 100").fetchall()
-        backfills = db.execute("SELECT state,COUNT(*) AS count FROM stats_backfill GROUP BY state").fetchall()
-        db_bytes = sum(path.stat().st_size for path in (
-            store.db_path, store.db_path.with_name(store.db_path.name + "-wal"),
-        ) if path.exists())
-        return {"earliest": iso_utc(usage[0]) if usage[0] is not None else None,
-                "latest": iso_utc(usage[1]) if usage[1] is not None else None,
-                "freshness_seconds": max(0, int(time.time()) - usage[1]) if usage[1] is not None else None,
-                "minute_rows": usage[2], "quality_rows": 0,
-                "unknown_cost_rows": usage[3] or 0,
-                "sources": [dict(row) for row in sources],
-                "disabled_spans": [{"from": iso_utc(row["start_ts"]),
-                                    "to": iso_utc(row["end_ts"]) if row["end_ts"] else None} for row in spans],
-                "backfill": {row["state"]: row["count"] for row in backfills},
-                "db_bytes": db_bytes,
-                "revision": store.revision()}
-    finally:
-        db.close()
+    db_path = str(getattr(store, "db_path", id(store)))
+    rev = store.revision()
+    cov_key = (rev, pack_queries.pack_coverage_stamp(store))
+    now_mono = time.monotonic()
+    with _COV_LOCK:
+        hit = _COV_CACHE.get(db_path)
+        if hit is not None and hit[0] == cov_key and now_mono - hit[1] < 15.0:
+            cached = dict(hit[2])
+            latest_ts = cached.pop("_latest_ts", None)
+            if latest_ts is not None:
+                cached["freshness_seconds"] = max(0, int(time.time()) - latest_ts)
+            return cached
+        lock = _COV_INFLIGHT.setdefault(db_path, __import__("threading").Lock())
+    with lock:
+        now_mono = time.monotonic()
+        with _COV_LOCK:
+            hit = _COV_CACHE.get(db_path)
+        if hit is not None and hit[0] == cov_key and now_mono - hit[1] < 15.0:
+            cached = dict(hit[2])
+            latest_ts = cached.pop("_latest_ts", None)
+            if latest_ts is not None:
+                cached["freshness_seconds"] = max(0, int(time.time()) - latest_ts)
+            return cached
+        out, latest_ts = pack_queries.read_coverage_snapshot(store, _open_read_ctx, FLOOR_SQL, rev)
+        with _COV_LOCK:
+            _COV_CACHE[db_path] = (cov_key, time.monotonic(), {**out, "_latest_ts": latest_ts})
+        return out
+
+
+def _dim_where(table: str, filters: StatsFilters, start: int | None, end: int | None) -> tuple[str, list]:
+    if start is not None and end is not None:
+        return _where(table, filters, start, end)
+    where, args = "1=1", []
+    if table == "minute_usage":
+        where += f" AND {_REAL_USAGE}"
+    allowed = _allowed_filters(table)
+    for key, value in filters.model_dump(exclude_none=True).items():
+        if key not in allowed:
+            raise ValueError(f"{key} is unavailable for {table}")
+        if key == "hosts":
+            where += f" AND host IN ({','.join('?' * len(value))})"
+            args.extend(value)
+        else:
+            where += f" AND {_FILTER_COLUMNS[key]}=?"
+            args.append(value)
+    return where, args
 
 
 def contributions(store: StatsStoreLike, request: QueryRequest, *, limit: int, cursor: int) -> dict:
@@ -651,7 +671,7 @@ def contributions(store: StatsStoreLike, request: QueryRequest, *, limit: int, c
         raise ValueError("quota has no conversation contributions")
     start, end = minute_window(request)
     table = METRICS[request.metric][1]
-    rows = _fetch(store, table, request.filters, start, end, "conversation_id", deadline, request.metric)
+    rows = pack_queries.fetch_contributions_rows(store, request, table, start, end, deadline, _fetch)
     grouped: dict[str, dict] = {}
     for index, row in enumerate(rows):
         if index % 1024 == 0 and time.monotonic() > deadline:
@@ -677,78 +697,72 @@ def contributions(store: StatsStoreLike, request: QueryRequest, *, limit: int, c
 
 
 def dimensions(store: StatsStoreLike, *, dimension: str, filters: StatsFilters,
-               start: int | None, end: int | None, limit: int, cursor: int) -> dict:
+               start: int | None, end: int | None, limit: int, cursor: int,
+               scope: str = "pack") -> dict:
     if dimension not in _FILTER_COLUMNS:
         raise ValueError("unknown dimension")
+    filters = pack_scope.normalize_filters_for_self(store, filters)
     table = "quota_minutes" if dimension in ("account_id", "window") else "minute_usage"
     source = _usage_source(filters, dimension) if table == "minute_usage" else table
-    if start is not None and end is not None:
-        where, args = _where(table, filters, start, end)
-    else:
-        where, args = "1=1", []
-        if table == "minute_usage":
-            where += f" AND {_REAL_USAGE}"
-        allowed = _allowed_filters(table)
-        for key, value in filters.model_dump(exclude_none=True).items():
-            if key not in allowed:
-                raise ValueError(f"{key} is unavailable for {table}")
-            where += f" AND {_FILTER_COLUMNS[key]}=?"
-            args.append(value)
+    where, args = _dim_where(table, filters, start, end)
     deadline = time.monotonic() + DEADLINE_SECONDS
-    groups = project_groups.groups_for(store) if dimension == "project" else None
-    account_labels = _account_labels() if dimension == "account_id" else None
-    db = store.connect(readonly=True)
-    try:
-        db.set_progress_handler(lambda: 1 if time.monotonic() > deadline else 0, 1000)
-        if groups is not None:
-            return _project_dimension(db, groups, source, where, args, limit, cursor)
-        rows = db.execute(
-            f"SELECT {dimension} AS value,COUNT(*) AS count FROM {source} WHERE {where} "
-            f"GROUP BY {dimension} ORDER BY count DESC,value LIMIT ? OFFSET ?",
-            (*args, limit + 1, cursor),
-        ).fetchall()
-        total = db.execute(
-            f"SELECT COUNT(DISTINCT {dimension}) FROM {source} WHERE {where}", args,
-        ).fetchone()[0]
-        items = []
-        for row in rows[:limit]:
-            key, label, filter_value = _public_dimension(dimension, row["value"], None, account_labels)
-            items.append({"key": key, "label": label, "filter_value": filter_value, "minute_rows": row["count"]})
-        return {"items": items,
-                "next_cursor": cursor + limit if len(rows) > limit else None,
-                "total": total}
-    except sqlite3.OperationalError as exc:
-        if "interrupted" in str(exc):
-            raise QueryLimit("dimension deadline exceeded") from exc
-        raise
-    finally:
-        db.close()
-
-
-def _project_dimension(db: sqlite3.Connection, groups: ProjectGroups, source: str, where: str, args: list,
-                       limit: int, cursor: int) -> dict:
-    counts: dict[str, int] = defaultdict(int)
-    members: dict[str, int] = {}
-    for row in db.execute(f"SELECT project AS value,COUNT(*) AS count FROM {source} WHERE {where} "
-                          "GROUP BY project", args):
-        group = groups.group_of(row["value"]) if row["value"] else OTHER_GROUP
-        counts[group] += row["count"]
-        if group == OTHER_GROUP:
-            members[row["value"] or ""] = row["count"]
-    detail = groups.other_detail(sorted(members, key=lambda raw: (-members[raw], raw))) if members else None
-    labels = _project_labels(groups, detail["count"] if detail else 0)
-    ordered = sorted((g for g in counts if g != OTHER_GROUP), key=lambda g: (-counts[g], labels.get(g, g)))
-    if OTHER_GROUP in counts:
-        ordered.append(OTHER_GROUP)
-    items = []
-    for group in ordered[cursor:cursor + limit]:
-        key, label, filter_value = _public_dimension("project", group, labels)
-        item = {"key": key, "label": label, "filter_value": filter_value, "minute_rows": counts[group]}
-        if group == OTHER_GROUP and detail:
-            item["detail"] = detail
-        items.append(item)
-    return {"items": items, "next_cursor": cursor + limit if cursor + limit < len(ordered) else None,
-            "total": len(ordered)}
+    db_path = str(getattr(store, "db_path", id(store)))
+    rev = store.revision()
+    pack_fp = pack_scope.rollup_fingerprint(store) if scope == "pack" else None
+    cache_key = (
+        db_path,
+        dimension,
+        scope,
+        pack_fp,
+        tuple(sorted(
+            (k, tuple(v) if isinstance(v, list) else v)
+            for k, v in filters.model_dump(exclude_none=True).items()
+        )),
+        (start // 60) if start is not None else None,
+        (end // 60) if end is not None else None,
+        limit,
+        cursor,
+    )
+    now_mono = time.monotonic()
+    with _DIM_LOCK:
+        hit = _DIM_CACHE.get(cache_key)
+        if hit is not None and hit[0] == rev and now_mono - hit[1] < 30.0:
+            return hit[2]
+        dim_lock = _DIM_INFLIGHT.setdefault(cache_key, __import__("threading").Lock())
+    with dim_lock:
+        now_mono = time.monotonic()
+        with _DIM_LOCK:
+            hit = _DIM_CACHE.get(cache_key)
+        if hit is not None and hit[0] == rev and now_mono - hit[1] < 30.0:
+            return hit[2]
+        groups = project_groups.groups_for(store) if dimension == "project" else None
+        account_labels = _account_labels() if dimension == "account_id" else None
+        local_counts: dict = {}
+        with _open_read_ctx(store) as db:
+            try:
+                db.set_progress_handler(lambda: 1 if time.monotonic() > deadline else 0, 1000)
+                for row in db.execute(
+                    f"SELECT {dimension} AS value,COUNT(*) AS count FROM {source} WHERE {where} GROUP BY {dimension}",
+                    args,
+                ).fetchall():
+                    local_counts[row["value"]] = int(row["count"])
+            except sqlite3.OperationalError as exc:
+                if "interrupted" in str(exc):
+                    raise QueryLimit("dimension deadline exceeded") from exc
+                raise exc
+            finally:
+                db.set_progress_handler(None, 0)
+        result = pack_queries.merge_dimension_counts(
+            store, dimension=dimension, table=table, filters=filters, start=start, end=end,
+            limit=limit, cursor=cursor, deadline=deadline, local_counts=local_counts, scope=scope,
+            groups=groups, account_labels=account_labels, public_dimension=_public_dimension,
+            dim_where_fn=_dim_where,
+        )
+        with _DIM_LOCK:
+            if len(_DIM_CACHE) > 256:
+                _DIM_CACHE.clear()
+            _DIM_CACHE[cache_key] = (rev, time.monotonic(), result)
+        return result
 
 
 def execute_batch(store: StatsStoreLike, items: list[dict]) -> dict:
@@ -776,6 +790,8 @@ def _item_fingerprint(view: BatchStore, request: QueryRequest) -> str:
     parts = [answers.base_fingerprint(view)]
     if request.group_by == "project":
         groups = project_groups.groups_for(view)
+        if request.scope == "pack" and METRICS[request.metric][1] in pack_scope.PACK_TABLES:
+            groups = pack_scope.pack_groups(view, groups)
         held = view.fingerprints.get(("groups", id(groups)))
         if held is None:
             held = view.fingerprints[("groups", id(groups))] = answers.digest(
@@ -784,7 +800,8 @@ def _item_fingerprint(view: BatchStore, request: QueryRequest) -> str:
     elif request.group_by == "account_id":
         parts.append(answers.digest(sorted(_account_labels().items())))
     elif request.group_by == "conversation_id":
-        parts.append(answers.digest(sorted(agent_names.names_for(view).items())))
+        parts.append(answers.digest(sorted(agent_names.names_for(view).items()),
+                                    sorted(agent_names.parent_map_for(view).items())))
     if request.scope == "pack" and METRICS[request.metric][1] in pack_scope.PACK_TABLES:
         parts.append(pack_scope.signature(view, view))
     return answers.digest(*parts)
@@ -805,19 +822,22 @@ def _run_batch(store: StatsStoreLike, items: list[dict], cap: float, memo: dict,
     for item in items:
         key = json.dumps(item, sort_keys=True, separators=(",", ":"), default=str)
         if key not in memo:
-            try:
-                memo[key] = _answer_item(store, item, cap, state)
-            except ValidationError as exc:
-                memo[key] = {"ok": False, "error": {
-                    "code": "invalid_stats_request",
-                    "message": "; ".join(f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in exc.errors())}}
-            except (ValueError, KeyError) as exc:
-                memo[key] = {"ok": False, "error": {
-                    "code": "stats_query_limit" if isinstance(exc, QueryLimit) else "invalid_stats_request",
-                    "message": str(exc)}}
-            except sqlite3.Error as exc:
-                logger.warning("stats_batch_item_failed", error_type=type(exc).__name__, error=str(exc))
-                memo[key] = {"ok": False, "error": {
-                    "code": "stats_unavailable", "message": "statistics are temporarily unavailable"}}
+            if time.monotonic() >= cap:
+                memo[key] = {"ok": False, "error": {"code": "stats_query_limit", "message": "batch deadline exceeded"}}
+            else:
+                try:
+                    memo[key] = _answer_item(store, item, cap, state)
+                except ValidationError as exc:
+                    memo[key] = {"ok": False, "error": {
+                        "code": "invalid_stats_request",
+                        "message": "; ".join(f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in exc.errors())}}
+                except (ValueError, KeyError) as exc:
+                    memo[key] = {"ok": False, "error": {
+                        "code": "stats_query_limit" if isinstance(exc, QueryLimit) else "invalid_stats_request",
+                        "message": str(exc)}}
+                except sqlite3.Error as exc:
+                    logger.warning("stats_batch_item_failed", error_type=type(exc).__name__, error=str(exc))
+                    memo[key] = {"ok": False, "error": {
+                        "code": "stats_unavailable", "message": "statistics are temporarily unavailable"}}
         results.append(memo[key])
     return {"results": results, "revision": store.revision()}

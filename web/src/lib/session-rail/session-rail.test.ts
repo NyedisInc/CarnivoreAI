@@ -64,8 +64,8 @@ describe('the default and the lists', () => {
   });
 
   test('another device reordering the rail repaints it live (the preferences.changed follow)', () => {
-    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.task-manager' }, { widget: 'core.changes' }] });
-    expect(keys()).toEqual(['core.task-manager', 'core.changes']);
+    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.task-manager-mk2' }, { widget: 'core.changes' }] });
+    expect(keys()).toEqual(['core.task-manager-mk2', 'core.changes']);
     follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.notes' }] });
     expect(bottomKeys()).toEqual(['core.notes']);
     expect(written).toEqual([]);
@@ -141,7 +141,7 @@ describe('the bottom rail', () => {
 
 describe('the slide-out', () => {
   test('a key slides its widget out over the terminal; the key again or Escape slide it back', () => {
-    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }, { widget: 'core.notes' }, { widget: 'core.task-manager' }] });
+    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }, { widget: 'core.notes' }, { widget: 'core.task-manager-mk2' }] });
     const key = (id: string) => document.querySelector<HTMLButtonElement>(`[data-zone-item="${id}"]`)!;
     key('core.changes').click();
     flushSync();
@@ -157,7 +157,7 @@ describe('the slide-out', () => {
     flushSync();
     expect(railSlideout.key).toBeNull();
 
-    key('core.task-manager').click();
+    key('core.task-manager-mk2').click();
     flushSync();
     expect(document.querySelector('[data-rail-slideout] .rail-out__bar')).toBeNull();
     document.querySelector('[data-rail-slideout]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
@@ -191,7 +191,7 @@ describe('the session-based flag', () => {
   });
 
   test('every placement gets the same rule: the flag decides, the active session answers', () => {
-    for (const id of ['core.changes', 'core.task-manager', 'core.notes', 'core.files']) {
+    for (const id of ['core.changes', 'core.task-manager-mk2', 'core.notes', 'core.files']) {
       expect(CORE_MANIFESTS[id]!.scope).toBe('session');
     }
     expect(activeScopeFor(CORE_MANIFESTS['core.notes'])?.sessionId).toBe('ses_1');
@@ -221,21 +221,21 @@ describe('the session-based flag', () => {
 describe('edit layout owns the rails', () => {
 
   test('without a pointer: arrows along the strip move the focused key and del takes it out', () => {
-    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }, { widget: 'core.notes' }, { widget: 'core.task-manager' }] });
+    follow(RAIL_FIELD, { v: 1, items: [{ widget: 'core.changes' }, { widget: 'core.files' }, { widget: 'core.notes' }, { widget: 'core.task-manager-mk2' }] });
     layoutEditor.active = true;
     flushSync();
     const key = (id: string) => document.querySelector<HTMLElement>(`[data-zone-item="${id}"]`)!;
     const writesBefore = written.length;
-    key('core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
+    key('core.task-manager-mk2').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
     flushSync();
     expect(written.length).toBe(writesBefore);
-    key('core.task-manager').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+    key('core.task-manager-mk2').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     flushSync();
     expect(written.length).toBe(writesBefore + 1);
-    expect(keys()).toEqual(['core.changes', 'core.files', 'core.task-manager', 'core.notes']);
+    expect(keys()).toEqual(['core.changes', 'core.files', 'core.task-manager-mk2', 'core.notes']);
     key('core.files').dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
     flushSync();
-    expect(keys()).toEqual(['core.changes', 'core.task-manager', 'core.notes']);
+    expect(keys()).toEqual(['core.changes', 'core.task-manager-mk2', 'core.notes']);
 
     follow(BOTTOM_FIELD, { v: 1, items: [{ widget: 'core.files' }, { widget: 'core.ledger' }] });
     document.querySelector<HTMLElement>(`#${RAIL_BOTTOM_ID} [data-zone-item="core.ledger"]`)!
@@ -311,7 +311,7 @@ describe('the rails hold more than the drawer area and one widget in one rail', 
 
 describe('the new widgets', () => {
   test('changes and huddle declare the list sizes, one copy per page, and the session flag', () => {
-    for (const id of ['core.changes', 'core.task-manager']) {
+    for (const id of ['core.changes', 'core.task-manager-mk2']) {
       const manifest = CORE_MANIFESTS[id]!;
       expect(widgetSizeNames(manifest)).toEqual(['tall', 'medium', 'large', 'full']);
       expect(manifest.fits.max_per_surface).toBe(1);

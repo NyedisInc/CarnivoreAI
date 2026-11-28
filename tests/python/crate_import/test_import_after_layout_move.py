@@ -6,10 +6,11 @@ from pathlib import Path
 
 from src.core.crate_import.env import StoreHome
 from src.core.inventory import plugin_stores
+from src.core.plugin_registry import plugin_layout
 from src.plugins.host import identity, registry_boot
 from src.plugins.sdk.crate_import import plugin_homes_of
 from tests.python.cplugs.crate.test_plugin_data import manifest_with
-from tests.python.cplugs.test_registry_migration_full_tuple import Alerts
+from tests.python.cplugs.test_registry_boot_tiebreaks import Alerts
 from tests.python.crate_import.test_import_boards import BOARDS, KEEP, MEMO, PLUGIN, export_rig
 from tests.python.crate_import.test_import_same_path import run
 from tests.python.crate_import.test_import_work_side import target_install
@@ -39,7 +40,8 @@ def test_a_crate_exported_before_the_migration_imports_into_the_new_data_folder(
     crate = export_rig(tmp_path)
     install, record = installed_target(tmp_path, crate)
     assert homes_for(install, crate)(PLUGIN, "keep").root == install.state / "cplugs" / record.uuid / "keep"
-    assert registry_boot.run(install.state, retired=lambda: None, alert=Alerts()).action == registry_boot.A_MIGRATED
+    plugin_layout.apply_moves(plugin_layout.plan_moves(install.state), install.state / "journal.json")
+    assert registry_boot.run(install.state, retired=lambda: None, alert=Alerts()).action == registry_boot.A_NORMAL
     new = install.state / "plugin-data" / record.uuid / "keep"
     assert (new / "already-here.txt").read_text() == "a local note\n" and not (install.state / "cplugs" / record.uuid).exists()
     homes = homes_for(install, crate)

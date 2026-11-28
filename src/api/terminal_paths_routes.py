@@ -1,6 +1,8 @@
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -9,6 +11,11 @@ from starlette.concurrency import run_in_threadpool
 from src.api.auth import require_auth
 from src.api.error_response import api_error
 from src.api.remote_route_guard import refuse_remote
+from src.config import settings
+from src.core.agy import transcripts
+from src.core.agy.identity import info_is_agy
+from src.core.agy.path_names import resolve_bare
+from src.core.agy.state import state_for_conversation
 from src.core.session_pane_facts import read_pane_facts
 from src.core.terminal_paths import open_app
 from src.core.terminal_paths.resolve import resolve
@@ -31,6 +38,23 @@ async def _cwd(request: Request, session_id: str, action: str) -> Optional[str]:
     return info.session.working_dir if info.session else None
 
 
+async def _agy_transcript(request: Request, session_id: str) -> Optional[Path]:
+    manager: Any = request.app.state.session_manager
+    info = await manager.get_session_info(session_id)
+    if info is None or not info.tmux_session or not info_is_agy(info):
+        return None
+    conversation = manager.claude_uuid_for_tmux_name(info.tmux_session)
+
+    def find() -> Optional[Path]:
+        state = state_for_conversation(settings.get_state_dir(), conversation) or {}
+        named = state.get("transcript_path")
+        if isinstance(named, str) and os.path.isfile(named):
+            return Path(named)
+        return transcripts.transcript_path(conversation) if conversation else None
+
+    return await run_in_threadpool(find)
+
+
 @router.post("/sessions/{session_id}/paths/resolve", response_model=ResolvePathsResponse)
 async def resolve_paths(request: Request, session_id: str, body: ResolvePathsRequest) -> ResolvePathsResponse:
     """Which of these printed paths exist. Inputs: session_id; body. Output: one answer per text, in order.
@@ -40,15 +64,15 @@ async def resolve_paths(request: Request, session_id: str, body: ResolvePathsReq
     """
     cwd = await _cwd(request, session_id, "the terminal path check")
 
-    def check() -> list[ResolvedPath]:
-        out = []
-        for text in body.texts:
-            found = resolve(text, cwd)
-            out.append(ResolvedPath(text=text, path=found.path, kind=found.kind, line=found.line) if found
-                       else ResolvedPath(text=text))
-        return out
-
-    return ResolvePathsResponse(paths=await run_in_threadpool(check))
+    answers = await run_in_threadpool(lambda: {t: resolve(t, cwd) for t in body.texts})
+    bare = [t for t, r in answers.items() if r is None and "/" not in t]
+    if bare:
+        transcript = await _agy_transcript(request, session_id)
+        for t in bare:
+            answers[t] = await run_in_threadpool(resolve_bare, t, transcript)
+    return ResolvePathsResponse(paths=[
+        ResolvedPath(text=t, path=answers[t].path, kind=answers[t].kind, line=answers[t].line) if answers[t]
+        else ResolvedPath(text=t) for t in body.texts])
 
 
 @router.post("/sessions/{session_id}/paths/open", response_model=OpenPathResponse)
@@ -60,6 +84,8 @@ async def open_path(request: Request, session_id: str, body: OpenPathRequest) ->
     """
     cwd = await _cwd(request, session_id, "opening a terminal path")
     found = await run_in_threadpool(resolve, body.text, cwd)
+    if found is None and "/" not in body.text:
+        found = await run_in_threadpool(resolve_bare, body.text, await _agy_transcript(request, session_id))
     if found is None:
         raise HTTPException(status_code=404, detail="no such file or folder")
     if body.app == "browser" and found.kind != "file":

@@ -69,6 +69,10 @@ console.log('[TerminalHistoryGate Module] Loading...');
         return typeof controller._navCurrent !== 'function' || controller._navCurrent('history');
     }
 
+    function followUp(controller, hold, b64) {
+        if (global.TerminalHistoryFollowup) global.TerminalHistoryFollowup.start(controller, hold, b64);
+    }
+
     async function onHistory(controller, hold, b64) {
         var outcome = 'nothing';
         try {
@@ -80,20 +84,30 @@ console.log('[TerminalHistoryGate Module] Loading...');
         } catch (err) {
             console.warn('Terminal: history paint failed, continuing without it:', err);
         }
-        if (!hold.on || controller._historyGate !== hold) return;
-        if (valid(controller, hold)) release(controller, 'history ' + outcome);
-        else discard(controller, 'stale connection or navigation');
+        if (!hold.on || controller._historyGate !== hold) {
+            if (hold.unpainted && outcome !== 'painted') followUp(controller, hold, b64);
+            return;
+        }
+        if (valid(controller, hold)) {
+            release(controller, 'history ' + outcome);
+            if (outcome !== 'painted') followUp(controller, hold, b64);
+        } else discard(controller, 'stale connection or navigation');
     }
 
     function begin(controller, pending, opts) {
         discard(controller, 'a new hold begins');
         var hold = {
-            on: true, gen: controller._connGen, frames: [], bytes: 0, dropped: 0, timer: null
+            on: true, gen: controller._connGen, frames: [], bytes: 0, dropped: 0, timer: null,
+            nav: controller._navToken, unpainted: false,
+            sid: typeof controller._sessionId === 'function' ? controller._sessionId() : null
         };
         controller._historyGate = hold;
         var ms = opts && opts.holdMs > 0 ? opts.holdMs : HISTORY_HOLD_MS;
         hold.timer = setTimeout(function () {
-            if (controller._historyGate === hold) release(controller, 'bound ' + ms + ' ms');
+            if (controller._historyGate === hold) {
+                hold.unpainted = true;
+                release(controller, 'bound ' + ms + ' ms');
+            }
         }, ms);
         Promise.resolve(pending).then(function (b64) {
             return onHistory(controller, hold, b64);

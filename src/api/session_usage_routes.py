@@ -31,10 +31,13 @@ class SessionUsageAnswer(BaseModel):
 
 
 @router.get("/sessions/usage", response_model=SessionUsageAnswer)
-async def sessions_usage(days: int = Query(rollup.DEFAULT_DAYS, ge=rollup.MIN_DAYS, le=rollup.MAX_DAYS)) -> SessionUsageAnswer:
+async def sessions_usage(
+    days: int = Query(rollup.DEFAULT_DAYS, ge=rollup.MIN_DAYS, le=rollup.MAX_DAYS),
+    scope: Literal["local", "pack"] = Query("pack"),
+) -> SessionUsageAnswer:
     """Worked seconds, active days and last worked time per session over the last ``days`` days (1 to 90, default 30).
 
-    Inputs: days. Output: SessionUsageAnswer. Never an error for missing data: ``state`` says what was not measured.
+    Inputs: days; scope ('pack' | 'local', default 'pack'). Output: SessionUsageAnswer. Never an error for missing data: ``state`` says what was not measured.
     Example: GET /api/v1/sessions/usage?days=30
     """
-    return SessionUsageAnswer(**await run_in_threadpool(rollup.build, days))
+    return SessionUsageAnswer(**await run_in_threadpool(rollup.build, days, scope=scope))

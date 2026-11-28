@@ -18,7 +18,7 @@
     import { closedByKey, closedOnlyGroups, historyKeyOf } from './closed-model';
     import GroupSection from './GroupSection.svelte';
     import { LENSES, lensGroups, type LensGroup, lensMeasure, readLens, writeLens, type LensContext, type LensKey } from './lenses';
-    import LensRail from './LensRail.svelte';
+    import type { RailState } from './rail-state';
     import ListHead from './ListHead.svelte';
     import { latestView } from './latest-line';
     import { pinnedUuidSet } from './pins';
@@ -51,8 +51,9 @@
         closedRows?: readonly PageRow[];
         busyIds?: ReadonlySet<string>;
         bar?: Snippet;
+        rail?: RailState | undefined;
     }
-    let { rows, data, t, now, searching, active = true, selected = $bindable(null), previewing = false, onPreview, onAct, emptyProjects = [], find = '', withEmpties = true, showArchived = false, projectSort = 'default', onProjectAction, onCompanyAction, projectBusy = false, closedRows = [], busyIds = new Set<string>(), bar }: Props = $props();
+    let { rows, data, t, now, searching, active = true, selected = $bindable(null), previewing = false, onPreview, onAct, emptyProjects = [], find = '', withEmpties = true, showArchived = false, projectSort = 'default', onProjectAction, onCompanyAction, projectBusy = false, closedRows = [], busyIds = new Set<string>(), bar, rail = $bindable() }: Props = $props();
 
     let lens = $state<LensKey>(readLens());
     let sort = $state<SortState | null>(null);
@@ -418,6 +419,13 @@
         if (id) void choose(id, { open: true });
     }
 
+    $effect(() => {
+        rail = { lens, counts, groups, inactive: bands.inactive, current, listingDown, onLens: setLens, onSection: (key: string) => void goSection(key) };
+    });
+    $effect(() => () => {
+        rail = undefined;
+    });
+
     onMount(() => {
         if (typeof ResizeObserver === 'undefined' || !listEl) return;
         const ro = new ResizeObserver(() => {
@@ -461,7 +469,6 @@
 {/snippet}
 
 <div class="sp-ix" bind:this={rootEl}>
-    <LensRail {lens} {counts} groups={groups} inactive={bands.inactive} {current} {listingDown} {t} onLens={setLens} onSection={(key) => void goSection(key)} />
     <div class="sp-listcol">
         {#if bar}
             {@render bar()}

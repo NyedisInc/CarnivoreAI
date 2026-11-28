@@ -150,10 +150,10 @@ def test_pulls_are_spaced_sixty_seconds_apart(tmp_path, b_state):
     _run(importer.maybe_pull(PEER, peer.snapshot()))
     _conversation(peer.conn, "c1", "p", [1])
     peer.requests.clear()
-    clock.now += 30
+    clock.now += puller.MIN_INTERVAL_SECONDS - 5
     _run(importer.maybe_pull(PEER, peer.snapshot()))
-    assert peer.requests == [], "inside 60 s the next beat retries, nothing is pulled"
-    clock.now += 31
+    assert peer.requests == [], "inside MIN_INTERVAL_SECONDS the next beat retries, nothing is pulled"
+    clock.now += 6
     _run(importer.maybe_pull(PEER, peer.snapshot()))
     assert len(peer.requests) == 1
 

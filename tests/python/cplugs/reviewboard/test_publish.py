@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from src.api.auth import require_auth
-from src.plugins.huddle import board_port, wire as task_manager_wire
+from src.plugins.taskmanager import board_port, wire as task_manager_wire
 from src.plugins.reviewboard import document, publish, revisions, scan, store
 from src.plugins.reviewboard.errors import BadRequest
 from src.plugins.reviewboard.requests import ReviseBody

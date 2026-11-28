@@ -70,6 +70,14 @@ console.log('[SessionRestartPicker Module] Loading...');
         return parts.join('');
     }
 
+    var RESTORED = { restored: true };
+
+    function restoreOffered(preview, sessionUuid) {
+        return !!sessionUuid
+            && Options.rowFacts(preview).some(function (fact) { return fact.kind === 'offloaded'; })
+            && !!(window.CloudeWeb && window.CloudeWeb.offloadPrompt);
+    }
+
     function dismiss(resolve, value) {
         pendingResolve = null;
         if (overlayEl && overlayEl.parentNode) {
@@ -197,6 +205,27 @@ console.log('[SessionRestartPicker Module] Loading...');
                 .addEventListener('click', function () {
                     dismiss(resolve, null);
                 });
+            if (restoreOffered(preview, sessionUuid)) {
+                window.CloudeWeb.offloadPrompt.canRestore({ sessionUuid: sessionUuid }).then(function (allowed) {
+                    var cancelBtn = overlay.querySelector('#restart-picker-cancel');
+                    if (!allowed || !overlay.isConnected || !cancelBtn) return;
+                    var restoreBtn = cancelBtn.cloneNode(false);
+                    restoreBtn.id = 'restart-picker-restore';
+                    restoreBtn.classList.replace('modal-btn-secondary', 'modal-btn-confirm');
+                    restoreBtn.textContent = tr('session.restart.picker.restore');
+                    cancelBtn.parentNode.insertBefore(restoreBtn, cancelBtn);
+                    restoreBtn.addEventListener('click', function () {
+                        window.CloudeWeb.offloadPrompt.prompt({ sessionUuid: sessionUuid, label: displayName })
+                            .then(function (restored) {
+                                if (restored) dismiss(resolve, RESTORED);
+                            }, function (err) {
+                                console.error('SessionRestartPicker: the restore prompt failed:', err);
+                            });
+                    });
+                }, function (err) {
+                    console.error('SessionRestartPicker: could not ask whether a restore is offered:', err);
+                });
+            }
             go.addEventListener('click', function () {
                 if (go.disabled) return;
                 var picked = choice ? choice.selected() : null;
@@ -238,6 +267,10 @@ console.log('[SessionRestartPicker Module] Loading...');
                     displayName || tmuxName, answer.preview, status,
                     answer.mode, answer.sessionUuid, focusWrapper,
                     armedByGesture, busyWork, both[1]);
+            }).then(function (picked) {
+                return picked === RESTORED
+                    ? open(tmuxName, displayName, status, sessionUuid, focusWrapper, armedByGesture, busyWork)
+                    : picked;
             }).catch(function (err) {
                 lastErrorText = (err && err.message) || String(err);
                 console.error('SessionRestartPicker: preview failed:', err);

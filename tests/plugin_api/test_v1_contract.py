@@ -316,8 +316,8 @@ def mcp_tool_problems(text: str) -> List[str]:
 
 
 def gate_problems(text: str) -> List[str]:
-    from src.plugins.host.sidecar_manifest import TOOL_GATES
     from src.plugins.sdk.definition import GATES
+    from src.plugins.sdk.manifest_v2 import TOOL_GATES
 
     rows = _rows(text, "5.2")
     if not rows:
@@ -397,8 +397,8 @@ MCP_RED_CASES = (
     ("| `plugin_requests_list` | experimental |", "| `plugin_capability_calls_list` | experimental |", "a read tool reaching another route"),
     ("| none: owner-only |", "| none: because |", "a reason not in the table"),
     ("| none: owner-only |", "| none: ui-asset |", "a reason that does not fit the purge route"),
-    ("| `{confirm_dependents, consent, enabled, grants, revision, settings}` | none: consent |",
-     "| `{confirm_dependents, consent, enabled, grants, revision, settings}` | none: ui-asset |", "ui-asset on the enable route"),
+    ("| `{activate_runtime, confirm_dependents, consent, enabled, grants, revision, secrets, settings}` | none: consent |",
+     "| `{activate_runtime, confirm_dependents, consent, enabled, grants, revision, secrets, settings}` | none: ui-asset |", "ui-asset on the enable route"),
     ("| `{value}` | none: credentials |", "| `{value}` | none: platform |", "platform off the catalog"),
 )
 

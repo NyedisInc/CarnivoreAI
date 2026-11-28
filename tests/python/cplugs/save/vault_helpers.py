@@ -117,16 +117,18 @@ def stop_follower(client: TestClient) -> None:
 def store_plugin_entry(state: Path, plugin_id: str, settings: dict, *, enabled: bool = True) -> None:
     import json
 
-    from src.plugins.host import state as owner_state
+    from src.plugins.host import registry_store
 
-    path = owner_state.state_path(state)
+    path = registry_store.registry_path(state)
     path.parent.mkdir(parents=True, exist_ok=True)
-    data = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {"version": owner_state.STATE_VERSION, "cplugs": {}}
-    entry = data["cplugs"].get(plugin_id) or {"grants": [], "revision": 0}
+    doc = json.loads(path.read_text(encoding="utf-8")) if path.exists() else registry_store.new_document()
+    items = doc.setdefault("items", {})
+    entry = items.get(plugin_id) or {"kind": "feature", "grants": [], "revision": 0}
+    entry.pop("unstored", None)
     entry.update(enabled=enabled, settings=dict(settings), revision=int(entry.get("revision", 0)) + 1)
-    data["cplugs"][plugin_id] = entry
-    path.write_text(json.dumps(data), encoding="utf-8")
-    owner_state._file_cache.pop(str(path), None)
+    items[plugin_id] = entry
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    registry_store._cache.pop(str(path), None)
 
 
 def store_save_settings(state: Path, settings: dict, *, enabled: bool = True) -> None:

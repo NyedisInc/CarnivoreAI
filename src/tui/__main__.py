@@ -17,10 +17,16 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", metavar="command")
     tui = sub.add_parser("tui", help="open the terminal interface (the default)")
     tui.add_argument("--offline", action="store_true", default=argparse.SUPPRESS, help=OFFLINE_HELP)
+    sub.add_parser("plugin", help="plugin developer CLI (new, dev, test, check, install, publish)")
     return parser
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    raw = list(sys.argv[1:] if argv is None else argv)
+    if raw and raw[0] == "plugin":
+        from src.plugins.cli import main as plugin_main  # noqa: PLC0415
+
+        return int(plugin_main(raw[1:]))
     args = build_parser().parse_args(argv)
     from src.config import settings
     from src.tui.api_client import server_base_url
@@ -35,7 +41,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     from src.tui.api_client import ApiClient
     from src.tui.app import CarnivoreTui
-    from src.tui.token_store import TokenStore
+    from src.core.cli_command.token_store import TokenStore
 
     client = ApiClient(TokenStore(settings.get_state_dir()), server_base_url(settings.port))
     CarnivoreTui(client).run()

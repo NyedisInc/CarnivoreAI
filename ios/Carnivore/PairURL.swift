@@ -1,20 +1,21 @@
 import Foundation
 
-enum PairError: Error, Equatable {
+enum PairError: Error, Equatable, Sendable {
     case notAPairingCode
     case unknownHost
     case badSecret
 }
 
-struct PairTarget: Equatable {
+struct PairTarget: Equatable, Sendable {
     let url: URL
     let origin: Origin
+    let secret: String?
     let isKnown: Bool
     let kind: ComputerKind
     let needsConfirm: Bool
 }
 
-enum HostDecision: Equatable {
+enum HostDecision: Equatable, Sendable {
     case link, known, confirm, refuse
 }
 
@@ -46,7 +47,7 @@ enum PairURL {
               secretShape.firstMatch(in: secret, range: NSRange(secret.startIndex..., in: secret)) != nil
         else { return .failure(.badSecret) }
         if let relay = linkTarget(comps, secret: secret, scanned: origin, known: known) { return .success(relay) }
-        return target(for: origin, url: url, known: known)
+        return target(for: origin, url: url, secret: secret, known: known)
     }
 
     private static func linkTarget(_ comps: URLComponents, secret: String, scanned: Origin, known: [Origin]) -> PairTarget? {
@@ -56,7 +57,8 @@ enum PairURL {
               linkHost.firstMatch(in: host, range: NSRange(host.startIndex..., in: host)) != nil,
               let url = URL(string: "https://\(host)/pair#\(secret)"), let origin = Origin(url: url)
         else { return nil }
-        return PairTarget(url: url, origin: origin, isKnown: known.contains(origin), kind: .relay, needsConfirm: false)
+        let isKnown = known.contains(origin)
+        return PairTarget(url: url, origin: origin, secret: secret, isKnown: isKnown, kind: .relay, needsConfirm: !isKnown)
     }
 
     private static func isLinkHost(_ host: String) -> Bool {
@@ -67,14 +69,15 @@ enum PairURL {
         guard let url = URL(string: "/pair", relativeTo: origin.rootURL)?.absoluteURL else {
             return .failure(.notAPairingCode)
         }
-        return target(for: origin, url: url, known: known)
+        return target(for: origin, url: url, secret: nil, known: known)
     }
 
-    private static func target(for origin: Origin, url: URL, known: [Origin]) -> Result<PairTarget, PairError> {
+    private static func target(for origin: Origin, url: URL, secret: String?, known: [Origin]) -> Result<PairTarget, PairError> {
         let decision = hostDecision(origin, known: known)
         if decision == .refuse { return .failure(.unknownHost) }
-        return .success(PairTarget(url: url, origin: origin, isKnown: known.contains(origin),
+        let isKnown = known.contains(origin)
+        return .success(PairTarget(url: url, origin: origin, secret: secret, isKnown: isKnown,
                                    kind: decision == .link ? .relay : .https,
-                                   needsConfirm: decision == .confirm))
+                                   needsConfirm: !isKnown))
     }
 }

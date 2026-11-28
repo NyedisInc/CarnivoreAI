@@ -18,6 +18,7 @@ interface IndexDocument {
     featured?: string[];
 }
 
+/* cannot be read */
 async function readKeyId(fetchImpl: typeof fetch): Promise<string | null> {
     try {
         const r = await fetchImpl(SIGNATURE_URL, { cache: 'no-cache' });

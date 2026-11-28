@@ -8,7 +8,8 @@ settings:
   base:
     DEVELOPMENT_TEAM: ARD6KN4BX4
     SWIFT_VERSION: "5.0"
-    MARKETING_VERSION: "1.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "2.0"
     CURRENT_PROJECT_VERSION: "1"
     TARGETED_DEVICE_FAMILY: "1"
     SUPPORTS_MACCATALYST: NO
@@ -48,14 +49,20 @@ targets:
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UIAppFonts: [JetBrainsMono-Regular.ttf, JetBrainsMono-Medium.ttf, JetBrainsMono-Bold.ttf]
+        NSFaceIDUsageDescription: carnivore uses Face ID to lock your sessions and agent approvals.
         NSCameraUsageDescription: carnivore uses the camera to scan the pairing code shown on your computer.
         NSLocalNetworkUsageDescription: carnivore connects to your computer on your local network.
-        NSMicrophoneUsageDescription: carnivore listens through the microphone when you tap the mic key to dictate into a terminal.
-        NSSpeechRecognitionUsageDescription: carnivore turns your speech into text when you dictate into a terminal.
+        NSMicrophoneUsageDescription: carnivore listens through the microphone when you dictate into a terminal.
+        NSSpeechRecognitionUsageDescription: carnivore turns your speech into text on-device when you dictate to an agent.
         ITSAppUsesNonExemptEncryption: false
         CarnivorePushEnvironment: $(PUSH_ENVIRONMENT)
         CarnivoreKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.shared
+        CarnivoreMacKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.notify-mac
         NSPhotoLibraryAddUsageDescription: carnivore saves an image an agent sent you to your photos when you tap save.
+        CFBundleURLTypes:
+          - CFBundleURLName: ai.carnivore.ios
+            CFBundleURLSchemes: [carnivore]
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     entitlements:
@@ -64,7 +71,9 @@ targets:
         aps-environment: $(APS_ENVIRONMENT)
         com.apple.developer.usernotifications.time-sensitive: true
         com.apple.security.application-groups: [group.ai.carnivore]
-        keychain-access-groups: [$(AppIdentifierPrefix)ai.carnivore.shared]
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)ai.carnivore.shared
+          - $(AppIdentifierPrefix)ai.carnivore.notify-mac
     dependencies:
       - target: CarnivoreNotify
         embed: true
@@ -76,9 +85,9 @@ targets:
     sources:
       - CarnivoreNotify
       - path: Shared
-        excludes: [TestVectors]
+        excludes: [TestVectors, Card]
       - Carnivore/Generated/Strings.swift
-      - Carnivore/Generated/CardTones.swift
+      - Carnivore/Generated/CardThumbTones.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.notify
@@ -93,6 +102,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CarnivoreKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.shared
+        CarnivoreMacKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.notify-mac
         NSExtension:
           NSExtensionPointIdentifier: com.apple.usernotifications.service
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationService
@@ -100,14 +110,16 @@ targets:
       path: CarnivoreNotify/CarnivoreNotify.entitlements
       properties:
         com.apple.security.application-groups: [group.ai.carnivore]
-        keychain-access-groups: [$(AppIdentifierPrefix)ai.carnivore.shared]
+        keychain-access-groups:
+          - $(AppIdentifierPrefix)ai.carnivore.shared
+          - $(AppIdentifierPrefix)ai.carnivore.notify-mac
   CarnivoreCard:
     type: app-extension
     platform: iOS
     sources:
       - CarnivoreCard
       - path: Shared
-        excludes: [TestVectors]
+        excludes: [TestVectors, PushKeyStore.swift, PayloadCrypto.swift, PushRewrite.swift, CardThumbCG.swift, PrivacyInfo.xcprivacy]
       - Carnivore/Generated/Strings.swift
       - Carnivore/Generated/CardTones.swift
     dependencies:
@@ -117,6 +129,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: ai.carnivore.ios.card
         ENABLE_DEBUG_DYLIB: NO
         TARGETED_DEVICE_FAMILY: "1"
+        CODE_SIGN_ENTITLEMENTS: CarnivoreCard/CarnivoreCard.entitlements
         GENERATE_INFOPLIST_FILE: NO
     info:
       path: CarnivoreCard/Info.plist
@@ -124,6 +137,7 @@ targets:
         CFBundleDisplayName: Carnivore
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CarnivoreMacKeychainGroup: $(AppIdentifierPrefix)ai.carnivore.notify-mac
         NSExtension:
           NSExtensionPointIdentifier: com.apple.usernotifications.content-extension
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).NotificationViewController
@@ -132,6 +146,10 @@ targets:
             UNNotificationExtensionDefaultContentHidden: true
             UNNotificationExtensionUserInteractionEnabled: false
             UNNotificationExtensionInitialContentSizeRatio: 0.6
+    entitlements:
+      path: CarnivoreCard/CarnivoreCard.entitlements
+      properties:
+        keychain-access-groups: [$(AppIdentifierPrefix)ai.carnivore.notify-mac]
   CarnivoreTests:
     type: bundle.unit-test
     platform: iOS

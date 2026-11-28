@@ -1,4 +1,5 @@
 <script lang="ts">
+  /* the Task Manager */
   import { announceFailure, familyOf, resourcePush, stampLabel, t } from '../sdk';
   import { Button } from '../sdk/ui';
   import type { PanelReadState, ProjectPanelProps } from '../sdk';

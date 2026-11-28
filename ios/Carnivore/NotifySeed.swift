@@ -22,7 +22,8 @@ enum NotifySeed {
             let names = (try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? []
             for name in names where name.hasPrefix("play-") && name.hasSuffix(".json") {
                 let path = dir + "/" + name
-                guard let data = FileManager.default.contents(atPath: path), let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String] else { continue }
+                guard let data = FileManager.default.contents(atPath: path),
+                      let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String] else { continue }
                 try? FileManager.default.removeItem(atPath: path)
                 let content = UNMutableNotificationContent()
                 content.title = "carnivore"
@@ -31,9 +32,9 @@ enum NotifySeed {
                 let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
                 service.didReceive(request) { delivered in
                     let final = (delivered.mutableCopy() as? UNMutableNotificationContent) ?? UNMutableNotificationContent()
-                    var info = final.userInfo
+                    var info = (final.userInfo as? [String: String]) ?? [:]
                     if info["ttl"] != nil { info["ttl"] = String(Date().addingTimeInterval(3600).timeIntervalSince1970) }
-                    final.userInfo = info
+                    final.userInfo = NotificationMAC.sign(info)
                     if final.interruptionLevel == .passive { final.interruptionLevel = .active }
                     let out = UNNotificationRequest(identifier: UUID().uuidString, content: final, trigger: UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false))
                     UNUserNotificationCenter.current().add(out)

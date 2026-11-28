@@ -40,7 +40,7 @@ beforeEach(() => {
   document.body.innerHTML = drawerMarkup();
   localStorage.clear();
   drawerSurface.page = 'home';
-  cplugEnablement.enabled = { huddle: false };
+  cplugEnablement.enabled = { taskmanager: false };
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
@@ -85,7 +85,9 @@ test('"+" project opens the full new-project menu; the import button is gone', (
   plus.click();
   flushSync();
   const project = row.querySelector<HTMLButtonElement>('[data-node="project"]')!;
-  expect(project.classList.contains('acm-sep'), 'project and group sit apart from the session kinds').toBe(true);
+  const group = row.querySelector<HTMLButtonElement>('[data-node="group"]')!;
+  expect(project.classList.contains('acm-sep'), 'project sits with agent, terminal and browser').toBe(false);
+  expect(group.classList.contains('acm-sep'), 'group and company sit below the divider').toBe(true);
   project.click();
   flushSync();
   expect(startNewClaudeProject).toHaveBeenCalledTimes(1);
@@ -120,7 +122,7 @@ test('"+" opens a submenu: agent runs the plain create flow, terminal opens a sh
   plus.click();
   flushSync();
   const menuItems = () => [...row.querySelectorAll<HTMLElement>('[role="menu"] [role="menuitem"]')];
-  expect(menuItems().map((i) => i.dataset.node)).toEqual(['agent', 'terminal', 'browser', 'project', 'group']);
+  expect(menuItems().map((i) => i.dataset.node)).toEqual(['agent', 'project', 'terminal', 'browser', 'group', 'company']);
   expect(plus.getAttribute('aria-expanded')).toBe('true');
   row.querySelector<HTMLButtonElement>('[data-node="agent"]')!.click();
   flushSync();
@@ -152,7 +154,7 @@ test('the "+" submenu offers browser, which creates one and records its fragment
     row.querySelector<HTMLButtonElement>('[data-action="new-session"]')!.click();
     flushSync();
     const kinds = [...row.querySelectorAll<HTMLElement>('[role="menuitem"]')].map((i) => i.dataset.node);
-    expect(kinds).toEqual(['agent', 'terminal', 'browser', 'project', 'group']);
+    expect(kinds).toEqual(['agent', 'project', 'terminal', 'browser', 'group', 'company']);
     row.querySelector<HTMLButtonElement>('[data-node="browser"]')!.click();
     flushSync();
     await vi.waitFor(() => expect(location.hash).toBe(`#browser/${id}`));
@@ -184,20 +186,23 @@ test('the "+" submenu: arrow keys walk its items, and a pointer outside closes i
   row.querySelector<HTMLButtonElement>('[data-action="new-session"]')!.click();
   flushSync();
   const agent = row.querySelector<HTMLButtonElement>('[data-node="agent"]')!;
+  const project = row.querySelector<HTMLButtonElement>('[data-node="project"]')!;
   const terminal = row.querySelector<HTMLButtonElement>('[data-node="terminal"]')!;
+  const browser = row.querySelector<HTMLButtonElement>('[data-node="browser"]')!;
+  const group = row.querySelector<HTMLButtonElement>('[data-node="group"]')!;
+  const company = row.querySelector<HTMLButtonElement>('[data-node="company"]')!;
   expect(document.activeElement).toBe(agent);
   agent.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-  expect(document.activeElement).toBe(terminal);
-  terminal.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-  const browser = row.querySelector<HTMLButtonElement>('[data-node="browser"]')!;
-  expect(document.activeElement).toBe(browser);
-  browser.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-  const project = row.querySelector<HTMLButtonElement>('[data-node="project"]')!;
   expect(document.activeElement).toBe(project);
   project.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-  const group = row.querySelector<HTMLButtonElement>('[data-node="group"]')!;
+  expect(document.activeElement).toBe(terminal);
+  terminal.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+  expect(document.activeElement).toBe(browser);
+  browser.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
   expect(document.activeElement).toBe(group);
   group.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+  expect(document.activeElement).toBe(company);
+  company.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
   expect(document.activeElement, 'wraps back to the first').toBe(agent);
   expect(row.querySelector('[role="menu"]')!.classList.contains('acm-menu'), 'the add component popup, not a copy').toBe(true);
   document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));

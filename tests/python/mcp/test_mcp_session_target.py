@@ -26,7 +26,7 @@ ORPHAN = "12d67d84-9428-4105-90d0-12b01f2d8670"
 
 
 def _info(name: str) -> SimpleNamespace:
-    return SimpleNamespace(tmux_session=name, host_key="local", session_row_id=1, label=None, agent_type="claude",
+    return SimpleNamespace(claude_title=None, tmux_session=name, host_key="local", session_row_id=1, label=None, agent_type="claude",
                            project_name="p", activity_status="idle", unread=False, status_source="pane",
                            startup_gate="ready", subagents_state=None, subagents_running=None, background_open=None,
                            background_processes=None, task_lead=None, do_not_disturb=None,

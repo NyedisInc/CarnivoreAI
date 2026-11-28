@@ -26,7 +26,7 @@
      "content": [
       {
        "type": "tool_use",
-       "id": "toolu_01XUk8Vjge5KrFtmgtQu1NBK",
+       "id": "toolu_01SYNTHETICSUBAGT000001",
        "name": "Agent",
        "input": {
         "description": "redacted",
@@ -53,7 +53,7 @@
      "role": "user",
      "content": [
       {
-       "tool_use_id": "toolu_01XUk8Vjge5KrFtmgtQu1NBK",
+       "tool_use_id": "toolu_01SYNTHETICSUBAGT000001",
        "type": "tool_result",
        "content": "redacted"
       }
@@ -193,7 +193,7 @@
     "operation": "enqueue",
     "timestamp": "2026-09-27T20:50:35.863Z",
     "sessionId": "{SESSION}",
-    "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01XUk8Vjge5KrFtmgtQu1NBK</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000001</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
    },
    {
     "type": "queue-operation",
@@ -206,7 +206,7 @@
     "type": "user",
     "message": {
      "role": "user",
-     "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01XUk8Vjge5KrFtmgtQu1NBK</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+     "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000001</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
     },
     "timestamp": "2026-09-27T20:50:35.883Z",
     "origin": {
@@ -236,7 +236,7 @@
      "content": [
       {
        "type": "tool_use",
-       "id": "toolu_01FOejzPYWkDBAskrheqgGaS",
+       "id": "toolu_01SYNTHETICSUBAGT000002",
        "name": "SendMessage",
        "input": {
         "to": "redacted",
@@ -264,7 +264,7 @@
      "role": "user",
      "content": [
       {
-       "tool_use_id": "toolu_01FOejzPYWkDBAskrheqgGaS",
+       "tool_use_id": "toolu_01SYNTHETICSUBAGT000002",
        "type": "tool_result",
        "content": "redacted"
       }
@@ -325,21 +325,21 @@
     "operation": "enqueue",
     "timestamp": "2026-09-27T20:50:48.918Z",
     "sessionId": "{SESSION}",
-    "content": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01AkvIkTziFDJpJ77Qe3Or8G</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
+    "content": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000003</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
    },
    {
     "type": "queue-operation",
     "operation": "remove",
     "timestamp": "2026-09-27T20:50:49.974Z",
     "sessionId": "{SESSION}",
-    "content": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01AkvIkTziFDJpJ77Qe3Or8G</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
+    "content": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000003</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
    },
    {
     "type": "queue-operation",
     "operation": "enqueue",
     "timestamp": "2026-09-27T20:51:12.774Z",
     "sessionId": "{SESSION}",
-    "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01FOejzPYWkDBAskrheqgGaS</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000002</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
    },
    {
     "type": "queue-operation",
@@ -352,7 +352,7 @@
     "type": "user",
     "message": {
      "role": "user",
-     "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01FOejzPYWkDBAskrheqgGaS</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+     "content": "<task-notification>\n<task-id>ef46830a20a635dd3</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000002</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
     },
     "timestamp": "2026-09-27T20:51:12.786Z",
     "origin": {
@@ -503,14 +503,14 @@
     "operation": "enqueue",
     "timestamp": "2026-09-27T21:00:55.406Z",
     "sessionId": "{SESSION}",
-    "content": "<task-notification>\n<task-id>bcw5srws5</task-id>\n<tool-use-id>toolu_01PIvMDNWdeDuunvUq5tsR2g</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    "content": "<task-notification>\n<task-id>bcw5srws5</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000004</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
    },
    {
     "type": "queue-operation",
     "operation": "remove",
     "timestamp": "2026-09-27T21:00:55.433Z",
     "sessionId": "{SESSION}",
-    "content": "<task-notification>\n<task-id>bcw5srws5</task-id>\n<tool-use-id>toolu_01PIvMDNWdeDuunvUq5tsR2g</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    "content": "<task-notification>\n<task-id>bcw5srws5</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000004</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
    },
    {
     "type": "queue-operation",
@@ -525,7 +525,7 @@
     "meta": {
      "agentType": "general-purpose",
      "description": "redacted",
-     "toolUseId": "toolu_01XUk8Vjge5KrFtmgtQu1NBK",
+     "toolUseId": "toolu_01SYNTHETICSUBAGT000001",
      "spawnDepth": 1,
      "requestShape": "background",
      "requestNonInteractive": true,
@@ -540,7 +540,7 @@
        "role": "user",
        "content": [
         {
-         "tool_use_id": "toolu_01AkvIkTziFDJpJ77Qe3Or8G",
+         "tool_use_id": "toolu_01SYNTHETICSUBAGT000003",
          "type": "tool_result",
          "content": "Command running in background with ID: bas8u5mr6. Output is being written to: {TASKS}/bas8u5mr6.output. You will be notified when it completes.",
          "is_error": false
@@ -568,7 +568,7 @@
        "role": "user",
        "content": [
         {
-         "tool_use_id": "toolu_01URRSqrw8b74VtMo7hcz4qH",
+         "tool_use_id": "toolu_01SYNTHETICSUBAGT000005",
          "type": "tool_result",
          "content": "Monitor started (task bidpmkfge, redacted)"
         }
@@ -615,7 +615,7 @@
       "agentId": "ef46830a20a635dd3",
       "attachment": {
        "type": "queued_command",
-       "prompt": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01AkvIkTziFDJpJ77Qe3Or8G</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
+       "prompt": "<task-notification>\n<task-id>bas8u5mr6</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000003</tool-use-id>\n<status>failed</status>\n<summary>redacted</summary>\n</task-notification>"
       },
       "type": "attachment",
       "timestamp": "2026-09-27T20:50:48.918Z",
@@ -630,7 +630,7 @@
        "role": "user",
        "content": [
         {
-         "tool_use_id": "toolu_01PIvMDNWdeDuunvUq5tsR2g",
+         "tool_use_id": "toolu_01SYNTHETICSUBAGT000004",
          "type": "tool_result",
          "content": "Command running in background with ID: bcw5srws5. Output is being written to: {TASKS}/bcw5srws5.output. You will be notified when it completes.",
          "is_error": false
@@ -657,7 +657,7 @@
        "role": "user",
        "content": [
         {
-         "tool_use_id": "toolu_01OxDK3bpprlubyq9QYlk7dC",
+         "tool_use_id": "toolu_01SYNTHETICSUBAGT000006",
          "type": "tool_result",
          "content": "Monitor started (task bbspnbm6q, redacted)"
         }
@@ -786,7 +786,7 @@
     "operation": "enqueue",
     "timestamp": "2026-09-27T18:51:42.647Z",
     "sessionId": "{SESSION}",
-    "content": "<task-notification>\n<task-id>bgmvzhmav</task-id>\n<tool-use-id>toolu_013y83TE07Aw0aAwrdjWxn4E</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
+    "content": "<task-notification>\n<task-id>bgmvzhmav</task-id>\n<tool-use-id>toolu_01SYNTHETICSUBAGT000007</tool-use-id>\n<status>completed</status>\n<summary>redacted</summary>\n</task-notification>"
    }
   ],
   "agents": {
@@ -794,7 +794,7 @@
     "meta": {
      "agentType": "general-purpose",
      "description": "redacted",
-     "toolUseId": "toolu_017IaNersc9EbwS4hhQn49Ec",
+     "toolUseId": "toolu_01SYNTHETICSUBAGT000008",
      "spawnDepth": 1,
      "requestShape": "background",
      "requestNonInteractive": true,
@@ -810,7 +810,7 @@
        "content": [
         {
          "type": "tool_use",
-         "id": "toolu_013y83TE07Aw0aAwrdjWxn4E",
+         "id": "toolu_01SYNTHETICSUBAGT000007",
          "name": "Monitor",
          "input": {
           "command": "redacted",
@@ -836,7 +836,7 @@
        "role": "user",
        "content": [
         {
-         "tool_use_id": "toolu_013y83TE07Aw0aAwrdjWxn4E",
+         "tool_use_id": "toolu_01SYNTHETICSUBAGT000007",
          "type": "tool_result",
          "content": "Monitor started (task bgmvzhmav, redacted)"
         }

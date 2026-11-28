@@ -44,18 +44,21 @@
       <Switch bare label="" disabled={busy} bind:checked={() => takeoverOn, (next) => void setTakeover(next, relayOn)} aria-label={t('roster.reconnect.takeover')} data-act="takeover" /></div>
     {#if reason !== 'unknown'}<p class="pp-hint" data-line="takeover-reason" data-reason={reason}>{t(`roster.reconnect.takeover_${reason}`)}</p>{/if}
     {#if order.length > 1}
-      <h3 class="pp-k">{t('roster.reconnect.order')}</h3>
+      <h3 class="pp-k pp-k--sec">{t('roster.reconnect.order')}</h3>
       <p class="pp-hint">{editable ? t('roster.reconnect.order_hint') : t('roster.reconnect.order_readonly')}</p>
+      {#if editable}<div class="pp-swrow__ctl" aria-hidden="true"><span class="pp-k pp-swrow__col" data-line="takeover-col">{t('roster.reconnect.takeover_col')}</span></div>{/if}
       <ul class="pp-grants" data-list="successors">
         {#each order as c, i (c.id)}
           <li class="pp-swrow" data-successor={c.id}>
-            <span>{i + 1}. {c.name}{#if c.viaRelay} <span class="pp-dim">{t('roster.reconnect.via_relay')}</span>{/if}{#if c.needsUpdate} <span class="pp-warn" data-flag="needs-update">{t('roster.reconnect.needs_update')}</span>{/if}</span>
+            <span>{i + 1}. {c.name}{#if c.viaRelay}{' '}<span class="pp-dim">{t('roster.reconnect.via_relay')}</span>{/if}{#if c.needsUpdate}{' '}<span class="pp-warn" data-flag="needs-update">{t('roster.reconnect.needs_update')}</span>{/if}</span>
             {#if editable}
-              <Switch bare label="" disabled={busy || c.needsUpdate} bind:checked={() => c.eligible, (next) => void setEligible(c.id, next)} aria-label={t('roster.reconnect.eligible', { name: c.name })} data-act="eligible" />
-              <IconButton label={t('roster.reconnect.up', { name: c.name })} icon="chevron-up" iconSize={12} variant="quiet" disabled={busy || i === 0}
-                onclick={() => void saveOrder(moveInOrder(order.map((o) => o.id), c.id, -1))} />
-              <IconButton label={t('roster.reconnect.down', { name: c.name })} icon="chevron-down" iconSize={12} variant="quiet" disabled={busy || i === order.length - 1}
-                onclick={() => void saveOrder(moveInOrder(order.map((o) => o.id), c.id, 1))} />
+              <span class="pp-swrow__ctl">
+                <Switch bare label="" disabled={busy || c.needsUpdate} bind:checked={() => c.eligible, (next) => void setEligible(c.id, next)} aria-label={t('roster.reconnect.eligible', { name: c.name })} data-act="eligible" />
+                <IconButton label={t('roster.reconnect.up', { name: c.name })} icon="chevron-up" iconSize={12} iconStroke={3} variant="strong" disabled={busy || i === 0}
+                  onclick={() => void saveOrder(moveInOrder(order.map((o) => o.id), c.id, -1))} />
+                <IconButton label={t('roster.reconnect.down', { name: c.name })} icon="chevron-down" iconSize={12} iconStroke={3} variant="strong" disabled={busy || i === order.length - 1}
+                  onclick={() => void saveOrder(moveInOrder(order.map((o) => o.id), c.id, 1))} />
+              </span>
             {:else if c.eligible}<span class="pp-dim">{t('roster.reconnect.opted_in')}</span>{/if}
           </li>
         {/each}

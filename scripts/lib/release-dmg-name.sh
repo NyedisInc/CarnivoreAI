@@ -1,8 +1,24 @@
 #!/bin/bash
 
 RELEASE_DMG_ARCH_SINCE="1.16.4"
+RELEASE_DMG_SPLIT_SINCE="1.16.10"
 RELEASE_DMG_LEGACY_ARCH="arm64"
 RELEASE_ARCH_JSON="${RELEASE_ARCH_JSON:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/macOS/release-arch.json}"
+
+release_host_arch() {
+  local m="${RELEASE_HOST_ARCH:-$(uname -m)}"
+  case "$m" in
+    arm64) printf 'arm64' ;;
+    x86_64|x64)
+      if [[ -z "${RELEASE_HOST_ARCH:-}" ]] && [[ "$(sysctl -in sysctl.proc_translated 2>/dev/null || echo 0)" == "1" ]]; then
+        printf 'arm64'
+      else
+        printf 'x64'
+      fi
+      ;;
+    *) printf '%s' "$m" ;;
+  esac
+}
 
 dmg_name() { printf 'Carnivore-%s-%s.dmg' "$1" "$2"; }
 
@@ -60,6 +76,13 @@ release_dmg_name() {
   if [ -z "$arch" ]; then
     if release_version_at_least "$v" "$RELEASE_DMG_ARCH_SINCE"; then
       arch=$(release_dmg_arch) || return 1
+      if [ "$arch" = "auto" ]; then
+        if release_version_at_least "$v" "$RELEASE_DMG_SPLIT_SINCE"; then
+          arch=$(release_host_arch)
+        else
+          arch="universal"
+        fi
+      fi
     else
       arch="$RELEASE_DMG_LEGACY_ARCH"
     fi

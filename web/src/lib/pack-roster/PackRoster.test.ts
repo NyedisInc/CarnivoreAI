@@ -58,6 +58,7 @@ async function render(role = 'main', entryOver: Record<string, unknown> = {}): P
   return target;
 }
 
+/** Let promises settle and Svelte paint. */
 async function settle(): Promise<void> {
   for (let i = 0; i < 4; i++) await new Promise((r) => setTimeout(r, 0));
   flushSync();

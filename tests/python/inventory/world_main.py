@@ -96,6 +96,10 @@ def seed_graph(w: SimpleNamespace) -> None:
     for table in ("pack_rollups", "pack_rollup_counters"):
         extra = {"counter": 1, "key": 1, "value": 1} if table.endswith("counters") else {}
         s.put(table, (A,), peer_install_id="i2", conversation_id=CONV_A, hour=1, model="m", project="Proj One", **extra)
+    s.put("pack_rollup_rev", (A,), peer_install_id="i2", conversation_id=CONV_A, hour=1, rev=1)
+    s.put("pack_rollup_floor", (A,), peer_install_id="i2", conversation_id=CONV_A, hour=1, floor=1)
+    s.put("session_creators", (A,), session_uuid=UUID_A, creator_uuid=UUID_B, created_at="2026-01-01T00:00:00Z")
+    s.put("session_creators", (), session_uuid=UUID_D, creator_uuid=UUID_B, created_at="2026-01-01T00:00:00Z")
 
 
 def seed_swarm(w: SimpleNamespace) -> None:

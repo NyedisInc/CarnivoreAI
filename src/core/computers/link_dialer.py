@@ -80,8 +80,10 @@ class LinkDialer:
     def __init__(self, *, identity: LinkIdentity, hub: LinkListener, rows: Callable[[str], Optional[store.LinkRow]],
                  on_change: Optional[Callable[[str], None]] = None, backoff: Callable[[int], float] = backoff_delay,
                  connect_timeout: float = CONNECT_TIMEOUT, stagger: float = DIAL_STAGGER,
-                 on_candidate_win: Optional[Callable[[str], None]] = None) -> None:
+                 on_candidate_win: Optional[Callable[[str], None]] = None, alpn: Optional[str] = None,
+                 idle_while: Callable[[str], bool] = lambda _iid: False) -> None:
         self._identity, self._hub, self._rows, self._on_change = identity, hub, rows, on_change
+        self._alpn, self._idle_while = alpn, idle_while
         self._backoff, self._timeout, self._stagger = backoff, connect_timeout, stagger
         self._on_candidate_win = on_candidate_win
         self._dials: Dict[str, _Dial] = {}
@@ -139,6 +141,12 @@ class LinkDialer:
             dial = self._dials.get(iid)
             if dial is None:
                 return
+            while self._idle_while(iid):
+                dial.kick.clear()
+                await dial.kick.wait()
+                dial = self._dials.get(iid)
+                if dial is None:
+                    return
             wait = self._backoff(attempt)
             try:
                 outcome = await self._round(iid, dial)
@@ -173,6 +181,8 @@ class LinkDialer:
         member = dial.member
         pins = [c for c in (member.cert, member.next_cert) if c is not None]
         ctx = await asyncio.to_thread(client_link_ctx, self._identity, pins)
+        if self._alpn:
+            ctx.set_alpn_protocols([self._alpn])
         stored = sorted(((a, row.link_port) for a in await self._expand(row.addresses) if a not in tried), key=lambda t: t[0] != dial.last_good)
         targets = [(a, row.link_port) for a in tried] + stored
         conn, errors = await self._dial(targets, ctx, member.shas())

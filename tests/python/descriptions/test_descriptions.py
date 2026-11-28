@@ -96,7 +96,7 @@ def test_session_route_caps_writes_and_feeds_the_listing_index(client, world):  
 
 
 def _live(row_id, name, project_id, status="working"):
-    return SimpleNamespace(session_row_id=row_id, tmux_session=name, label=None, project_id=project_id,
+    return SimpleNamespace(session_row_id=row_id, tmux_session=name, label=None, claude_title=None, project_id=project_id,
                            activity_status=status, agent_type="claude", host_key="local",
                            host_label="here", session=SimpleNamespace(id=f"ses_{name}", working_dir="/w", tmux_created_epoch=1000))
 

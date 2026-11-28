@@ -259,15 +259,18 @@ class SwarmFacade:
                 watch.schedule_boot(self._app_state)
 
     def register_card_port(self, port: Optional[CardPort]) -> None:
-        card_port.register(port)
-        if port is None:
-            dealer.unbind()
-            return
         try:
             loop: Optional[asyncio.AbstractEventLoop] = asyncio.get_running_loop()
         except RuntimeError:
             loop = None
+        card_port.register(port, loop)
+        if port is None:
+            dealer.unbind()
+            return
         dealer.bind(self._app_state, loop)
+
+    def card_moved(self, card_id: int, before: str, after: str, reason: str = "") -> None:
+        card_port.card_moved(card_id, before, after, reason)
 
     def deal_requested(self, project_key: str) -> None:
         dealer.kick(project_key)

@@ -60,7 +60,7 @@
 
     .sp-sum {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         align-items: center;
         justify-content: flex-start;
         gap: var(--oc-space-1) calc(var(--oc-space-3) + var(--oc-space-0-5));

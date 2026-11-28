@@ -459,4 +459,15 @@ describe('the short name on an edit', () => {
         expect(storedAccountBody(ROW, { name: 'work', color: null, short_name: ' w ' })?.short_name).toBe('w');
         expect(storedAccountBody(ROW, { name: 'work', color: null, short_name: '' })?.short_name).toBe('');
     });
+
+    test('antigravity rows rewrite cleanly without directory pointers (#3365)', () => {
+        const agy = { id: 'agy-adoomnyc-gmail-com', name: 'adoomnyc', provider: 'antigravity', managed: false, color: null };
+        expect(storedAccountBody(agy, { name: 'adoomnyc', color: null, short_name: 'agy' })).toEqual({
+            name: 'adoomnyc',
+            provider: 'antigravity',
+            managed: false,
+            color: null,
+            short_name: 'agy',
+        });
+    });
 });

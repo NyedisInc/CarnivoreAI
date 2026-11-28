@@ -8,7 +8,7 @@
    "important": 2
   },
   "client/css/animation-types.css": {
-   "important": 13
+   "important": 11
   },
   "client/css/config-editor-modal.css": {
    "important": 1
@@ -118,14 +118,8 @@
   "web/src/lib/catalog/CatalogPhoneBar.svelte": {
    "global": 2
   },
-  "web/src/lib/catalog/CatalogToolbar.svelte": {
-   "hook": 1
-  },
   "web/src/lib/catalog/ConfirmSheet.svelte": {
    "hook": 1
-  },
-  "web/src/lib/catalog/FilterGroup.svelte": {
-   "global": 6
   },
   "web/src/lib/catalog/InstallSheet.svelte": {
    "hook": 1
@@ -151,9 +145,6 @@
   "web/src/lib/catalog/WarezTools.svelte": {
    "global": 10,
    "hook": 4
-  },
-  "web/src/lib/catalog/menu/InstalledKindScreen.svelte": {
-   "global": 1
   },
   "web/src/lib/catalog/menu/WarezMenu.svelte": {
    "global": 4,
@@ -307,7 +298,6 @@
   },
   "web/src/lib/sessions-page/sessions-list.css": {
    "hook": 1,
-   "important": 1,
    "private-write": 12
   },
   "web/src/lib/sessions-page/sessions-page.css": {
@@ -362,10 +352,6 @@
   "web/src/lib/themes-page/ThemeInspector.svelte": {
    "hook": 1
   },
-  "web/src/lib/themes-page/ThemesScreen.svelte": {
-   "global": 6,
-   "hook": 3
-  },
   "web/src/lib/warroom/WarRoomScreen.svelte": {
    "global": 1
   },
@@ -403,23 +389,6 @@
   "web/src/opscenter/cells/session-contents/Cell.svelte": {
    "global": 4,
    "private-write": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2Bar.svelte": {
-   "private-write": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2Crosstalk.svelte": {
-   "private-write": 2
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2Frame.svelte": {
-   "hook": 2
-  },
-  "web/src/opscenter/cells/task-manager-mk2/Mk2Subtasks.svelte": {
-   "private-write": 1
-  },
-  "web/src/opscenter/cells/task-manager-mk2/mk2-design.css": {
-   "hook": 6,
-   "important": 1,
-   "private-write": 2
   },
   "web/src/opscenter/cells/terminal-live/Cell.svelte": {
    "global": 1
@@ -504,25 +473,42 @@
   "web/src/plugins/devwidgetlab/lab-menu.css": {
    "hook": 3
   },
-  "web/src/plugins/huddle/HuddleBody.svelte": {
+  "web/src/plugins/taskmanager/HuddleBody.svelte": {
    "global": 1,
    "hook": 2
   },
-  "web/src/plugins/huddle/TaskManagerRow.svelte": {
+  "web/src/plugins/taskmanager/TaskManagerRow.svelte": {
    "global": 2
   },
-  "web/src/plugins/huddle/TaskManagerTagged.svelte": {
+  "web/src/plugins/taskmanager/TaskManagerTagged.svelte": {
    "private-write": 2
   },
-  "web/src/plugins/huddle/chat/ChatBar.svelte": {
+  "web/src/plugins/taskmanager/chat/ChatBar.svelte": {
    "global": 2,
    "hook": 3
   },
-  "web/src/plugins/huddle/chat/ChatWidget.svelte": {
+  "web/src/plugins/taskmanager/chat/ChatWidget.svelte": {
    "global": 2,
    "hook": 3
   },
-  "web/src/plugins/huddle/swarm/characters/characters.css": {
+  "web/src/plugins/taskmanager/mk2/Mk2Bar.svelte": {
+   "private-write": 1
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2Crosstalk.svelte": {
+   "private-write": 2
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2Frame.svelte": {
+   "hook": 2
+  },
+  "web/src/plugins/taskmanager/mk2/Mk2Subtasks.svelte": {
+   "private-write": 1
+  },
+  "web/src/plugins/taskmanager/mk2/mk2-design.css": {
+   "hook": 6,
+   "important": 1,
+   "private-write": 2
+  },
+  "web/src/plugins/taskmanager/swarm/characters/characters.css": {
    "important": 6
   },
   "web/src/plugins/reviewboard/ClosedReviews.svelte": {
@@ -548,9 +534,9 @@
   }
  },
  "totals": {
-  "global": 112,
-  "hook": 243,
-  "important": 77,
+  "global": 99,
+  "hook": 239,
+  "important": 74,
   "private-write": 134
  }
 }

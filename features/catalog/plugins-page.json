@@ -80,7 +80,7 @@
     "web/src/lib/plugins-page/CatalogPluginFacts.svelte",
     "web/src/lib/plugins-page/catalog-plugins.svelte.ts"
   ],
-  "updated": "2026-10-15",
+  "updated": "2026-11-26",
   "where": [
     "Menu tab, Plugins.",
     "The plugins card's view all.",

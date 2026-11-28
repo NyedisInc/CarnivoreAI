@@ -30,6 +30,7 @@ vi.mock('../../api', async (importOriginal) => {
 vi.mock('../../../lib/cplug-ui/api', () => ({
   fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/hello/view/game/t/index.html' })),
   callViewRoute: vi.fn(),
+  callViewTool: vi.fn(),
 }));
 
 const A = 'terminal:ses_a' as SlotId;

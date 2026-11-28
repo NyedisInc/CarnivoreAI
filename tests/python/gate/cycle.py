@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -149,7 +150,9 @@ def seed(client: TestClient, host: runtime.Host, d: CplugDefinition, work: Path)
 
 
 def declared_prefix(plugin_id: str) -> str:
-    raw = json.loads((REPO_ROOT / "src" / "plugins" / plugin_id / "cplug.json").read_text(encoding="utf-8"))
+    folder = REPO_ROOT / "src" / "plugins" / plugin_id
+    toml_path = folder / "carnivore.toml"
+    raw = tomllib.loads(toml_path.read_text(encoding="utf-8")) if toml_path.is_file() else json.loads((folder / "cplug.json").read_text(encoding="utf-8"))
     return str(raw.get("css_prefix", ""))
 
 

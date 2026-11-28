@@ -4,7 +4,7 @@
   import Check from '../../opscenter/ui/Check.svelte';
   import PackMarks from '../pack-machines/PackMarks.svelte';
   import PackMeter from '../pack-machines/PackMeter.svelte';
-  import { linkMarkFor, linkStateOf, loadPercent } from '../pack-machines/pack-meter-math';
+  import { linkMarkFor, linkStateOf, cpuFigure, cpuPercent } from '../pack-machines/pack-meter-math';
   import { makeMaster, packActivity } from '../pack-machines/pack-machines-store.svelte';
   import type { ComputerEntry } from './computers-api';
   import { remove, setDirection } from './computers-store.svelte';
@@ -58,9 +58,9 @@
   {/if}
   {#if snap}
     <div class="pk-meters" data-pm="stats">
-      <PackMeter label={t('pack.machines.cpu')} pct={loadPercent(snap.load.load_1, snap.load.cores)}
-        text={`${figure(snap.load.load_1)}/${figure(snap.load.cores)}`} reservePct={snap.reserve.cpu_pct}
-        title={t('pack.meter.cpu_title', { load: figure(snap.load.load_1), cores: figure(snap.load.cores), reserve: snap.reserve.cpu_pct })} />
+      <PackMeter label={t('pack.machines.cpu')} pct={cpuPercent(snap.load)}
+        text={cpuFigure(snap.load)} reservePct={snap.reserve.cpu_pct}
+        title={t('pack.meter.cpu_title', { load: figure(snap.load.busy_cores ?? snap.load.load_1), cores: figure(snap.load.cores), reserve: snap.reserve.cpu_pct })} />
       <PackMeter label={t('pack.machines.mem')} pct={snap.load.memory_percent ?? null} text={figure(snap.load.memory_percent, '%')}
         reservePct={snap.reserve.mem_pct}
         title={t('pack.meter.mem_title', { used: figure(snap.load.memory_percent), reserve: snap.reserve.mem_pct })} />

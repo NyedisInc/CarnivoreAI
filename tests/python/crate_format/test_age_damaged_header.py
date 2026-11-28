@@ -19,7 +19,8 @@ def _damaged(tmp_path: Path) -> tuple:
     path = build_crate(tmp_path / "a.crate.age", recipients=[recipient])
     data = bytearray(path.read_bytes())
     header = parse_header(bytes(data[:4096]))
-    data[header.length - 3] ^= 0x01
+    at = header.length - 3
+    data[at] = ord("B") if data[at] == ord("A") else ord("A")
     bad = tmp_path / "bad.crate.age"
     bad.write_bytes(bytes(data))
     return bad, identity

@@ -11,7 +11,8 @@ import { RAIL_EDGES, type RailEdge } from '../session-rail/rail-model';
 import { railSlideout } from '../session-rail/slideout.svelte';
 import { railStores } from '../session-rail/rail-store.svelte';
 
-export const ALL_WIDGET = 'core.task-manager-all';
+/* the Task Manager */
+export const ALL_WIDGET = 'core.task-manager-mk2-all';
 
 const ALL_SELECTOR = '[data-task-manager-all-cell]';
 const PROJECT_SELECTOR = '[data-task-manager-cell]';
@@ -57,6 +58,7 @@ function focusWidget(el: HTMLElement): void {
   el.focus({ preventScroll: true });
 }
 
+/* the Task Manager */
 interface BroughtUp {
   outcome: 'shown' | 'raised' | 'missing';
   seen: HTMLElement | null;
@@ -72,6 +74,7 @@ async function bringUp(list: string): Promise<BroughtUp> {
   return { outcome: seen ? 'shown' : 'raised', seen };
 }
 
+/* the Task Manager */
 export async function showTaskManager(): Promise<RevealOutcome> {
   const { outcome, seen } = await bringUp('');
   if (seen) focusWidget(seen);
@@ -91,6 +94,7 @@ export async function revealInTaskManager(list: string, id: number): Promise<Rev
   return { outcome, reason: null };
 }
 
+/* the Task Manager */
 export async function openTaskManagerItem(list: string, id: number): Promise<string | null> {
   const result = await revealInTaskManager(list, id);
   return result.outcome === 'missing' ? t('opscenter.cell.task_list.no_tm') : result.reason;

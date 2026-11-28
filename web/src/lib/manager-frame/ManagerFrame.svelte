@@ -345,6 +345,9 @@
     class="pledger mgr {className}"
     frame="column"
     scroll="self"
+    toolRow="line"
+    toolAlign="center"
+    omniGap
     {embedded}
     {title}
     label={countInBar ? undefined : label}
@@ -464,7 +467,7 @@
                         </Button>
                     {/if}
                 </div>
-                <div class="oc-page__detail-body" class:mgr__detail-body--fill={detailFill}>
+                <div class="oc-page__detail-body" class:oc-page__detail-body--fill={detailFill}>
                     {@render detail(selected)}
                     <ManagerItemActions item={selected} {onExport} {onRemove} progress={itemActions[selected.id]} {t} />
                 </div>

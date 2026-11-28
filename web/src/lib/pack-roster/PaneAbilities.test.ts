@@ -49,6 +49,7 @@ describe('PaneAbilities', () => {
   });
   test('check again calls the rescan; a skipped probe says less than a minute ago', async () => {
     await render(computer({ can, restrictions: { may_host_agents: true, may_install_tools: true } }));
+    expect(document.body.querySelector('[data-act="check-again"]')?.getAttribute('data-btn')).toBe('secondary');
     (document.body.querySelector('[data-act="check-again"]') as HTMLElement).click();
     await settle(); await settle();
     expect(rescans).toBe(1);

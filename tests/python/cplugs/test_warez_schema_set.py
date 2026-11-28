@@ -6,9 +6,8 @@ from typing import Any, Dict, List
 
 import pytest
 
-from src.plugins.sdk.schema_check import SchemaError, SchemaSet
+from src.plugins.sdk.schema_check import SchemaError, SchemaSet, schemas, validate_document
 from src.plugins.sdk.schema_digest import SCHEMA_DIR, SCHEMA_SET_DIGEST, schema_set_digest
-from src.plugins.sdk.sidecar import schemas, validate_document
 from tests.python.cplugs.test_extension_schemas import DIGEST, KINDS, good
 
 SET = schemas()

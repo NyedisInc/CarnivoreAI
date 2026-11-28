@@ -23,6 +23,14 @@
     "sweep_interval_seconds": 3600,
     "max_size_mb": 10
   },
+  "retention": {
+    "enabled": true,
+    "keep_db_backups": 2,
+    "keep_rollback_bundles": 2,
+    "menubar_log_cap_mb": 50,
+    "scratch_idle_hours": 24,
+    "interval_seconds": 86400
+  },
   "_comment_message_archive": "RETIRED AND LOCKED OFF (#1660). The byte-exact message archive cannot be turned on: this key and the CLOUDE_MESSAGE_ARCHIVE environment variable are ignored, and a set one logs a single warning at startup. Existing message_* tables and cloude-archive.db are left untouched.",
   "message_archive": {
     "enabled": false

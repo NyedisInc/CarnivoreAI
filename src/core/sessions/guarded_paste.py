@@ -123,6 +123,7 @@ async def _foreground_agent_proven(row: Optional[dict], tmux_name: Optional[str]
     return await asyncio.to_thread(
         registered_agent_in_foreground, tmux_name=tmux_name, pane_id=row.get("pane_id"), pane_pid=row.get("pid"),
         session_started_epoch=row.get("created_at_epoch"), claude_session_uuid=claude_session_uuid,
+        agent_type=agent_type,
     )
 
 

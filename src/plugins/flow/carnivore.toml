@@ -1,0 +1,65 @@
+schema = 2
+api_version = 1
+id = "flow"
+name = "flow chart"
+description = "rebuilds a multi-agent run as a chart (lanes, timeline and board) through the flow_get tool or its route, or as a live chat in the flow tab with a bubble per agent and cards for tasks, crosstalk, spawns, subagents and tool work. nothing runs unless the tab is open or a chart is asked for. needs the swarm feature."
+name_key = "cplug.flow.name"
+description_key = "cplug.flow.description"
+version = "1.0.0"
+kind = "plugin"
+icon = "swarm"
+author = "Carnivore"
+license = "MIT"
+min_app_version = "1.16.0"
+tier = "builtin"
+default_enabled = false
+css_prefix = "flw"
+requires = ["taskmanager"]
+requires_core = ["crosstalk", "activity_read", "transcript_events"]
+
+[permissions]
+read = ["activity.read"]
+
+[ui]
+routes = true
+storage = true
+topics = ["feed"]
+tabs = ["flow"]
+page_section = "review"
+page_section_label_key = "cplug.flow.page_section"
+page_section_icon = "eye"
+popout = true
+
+[mcp]
+tools = ["flow_get"]
+
+[owns]
+routes = ["/feed", "/run"]
+strings = ["cplug.flow."]
+styles = ["flow.css"]
+tests = ["tests/python/cplugs/flow/", "web/src/cplugs/flow/"]
+style_guide = [
+  "web/src/cplugs/flow/FlowBody.svelte",
+  "web/src/cplugs/flow/FlowBubble.svelte",
+  "web/src/cplugs/flow/FlowCard.svelte",
+  "web/src/cplugs/flow/flow.css",
+]
+
+[settings_schema]
+version = 1
+
+[settings_schema.fields.showTab]
+kind = "boolean"
+labelKey = "cplug.flow.settings.show_tab"
+default = false
+
+[[data]]
+id = "graph"
+kind = "db"
+path = "flow.db"
+scope_by = "install"
+
+[data.policy]
+own = "excluded"
+share = "excluded"
+reason = "flow graph snapshots of this install, keyed by no session or project"

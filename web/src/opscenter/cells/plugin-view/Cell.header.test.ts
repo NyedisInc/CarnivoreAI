@@ -6,6 +6,7 @@ import type { CplugRow } from '../../../lib/plugins-page/cplugs-adapter';
 vi.mock('../../../lib/cplug-ui/api', () => ({
     fetchViewTicket: vi.fn(async () => ({ path: '/cplugs/hello/view/game/t/index.html' })),
     callViewRoute: vi.fn(),
+    callViewTool: vi.fn(),
 }));
 
 import PanelHost from './fixtures/PanelHost.svelte';
@@ -30,25 +31,24 @@ async function draw(unverified = false): Promise<FrameHeader> {
 
 const marks = () => document.querySelectorAll('[data-cplug-mark]');
 
-describe('a panel widget has one header', () => {
-    test('the frame draws no bar of its own and the mark goes up into the host title strip', async () => {
+describe('a panel widget has one clean header with no third-party/unverified badge (#3406)', () => {
+    test('the frame draws no bar of its own and renders no third-party mark in header or body', async () => {
         const header = await draw();
         header.drawn = true;
         flushSync();
         expect(document.querySelector('.cu-frame__bar')).toBeNull();
-        expect(marks().length).toBe(1);
-        expect(document.querySelector('[data-host-header] [data-cplug-mark]')).not.toBeNull();
+        expect(marks().length).toBe(0);
+        expect(document.querySelector('[data-host-header] [data-cplug-mark]')).toBeNull();
         expect(document.querySelector('[data-cplug-name]')).toBeNull();
     });
 
-    test('with no header drawn, or the header ticked off, the mark is in the body, and a sideload reads unverified', async () => {
+    test('unverified plugins and suppressed headers also omit the header/body badge', async () => {
         const header = await draw(true);
         expect(document.querySelector('.cu-frame__bar')).toBeNull();
-        expect(document.querySelector('[data-widget-controls] [data-cplug-mark]')).not.toBeNull();
+        expect(marks().length).toBe(0);
         header.suppressed = true;
         flushSync();
-        expect(marks().length).toBe(1);
+        expect(marks().length).toBe(0);
         expect(document.querySelector('[data-host-header] [data-cplug-mark]')).toBeNull();
-        expect(marks()[0]!.hasAttribute('data-unverified')).toBe(true);
     });
 });

@@ -74,6 +74,7 @@ export interface ApprovalDetailRow {
   file?: string;
 }
 
+/* the Task Manager */
 export interface ApprovalDisplay {
   verb: string;
   object: string;

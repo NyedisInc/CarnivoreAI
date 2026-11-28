@@ -58,8 +58,17 @@ function keyOf(name: string, row: Record<string, unknown>): string | null {
     return typeof row.session_uuid === 'string' ? row.session_uuid : null;
 }
 
-function clone<T>(value: T): T {
-    return JSON.parse(JSON.stringify(value)) as T;
+function cloneRow(row: Record<string, unknown>): Record<string, unknown> {
+    const copy: Record<string, unknown> = { ...row };
+    const session = copy.session;
+    if (session && typeof session === 'object' && !Array.isArray(session)) {
+        copy.session = { ...(session as Record<string, unknown>) };
+    }
+    return copy;
+}
+
+function cloneShallow<T extends Record<string, unknown>>(value: T): T {
+    return { ...value };
 }
 
 export interface StoreDeps {
@@ -102,7 +111,12 @@ export class ListingStore {
         if (!this.live) return null;
         const held = this.collections.get(name);
         if (!held || !held.status.ok) return null;
-        return clone(held.order.map((key) => held.byKey.get(key)).filter(Boolean)) as T[];
+        const out: Record<string, unknown>[] = [];
+        for (const key of held.order) {
+            const row = held.byKey.get(key);
+            if (row) out.push(cloneRow(row));
+        }
+        return out as T[];
     }
 
     snapshot(): Snapshot | null {
@@ -110,9 +124,17 @@ export class ListingStore {
         const collections: Record<string, CollectionState> = {};
         for (const [name, held] of this.collections) {
             if (!held.status.ok) continue;
+            const rows: Record<string, unknown>[] = [];
+            for (const key of held.order) {
+                const row = held.byKey.get(key);
+                if (row) rows.push(row);
+            }
             collections[name] = {
-                rows: clone(held.order.map((key) => held.byKey.get(key)).filter(Boolean)) as Record<string, unknown>[],
-                ...clone(held.status),
+                rows,
+                ok: held.status.ok,
+                status: held.status.status,
+                detail: held.status.detail,
+                meta: cloneShallow(held.status.meta),
             };
         }
         return { stream: this.stream, seq: this.seq, collections };
@@ -128,15 +150,15 @@ export class ListingStore {
         if (this.live || this.hasSynced || !this.cached || Date.now() > this.cachedUntil) return null;
         const col = this.cached.collections[name];
         if (!col || col.ok === false || !Array.isArray(col.rows)) return null;
-        return clone(col.rows).map((row) => (
-            name === 'list' ? { ...row, ...PROVISIONAL_FIELDS } : { ...row, provisional: true }
+        return col.rows.map((row) => (
+            name === 'list' ? { ...cloneRow(row), ...PROVISIONAL_FIELDS } : { ...cloneRow(row), provisional: true }
         )) as T[];
     }
 
     meta(name: string): Record<string, unknown> | null {
         if (!this.live) return null;
         const held = this.collections.get(name);
-        return held && held.status.ok ? clone(held.status.meta || {}) : null;
+        return held && held.status.ok ? cloneShallow(held.status.meta || {}) : null;
     }
 
     onChange(fn: ChangeListener): () => void {
@@ -278,17 +300,16 @@ export class ListingStore {
                 this.collections.set(name, held);
             }
             for (const up of change.upsert || []) {
-                const row = held.byKey.get(up.key) ?? {};
-                if (!held.byKey.has(up.key)) {
-                    held.byKey.set(up.key, row);
-                    held.order.push(up.key);
-                }
+                const prev = held.byKey.get(up.key);
+                const row: Record<string, unknown> = prev ? { ...prev } : {};
+                if (!prev) held.order.push(up.key);
                 Object.assign(row, up.fields || {});
                 for (const [field, part] of Object.entries(up.nested || {})) {
                     const inner = row[field];
                     row[field] = { ...(inner && typeof inner === 'object' ? inner as Record<string, unknown> : {}), ...part };
                 }
                 for (const field of up.drop || []) delete row[field];
+                held.byKey.set(up.key, row);
             }
             for (const key of change.remove || []) held.byKey.delete(key);
             held.order = (change.order || held.order).filter((key) => held!.byKey.has(key));

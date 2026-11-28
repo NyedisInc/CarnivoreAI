@@ -1,10 +1,9 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import WarRoomScreen from './WarRoomScreen.svelte';
 
 export const WARROOM_SCREEN_CONTAINER = 'warroom-screen';
 export const WARROOM_HASH = '#warroom';
 
-const warroomHost = createOverlayHost(WARROOM_SCREEN_CONTAINER, WarRoomScreen, WARROOM_HASH);
+const warroomHost = createOverlayHost(WARROOM_SCREEN_CONTAINER, { load: () => import('./WarRoomScreen.svelte') }, WARROOM_HASH);
 
 export const openWarroomScreen = (): boolean => warroomHost.open();
 

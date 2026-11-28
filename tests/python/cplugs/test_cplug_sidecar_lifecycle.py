@@ -29,14 +29,19 @@ pytestmark = pytest.mark.skipif(not AVAILABLE, reason="needs macOS sandbox-exec 
 
 NAME, ITEM = "clock", "acme/clock"
 TOOL = {"name": "clock_now", "description": "The time.", "gate": "read", "inputSchema": {"type": "object"}}
-CPLUG = {"schema": 1, "id": NAME, "name": "Clock", "description": "Tells the time.", "version": "1.0.0", "entry": "main.py",
-         "permissions": {"app": ["notify", "network_hosts:api.example.com"]}, "tools": [TOOL],
-         "network_hosts": [{"host": "api.example.com", "reason": "time source", "methods": ["GET"],
-                            "auth": {"secret": "token", "header": "Authorization", "scheme": "Bearer"}}],
-         "secrets": [{"name": "token", "label": "API token", "help": "From the provider."}]}
-SIDE = {"kind": "cplug", "id": ITEM, "name": "Clock", "version": "1.0.0", "api_version": 1, "min_app_version": "1.12.20", "author": "acme",
-        "license": "MIT", "tier": "catalog", "scope": ["global"], "icon": "plug", "default_enabled": False,
-        "permissions": [{"name": "notify", "reason": "tells you when the time is up"}], "owns": {}, "data": []}
+CARNIVORE = {
+    "schema": 2, "kind": "plugin", "id": NAME, "name": "Clock", "description": "Tells the time.", "version": "1.0.0",
+    "api_version": 1, "min_app_version": "1.12.20", "author": "acme", "license": "MIT", "tier": "catalog",
+    "icon": "plug", "default_enabled": False, "run": {"cmd": ["python3", "main.py"], "mode": "rpc"},
+    "permissions": {
+        "write": ["notify"],
+        "reasons": {"notify": "tells you when the time is up"},
+        "network": [{"host": "api.example.com", "reason": "time source", "methods": ["GET"],
+                     "auth": {"secret": "token", "header": "Authorization", "scheme": "Bearer"}}],
+        "secrets": [{"name": "token", "label": "API token", "help": "From the provider."}],
+    },
+    "mcp": {"tools": [TOOL]}, "owns": {}, "data": [],
+}
 PLUGIN = (
     "from cplug_sdk import Plugin\n\nplugin = Plugin()\n\n\n"
     "@plugin.tool('clock_now', 'The time.', {'type': 'object'}, gate='read')\n"
@@ -76,8 +81,7 @@ def children(state: Path) -> Dict[str, Any]:
 def lay_code(state: Path) -> None:
     root = state / "plugins" / NAME
     root.mkdir(parents=True)
-    (root / "cplug.json").write_text(json.dumps(CPLUG))
-    (root / "carnivore.json").write_text(json.dumps(SIDE))
+    (root / "carnivore.json").write_text(json.dumps(CARNIVORE))
     (root / "main.py").write_text(PLUGIN)
 
 

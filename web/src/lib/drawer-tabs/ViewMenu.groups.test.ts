@@ -29,7 +29,7 @@ beforeEach(() => {
   document.body.innerHTML = drawerMarkup();
   localStorage.clear();
   drawerSurface.page = 'home';
-  cplugEnablement.enabled = { huddle: false };
+  cplugEnablement.enabled = { taskmanager: false };
   vi.spyOn(console, 'log').mockImplementation(() => {});
   Density.init();
   initStats();

@@ -365,3 +365,111 @@ describe('the plain-http switch (this computer only, needs the private switch)',
         expect(createBody(slack, { ...initialDraft(slack, null), name: 's' }, 'global')).not.toHaveProperty('allow_plain_http');
     });
 });
+
+describe('dynamic plugin notification channels (M4.1c)', () => {
+    const PLUGIN_ZERO: Kind = {
+        id: 'plugin:acme:alerts',
+        label_key: 'cplug.acme.channel.alerts',
+        label: 'Acme Alerts',
+        plugin_id: 'acme',
+        sms_like: false,
+        details_allowed: true,
+        virtual: false,
+        public_fields: [],
+        secret_fields: [],
+    };
+    const PLUGIN_CUSTOM: Kind = {
+        id: 'plugin:acme:webhook_custom',
+        label_key: 'cplug.acme.channel.webhook_custom',
+        label: 'Acme Custom Channel',
+        plugin_id: 'acme',
+        sms_like: false,
+        details_allowed: true,
+        virtual: false,
+        public_fields: [{ name: 'channel_room', type: 'text', required: true, choices: [], label: 'Room Name' }],
+        secret_fields: [{ name: 'api_key_custom', type: 'secret', required: true, choices: [] }],
+    };
+
+    test('refresh() re-fetches /notifications/types so plugin channels appear and disappear dynamically', async () => {
+        let serverKinds: Kind[] = [...KINDS];
+        const rig = await render([], {
+            'GET /notifications/types': () => ({ families: [], types: [], kinds: serverKinds }),
+        });
+        expect(notify.kinds.some((k) => k.id === PLUGIN_ZERO.id)).toBe(false);
+
+        serverKinds = [...KINDS, PLUGIN_ZERO];
+        const { refresh } = await import('./store.svelte');
+        await refresh();
+        flushSync();
+        expect(notify.kinds.some((k) => k.id === PLUGIN_ZERO.id)).toBe(true);
+
+        serverKinds = [...KINDS];
+        await refresh();
+        flushSync();
+        expect(notify.kinds.some((k) => k.id === PLUGIN_ZERO.id)).toBe(false);
+        expect(rig.calls.filter((c) => c.path === '/notifications/types').length).toBeGreaterThanOrEqual(3);
+    });
+
+    test('groups plugin channels under plugins with human label and plugin_id subtitle, and creates zero-field / custom-field destinations without raw keys', async () => {
+        const created = dest({
+            id: 'd_plugin_zero_1',
+            kind: PLUGIN_ZERO.id,
+            name: 'Acme Ops',
+            config: {},
+            secrets: {},
+        });
+        const rig = await render([], {
+            'GET /notifications/types': () => ({ families: [], types: [], kinds: [...KINDS, PLUGIN_ZERO, PLUGIN_CUSTOM] }),
+            'POST /notifications/destinations': () => ({ destination: created }),
+        });
+
+        await click('[data-notify="add"]');
+        q('[data-ai="kind-input"]')!.click();
+        flushSync();
+
+        expect([...document.body.querySelectorAll('.ai-pick__head')].map((h) => h.textContent)).toEqual([
+            'chat',
+            'push',
+            'sms',
+            'other',
+            'plugins',
+        ]);
+        const pluginOpt = q(`[data-ai="kind-option"][data-id="${PLUGIN_ZERO.id}"]`)!;
+        expect(pluginOpt.textContent).toContain('Acme Alerts');
+        expect(pluginOpt.textContent).toContain('acme');
+        expect(pluginOpt.textContent).not.toContain('cplug.acme.channel');
+
+        await pickKind(PLUGIN_CUSTOM.id);
+        expect(document.body.textContent).toContain('Room Name');
+        expect(document.body.textContent).toContain('api key custom');
+        expect(document.body.textContent).not.toContain('settings.notify.field.');
+
+        await pickKind(PLUGIN_ZERO.id);
+        type(q('[data-notify="name"]')!, 'Acme Ops');
+        await click('[data-notify="save"]');
+        await vi.waitFor(() => expect(rig.calls.some((c) => c.method === 'POST')).toBe(true));
+        expect(rig.calls.find((c) => c.method === 'POST')!.body).toMatchObject({
+            kind: PLUGIN_ZERO.id,
+            name: 'Acme Ops',
+            config: {},
+            secrets: {},
+        });
+        const card = q('[data-notify-dest="d_plugin_zero_1"]')!;
+        expect(card.querySelector('[data-notify="kind-name"]')?.textContent).toBe('Acme Alerts');
+        expect(card.querySelector('[data-notify="secrets-state"]')).toBeNull();
+    });
+
+    test('hides Edit button gracefully when a saved destination references an inactive plugin channel', async () => {
+        const orphaned = dest({
+            id: 'd_orphaned_plugin',
+            kind: 'plugin:disabled_plug:alerts',
+            name: 'Paused Channel',
+            config: {},
+            secrets: {},
+        });
+        await render([orphaned]);
+        const card = q('[data-notify-dest="d_orphaned_plugin"]')!;
+        expect(card.querySelector('[data-notify="kind-name"]')?.textContent).toBe('plugin:disabled_plug:alerts');
+        expect(card.querySelector('[data-notify="edit"]')).toBeNull();
+    });
+});

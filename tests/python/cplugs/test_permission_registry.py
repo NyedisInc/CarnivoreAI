@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import copy
-import json
 import re
 from pathlib import Path
 
@@ -14,7 +13,25 @@ from src.plugins.sdk.manifest import parse_manifest
 from tests.helpers.catalog_text import catalog_text
 
 ROOT = Path(__file__).resolve().parents[3]
-BASE = json.loads((ROOT / "src/plugins/unread/cplug.json").read_text())
+BASE = {
+    "schema": 1,
+    "id": "unread",
+    "name_key": "cplug.unread.name",
+    "description_key": "cplug.unread.description",
+    "version": "1.0.0",
+    "icon": "bell",
+    "author": "Alex (example-owner)",
+    "min_app_version": "1.12.20",
+    "tier": "builtin",
+    "default_enabled": True,
+    "surfaces": {"plugins": ["session-card-action"]},
+    "owns": {
+        "strings": ["cplug.unread."],
+        "tests": ["tests/python/cplugs/unread/"],
+        "contributions": ["session.card_action"],
+    },
+    "settings_schema": {"version": 1, "fields": {}},
+}
 
 
 def _with(permissions: list, tier: str = "builtin") -> dict:

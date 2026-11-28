@@ -9,6 +9,8 @@ from fastapi import HTTPException
 
 from src.api.auth import create_access_token, create_refresh_token
 from src.api.auth_routes import check_totp_code
+from src.config import settings
+from src.core.catalog.client_sessions import bind_family_to_device
 from src.core.federation.pairing import KeyedWindows
 
 logger = structlog.get_logger()
@@ -33,12 +35,16 @@ async def door_totp_ok(code: str) -> bool:
 
 
 async def door_login_tokens(refresh_store: Any) -> Dict[str, Any]:
-    access, expires_in = create_access_token()
     refresh, jti, exp = create_refresh_token()
+    access, expires_in = create_access_token(family=jti)
     if refresh_store is not None:
         try:
             await refresh_store.issue(jti, "claudetunnel_user", exp)
         except Exception as exc:  # noqa: BLE001
             logger.error("door_login_store_failed", error_type=type(exc).__name__)
             raise RuntimeError("refresh store failed") from None
+    try:
+        bind_family_to_device(settings.get_state_dir(), jti)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("door_login_catalog_bind_skipped", error_type=type(exc).__name__)
     return {"access_token": access, "refresh_token": refresh, "expires_in": expires_in}

@@ -34,6 +34,17 @@ class RosterRefused(ValueError):
     pass
 
 
+class RosterFull(RosterRefused):
+
+    def __init__(self, count: int, limit: int, left_out: Sequence[str]) -> None:
+        super().__init__(f"the pack is full: {count} computers, the limit is {limit}")
+        self.count, self.limit, self.left_out = count, limit, tuple(left_out)
+
+
+def max_computers() -> int:
+    return 64 if caps_mod.mesh_on() else MAX_COMPUTERS
+
+
 def _b64_der(value: str) -> bytes:
     try:
         der = base64.b64decode(value, validate=True)
@@ -140,6 +151,9 @@ class RosterInput:
     relay_id: Optional[str]
     laptop: bool = False
     joined_at: str = ""
+    capabilities: Tuple[str, ...] = ()
+    one_way: bool = False
+    may_receive_logins: bool = False
 
 
 def canonical_bytes(roster: Roster) -> bytes:
@@ -179,13 +193,16 @@ def _default_key(item: RosterInput) -> Tuple[bool, str, str]:
 
 
 def plan(held: Optional[Roster], inputs: Sequence[RosterInput], *, alpha: str, home: Optional[str] = None,
-         eligible: Optional[Dict[str, bool]] = None, order: Optional[Sequence[str]] = None) -> Optional[Roster]:
+         eligible: Optional[Dict[str, bool]] = None, order: Optional[Sequence[str]] = None,
+         limit: int = MAX_COMPUTERS, doc: Any = Roster, entry: Any = RosterComputer,
+         extra: Optional[Callable[[RosterInput], Dict[str, Any]]] = None) -> Optional[Roster]:
     by_id = {i.install_id: i for i in inputs}
     if alpha not in by_id:
         return None
     ranked: List[str] = [i for i in (order if order is not None else (held.order() if held is not None else [])) if i in by_id]
     ranked += [i.install_id for i in sorted(by_id.values(), key=_default_key) if i.install_id not in ranked]
-    ranked = ranked[:MAX_COMPUTERS]
+    if len(ranked) > limit:
+        raise RosterFull(len(ranked), limit, ranked[limit:])
     if alpha not in ranked:
         return None
     flags = {c.install_id: c.takeover_eligible for c in held.computers} if held is not None else {}
@@ -193,12 +210,13 @@ def plan(held: Optional[Roster], inputs: Sequence[RosterInput], *, alpha: str, h
     computers = []
     for iid in ranked:
         item, on = by_id[iid], bool(flags.get(iid, False))
-        computers.append(RosterComputer(
+        computers.append(entry(
+            **(extra(item) if extra is not None else {}),
             install_id=iid, label=item.label[:80], fed_public_key=item.fed_public_key,
             cert=base64.b64encode(item.cert).decode(), next_cert=base64.b64encode(item.next_cert).decode() if item.next_cert else None,
             addresses=list(item.addresses)[:MAX_ADDRESSES], link_port=item.link_port,
             relay_id=item.relay_id if (iid == alpha or on) else None, takeover_eligible=on))
-    return Roster(generation=held.generation if held is not None else 0, alpha=alpha,
+    return doc(generation=held.generation if held is not None else 0, alpha=alpha,
                   home=home or (held.home if held is not None else alpha), issued_at=0, computers=computers)
 
 
@@ -232,7 +250,8 @@ def hints_changed(held: Roster, new: Roster) -> bool:
 
 def judge(*, held: Optional[Roster], remote: Roster, signature: Optional[Signature], held_alpha: str,
           held_roster_alpha: Optional[str] = None, held_generation: Optional[int] = None,
-          public_key_for: Callable[[str], Optional[str]]) -> Verdict:
+          public_key_for: Callable[[str], Optional[str]], verify_fn: Callable[..., bool] = verify,
+          bump_fn: Callable[..., Optional[str]] = bump_reason) -> Verdict:
     if signature is None:
         return Verdict(settings_sign.REFUSE_UNSIGNED, "a roster is always signed")
     handover = (signature.signer == held_roster_alpha and remote.alpha == held_alpha and held_alpha != signature.signer
@@ -242,7 +261,7 @@ def judge(*, held: Optional[Roster], remote: Roster, signature: Optional[Signatu
     if held is not None:
         if (remote.generation, remote.issued_at) <= (held.generation, held.issued_at):
             return Verdict(settings_sign.IGNORE, settings_sign.REASON_NOT_NEWER)
-        if remote.generation == held.generation and bump_reason(held, remote) is not None:
+        if remote.generation == held.generation and bump_fn(held, remote) is not None:
             return Verdict(settings_sign.REFUSE_MALFORMED, REASON_SAME_GENERATION)
         if remote.home != held.home and signature.signer != held.home:
             return Verdict(settings_sign.REFUSE_MALFORMED, "home changed by a signer that is not the home")
@@ -251,6 +270,6 @@ def judge(*, held: Optional[Roster], remote: Roster, signature: Optional[Signatu
     public_key = public_key_for(signature.signer)
     if public_key is None:
         return Verdict(settings_sign.REFUSE_UNPINNED, "signer is not paired here")
-    if not verify(remote, signature, public_key):
+    if not verify_fn(remote, signature, public_key):
         return Verdict(settings_sign.REFUSE_BAD_SIGNATURE, "signature does not verify")
     return Verdict(settings_sign.ACCEPT)

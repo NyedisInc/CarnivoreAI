@@ -23,6 +23,7 @@ OP_LINK = "link"
 OP_SETTINGS = "settings"
 OP_MARKER = "marker"
 OP_VAULT = "vault_point"
+TWIN_OF = "twin_of"
 _SIDE_NAME = re.compile(r"^.+-\d{8}(-\d+)?$")
 
 
@@ -178,6 +179,11 @@ def rollback(entries: Iterable[Dict[str, Any]], allowed_roots: Sequence[Path]) -
         if not path or op not in (OP_FILE, OP_DIR, OP_GROW, OP_LINK, OP_SETTINGS, OP_MARKER) or not (_allowed(path, allowed_roots) or _in_side(entry, path)):
             report.kept.append(path)
             logger.warning("crate_import_undo_entry_refused", path=path, op=op)
+            continue
+        twin_of = entry.get(TWIN_OF)
+        if twin_of and os.path.lexists(str(twin_of)):
+            if os.path.lexists(path):
+                report.kept.append(path)
             continue
         try:
             info = os.lstat(path)

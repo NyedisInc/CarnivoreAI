@@ -474,7 +474,7 @@ test('NOTHING MOVED INSIDE #terminal, so the scroll guard cannot eat a tap', () 
     const html = clientFile('index.html');
     assert.ok(/<div id="terminal"[^>]*><\/div>/.test(html),
         '#terminal must stay empty in the markup');
-    const screenEnd = html.indexOf('<!-- Vendored xterm.js');
+    const screenEnd = html.indexOf('<script src="/static/vendor/xterm/xterm.js">');
     assert.ok(screenEnd > 0);
     assert.ok(html.indexOf('id="cloude-image-attach-input"') > screenEnd,
         'the file input must sit outside #terminal-screen, not inside #terminal');

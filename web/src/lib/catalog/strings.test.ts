@@ -42,6 +42,9 @@ const SOURCES = [
     'web/src/lib/catalog/InstallCount.svelte',
     'web/src/lib/catalog/ConfirmSheet.svelte',
     'web/src/lib/catalog/OneShotPicker.svelte',
+    'web/src/lib/catalog/RevokedBanner.svelte',
+    'web/src/lib/catalog/PermissionDiffPanel.svelte',
+    'web/src/lib/catalog/FlaggedWarningBox.svelte',
 ];
 
 const COMPOSED_PREFIXES = new Set([
@@ -145,12 +148,10 @@ describe('every refusal code has a sentence of its own', () => {
         expect(stray).toEqual([]);
     });
 
-    test('the five blocking kinds and the seven advisory ones, named', () => {
+    test('the three blocking kinds and the nine advisory ones, named', () => {
         for (const kind of [
             'prompt_injection',
             'credential_access',
-            'obfuscation',
-            'opaque_payload',
             'settings_write',
         ]) {
             expect(REVIEW_BLOCKING_KINDS.has(kind), kind).toBe(true);
@@ -163,6 +164,8 @@ describe('every refusal code has a sentence of its own', () => {
             'description_mismatch',
             'other',
             'instructions_write',
+            'obfuscation',
+            'opaque_payload',
         ]) {
             expect(REVIEW_BLOCKING_KINDS.has(kind), kind).toBe(false);
         }

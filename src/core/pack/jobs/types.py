@@ -102,6 +102,7 @@ class JobRequest:
     est_ram_gb: Optional[float] = None
     needs: List[str] = field(default_factory=list)
     prefer: List[str] = field(default_factory=list)
+    commit: Optional[str] = field(default=None, kw_only=True)
 
     def validate(self) -> None:
         from src.core.pack.placement import workload
@@ -111,6 +112,8 @@ class JobRequest:
 
         if not self.folder.startswith("/"):
             raise bad("the folder must be an absolute path")
+        if self.commit is not None and not re.fullmatch(r"[0-9a-f]{40}", self.commit):
+            raise bad("commit must be 40 lowercase hex characters")
         if self.kind not in workload.DEFAULTS:
             raise bad(f"kind must be one of {', '.join(workload.DEFAULTS)}")
         if not 1 <= self.time_cap_s <= 21600:
@@ -264,7 +267,7 @@ class AdmitBody(_Wire):
     est_cpu: Optional[float] = Field(default=None, ge=0, le=1024)
     est_ram_gb: Optional[float] = Field(default=None, ge=0, le=65536)
     omit_when_none: ClassVar[Tuple[str, ...]] = ("agent_family", "account_key", "needs")
-    agent_family: Optional[Literal["claude", "codex"]] = None
+    agent_family: Optional[Literal["claude", "codex", "agy"]] = None
     account_key: Optional[str] = Field(default=None, pattern=ACCOUNT_KEY_PATTERN)
     needs: Optional[List[str]] = Field(default=None, max_length=24)
 
@@ -354,6 +357,11 @@ class StartBody(_Wire):
 class JobIdBody(_Wire):
 
     job_id: str = Field(pattern=JOB_ID_PATTERN)
+
+
+class LookBody(_Wire):
+
+    project_uid: str = Field(min_length=8, max_length=64, pattern=r"^[A-Za-z0-9_-]{8,64}$")
 
 
 class StopBody(_Wire):

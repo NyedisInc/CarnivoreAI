@@ -7,16 +7,24 @@ from typing import List, Optional, Tuple
 
 SOURCE_CLAUDE_REGISTRY: str = "claude_registry_mtime"
 SOURCE_CLAUDE_TRANSCRIPT: str = "claude_transcript_mtime"
+SOURCE_CLAUDE_ACTIVITY: str = "claude_transcript_activity"
+SOURCE_CLAUDE_REGISTRY_STATUS: str = "claude_registry_status_time"
 SOURCE_CODEX_ROLLOUT: str = "codex_rollout_mtime"
 SOURCE_CODEX_STATUS: str = "codex_status_time"
+SOURCE_AGY_TRANSCRIPT: str = "agy_transcript_mtime"
+SOURCE_AGY_STORE: str = "agy_store_mtime"
 SOURCE_FALLBACK_NOW: str = "fallback_now"
 
 ALL_SOURCES: frozenset = frozenset(
     {
         SOURCE_CLAUDE_REGISTRY,
         SOURCE_CLAUDE_TRANSCRIPT,
+        SOURCE_CLAUDE_ACTIVITY,
+        SOURCE_CLAUDE_REGISTRY_STATUS,
         SOURCE_CODEX_ROLLOUT,
         SOURCE_CODEX_STATUS,
+        SOURCE_AGY_TRANSCRIPT,
+        SOURCE_AGY_STORE,
         SOURCE_FALLBACK_NOW,
     }
 )

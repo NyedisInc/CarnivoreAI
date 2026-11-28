@@ -75,7 +75,7 @@
 </script>
 
 {#snippet item(card: CardView, trusted: boolean)}
-    {#if trusted}
+    {#if trusted && !card.revoked}
         <CatalogCard
             list={view === 'list'}
             selected={card.id === selectedId}

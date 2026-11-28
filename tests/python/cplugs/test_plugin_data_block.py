@@ -4,18 +4,18 @@ from __future__ import annotations
 import copy
 import fnmatch
 import json
-import shutil
+import tomllib
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pytest
-import structlog
 
 from src.core.inventory.registry_side import EXCLUDED_STORES
 from src.plugins.host import runtime
-from src.plugins.sdk import data_decl, sidecar
-from src.plugins.sdk.manifest import load_manifest, parse_manifest
-from src.plugins.sdk.sidecar import validate_document
+from src.plugins.sdk import data_decl
+from src.plugins.sdk.manifest import ManifestError, load_manifest
+from src.plugins.sdk.manifest_v2 import ManifestV2Error, load_manifest_v2
+from src.plugins.sdk.schema_check import validate_document
 from tests.python.cplugs.test_extension_schemas import good
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -95,14 +95,21 @@ def test_cross_field_rules_the_schema_cannot_say() -> None:
 def _plugin_copy(plugin_id: str, tmp_path: Path, data: Any = "keep") -> Path:
     folder = tmp_path / plugin_id
     folder.mkdir()
-    for name in ("cplug.json", sidecar.SIDECAR_NAME):
-        shutil.copy(PLUGINS / plugin_id / name, folder / name)
-    doc = json.loads((folder / sidecar.SIDECAR_NAME).read_text())
+    doc: Dict[str, Any] = {
+        "schema": 2,
+        "id": plugin_id,
+        "name": "share read only",
+        "version": "1.0.0",
+        "kind": "plugin",
+        "description": "Share plugin.",
+        "author": "Alex (example-owner)",
+        "tier": "builtin",
+        "default_enabled": True,
+        "data": [] if data == "keep" else data,
+    }
     if data == "drop":
         del doc["data"]
-    elif data != "keep":
-        doc["data"] = data
-    (folder / sidecar.SIDECAR_NAME).write_text(json.dumps(doc))
+    (folder / "carnivore.json").write_text(json.dumps(doc), encoding="utf-8")
     return folder
 
 
@@ -111,39 +118,24 @@ def test_the_loaded_manifest_carries_the_checked_block() -> None:
     assert crate is not None and {"bundles", "second_copies"} <= {d.id for d in crate}
     assert next(d for d in crate if d.id == "bundles").root_setting is not None
     assert load_manifest(str(PLUGINS / "share" / "__init__.py")).data == ()
-    assert load_manifest(str(PLUGINS / "huddle" / "__init__.py")).data == ()
-    assert parse_manifest(json.loads((PLUGINS / "share" / "cplug.json").read_text())).data is None
+    assert load_manifest(str(PLUGINS / "taskmanager" / "__init__.py")).data == ()
 
 
-def test_a_broken_block_leaves_data_undeclared_and_warns() -> None:
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as tmp, structlog.testing.capture_logs() as logs:
-        folder = _plugin_copy("save", Path(tmp), data=[DB, DB])
-        assert load_manifest(str(folder / "__init__.py")).data is None
-    assert [e["log_level"] for e in logs if e["event"] == "cplug_data_invalid"] == ["warning"]
+def test_a_broken_data_block_is_refused_by_v2_loader(tmp_path: Path) -> None:
+    folder = _plugin_copy("share", tmp_path, data=[DB, DB])
+    with pytest.raises(ManifestError, match="declared twice"):
+        load_manifest(str(folder / "__init__.py"))
 
 
-def test_a_missing_data_key_warns_now_and_refuses_after_1_0(tmp_path: Path) -> None:
-    folder = _plugin_copy("share", tmp_path, data="drop")
-    manifest = parse_manifest(json.loads((folder / "cplug.json").read_text()))
-    with structlog.testing.capture_logs() as logs:
-        reports = sidecar.audit_ship_list([manifest], tmp_path, enforcement="warn")
-    assert reports["share"].status == sidecar.INVALID and any("'data'" in p for p in reports["share"].problems)
-    assert [e["event"] for e in logs] == ["cplug_sidecar_invalid"]
-    with pytest.raises(sidecar.SidecarError):
-        sidecar.audit_ship_list([manifest], tmp_path, enforcement="refuse")
-
-
-def test_the_sidecar_audit_reports_the_cross_field_problems(tmp_path: Path) -> None:
+def test_the_v2_loader_reports_the_cross_field_problems(tmp_path: Path) -> None:
     folder = _plugin_copy("share", tmp_path, data=[FOLDER])
-    report = sidecar.check_plugin(parse_manifest(json.loads((folder / "cplug.json").read_text())), folder)
-    assert report.status == sidecar.INVALID and any("not a setting this plugin declares" in p for p in report.problems)
+    with pytest.raises(ManifestV2Error, match="not a setting this plugin declares"):
+        load_manifest_v2(folder, tier="builtin", allow_tier_override=True)
 
 
-@pytest.mark.parametrize("plugin_id", [i for i in SHIPPED if i not in sidecar.PENDING])
+@pytest.mark.parametrize("plugin_id", SHIPPED)
 def test_every_shipped_plugin_declares_its_data(plugin_id: str) -> None:
-    doc = json.loads((PLUGINS / plugin_id / sidecar.SIDECAR_NAME).read_text())
+    doc = tomllib.loads((PLUGINS / plugin_id / "carnivore.toml").read_text(encoding="utf-8"))
     assert isinstance(doc.get("data"), list), "a plugin that keeps nothing says data: []"
     assert load_manifest(str(PLUGINS / plugin_id / "__init__.py")).data is not None
 
@@ -160,7 +152,7 @@ DECLARED_BEYOND_THE_TABLES = {("crate", "second_copies"), ("save", "legacy_point
 
 
 def _declared() -> Dict[str, Dict[str, data_decl.DataDecl]]:
-    return {i: {d.id: d for d in (load_manifest(str(PLUGINS / i / "__init__.py")).data or ())} for i in SHIPPED if i not in sidecar.PENDING}
+    return {i: {d.id: d for d in (load_manifest(str(PLUGINS / i / "__init__.py")).data or ())} for i in SHIPPED}
 
 
 def _covers(table_path: str, plugin_id: str, decl: data_decl.DataDecl) -> bool:
@@ -183,9 +175,7 @@ def test_every_plugin_store_in_the_core_tables_matches_a_declaration() -> None:
         if not path.startswith("cplugs/"):
             continue
         owner = path.split("/")[1]
-        if owner in ("state.json", "activity.db", "ai_budget.db", "egress.db"):
-            continue
-        if owner in sidecar.PENDING:
+        if owner in ("state.json", "renamed-carried.json", "activity.db", "ai_budget.db", "egress.db"):
             continue
         if not any(_covers(path, owner, d) for d in declared.get(owner, {}).values()):
             unmatched.append(path)

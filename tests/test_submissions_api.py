@@ -9,8 +9,11 @@ import pytest
 from tests.helpers import hosted_catalog_fake as fake
 from tests.helpers import submissions_harness as h
 
-TODAY = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-YESTERDAY = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+
+
+def _day(offset_days: int = 0) -> str:
+    return (datetime.now(timezone.utc) - timedelta(days=offset_days)).strftime("%Y-%m-%d")
+
 
 
 @pytest.fixture(scope="module")
@@ -103,8 +106,8 @@ def test_the_handle_comes_from_the_token_not_the_body(api):
      ]), "submission_invalid"),
     (h.submission(files=[
         {"path": "SKILL.md", "content_base64": h.b64(h.skill_md())},
-        {"path": "scripts/go.sh", "content_base64": h.b64("#!/bin/sh")},
-     ]), "scripts_not_supported"),
+        {"path": ".claude-plugin/x", "content_base64": h.b64("{}")},
+     ]), "skill_not_safe"),
     (h.submission(version="not-a-version"), "submission_invalid"),
 ])
 def test_a_refusal_costs_no_storage_at_all(api, payload, code):
@@ -113,6 +116,15 @@ def test_a_refusal_costs_no_storage_at_all(api, payload, code):
     assert h.body_of(response)["code"] == code, h.body_of(response)
     assert api.s3.objects == {}
     assert h.storage_calls(api) == [], api.log
+
+
+def test_skill_with_scripts_is_accepted(api):
+    payload = h.submission(files=[
+        {"path": "SKILL.md", "content_base64": h.b64(h.skill_md())},
+        {"path": "scripts/go.sh", "content_base64": h.b64("#!/bin/sh\necho hi\n")},
+    ])
+    response = h.submit(api, payload)
+    assert response["statusCode"] == 201, h.body_of(response)
 
 
 def test_an_unsigned_submission_is_refused_before_anything(api):
@@ -178,7 +190,7 @@ def test_the_other_routes_keep_the_small_body_cap(api):
 def test_the_sixth_submission_in_a_day_is_refused_and_stores_nothing(api):
     _users(api).seed(
         {"user_id": h.OTHER_ID},
-        {"submissions_day": TODAY, "submissions_today": 5},
+        {"submissions_day": _day(), "submissions_today": 5},
     )
     response = h.submit(api)
     assert response["statusCode"] == 429
@@ -190,17 +202,17 @@ def test_yesterdays_submission_counter_is_reset_rather_than_refused(api):
     users = _users(api)
     users.seed(
         {"user_id": h.OTHER_ID},
-        {"submissions_day": YESTERDAY, "submissions_today": 5},
+        {"submissions_day": _day(1), "submissions_today": 5},
     )
     assert h.submit(api)["statusCode"] == 201
     stored = users.stored({"user_id": h.OTHER_ID})
-    assert stored["submissions_day"] == TODAY
+    assert stored["submissions_day"] == _day()
     assert stored["submissions_today"] == 1
 
 
 def test_the_vote_and_submission_counters_are_separate(api):
     _users(api).seed(
-        {"user_id": h.OTHER_ID}, {"votes_day": TODAY, "votes_today": 50}
+        {"user_id": h.OTHER_ID}, {"votes_day": _day(), "votes_today": 50}
     )
     assert h.submit(api)["statusCode"] == 201
 

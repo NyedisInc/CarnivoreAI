@@ -13,6 +13,7 @@ const GLYPHS = Object.freeze({
   'waiting-input': { shape: SHAPES.DISC, color: TOKEN_HEX['--oc-yellow-bright'] },
   notice: { shape: SHAPES.DISC, color: TOKEN_HEX['--oc-cyan'] },
   idle: { shape: SHAPES.DISC, color: TOKEN_HEX['--oc-text-muted'] },
+  background: { shape: SHAPES.RING_DOT, color: TOKEN_HEX['--oc-text-muted'], centerColor: TOKEN_HEX['--oc-text-muted'] },
   done: { shape: SHAPES.RING_DOT, color: TOKEN_HEX['--oc-green'], centerColor: TOKEN_HEX['--oc-text-muted'] },
   dead: { shape: SHAPES.DISC, color: DEAD_HEX },
   disconnected: { shape: SHAPES.DISC, color: TOKEN_HEX['--oc-coral'] },

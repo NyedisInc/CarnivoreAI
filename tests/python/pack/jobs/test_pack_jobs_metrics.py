@@ -178,7 +178,7 @@ def test_report_shape_route_tool_and_order(tmp_path, monkeypatch) -> None:
     store = JobStore(tmp_path)
     monkeypatch.setattr(boot, "engine", lambda: SimpleNamespace(store=store))
     out = routes._report(30)
-    assert set(out) == {"days", "p3", "r3", "load"} and out["days"] == 30
+    assert set(out) == {"days", "p3", "r3", "guard", "load"} and out["days"] == 30
     assert set(out["p3"]) == {"window_days", "misses", "local_ok", "delegated", "delegate_calls", "share", "threshold", "over", "enough_data", "since"}
     assert set(out["r3"]) == {"window_days", "remote_minutes", "local_minutes", "share"} and out["load"] == {"hours": []}
     assert metrics.report(store, 99, now=NOW)["days"] == 30

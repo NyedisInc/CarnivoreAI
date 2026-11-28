@@ -54,6 +54,13 @@ describe('validateManifest', () => {
     expect(refusalOf((m) => { m.settings.fields.kind_all = { kind: 'boolean', labelKey: 'widgets.acme.kind_all', default: true }; }).refusal).toBeNull();
   });
 
+  test('a setting field may declare optional boolean hidden', () => {
+    expect(refusalOf((m) => {
+      m.settings.fields.showArt.hidden = false;
+      m.settings.fields.caption.hidden = true;
+    }).refusal).toBeNull();
+  });
+
   test('a settings key starting with an underscore is refused', () => {
     expect(refusalOf((m) => { m.settings.fields._bad = { kind: 'boolean', labelKey: 'widgets.acme.bad', default: true }; }).refusal).toBe('settings');
   });
@@ -123,6 +130,7 @@ describe('validateManifest', () => {
     ['settings', 'an unknown field kind', (m) => { m.settings.fields.rows.kind = 'color'; }],
     ['settings', 'a dotted field key reaching another namespace', (m) => { m.settings.fields['core.theme'] = m.settings.fields.showArt; }],
     ['settings', 'a label that is not a catalog key', (m) => { m.settings.fields.rows.labelKey = 'Rows'; }],
+    ['settings', 'a non-boolean hidden flag', (m) => { m.settings.fields.caption.hidden = 'yes'; }],
     ['capabilities', 'an unknown capability', (m) => { m.capabilities = ['network']; }],
     ['capabilities', 'a repeated capability', (m) => { m.capabilities = ['navigate', 'navigate']; }],
     ['keep-alive', 'an unknown keep-alive', (m) => { m.keepAlive = 'always'; }],

@@ -230,6 +230,36 @@ body {
     text-transform: uppercase;
 }
 
+.admin-badge--good {
+    border-color: var(--oc-green);
+    color: var(--oc-green);
+}
+
+.admin-badge--warn {
+    border-color: var(--oc-yellow);
+    color: var(--oc-yellow);
+}
+
+.admin-badge--bad {
+    border-color: var(--oc-coral);
+    color: var(--oc-coral);
+}
+
+.admin-m5-meta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--oc-space-1);
+    margin: var(--oc-space-2) 0;
+}
+
+.admin-quick-revoke {
+    display: flex;
+    flex-wrap: wrap;
+    flex: 1 1 100%;
+    gap: var(--oc-space-2);
+    align-items: center;
+}
+
 .admin-detail {
     flex: 1 1 100%;
 }

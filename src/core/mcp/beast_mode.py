@@ -30,6 +30,7 @@ ALWAYS_WAITS = frozenset({
     "computer_invite", "computer_remove", "computer_leave", "computer_add",
     "api_key_delete",
     "session_external_stop",
+    "project_merge_run", "company_accounts_set",
 })
 
 
@@ -142,7 +143,7 @@ def _safe_reason(exc: BaseException) -> str:
 async def run_unprompted(
     caller: AgentCaller, action: str, run: Callable[[], Awaitable[dict]], *,
     target_id: str = "", target_tmux: str = "", summary: str = "", args: dict | None = None,
-    event: str = "mcp_action_approved_by_beast_mode",
+    event: str = "mcp_action_approved_by_beast_mode", approval_source: str = "approved by beast mode",
 ) -> dict:
     try:
         result = await run()
@@ -152,6 +153,7 @@ async def run_unprompted(
             external_client=caller.token_name, target_session_id=target_id,
             target_tmux=target_tmux, action=action, args_summary=summary or action,
             args=args or {}, result={"status": "failed", "error_type": type(exc).__name__},
+            approval_source=approval_source,
         )
         logger.warning("mcp_action_failed_under_beast_mode", action=action, error_type=type(exc).__name__,
                        reason=_safe_reason(exc))
@@ -160,7 +162,7 @@ async def run_unprompted(
         caller_session_id=caller.current_session_id, caller_tmux=caller.tmux_name,
         external_client=caller.token_name, target_session_id=target_id,
         target_tmux=target_tmux, action=action, args_summary=summary or action,
-        args=args or {}, result=result,
+        args=args or {}, result=result, approval_source=approval_source,
     )
     logger.info(event, action=action, caller=caller.tmux_name,
                 client=caller.token_name or None, target=target_tmux or target_id)

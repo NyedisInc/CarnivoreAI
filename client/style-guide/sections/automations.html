@@ -33,9 +33,8 @@ The sections below that say "tab" for the table and the run feed describe the su
         reviewed rows fold out. Title and summary are written by code on the server, never by a model; a run stored before they existed shows the
         older feed face line. Keys <code>j</code> <code>k</code> <code>enter</code> <code>r</code> (<code>.f-keys</code>).</dd>
     <dt>drawer</dt>
-    <dd><code>ItemDrawer</code> (<code>.ap-dr</code>, a non-modal side panel, <code>role="complementary"</code>) docks at 420 px from 1100 px of page, covers the page below
-        that and is a full sheet with a back button (a base <code>Button</code>) at phone width. Title bar <code>.ap-dr-bar</code>, scroll body
-        <code>.ap-dr-scroll</code>, sections base <code>Card</code>s with a small uppercase label <code>.ap-dr-lab</code>. <code>AutomationDrawer</code>:
+    <dd><code>ItemDrawer</code> (<code>.ap-dr</code>, <code>role="complementary"</code>) is the detail region's other state (ruling Q4: one right-side region per frame):
+        the frame draws its place, width, head and close key, the drawer only its content, as base <code>Card</code>s with a small uppercase label. <code>AutomationDrawer</code>:
         name (<code>.ap-dr-name</code>), switch, run now, the next three runs (a base <code>List</code>), the last run (<code>LastRun</code>), edit and
         open in advanced (base <code>Button</code>s). <code>RunDrawer</code>: the run, its title and summary (<code>.ap-dr-title</code>, <code>.ap-dr-sum</code>),
         attachments, a since sentence against the previous run and the full report in advanced. Focus moves in on open and back to the opener on
@@ -191,12 +190,10 @@ The sections below that say "tab" for the table and the run feed describe the su
 <h3 class="sg-h3" id="automations-pane">the detail pane</h3>
 <dl class="sg-facts">
     <dt>pattern</dt>
-    <dd><code>DetailPane</code> is the page's right column (<code>.ap-pn</code>), sized by the PAGE, never the window: the page is a
-        container (<code>ap-page</code>), and from 900 px of page the pane docks at 36% of it (340 to 760 px) while the list, the title
-        bar and the strips stop at its left edge; under 900 px it covers the whole page. The title bar is its own container
-        (<code>ap-title</code>) and drops the sentence under 1000 px of bar. It slides in over
-        <code>var(--oc-motion)</code> and the body fades 150 ms when the tab or the run changes (<code>.ap-pn-fade</code>), both
-        off under reduced motion. A title row (<code>.ap-pn-bar</code>), the head or the editor, four tabs (<code>.ap-pn-tabs</code>)
+    <dd><code>DetailPane</code> is the page frame's DETAIL region (<code>.ap-pn</code> inside <code>.oc-page__detail--frame</code>, #2775, Joe (ccsliinc)
+        2026-11-20): under the one header, 360 to 560 px of the page (<code>--oc-frame-detail-w</code>), replacing the list below 900 px of page, with the
+        frame's own head (the label and the close key) and its body edge to edge (<code>detailFill</code>). It is drawn only while it is open. The body fades 150 ms
+        when the tab or the run changes (<code>.ap-pn-fade</code>), off under reduced motion. Inside: the head or the editor, four tabs (<code>.ap-pn-tabs</code>)
         and the body. <code>[</code> steps to the older run, <code>]</code> to the newer one, Escape closes.</dd>
     <dt>head and editor</dt>
     <dd><code>PaneHead</code>: the light and when it runs next (<code>.ap-pn-top</code>), the name (<code>.ap-pn-name</code>), what it runs and the

@@ -45,13 +45,25 @@ resolve_python() {
 }
 
 
+explicit_state_dir_setting() {
+    local install_dir="$1" name raw env_file="$1/.env"
+    for name in CARNIVORE_STATE_DIR CLOUDE_STATE_DIR CLOUDECODE_STATE_DIR; do
+        raw="${!name:-}"
+        if [ -z "${raw}" ] && [ -f "${env_file}" ]; then
+            raw="$(grep -E "^${name}=" "${env_file}" | tail -1 | cut -d= -f2-)"
+        fi
+        if [ -n "${raw}" ]; then
+            printf '%s\n' "${raw}"
+            return 0
+        fi
+    done
+    return 0
+}
+
 resolve_state_dir() {
     local install_dir="$1" python_bin
-    local env_file="${install_dir}/.env"
-    local raw="${CLOUDE_STATE_DIR:-}"
-    if [ -z "${raw}" ] && [ -f "${env_file}" ]; then
-        raw="$(grep -E '^CLOUDE_STATE_DIR=' "${env_file}" | tail -1 | cut -d= -f2-)"
-    fi
+    local raw
+    raw="$(explicit_state_dir_setting "${install_dir}")"
     python_bin="$(resolve_python "${install_dir}")"
     if [ -n "${raw}" ]; then
         "${python_bin}" -c "import os, sys; print(os.path.expanduser(sys.argv[1]))" "${raw}"
@@ -82,10 +94,8 @@ resolve_state_file() {
     local new_path="${state_dir}/${filename}"
 
     local carnivore_legacy_path=""
-    local raw="${CLOUDE_STATE_DIR:-}"
-    if [ -z "${raw}" ] && [ -f "${install_dir}/.env" ]; then
-        raw="$(grep -E '^CLOUDE_STATE_DIR=' "${install_dir}/.env" | tail -1 | cut -d= -f2-)"
-    fi
+    local raw
+    raw="$(explicit_state_dir_setting "${install_dir}")"
     if [ -z "${raw}" ]; then
         local python_bin legacy_named_dir
         python_bin="$(resolve_python "${install_dir}")"
@@ -143,6 +153,18 @@ current_version() {
     local install_dir="$1" probe="$2" python_bin
     python_bin="$(resolve_python "${install_dir}")"
     "${python_bin}" "${probe}" current --install-dir "${install_dir}"
+}
+
+resolve_release_ref() {
+    local install_dir="$1" bare candidate
+    bare="${2#[vV]}"
+    for candidate in "v${bare}" "${bare}"; do
+        if git -C "${install_dir}" rev-parse -q --verify "refs/tags/${candidate}^{commit}" >/dev/null 2>&1; then
+            printf 'tags/%s\n' "${candidate}"
+            return 0
+        fi
+    done
+    return 1
 }
 
 resolve_remote() {

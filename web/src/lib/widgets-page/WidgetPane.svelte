@@ -1,6 +1,7 @@
 
 <script lang="ts">
-    import { Button, IconButton, Segmented, Switch, type SegmentedOption } from '../base';
+    import { Button, Segmented, Switch, type SegmentedOption } from '../base';
+    import { clearToasts } from '../../opscenter/ui/detail-clearance';
     import type { Translate } from '../sessions/types';
     import type { PreviewMode } from '../../widget-preview/protocol';
     import ItemSettingsPanel from '../item-settings/ItemSettingsPanel.svelte';
@@ -26,14 +27,14 @@
         toggle?: ManagerToggleState;
         onToggle: (id: string, next: boolean) => void;
         onMenu: (anchor: HTMLElement, id: string) => void;
-        onClose: () => void;
         settingsFor?: (id: string) => ItemSettingsController;
         previews?: boolean;
     }
 
-    const { item, t, toggle, onToggle, onMenu, onClose, settingsFor, previews = true }: Props = $props();
+    const { item, t, toggle, onToggle, onMenu, settingsFor, previews = true }: Props = $props();
 
-    const PANE_W = 400;
+    const UNMEASURED_PANE_W = 460;
+    let paneW = $state(0);
 
     const manifest = $derived(item.manifest);
     const declared = $derived(declaredSizes(manifest));
@@ -53,7 +54,7 @@
     const realOk = $derived(realPreviewAvailable(drawn));
     const shownMode = $derived<PreviewMode>(realOk ? mode : 'sample');
     const glancePx = $derived(declaredGlanceHeight(manifest.id));
-    const heroH = $derived(heroHeight(previewSizes(drawn).find((one) => one.name === size) ?? null, PANE_W));
+    const heroH = $derived(heroHeight(previewSizes(drawn).find((one) => one.name === size) ?? null, paneW || UNMEASURED_PANE_W));
 
     const placed = $derived.by(() => {
         const out: { place: PlaceId; label: string; sub: string; key: string | null; board: string | null }[] = [];
@@ -92,7 +93,7 @@
     }
 </script>
 
-<section class="pn-detail" data-group={manifest.category} aria-label={item.name} data-widget-pane={item.id}>
+<section class="pn-detail" data-group={manifest.category} aria-label={item.name} data-widget-pane={item.id} use:clearToasts bind:clientWidth={paneW}>
     <div class="pn-band" aria-hidden="true"></div>
     <div class="pn-hero" style={`height: ${heroH}px`}>
         <div class="pn-hero__top">
@@ -101,7 +102,6 @@
             {:else}
                 <span class="pn-note" data-preview-sample-only>{t('widgets.page.preview.sample_only')}</span>
             {/if}
-            <IconButton variant="close" icon="close" label={t('widgets.places.pane.close')} data-k="close" onclick={onClose} />
         </div>
         {#if previews}<WidgetHero manifest={drawn} {size} mode={shownMode} {t} />{/if}
     </div>

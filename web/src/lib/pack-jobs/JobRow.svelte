@@ -26,11 +26,11 @@
   {#snippet lead()}<Tag tone={stateTone(job.state)} data-jobs="state">{stateWord(job.state)}</Tag>{/snippet}
   {#snippet actions()}
     {#if mine && job.body === 'agent'}
-      <Button variant="quiet" size="sm" disabled={!canOpenWorker} title={canOpenWorker ? undefined : t('pack.jobs.worker_missing')} data-jobs="open-worker"
+      <Button size="sm" disabled={!canOpenWorker} title={canOpenWorker ? undefined : t('pack.jobs.worker_missing')} data-jobs="open-worker"
         onclick={() => onOpenWorker?.(job)}>{t('pack.jobs.open_worker')}</Button>
     {/if}
     {#if mine && isLive(job)}
-      <Button variant="quiet" size="sm" data-jobs="stop" onclick={() => onStop?.(job)}>{t('pack.jobs.stop.action')}</Button>
+      <Button size="sm" data-jobs="stop" onclick={() => onStop?.(job)}>{t('pack.jobs.stop.action')}</Button>
     {/if}
   {/snippet}
   {#snippet below()}

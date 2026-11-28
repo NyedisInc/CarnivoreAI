@@ -63,6 +63,12 @@ def pol(store: JobStore) -> policy_mod.Policy:
     return policy_mod.get(store, UID)
 
 
+def projects_db() -> sqlite3.Connection:
+    conn = sqlite3.connect(":memory:")
+    conn.execute("CREATE TABLE projects (uid TEXT, air_gap INTEGER)")
+    return conn
+
+
 def words(*w: str) -> List[needs_mod.Need]:
     return [parse_need(x) for x in w]
 
@@ -129,7 +135,10 @@ def test_the_mark_off_answers_here_whatever_is_needed(store) -> None:
 def test_a_burst_of_five_calls_on_a_computer_with_room_for_two_stays_twice_then_leaves(pol) -> None:
     v = view(machine(A, "mac", snap(), is_self=True), machine(B, "tower", snap()))
     answers = [place(SUITE, UID, pol, v).decision for _ in range(5)]
-    assert answers == ["here", "here", "remote", "remote", "remote"]
+    assert answers == ["here", "remote", "remote", "remote", "remote"]
+    legacy_holds = Holds()
+    legacy = [place(SUITE, UID, pol, v, holds=legacy_holds, active_balance=False).decision for _ in range(5)]
+    assert legacy == ["here", "here", "here", "remote", "remote"]
 
 
 def test_this_computer_pegged_sends_work_away_even_when_the_figures_say_room(pol) -> None:
@@ -161,7 +170,7 @@ def make_engine(tmp_path: Path, the_view: PlaceView, monkeypatch: pytest.MonkeyP
     async def facts(_s: Optional[str]) -> agent_facts.CallerFacts:
         return agent_facts.CallerFacts("claude", "work", "default", "m", None)
 
-    eng = Engine(state_dir=state, jobs_root=jobs, install_id=A, target_for=lambda _i: target, open_db=lambda: sqlite3.connect(":memory:"),
+    eng = Engine(state_dir=state, jobs_root=jobs, install_id=A, target_for=lambda _i: target, open_db=projects_db,
                  view_for=lambda _r, _u: the_view, facts_for=facts)
     monkeypatch.setattr(eng, "_resolve_project", lambda folder: ({"uid": UID, "name": "app", "root": folder}, ""))
     return eng
@@ -304,7 +313,7 @@ def test_the_target_refuses_while_pegged_and_the_refusal_holds_nothing(tmp_path,
 
 
 def test_two_callers_admitting_at_once_on_one_target_one_is_held_and_one_refused(tmp_path, monkeypatch) -> None:
-    host = fake_host(tmp_path, 6)
+    host = fake_host(tmp_path, 5)
     monkeypatch.setattr(host_admit, "own_snapshot", lambda: snap())
     barrier, results = threading.Barrier(2), []
 
@@ -325,7 +334,7 @@ def test_two_callers_admitting_at_once_on_one_target_one_is_held_and_one_refused
 
 
 def test_start_counts_every_other_hold_and_runner_start_shortens_its_own(tmp_path, monkeypatch) -> None:
-    host = fake_host(tmp_path, 6)
+    host = fake_host(tmp_path, 5)
     monkeypatch.setattr(host_admit, "own_snapshot", lambda: snap())
     host_admit.admit(host, B, admit_body("job_000000000001"), SUITE)
     host_admit.start_hold(host, B, "job_000000000001", "uid-test-0001", SUITE)

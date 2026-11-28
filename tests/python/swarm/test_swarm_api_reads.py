@@ -27,7 +27,7 @@ from src.core.db_migration import ensure_db_migrated
 from src.core.mcp import tools
 from src.core.mcp.caller import AgentCaller
 from src.core.swarm import push, store, stream, thread_port
-from src.plugins.huddle import swarm_stream, rules
+from src.plugins.taskmanager import swarm_stream, rules
 
 
 def msg(i, author_key, text, at, author="claude"):

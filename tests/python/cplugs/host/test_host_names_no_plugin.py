@@ -15,14 +15,14 @@ KNOWN: Dict[str, Set[str]] = {
     "session_fields.py": {"unread"},
     "sidecar_page.py": {"flow"},
     "split_migration.py": {"save"},
-    "swarm_default_migration.py": {"huddle"},
+    "swarm_default_migration.py": {"taskmanager"},
     "system_lifecycle.py": {"share"},
 }
 
 
 def plugin_ids() -> Set[str]:
     base = ROOT / "src" / "plugins"
-    return {p.parent.name for p in base.glob("*/cplug.json")} | ALSO
+    return {p.parent.name for pattern in ("*/carnivore.toml", "*/cplug.json") for p in base.glob(pattern)} | ALSO
 
 
 def named_in(text: str, ids: Set[str]) -> Set[str]:

@@ -1,6 +1,13 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { auth } from '../../api/auth.svelte';
+  import Button from '../../../lib/base/Button.svelte';
+  import IconButton from '../../../lib/base/IconButton.svelte';
   import Icon from '../../ui/Icon.svelte';
+  import { icons } from '../../ui/icons';
+  import type { ValidSlotEntry } from '../../../lib/cplug-ui/slots';
+  import { resolveActiveSlots, runSlotDescriptorAction } from '../../../lib/plugins/slot-actions';
+  import { pluginsStore } from '../../../lib/plugins/store.svelte';
   import TerminalSoundButton from '../../../lib/terminal-sound/TerminalSoundButton.svelte';
   import { sessions, asleep, sleepSession } from '../../api';
   import { primarySessionId, openSettings } from '../../api/host';
@@ -69,7 +76,32 @@
     };
   });
 
-  const kebabHolds = $derived(split.overflow.length > 0 || !!row?.tmux_session || appRows);
+  $effect(() => {
+    if (auth.state === 'signed-out') return;
+    return pluginsStore.acquire({ includeSlots: true });
+  });
+
+  const pluginToolbarEntries = $derived.by(() => {
+    void pluginsStore.rows;
+    void pluginsStore.slots;
+    return resolveActiveSlots('terminal.toolbar').filter(
+      (entry): entry is Extract<ValidSlotEntry, { kind: 'descriptor' }> => entry.kind === 'descriptor' && entry.action !== null,
+    );
+  });
+
+  const pluginStripItems = $derived(
+    width >= 420
+      ? pluginToolbarEntries.filter((entry) => entry.entry.item.position !== 'menu')
+      : [],
+  );
+
+  const pluginMenuItems = $derived(
+    width >= 420
+      ? pluginToolbarEntries.filter((entry) => entry.entry.item.position === 'menu')
+      : pluginToolbarEntries,
+  );
+
+  const kebabHolds = $derived(split.overflow.length > 0 || !!row?.tmux_session || appRows || pluginMenuItems.length > 0);
 
   function logout(): void {
     options?.hidePopover();
@@ -250,6 +282,23 @@
     options?.hidePopover();
     terminalAction(slot, action, anchor, showing);
   }
+  function runPluginToolbarItem(
+    entry: Extract<ValidSlotEntry, { kind: 'descriptor' }>,
+    closeMenu = false,
+  ): void {
+    if (closeMenu) options?.hidePopover();
+    inputFocus.select(slot);
+    if (!entry.action || entry.disabled) return;
+    const sessionRef = uuidOfTmuxName(row?.tmux_session) || sessionId || row?.tmux_session || null;
+    void runSlotDescriptorAction(entry.entry.plugin_id, entry.action, {
+      sessionRef,
+      confirm: entry.confirm,
+      title: entry.label,
+      tone: entry.tone,
+    }).catch((err: unknown) => {
+      console.error('[TerminalActions] plugin toolbar action failed:', entry.entry.plugin_id, entry.id, err);
+    });
+  }
   function runNotes(showing?: boolean): void {
     options?.hidePopover();
     const mine = showing ?? (notesAreOpen() && activeTerminalSlot() === slot);
@@ -360,6 +409,19 @@
       {/if}
     {/if}
   {/each}
+  {#each pluginStripItems as pItem (`${pItem.entry.plugin_id}:${pItem.id}`)}
+    <IconButton
+      icon={pItem.icon && pItem.icon in icons ? pItem.icon : 'cube'}
+      iconSize={15}
+      variant="quiet"
+      label={pItem.label}
+      tooltip={pItem.tooltip ?? pItem.label}
+      disabled={pItem.disabled}
+      data-cplug-tool={`${pItem.entry.plugin_id}:${pItem.id}`}
+      onmousedown={(e: MouseEvent) => e.preventDefault()}
+      onclick={() => runPluginToolbarItem(pItem)}
+    />
+  {/each}
   
   {#if kebabHolds}
   <button type="button" bind:this={menuAnchor} aria-label={t('terminal.options.label')}
@@ -412,6 +474,20 @@
         </button>
       {/if}
     {/if}
+  {/each}
+  {#each pluginMenuItems as pItem (`${pItem.entry.plugin_id}:${pItem.id}`)}
+    <Button
+      variant="row"
+      size="auto"
+      role="menuitem"
+      disabled={pItem.disabled}
+      title={pItem.tooltip ?? pItem.label}
+      data-cplug-tool={`${pItem.entry.plugin_id}:${pItem.id}`}
+      onmousedown={(e: MouseEvent) => e.preventDefault()}
+      onclick={() => runPluginToolbarItem(pItem, true)}
+    >
+      <Icon name={pItem.icon && pItem.icon in icons ? pItem.icon : 'cube'} size={15} />{pItem.label}
+    </Button>
   {/each}
   
   <button type="button" role="menuitem" data-tool="actions" class:after-tools={split.overflow.length > 0} disabled={!row?.tmux_session}

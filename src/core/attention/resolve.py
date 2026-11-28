@@ -1,12 +1,14 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Dict, Optional
 
-from src.core.attention.background_claims import standing_background_claims
+from src.core.attention.background_claims import only_servers_run, standing_background_claims
 from src.core.attention.manifest_reader import manifest_verdict
 from src.core.attention.codex_reader import resolve_codex_evidence
 from src.core.attention.evidence import (
+    ACTIVITY_HINT_BACKGROUND,
     ALL_STATES,
     FAMILY_CLAUDE,
     FAMILY_CODEX,
@@ -56,6 +58,7 @@ from src.core.attention.resolve_verdicts import (
     _verdict,
     _busy_unless_resting,
     _blocked_tool_reason,
+    _subagents_confirm_running_work,
 )
 from src.core.session_status import LIVENESS_GONE
 
@@ -211,26 +214,35 @@ def _rung_background_work(evidence: Evidence, previous_process_only: bool) -> Op
         facts.pending_workflows if registry.trusts_pending_count else None
     )
     open_shells = registry.known and standing_background_claims(evidence) > 0
-    if not previous_process_only and (
+    agent_work = (
         (trusted_count is not None and trusted_count > 0)
         or (trusted_workflows is not None and trusted_workflows > 0)
         or facts.open_async_agents > 0
-        or open_shells
-    ):
-        return _busy_unless_resting(
-            REASON_SUBAGENTS,
-            TIER_TRANSCRIPT,
-            facts.detail,
-            evidence=evidence,
+    )
+    if not previous_process_only and (agent_work or open_shells):
+        return _background_hint(
+            _busy_unless_resting(REASON_SUBAGENTS, TIER_TRANSCRIPT, facts.detail, evidence=evidence),
+            evidence, agent_work,
         )
 
-    parked = None if previous_process_only else evidence.parked_work
+    parked = None if previous_process_only or only_servers_run(evidence) else evidence.parked_work
     if parked is not None and parked.is_live:
-        return _busy_unless_resting(
-            REASON_SUBAGENTS, TIER_TRANSCRIPT, parked.detail, evidence=evidence
+        return _background_hint(
+            _busy_unless_resting(REASON_SUBAGENTS, TIER_TRANSCRIPT, parked.detail, evidence=evidence),
+            evidence, False,
         )
 
     return None
+
+
+def _background_hint(verdict: AttentionVerdict, evidence: Evidence, agent_work: bool) -> AttentionVerdict:
+    if verdict.state != STATE_BUSY or verdict.reason != REASON_SUBAGENTS:
+        return verdict
+    if agent_work or _subagents_confirm_running_work(REASON_SUBAGENTS, evidence):
+        return verdict
+    if evidence.registry.known and evidence.registry.status == REG_BUSY:
+        return verdict
+    return replace(verdict, activity_hint=ACTIVITY_HINT_BACKGROUND)
 
 
 def _rung_registry_waiting(evidence: Evidence) -> Optional[AttentionVerdict]:

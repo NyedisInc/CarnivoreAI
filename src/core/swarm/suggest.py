@@ -10,6 +10,7 @@ import structlog
 
 from src.core.companies import store as companies
 from src.core.mcp.caller import AgentCaller
+from src.core.swarm.types import CreateRefused, TurnOnError
 from src.core.swarm import body, body_create, company_agent, delivery, memory, project_agent, push, seats, spawn, store, thread_port
 from src.core.trail_entry import utc_now
 from src.core.swarm.names import shown_name
@@ -155,7 +156,7 @@ async def _build_project(name: str, company_id: int) -> Tuple[int, bool]:
     path = os.path.join(await asyncio.to_thread(company_agent.projects_root), name)
     try:
         await asyncio.to_thread(company_agent.make_repo_folder, path)
-    except project_agent.TurnOnError as exc:
+    except TurnOnError as exc:
         raise SuggestRefused(str(exc)) from None
 
     def register(conn: sqlite3.Connection) -> int:
@@ -165,7 +166,7 @@ async def _build_project(name: str, company_id: int) -> Tuple[int, bool]:
 
     try:
         return await body.run_db(register), True
-    except (sqlite3.Error, body_create.CreateRefused, companies.CompanyNotFound) as exc:
+    except (sqlite3.Error, CreateRefused, companies.CompanyNotFound) as exc:
         logger.warning("swarm_suggest_register_failed", error_type=type(exc).__name__)
         await asyncio.to_thread(company_agent.discard_unregistered, path)
         raise SuggestRefused("the project folder could not be registered; nothing was kept, approve again to retry") from exc
@@ -201,7 +202,7 @@ async def decide(app_state: Any, swarm_ref: str, approve: bool) -> None:
             agent = await company_agent.turn_on(app_state, made, first_order=order, owner_message_ref=ref)
         else:
             agent = await project_agent.turn_on(app_state, made, first_order=order, owner_message_ref=ref)
-    except (project_agent.TurnOnError, body.BodyError) as exc:
+    except (TurnOnError, body.BodyError) as exc:
         raise SuggestRefused(f"{name} was created but its agent did not start ({exc}); turn it on from its page") from exc
     else:
         await _tell_suggester(app_state, row, agent)

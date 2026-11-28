@@ -191,7 +191,7 @@ describe('the modal', () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
-  test('closes itself when its last item is answered, and not before', async () => {
+  test('closes itself immediately when its last item is answered, without showing the empty message', async () => {
     const closes = { n: 0 };
     await show([ASK, PERMISSION], closes);
     reply = { items: [PERMISSION] };
@@ -200,81 +200,20 @@ describe('the modal', () => {
     expect(closes.n).toBe(0);
     expect(document.querySelector('[data-approval-card="dlg:ses_2:bb"]')).not.toBeNull();
     reply = { items: [] };
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await refreshApprovals();
     await tick();
-    expect(closes.n).toBe(0);
-    await vi.advanceTimersByTimeAsync(2000);
     expect(closes.n).toBe(1);
-    vi.useRealTimers();
+    expect(document.querySelector('[data-approval-empty]')).toBeNull();
   });
 
-  test('a settle read that fails is retried: it closes once a read finally shows nothing', async () => {
+  test('submitting the last ask closes immediately without flashing nothing is waiting', async () => {
     const closes = { n: 0 };
     await show([ASK], closes);
+    await click('[data-ask-option="Red"]');
     reply = { items: [] };
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    await refreshApprovals();
-    await tick();
-    failReads = 1;
-    await vi.advanceTimersByTimeAsync(1600);
-    expect(closes.n).toBe(0);
-    await vi.advanceTimersByTimeAsync(700);
-    expect(closes.n).toBe(1);
-    vi.useRealTimers();
-  });
-
-  test('a settle read that fails then shows the ask again keeps the modal open (question 1 of N)', async () => {
-    const closes = { n: 0 };
-    await show([ASK], closes);
-    reply = { items: [] };
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    await refreshApprovals();
-    await tick();
-    failReads = 1;
-    await vi.advanceTimersByTimeAsync(1600);
-    reply = { items: [ASK] };
-    await vi.advanceTimersByTimeAsync(5000);
-    await tick();
-    expect(closes.n).toBe(0);
-    expect(document.querySelector('[data-ask-form]')).not.toBeNull();
-    vi.useRealTimers();
-  });
-
-  test('settle reads that keep failing close it once the retries are spent and the store holds nothing', async () => {
-    const closes = { n: 0 };
-    await show([ASK], closes);
-    reply = { items: [] };
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    await refreshApprovals();
-    await tick();
-    failReads = Infinity;
-    await vi.advanceTimersByTimeAsync(1600);
-    expect(closes.n).toBe(0);
-    await vi.advanceTimersByTimeAsync(2000);
-    expect(closes.n).toBe(1);
-    vi.useRealTimers();
-  });
-
-  test('a second empty spell gets its own full settle, not the first spell\'s leftover timer (G2)', async () => {
-    const closes = { n: 0 };
-    await show([ASK], closes);
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    reply = { items: [] };
-    await refreshApprovals();
-    await tick();
-    await vi.advanceTimersByTimeAsync(1000);
-    reply = { items: [ASK] };
-    await refreshApprovals();
-    await tick();
-    reply = { items: [] };
-    await refreshApprovals();
-    await tick();
-    await vi.advanceTimersByTimeAsync(700);
-    expect(closes.n).toBe(0);
-    await vi.advanceTimersByTimeAsync(1200);
-    expect(closes.n).toBe(1);
-    vi.useRealTimers();
+    await click('[data-ask-submit]');
+    await vi.waitFor(() => expect(closes.n).toBe(1));
+    expect(document.querySelector('[data-approval-empty]')).toBeNull();
   });
 
   test('opened with nothing waiting it stays and says so', async () => {

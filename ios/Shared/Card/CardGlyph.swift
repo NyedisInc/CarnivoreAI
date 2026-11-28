@@ -11,6 +11,7 @@ enum CardGlyphs {
 
     static func name(for kind: NotifyKind) -> String {
         switch kind {
+        case .yesno, .choice: return "question"
         case .crosstalk: return "message"
         case .notice: return "idle"
         default: return kind.rawValue
@@ -18,7 +19,7 @@ enum CardGlyphs {
     }
 
     private static let table: [String: [GlyphPart]] = [
-        "question": [.path("M9 9a3 3 0 1 1 4.5 2.6c-1 .6-1.5 1.1-1.5 2.4"), .circle(cx: 12, cy: 17.5, r: 0.8, filled: true), .circle(cx: 12, cy: 12, r: 9)],
+        "question": [.path("M8.5 8.5a3.5 3.5 0 1 1 5.2 3c-1.1.7-1.7 1.3-1.7 2.8"), .circle(cx: 12, cy: 18.2, r: 1.0, filled: true)],
         "choice": [.path("M8 6h12M8 12h12M8 18h12"), .circle(cx: 4, cy: 6, r: 1, filled: true), .circle(cx: 4, cy: 12, r: 1, filled: true), .circle(cx: 4, cy: 18, r: 1, filled: true)],
         "permission": [.path("M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"), .path("M9.5 12l2 2 3.5-4")],
         "file": [.path("M6 3h8l4 4v14H6z"), .path("M14 3v4h4M9 13h6M9 17h6")],

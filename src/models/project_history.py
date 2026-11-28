@@ -30,6 +30,13 @@ class HistorySession(BaseModel):
             "(issue #800) could still show it."
         ),
     )
+    offloaded: bool = Field(
+        False,
+        description=(
+            "True when this row's conversation was offloaded to the backup vault on purpose (the core marker) and its transcript is not on disk. "
+            "Its resume opens the restore prompt instead of reading as gone (#2803)."
+        ),
+    )
     created_at: Optional[str] = None
     last_seen_running_at: Optional[str] = None
     last_work_at: Optional[str] = None

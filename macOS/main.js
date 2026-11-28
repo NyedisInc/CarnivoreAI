@@ -32,7 +32,11 @@ const trayTerminal = require('./tray-terminal');
 const { createQuitHandler } = require('./quit-sequence');
 const { createAppWindow } = require('./app-window');
 const { createActivateHandler } = require('./dock-activate');
-const qrWindow = require('./qr-window');
+const qrWindow = {
+  showUrlQrWindow: (...args) => require('./qr-window').showUrlQrWindow(...args),
+  fetchLoadedCode: (...args) => require('./qr-window').fetchLoadedCode(...args),
+  showQrPairingWindow: (...args) => require('./qr-window').showQrPairingWindow(...args),
+};
 const { createStatusWindow } = require('./status-window');
 const { createUpdateWindow, windowFacts } = require('./update-window');
 const { updateUxFor, createNoticeMemo } = require('./update-ux');
@@ -43,7 +47,7 @@ const { createMember } = require('./member-window');
 const { registerDesktopSettings, senderAllowed } = require('./desktop-settings');
 const { registerOpenInTerminal } = require('./open-in-terminal');
 const { registerFolderTargets } = require('./folder-targets');
-const { createFinderDrop, wireFinderDrop } = require('./finder-drop');
+const { wireFinderDrop } = require('./finder-drop');
 const { createTrayMenu } = require('./tray-menu/controller');
 const { createTrayPresence, readMenuBarIcon } = require('./tray-presence');
 const { createWindowState } = require('./window-state');
@@ -121,8 +125,6 @@ let systemQuit = false;
 let serverManager = null;
 
 const autoUpdateModule = require('./auto-update');
-const updateVerify = require('./update-verify');
-const { createUpdateBridge } = require('./update-bridge');
 const { createUpdateEngineControl } = require('./update-engine-control');
 let autoUpdateInstance = null;
 
@@ -138,7 +140,7 @@ const autoUpdate = {
         }),
         getAutoUpdate: () => autoUpdateModule.readAutoUpdate(configPath()),
         isQuiet: () => (trayMenu ? trayMenu.isQuiet() : null),
-        verifyUpdate: (zipPath) => updateVerify.verifyStagedUpdate({ zipPath, currentVersion: app.getVersion(), currentPurpose: readRunningPurpose() }),
+        verifyUpdate: (zipPath) => require('./update-verify').verifyStagedUpdate({ zipPath, currentVersion: app.getVersion(), currentPurpose: readRunningPurpose() }),
         beforeInstall: updateEngine.stopForInstall,
         recoverEngine: updateEngine.restartAfterFailedInstall,
         onChange: () => { refreshTray(); autoUpdate.bridge().push(); applyUpdateUx(); },
@@ -149,7 +151,7 @@ const autoUpdate = {
   },
   bridge() {
     if (!autoUpdateBridge) {
-      autoUpdateBridge = createUpdateBridge({
+      autoUpdateBridge = require('./update-bridge').createUpdateBridge({
         controller: this,
         getApi: () => (trayMenu ? trayMenu.api() : null),
         appVersion: () => app.getVersion(),
@@ -295,11 +297,13 @@ function rebindDeps() {
 }
 
 async function waitForServerHealth(timeoutMs = 30000) {
+  if (serverManager && serverManager.getState() === 'running' && serverManager.getCachedHealth(1500)) return true;
   const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
+  const delays = [50, 100, 150, 250];
+  for (let attempt = 0; Date.now() - start < timeoutMs; attempt += 1) {
     const health = await serverManager.getHealth();
     if (health) return true;
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise((r) => setTimeout(r, delays[Math.min(attempt, delays.length - 1)]));
   }
   return false;
 }
@@ -419,7 +423,7 @@ app.whenReady().then(async () => {
   // Force immediate health check
   const health = serverManager.startBlockedReason
     ? null
-    : await serverManager.getHealth();
+    : (serverManager.getCachedHealth(2000) || await serverManager.getHealth());
   if (health && serverManager.getState() !== 'running') {
     console.log('Initial health check succeeded, marking as running');
     serverManager.state = 'running';
@@ -427,12 +431,13 @@ app.whenReady().then(async () => {
       serverManager.startTime = Date.now();
     }
   }
+  if (health) currentStats = health;
 
   void venvRetire.recordVenvOutcome({ serverManager, userData: app.getPath('userData'), serverDir });
 
   refreshTray();
 
-  startStatsPolling();
+  startStatsPolling(health);
 
   // once per launch
   rebindAfterPair.maybeAutoOpenFirstRun({ serverManager, appWindow, waitForServerHealth, settle: () => rebindAfterPair.settleBeforeFirstWindow(rebindDeps()) });
@@ -464,7 +469,7 @@ function openWindowForThisLaunch() {
     if (!up) return; await rebindAfterPair.settleBeforeFirstWindow(rebindDeps());
     if (serverManager.startBlockedReason) return;
     if (!appWindow.isOpen()) appWindow.open();
-    appWindow.restore();
+    appWindow.restore({ staggerMs: 350, afterMainLoad: true });
     console.log('[launch] window opened at launch');
   }).catch((err) => console.warn('[launch] window not opened:', err && err.message));
 }
@@ -496,10 +501,11 @@ function startTrayMenu() {
 
 const STEADY_HEALTH_POLL_MS = 15000;
 
-function startStatsPolling() {
+function startStatsPolling(initialHealth = null) {
   let pollInterval = STEADY_HEALTH_POLL_MS;
   let fastPollCount = 0;
   const maxFastPolls = 12;
+  let pendingInitialHealth = initialHealth;
 
   const pollOnce = async () => {
     const state = serverManager.getState();
@@ -514,7 +520,9 @@ function startStatsPolling() {
     if (windowGuard.fastPoll(state)) pollInterval = windowGuard.interval;
 
     if (state === 'running' || state === 'starting' || serverManager.isProcessRunning()) {
-      const health = await serverManager.getHealth();
+      const seedHealth = pendingInitialHealth;
+      pendingInitialHealth = null;
+      const health = seedHealth || await serverManager.getHealth();
       serverManager.superviseTick(Boolean(health));
       await windowGuard.onHealth(Boolean(health), health);
       if (health) {
@@ -686,7 +694,7 @@ const links = wireAppLinks({
 });
 
 const finderDrop = wireFinderDrop({
-  app, opener: () => createFinderDrop({ api: engineApi, dialog, loadTranslator: loadStrings, appWindow }),
+  app, opener: () => require('./finder-drop').createFinderDrop({ api: engineApi, dialog, loadTranslator: loadStrings, appWindow }),
 });
 
 app.on('second-instance', (_event, argv) => links.secondInstance(argv));

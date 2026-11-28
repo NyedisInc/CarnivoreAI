@@ -46,7 +46,8 @@ def row(w):
 
 
 def consented_then_edited(w):
-    (w.src / "carnivore.json").write_text(json.dumps({"permissions": [{"name": "notify", "reason": "says the time"}]}))
+    manifest = json.loads((w.src / "carnivore.json").read_text())
+    (w.src / "carnivore.json").write_text(json.dumps({**manifest, "permissions": {"write": ["notify"], "reasons": {"notify": "says the time"}}}))
     assert w.client.put(f"{URL}/switch", json={"enabled": True}, headers=w.owner).status_code == 200
     first = post(w).json()
     r = w.client.put(CPLUG, json={"revision": row(w)["revision"], "enabled": True, "grants": {"app": ["notify"]}, "consent": consent_body(w)},
@@ -115,8 +116,8 @@ def test_boot_switch_first_call_and_crash_restart_refuse_owed_code(world, spawne
 
 
 def no_permission_plugin(w) -> None:
-    manifest = json.loads((w.src / "cplug.json").read_text())
-    (w.src / "cplug.json").write_text(json.dumps({**manifest, "permissions": {"app": []}, "routes": ["ping"]}))
+    manifest = json.loads((w.src / "carnivore.json").read_text())
+    (w.src / "carnivore.json").write_text(json.dumps({**manifest, "permissions": {}, "ui": {"routes": ["ping"]}}))
 
 
 def test_resync_of_a_consented_no_permission_plugin_answers_needs_approval_like_its_row(world, spawned):

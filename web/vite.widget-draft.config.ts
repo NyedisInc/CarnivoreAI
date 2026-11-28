@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { join, resolve, sep } from 'node:path';
 import { popupFocusLast } from './vite.widget-harness.shared';
 import { draftOverlay } from './vite.widget-draft.plugin';
+import { tomlPlugin } from './vite.toml-plugin';
 
 const root = fileURLToPath(new URL('./src/widget-harness', import.meta.url));
 const repo = fileURLToPath(new URL('..', import.meta.url)).replace(/[/\\]$/, '');
@@ -20,7 +21,7 @@ export default defineConfig({
     root,
     cacheDir,
     base: './',
-    plugins: [draftOverlay(draftDir, repo), svelte(), tailwindcss(), popupFocusLast()],
+    plugins: [draftOverlay(draftDir, repo), tomlPlugin(), svelte(), tailwindcss(), popupFocusLast()],
     build: {
         outDir,
         emptyOutDir: true,

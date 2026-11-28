@@ -13,6 +13,7 @@ from src.core.db_models import (
     SESSION_CLAUDE_UUID_SOURCE_REGISTRY,
     SESSION_CLAUDE_UUID_SOURCES,
 )
+from src.core.session_conversation_takeover import RETIRED_NO_PANE_SQL
 from src.core.session_lineage import row_for_claude_uuid
 from src.core.session_store import get_instance, sessions_table_ready
 from src.core.trail_entry import utc_now
@@ -84,6 +85,7 @@ def bind_correlated_uuid(
     source: str = SESSION_CLAUDE_UUID_SOURCE_CORRELATED,
     replaces_uuid: Optional[str] = None,
     takes_from_row_id: Optional[int] = None,
+    release_requires_retired_no_pane: bool = False,
     now: Optional[str] = None,
 ) -> BindResult:
     stamp = now or utc_now()
@@ -162,12 +164,21 @@ def bind_correlated_uuid(
         conn.execute(_SAVEPOINT_OPEN)
     try:
         if release_from is not None:
-            conn.execute(
+            guard = f" AND {RETIRED_NO_PANE_SQL}" if release_requires_retired_no_pane else ""
+            released = conn.execute(
                 "UPDATE sessions SET claude_session_uuid = NULL, "
                 "claude_session_uuid_source = NULL, updated_at = ? "
-                "WHERE id = ? AND claude_session_uuid = ?",
+                "WHERE id = ? AND claude_session_uuid = ?" + guard,
                 (stamp, int(release_from), claude_uuid),
             )
+            if release_requires_retired_no_pane and released.rowcount != 1:
+                conn.execute(_SAVEPOINT_ROLLBACK)
+                conn.execute(_SAVEPOINT_RELEASE)
+                return BindResult(
+                    outcome=BIND_UNRESOLVED,
+                    row_id=int(anchor["id"]),
+                    detail="the holder is no longer an archived row without a tmux instance, so it keeps the conversation",
+                )
         conn.execute(
             "UPDATE sessions SET claude_session_uuid = ?, "
             "claude_session_uuid_source = ?, updated_at = ? WHERE id = ?",

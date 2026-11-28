@@ -1,0 +1,1 @@
+import{Ro as e,Uo as t,Vo as n}from"./popout-chunk-error-reason.js";var r=`/api/v1`;function i(e,t){return`${r}/feature-media/${encodeURIComponent(e)}/${encodeURIComponent(t)}`}function a(r,a){return n.state===`signed-out`?Promise.reject(Error(`not signed in`)):t(i(r,a).slice(e.length))}export{a as t};

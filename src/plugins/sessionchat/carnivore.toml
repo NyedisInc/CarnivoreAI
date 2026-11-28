@@ -1,0 +1,20 @@
+schema = 2
+api_version = 1
+id = "sessionchat"
+name = "session chat"
+description = "keeps a small local index of every claude session transcript (positions, counts and threads, never the text) so a session can be read as a chat. off until you switch it on"
+name_key = "cplug.sessionchat.name"
+description_key = "cplug.sessionchat.description"
+version = "1.0.0"
+kind = "plugin"
+icon = "chat"
+author = "Alex (example-owner)"
+license = "MIT"
+min_app_version = "1.16.4"
+tier = "builtin"
+default_enabled = false
+data = []
+
+[owns]
+strings = ["cplug.sessionchat."]
+tests = ["tests/python/cplugs/sessionchat/"]

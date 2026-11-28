@@ -13,8 +13,8 @@ import structlog
 
 from src.core import db
 from src.core.companies import store as companies
+from src.core.swarm.types import CreateRefused, TurnOnError
 from src.core.swarm import body, body_create, profiles, slugs, store, switch, thread_port
-from src.core.swarm.project_agent import TurnOnError
 
 logger = structlog.get_logger()
 
@@ -61,7 +61,7 @@ def make_repo_folder(path: str) -> None:
         raise TurnOnError(f"cannot create {path}: {type(exc).__name__}") from exc
     try:
         body_create.ensure_repo(path)
-    except body_create.CreateRefused as exc:
+    except CreateRefused as exc:
         shutil.rmtree(path, ignore_errors=True)
         raise TurnOnError(str(exc)) from exc
 
@@ -134,7 +134,7 @@ async def turn_on(app_state: Any, company_id: int, launch_profile: Optional[str]
             await asyncio.to_thread(make_repo_folder, hq)
         try:
             agent = await body.run_db(lambda c: _register(c, company, hq, launch_profile))
-        except (sqlite3.Error, body_create.CreateRefused, companies.CompanyNotFound) as exc:
+        except (sqlite3.Error, CreateRefused, companies.CompanyNotFound) as exc:
             logger.warning("swarm_company_register_failed", company_id=company_id, error_type=type(exc).__name__)
             await asyncio.to_thread(discard_unregistered, hq)
             raise TurnOnError("the company's HQ folder could not be registered as a project; nothing was kept, try again") from exc

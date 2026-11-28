@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field, fields, replace
 from pathlib import Path
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 import structlog
 
@@ -66,8 +66,10 @@ class ScanResult:
 
     counts: Dict[str, int] = field(default_factory=lambda: {o: 0 for o in K.OUTCOMES})
     changed: List[Row] = field(default_factory=list)
+    added: List[Row] = field(default_factory=list)
     present: List[Row] = field(default_factory=list)
     removed: List[Row] = field(default_factory=list)
+    moved: List[Tuple[Row, Row]] = field(default_factory=list)
     complete_roots: Set[str] = field(default_factory=set)
     unreadable_roots: Set[str] = field(default_factory=set)
     discovery_unreadable: int = 0
@@ -169,6 +171,8 @@ def _one(result: ScanResult, obs: Observed, old: Optional[Row], now: str, lstat:
         _keep_unread(result, obs, old, st, now, dataless=False)
         return
     result.counts[outcome] += 1
+    if outcome == K.OUT_ADDED:
+        result.added.append(row)
     if row is not None:
         result.changed.append(row)
     result.present.append(row if row is not None else old)
@@ -198,4 +202,21 @@ def scan(prior: Dict[str, Row], observed: Iterable[Observed], *, complete_roots:
         result.counts[K.OUT_REMOVED] += 1
         result.changed.append(gone)
         result.removed.append(gone)
+    _pair_moves(result, prior)
     return result
+
+
+def _pair_moves(result: ScanResult, prior: Dict[str, Row]) -> None:
+    from src.core.transcript_manifest.moves import pair_moves  # noqa: PLC0415
+
+    added = [r for r in result.added if r.path not in prior]
+    pairs = pair_moves(result.removed, added)
+    if not pairs:
+        return
+    result.moved.extend(pairs)
+    paired = {gone.path for gone, _ in pairs}
+    result.removed = [r for r in result.removed if r.path not in paired]
+    result.counts[K.OUT_REMOVED] -= len(pairs)
+    result.counts[K.OUT_ADDED] -= len(pairs)
+    result.counts[K.OUT_MOVED] += len(pairs)
+    logger.info("transcript_manifest_moves_paired", moved=len(pairs), sample=[new.path for _, new in pairs[:3]])

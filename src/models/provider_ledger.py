@@ -6,7 +6,7 @@ from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-ProviderKind = Literal["claude", "codex"]
+ProviderKind = Literal["claude", "codex", "antigravity"]
 
 CredentialState = Literal[
     "ok",

@@ -58,7 +58,7 @@ DECISIONS: Dict[str, Decision] = {
     **_all(RESTORE, "stats.db", "stats_annotations"),
     **_all(SKIP, MAIN, "work_card_deals work_held_sends", S_FINAL),
     **_all(SKIP, MAIN, "pack_session_moves pack_placements peer_sessions project_storage project_replicas pack_bundle_tips "
-           "pack_carried_trust pack_migrations work_callers work_reads work_send_picks", S_MACHINE),
+           "pack_carried_trust pack_migrations work_callers work_reads work_send_picks session_creators", S_MACHINE),
     **_all(SKIP, MAIN, "installed_items installed_item_targets installed_loadout_members", S_REINSTALL),
     **_all(SKIP, MAIN, "crosstalk_contacts crosstalk_watches messaging_bindings messaging_notices spectator_links work_card_grants",
            S_GRANT),

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple, Optional, Union
 
 import structlog
 
@@ -38,7 +38,7 @@ _STALE_KINDS = frozenset({FRAME_PTY, FRAME_PAINT, FRAME_RESYNC})
 class ViewerFrame(NamedTuple):
 
     kind: str
-    payload: str
+    payload: Union[bytes, str]
 
 
 class ResyncViewerStream(BoundedStream):
@@ -165,19 +165,19 @@ def new_viewer_stream(
     return BoundedStream(**kwargs)
 
 
-def offer_pty(stream: BoundedStream, encoded: str) -> str:
+def offer_pty(stream: BoundedStream, payload: Union[bytes, str]) -> str:
     if getattr(stream, "paused", False):
         stream.held_chunks = getattr(stream, "held_chunks", 0) + 1
         return OFFER_ACCEPTED
-    return stream.offer(ViewerFrame(FRAME_PTY, encoded), len(encoded))
+    return stream.offer(ViewerFrame(FRAME_PTY, payload), len(payload))
 
 
 def offer_text(stream: BoundedStream, text: str) -> str:
     return stream.offer(ViewerFrame(FRAME_TEXT, text), len(text))
 
 
-def offer_paint(stream: BoundedStream, encoded: str) -> str:
-    return stream.offer(ViewerFrame(FRAME_PAINT, encoded), len(encoded))
+def offer_paint(stream: BoundedStream, payload: Union[bytes, str]) -> str:
+    return stream.offer(ViewerFrame(FRAME_PAINT, payload), len(payload))
 
 
 def is_viewer_stream(candidate: Any) -> bool:

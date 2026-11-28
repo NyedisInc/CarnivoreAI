@@ -60,6 +60,15 @@ def test_summary_counts_the_vault_and_health_reports_the_engine(rig):
     assert set(health) >= {"known", "uncovered", "on_disk", "stale_hours", "unavailable", "over_cap", "damaged"}
 
 
+def test_summary_reassesses_when_a_capture_follows_an_empty_assessment(rig):
+    client, _state, _corpus, _tmp = rig
+    initial = client.get(f"{BASE}/summary").json()
+    assert initial["conversations"] == 0 and initial["points"] == 0
+    _kill()
+    after = client.get(f"{BASE}/summary").json()
+    assert after["conversations"] == 1 and after["points"] == 1 and after["used_bytes"] > 0
+
+
 def _set_location(client: TestClient, value: str):
     revision = client.get(BASE).json()["revision"]
     return client.put(BASE, json={"revision": revision, "settings": {"vaultLocation": value}})

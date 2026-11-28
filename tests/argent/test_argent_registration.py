@@ -154,6 +154,7 @@ def test_a_later_mint_register_keeps_the_project_and_computer_p5_registered(env)
 def test_feature_off_has_no_subscriber_and_makes_no_call(tmp_path, monkeypatch):
     monkeypatch.setattr(app_settings, "state_dir_override", tmp_path)
     monkeypatch.setattr(session_events, "_listeners", [])
+    monkeypatch.setattr(session_events, "_tasks", set())
     assert session_events._listeners == []
     run(session_events.announce(object(), STARTED, "carnivore_api"))
     session_events.schedule(object(), STARTED, "carnivore_api")
@@ -177,3 +178,22 @@ def test_a_deleted_sessions_name_reused_mints_a_fresh_id_but_a_stopped_one_keeps
     assert refs.ref_for_uuid("ten_1", "uuid-7") == new_ref
     with pytest.raises(AssertionError):
         assert new_ref == "carnivore_api"
+
+
+def test_the_agent_id_is_read_from_argents_nested_register_answer():
+    from src.core.argent.mint import registered_agent_id
+    assert registered_agent_id({"outcome": "created", "session": {"agent_id": "a1", "session_uuid": "s"}}) == "a1"
+    assert registered_agent_id({"agent_id": "a2"}) == "a2"
+    assert registered_agent_id({"outcome": "created", "session": {}}) == ""
+
+
+def test_the_mint_reads_argents_real_wire_shapes(env):
+    run(session_events.emit(started()))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path.endswith("/register"):
+            return httpx.Response(200, json={"outcome": "created", "session": {"agent_id": "agent-1", "session_uuid": "s"}})
+        return httpx.Response(201, json={"id": "k1", "agent_id": "agent-1", "plaintext_key": FIXTURE_KEY, "key_prefix": "x"})
+
+    key = run(mint.mint_session_key("carnivore_api", "api", "copilot", transport=httpx.MockTransport(handler)))
+    assert str(key) == FIXTURE_KEY and key.key_id == "k1"

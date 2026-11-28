@@ -62,13 +62,16 @@ def overlay_peers(conn: sqlite3.Connection, hosts: list) -> list:
     from dataclasses import replace
 
     from src.core.federation import peer_hosts
-    from src.core.pack.machines import runtime
+    from src.core.pack.machines import capabilities, runtime
 
-    peers = {p.key: p for p in peer_hosts.list_peers(conn)} if any(h.kind == "peer" for h in hosts) else {}
+    mesh = capabilities.mesh_on()
+    peers = {p.key: p for p in peer_hosts.list_peers(conn, include_mesh=mesh)} if any(h.kind == "peer" for h in hosts) else {}
     out = []
     for host in hosts:
         peer = peers.get(host.key) if host.kind == "peer" else None
-        if peer is None:
+        if peer is not None and peer.back_kind == peer_hosts.MESH_BACK_KIND:
+            out.append(replace(host, computer_install_id=peer.peer_install_id))
+        elif peer is None:
             out.append(host)
         elif peer.peer_state != "connected":
             out.append(replace(host, enabled=False, probe_state="refused", probe_detail=PEER_NOT_CONNECTED))

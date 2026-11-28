@@ -20,8 +20,10 @@ import {
   featuresFor,
   focusMainWindow,
   hasMainWindow,
+  isWidgetId,
   openHomePopout,
   parseGeometry,
+  parseWidgetTarget,
   rememberGeometry,
 } from './popout';
 
@@ -121,4 +123,14 @@ test('the pop-out imports nothing that can open a terminal or vote on a pane siz
     expect(imports).toMatch(/import/);
     expect(imports).not.toMatch(/terminal|size-master|drawer|sessions\/store/i);
   }
+});
+
+test('isWidgetId and parseWidgetTarget support hyphenated plugin ids while requiring :<target>', () => {
+  expect(isWidgetId('core.notes')).toBe(true);
+  expect(isWidgetId('my-plug.panel:panel-ab12cd34')).toBe(true);
+  expect(isWidgetId('linear-sync.issues:default')).toBe(true);
+  expect(isWidgetId('huddle.chat')).toBe(false);
+  expect(isWidgetId('my-plug.panel')).toBe(false);
+  expect(parseWidgetTarget('core.notes')).toEqual({ kind: 'core.notes', target: null });
+  expect(parseWidgetTarget('my-plug.panel:panel-ab12cd34')).toEqual({ kind: 'my-plug.panel', target: 'panel-ab12cd34' });
 });

@@ -16,6 +16,7 @@ export interface CellProps {
   page?: LayoutPage;
   scope?: SessionScope | null;
   options?: PlacementOptions;
+  /* the Task Manager */
   onOption?: (option: string, value: boolean | number | string) => void;
 }
 

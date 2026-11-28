@@ -15,6 +15,9 @@ import { pinGridViewport } from '../opscenter/engine/viewport.svelte';
 import { refreshAnalytics } from '../opscenter/cells/analytics/state.svelte';
 import { PREVIEW_CLASSIC_SCRIPTS } from './protocol';
 import type { StandardSize } from '../opscenter/widgets/standard-sizes';
+import { bootPluginCells } from '../plugins/host/cell-boot';
+
+bootPluginCells();
 
 const CONTAINER = 'widget-preview';
 

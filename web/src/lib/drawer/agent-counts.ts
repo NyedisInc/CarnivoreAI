@@ -25,7 +25,8 @@ export function rowCounts(row: CountRow): RowCounts | null {
   if (row.asleep === true || row.archived === true || row.closed === true || status === 'asleep') return null;
   const unread = row.unread === true;
   if (status === 'dead' || status === 'stopped') return { active: false, working: false, unread };
-  return { active: true, working: status === 'working' || status === 'working_subagent', unread };
+  const backgroundOnly = status === 'working_subagent' && row.activity_hint === 'background';
+  return { active: true, working: (status === 'working' || status === 'working_subagent') && !backgroundOnly, unread };
 }
 
 export function rowCountsAs(row: CountRow, kind: CountKind): boolean {

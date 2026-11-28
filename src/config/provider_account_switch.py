@@ -12,7 +12,7 @@ DEFAULT_THRESHOLD_PERCENT = 99
 
 MIN_THRESHOLD_PERCENT = 50
 
-SwitchProvider = Literal["claude", "codex"]
+SwitchProvider = Literal["claude", "codex", "antigravity"]
 
 _ID_SHAPE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
@@ -28,6 +28,8 @@ class ProviderAccountSwitchConfig(BaseModel):
         active_claude: the account id new Claude sessions launch under,
             or None for "not chosen", which injects nothing.
         active_codex: the same, for Codex.
+        active_antigravity: the same, for Antigravity (the Google login
+            currently swapped into agy's keychain item).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -38,8 +40,9 @@ class ProviderAccountSwitchConfig(BaseModel):
     )
     active_claude: Optional[str] = None
     active_codex: Optional[str] = None
+    active_antigravity: Optional[str] = None
 
-    @field_validator("active_claude", "active_codex")
+    @field_validator("active_claude", "active_codex", "active_antigravity")
     @classmethod
     def _pointer_is_an_id(cls, value: Optional[str]) -> Optional[str]:
         if value is not None and not _ID_SHAPE.fullmatch(value):
@@ -51,10 +54,12 @@ class ProviderAccountSwitchConfig(BaseModel):
             return self.active_claude
         if provider == "codex":
             return self.active_codex
+        if provider == "antigravity":
+            return self.active_antigravity
         return None
 
 
 def pointer_field(provider: str) -> str:
-    if provider not in ("claude", "codex"):
+    if provider not in ("claude", "codex", "antigravity"):
         raise ValueError(f"no account switch exists for provider {provider!r}")
     return f"active_{provider}"

@@ -133,6 +133,7 @@ export class TimelineLanes {
             const tl = await this.#readers.timeline(uuid);
             if (generation === this.#generation) this.#set(uuid, { status: 'ready', tl });
         } catch {
+            // cannot be read
             if (generation === this.#generation) this.#set(uuid, { status: 'error', tl: before });
         } finally {
             this.#inFlight.delete(uuid);

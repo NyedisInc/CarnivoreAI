@@ -56,7 +56,7 @@ def targets_for(slot: str, home: Path, accounts_root: Path, accounts: Iterable[A
             return []
         folder = found[0].claude_config_dir if kind == "claude" else found[0].codex_home
         return [Path(os.path.expanduser(folder))] if folder else []
-    base = {"claude": home / ".claude", "codex": home / ".codex", "agents": home / ".agents"}[kind]
+    base = {"claude": home / ".claude", "codex": home / ".codex", "agents": home / ".agents", "agy": home / ".gemini" / "config"}[kind]
     out = [base]
     pattern = _CLAUDE_RELAY_RE if kind == "claude" else _CODEX_RELAY_RE if kind == "codex" else None
     if pattern is not None:

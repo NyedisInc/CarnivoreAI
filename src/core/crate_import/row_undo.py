@@ -108,6 +108,27 @@ def _pk_of(conn: sqlite3.Connection, name: str) -> List[str]:
     return [r[1] for r in sorted((r for r in info if r[5] > 0), key=lambda r: r[5])]
 
 
+WHY_CONVERSATION_OWNED = "a session that was not part of the import now owns this conversation"
+
+
+def _keep_conversations_owned_elsewhere(conn: sqlite3.Connection, tables: Dict[str, Any],
+                                        cand: Dict[str, Set[Tuple[Any, ...]]], out: StorePlan) -> None:
+    index = tables.get("conversation_index")
+    if not index or "conversation_index" not in cand or not _has_table(conn, "sessions") or "sessions" not in tables:
+        return
+    import_rows = cand.get("sessions", set())
+    sess_pk = tables["sessions"]["pk"] or ["rowid"]
+    if "conversation_id" not in index["cols"]:
+        return
+    pk_cols = ", ".join(rj.quote(c) for c in sess_pk)
+    for key in sorted(cand["conversation_index"], key=repr):
+        cid = _value(conn, index, "conversation_index", key, "conversation_id")
+        owners = conn.execute(f"SELECT {pk_cols} FROM main.sessions WHERE claude_session_uuid = ?", (cid,)).fetchall()
+        if any(_key_tuple(o) not in import_rows for o in owners):
+            cand["conversation_index"].discard(key)
+            out.kept.append({"what": _row_label("conversation_index", key), "why": WHY_CONVERSATION_OWNED})
+
+
 def plan_store(path: Path, store: str, tables: Dict[str, Any]) -> StorePlan:
     out = StorePlan(store)
     conn = connect_readonly(path, timeout=READONLY_TIMEOUT_LONG_S)
@@ -133,6 +154,7 @@ def plan_store(path: Path, store: str, tables: Dict[str, Any]) -> StorePlan:
                     out.reverts.setdefault(tbl, []).append((key, old))
                 elif now is not None:
                     out.kept.append({"what": _row_label(tbl, key), "why": WHY_CHANGED})
+        _keep_conversations_owned_elsewhere(conn, tables, cand, out)
         edges = _edges(conn, store, tables)
         changed = True
         while changed:

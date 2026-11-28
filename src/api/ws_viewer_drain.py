@@ -18,6 +18,13 @@ from src.core.perf_hooks.monitor import PERF, frame_topic
 
 logger = structlog.get_logger()
 
+
+def _as_raw_bytes(payload: bytes | str) -> bytes:
+    if isinstance(payload, bytes):
+        return payload
+    return base64.b64decode(payload)
+
+
 _CLOSED_SOCKET_MARKERS = ("once a close message has been sent", "after sending 'websocket.close'")
 
 
@@ -69,32 +76,16 @@ async def _drain_viewer(
                     PERF.record_ws("terminal_out", frame.kind, len(screen), stream.label)
                 continue
 
-            raw_bytes = base64.b64decode(frame.payload)
-            if PERF.enabled:
-                PERF.record_ws("terminal_out", frame.kind, len(raw_bytes), stream.label)
             if frame.kind == viewer_fanout.FRAME_PAINT:
+                raw_bytes = _as_raw_bytes(frame.payload)
+                if PERF.enabled:
+                    PERF.record_ws("terminal_out", frame.kind, len(raw_bytes), stream.label)
                 await websocket.send_bytes(raw_bytes)
                 continue
 
-            _services = getattr(websocket.app.state, "services", None)
-            _registry = getattr(_services, "registry", None)
-            _backend = None
-            if _registry is not None:
-                if session_id:
-                    _backend = _registry.get_backend(session_id)
-                else:
-                    _backend = _registry.current_backend()
-            in_replay = (
-                _backend is not None
-                and getattr(_backend, "replay_in_progress", False)
-            )
-            if log_monitor and not in_replay:
-                try:
-                    text = raw_bytes.decode("utf-8", errors="replace")
-                    log_monitor._detect_patterns(text)
-                except Exception as e:
-                    logger.debug("pattern_detection_error", error=str(e))
-
+            raw_bytes = _as_raw_bytes(frame.payload)
+            if PERF.enabled:
+                PERF.record_ws("terminal_out", frame.kind, len(raw_bytes), stream.label)
             await websocket.send_bytes(raw_bytes)
     except asyncio.CancelledError:
         raise

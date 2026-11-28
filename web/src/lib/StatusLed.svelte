@@ -46,6 +46,7 @@
             host_offline: hostOffline,
             usage_limit: usageLimit,
             login_expired: loginExpired,
+            activity_hint: activityHint,
         }),
     );
     const label = $derived(statusTitle(key, statusSource, activityHint, unread, parkedSummary, hostOffline, usageLimit, loginExpired));

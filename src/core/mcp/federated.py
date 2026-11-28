@@ -11,7 +11,7 @@ from urllib.parse import urlencode
 import structlog
 from fastapi import HTTPException
 
-from src.core.federation import peer_forward, peer_hosts, peer_links, peer_listing
+from src.core.federation import mesh_peers, peer_forward, peer_hosts, peer_links, peer_listing
 from src.core.federation.peer_forward import SID, UUID
 from src.core.hosts.ddl import LOCAL_HOST_KEY
 from src.core.mcp.common import ToolError
@@ -45,7 +45,7 @@ def _target(wire_id: str) -> Optional[peer_forward.Target]:
 
 def _client(target: peer_forward.Target) -> Any:
     links = peer_links.LINKS
-    client = links.client(target.peer.peer_install_id) if links is not None else None
+    client = mesh_peers.session_client(links, target.peer.peer_install_id)
     if client is None:
         raise ToolError(f"{target.peer.label} is not connected right now")
     return client
@@ -96,12 +96,14 @@ async def find_peer(name: str) -> Any:
 
     def read() -> list:
         with closing(peer_auth.open_db()) as conn:
-            return peer_hosts.list_peers(conn)
+            return peer_hosts.list_peers(conn, include_mesh=True)
 
     for peer in await asyncio.to_thread(read):
-        if name.lower() in (peer.key.lower(), str(peer.label).lower()):
+        wanted = name.lower()
+        if wanted in (peer.key.lower(), str(peer.label).lower(), str(peer.peer_install_id).lower()) or wanted == peer.key.lower().removeprefix("peer-"):
             return peer
-    raise ToolError(f"no paired computer named {name!r}; the host column of sessions_list names them")
+    from src.core.crosstalk.spawn_peer_folder import SpawnReason
+    raise SpawnReason(f"no paired computer named {name!r}; use its label or host key from the host column of sessions_list")
 
 
 def standin(peer: Any) -> Any:

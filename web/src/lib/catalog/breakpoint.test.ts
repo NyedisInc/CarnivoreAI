@@ -104,7 +104,6 @@ describe('D2 - every consequential control shows focus through the shared edge',
 
 describe('D3 - a thumb can hit every consequential control', () => {
     const TARGETS: Array<[string, RegExp]> = [
-        ['CatalogToolbar.svelte', /min-height:\s*44px/],
         ['ConsentScripts.svelte', /min-height:\s*44px/],
         ['ConfirmSheet.svelte', /min-height:\s*44px/],
         ['OneShotPicker.svelte', /min-height:\s*44px/],
@@ -119,6 +118,13 @@ describe('D3 - a thumb can hit every consequential control', () => {
             expect(block, component).toMatch(rule);
         });
     }
+
+    test('the toolbar draws its segments with the base Segmented, which owns their 44px target', () => {
+        // does not exist yet
+        const source = fs.readFileSync(path.join(ROOT, 'web/src/lib/catalog/CatalogToolbar.svelte'), 'utf8');
+        expect(source).toMatch(/<Segmented\b/);
+        expect(source).not.toMatch(/oc-seg__item/);
+    });
 
     test('the screen\'s own buttons are the shared `.oc-btn`, thumb-sized in the primitive', () => {
         const controls = fs.readFileSync(path.join(ROOT, 'web/src/opscenter/controls.css'), 'utf8');

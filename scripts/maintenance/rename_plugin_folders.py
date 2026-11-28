@@ -9,9 +9,44 @@ import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, FrozenSet, Iterable, List, Optional, Protocol, Sequence, Tuple, cast
 
+from scripts.maintenance import huddle_rename_rules
 from scripts.maintenance import plugin_rename_rules as rules
+
+
+
+class RuleSet(Protocol):
+
+    FOLDER_MOVES: Tuple[Tuple[str, str], ...]
+
+    def is_excluded(self, path: str) -> bool:
+        pass
+
+    def new_path(self, path: str) -> str:
+        pass
+
+    def old_path(self, path: str) -> str:
+        pass
+
+    def in_old_folder(self, path: str) -> bool:
+        pass
+
+    def web_children(self, files: Iterable[str]) -> FrozenSet[str]:
+        pass
+
+    def apply_text_rules(self, path: str, text: str, counts: Dict[str, int], children: FrozenSet[str] = frozenset()) -> str:
+        pass
+
+    def leftover_hits(self, path: str, text: str, children: FrozenSet[str] = frozenset()) -> List[str]:
+        pass
+
+    def invariant_counts(self, texts: Iterable[str]) -> Dict[str, int]:
+        pass
+
+
+RULE_SETS: Dict[str, RuleSet] = {"folders": cast(RuleSet, rules), "huddle": cast(RuleSet, huddle_rename_rules)}
+DEFAULT_RULES: RuleSet = RULE_SETS["folders"]
 
 EXIT_OK, EXIT_REFUSED, EXIT_CANNOT = 0, 1, 2
 MAX_CHECK_LINES = 60
@@ -53,12 +88,12 @@ def tracked_files(root: Path) -> List[str]:
     return [p for p in git(root, "ls-files", "-z").decode("utf-8", "surrogateescape").split("\0") if p]
 
 
-def ensure_clean(root: Path) -> None:
+def ensure_clean(root: Path, rs: RuleSet = DEFAULT_RULES) -> None:
     dirty = git(root, "status", "--porcelain", "--untracked-files=no").decode("utf-8", "replace").strip()
     if dirty:
         first = dirty.splitlines()[:5]
         raise RenameError("refusing a dirty tree (commit or stash your changes first):\n  " + "\n  ".join(first))
-    stray = git(root, "ls-files", "-o", "--exclude-standard", "-z", "--", *[old for old, _ in rules.FOLDER_MOVES]).decode("utf-8", "replace")
+    stray = git(root, "ls-files", "-o", "--exclude-standard", "-z", "--", *[old for old, _ in rs.FOLDER_MOVES]).decode("utf-8", "replace")
     if stray:
         names = [p for p in stray.split("\0") if p][:5]
         raise RenameError("refusing: untracked files under an old plugin folder (add or move them first):\n  " + "\n  ".join(names))
@@ -74,9 +109,9 @@ def read_text(root: Path, rel: str) -> Optional[str]:
         return None
 
 
-def plan_moves(root: Path, files: Sequence[str], plan: Plan) -> None:
+def plan_moves(root: Path, files: Sequence[str], plan: Plan, rs: RuleSet = DEFAULT_RULES) -> None:
     tracked = set(files)
-    for old, new in rules.FOLDER_MOVES:
+    for old, new in rs.FOLDER_MOVES:
         under = [f for f in files if f.startswith(old + "/")]
         if not under:
             continue
@@ -91,32 +126,32 @@ def plan_moves(root: Path, files: Sequence[str], plan: Plan) -> None:
                 plan.file_moves.append((f, dest))
 
 
-def plan_rewrites(root: Path, files: Sequence[str], plan: Plan) -> Tuple[Dict[str, int], Dict[str, int]]:
+def plan_rewrites(root: Path, files: Sequence[str], plan: Plan, rs: RuleSet = DEFAULT_RULES) -> Tuple[Dict[str, int], Dict[str, int]]:
     before_texts: List[str] = []
     after_texts: List[str] = []
-    children = rules.web_children(files)
+    children = rs.web_children(files)
     for rel in files:
-        if rules.is_excluded(rel) or rules.is_excluded(rules.old_path(rel)):
+        if rs.is_excluded(rel) or rs.is_excluded(rs.old_path(rel)):
             continue
         text = read_text(root, rel)
         if text is None:
             continue
         counts: Dict[str, int] = {}
-        rewritten = rules.apply_text_rules(rules.old_path(rel), text, counts, children)
+        rewritten = rs.apply_text_rules(rs.old_path(rel), text, counts, children)
         before_texts.append(text)
         after_texts.append(rewritten)
         if rewritten != text:
             plan.rewrites[rel] = rewritten
             plan.rule_counts.update(counts)
-            plan.folder_counts[PurePosixPath(rules.new_path(rules.old_path(rel))).parts[0]] += 1
-    return rules.invariant_counts(before_texts), rules.invariant_counts(after_texts)
+            plan.folder_counts[PurePosixPath(rs.new_path(rs.old_path(rel))).parts[0]] += 1
+    return rs.invariant_counts(before_texts), rs.invariant_counts(after_texts)
 
 
-def build_plan(root: Path) -> Plan:
+def build_plan(root: Path, rs: RuleSet = DEFAULT_RULES) -> Plan:
     files = tracked_files(root)
     plan = Plan()
-    plan_moves(root, files, plan)
-    before, after = plan_rewrites(root, files, plan)
+    plan_moves(root, files, plan, rs)
+    before, after = plan_rewrites(root, files, plan, rs)
     moved = [n for n in before if before[n] != after[n]]
     if moved:
         detail = ", ".join(f"{n}: {before[n]} -> {after[n]}" for n in moved)
@@ -138,35 +173,35 @@ def remove_empty_dirs(root: Path, rel: str) -> int:
     return removed
 
 
-def apply_plan(root: Path, plan: Plan) -> None:
+def apply_plan(root: Path, plan: Plan, rs: RuleSet = DEFAULT_RULES) -> None:
     for old, new in plan.dir_moves:
         git(root, "mv", old, new)
     for src, dest in plan.file_moves:
         (root / dest).parent.mkdir(parents=True, exist_ok=True)
         git(root, "mv", src, dest)
-    for old, _new in rules.FOLDER_MOVES:
+    for old, _new in rs.FOLDER_MOVES:
         remove_empty_dirs(root, old)
     written: List[str] = []
     for rel, text in plan.rewrites.items():
-        target = rules.new_path(rel)
+        target = rs.new_path(rel)
         (root / target).write_text(text, encoding="utf-8")
         written.append(target)
     if written:
         git(root, "add", "--pathspec-from-file=-", "--pathspec-file-nul", stdin="\0".join(written).encode("utf-8"))
 
 
-def find_leftovers(root: Path) -> List[str]:
+def find_leftovers(root: Path, rs: RuleSet = DEFAULT_RULES) -> List[str]:
     found: List[str] = []
     files = tracked_files(root)
-    children = rules.web_children(files)
+    children = rs.web_children(files)
     for rel in files:
-        if rules.in_old_folder(rel):
+        if rs.in_old_folder(rel):
             found.append(f"{rel}: still inside the old folder")
-        if rules.is_excluded(rel):
+        if rs.is_excluded(rel):
             continue
         text = read_text(root, rel)
         if text is not None:
-            found += [f"{rel}: {hit}" for hit in rules.leftover_hits(rel, text, children)]
+            found += [f"{rel}: {hit}" for hit in rs.leftover_hits(rel, text, children)]
     return found
 
 
@@ -186,6 +221,8 @@ def report(plan: Plan, dry_run: bool) -> None:
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     ap = argparse.ArgumentParser(description="Rename src/cplugs -> src/plugins and web/src/cplugs -> web/src/plugins on any tree.")
     ap.add_argument("--root", default=".", help="a folder inside the repo (default: the current folder)")
+    ap.add_argument("--rules", choices=sorted(RULE_SETS), default="folders",
+                    help="which rename: folders (src/cplugs to src/plugins, #2948) or huddle (the Task Manager id to taskmanager, #3260)")
     mode = ap.add_mutually_exclusive_group()
     mode.add_argument("--dry-run", action="store_true", help="print counts per rule and per folder; write nothing")
     mode.add_argument("--check", action="store_true", help="exit 1 if any old code-path reference remains")
@@ -195,23 +232,24 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
 
 def run(args: argparse.Namespace) -> int:
     root = Path(git(Path(args.root), "rev-parse", "--show-toplevel").decode().strip())
+    rs = RULE_SETS[args.rules]
     if args.check:
-        left = find_leftovers(root)
+        left = find_leftovers(root, rs)
         for line in left[:MAX_CHECK_LINES]:
             print(line)
         print(f"check: {len(left)} old code-path reference(s) remain" if left else "check: clean, no old code-path reference remains")
         return EXIT_REFUSED if left else EXIT_OK
-    if args.fixup and not all((root / new).is_dir() for _, new in rules.FOLDER_MOVES):
+    if args.fixup and not all((root / new).is_dir() for _, new in rs.FOLDER_MOVES):
         raise RenameError("--fixup needs both new folders to exist (merge the renamed branch first)")
-    plan = build_plan(root)
+    plan = build_plan(root, rs)
     if plan.is_empty():
         print("nothing to do: the folders are already renamed and no old reference remains")
         return EXIT_OK
     if plan.conflicts:
         raise RenameError("would overwrite existing files, nothing changed:\n  " + "\n  ".join(plan.conflicts[:20]))
     if not args.dry_run:
-        ensure_clean(root)
-        apply_plan(root, plan)
+        ensure_clean(root, rs)
+        apply_plan(root, plan, rs)
     report(plan, args.dry_run)
     return EXIT_OK
 

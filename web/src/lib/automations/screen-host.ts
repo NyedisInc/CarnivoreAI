@@ -1,11 +1,10 @@
 import { createOverlayHost } from '../manager-frame/overlay-host';
-import AutomationsScreen from './AutomationsScreen.svelte';
 
 export const AUTOMATIONS_SCREEN_CONTAINER = 'automations-screen';
 
 export const AUTOMATIONS_HASH = '#automations';
 
-const host = createOverlayHost(AUTOMATIONS_SCREEN_CONTAINER, AutomationsScreen, AUTOMATIONS_HASH);
+const host = createOverlayHost(AUTOMATIONS_SCREEN_CONTAINER, { load: () => import('./AutomationsScreen.svelte') }, AUTOMATIONS_HASH);
 
 export const openAutomationsScreen = (): boolean => host.open();
 
